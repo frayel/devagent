@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: painel-b3-web
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    autoDeploy: true
+  - type: cron
+    name: painel-b3-coleta
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: echo "coleta" # placeholder as no script is defined yet
+    schedule: "*/15 * * * 1-5"
