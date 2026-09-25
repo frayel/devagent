@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: painel-b3
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app
