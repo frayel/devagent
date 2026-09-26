@@ -41,6 +41,7 @@ Merges feitos pelo `GITHUB_TOKEN` não disparam o `ci.yml` na `main`; por isso a
 | `JULES_API_KEY` | secret do GitHub | criar e destravar sessões do Jules (`scripts/jules.py`) |
 | `PRODUCTION_URL` | ambiente do Jules; variável (não secret) do GitHub, opcional | auditoria de produção; padrão `https://devagent-vb52.onrender.com` |
 | `BRAPI_TOKEN` | Render | coletor brapi |
+| `DATABASE_PATH` | Variável de ambiente (opcional) | caminho do banco SQLite (padrão `data.db`) |
 
 ## Render: cuidados
 

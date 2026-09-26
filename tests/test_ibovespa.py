@@ -3,29 +3,24 @@ import os
 from unittest import mock
 
 import httpx
-import pytest
 import respx
 from fastapi.testclient import TestClient
 
 from app.collectors.ibovespa import collect_and_save, fetch_brapi, fetch_yfinance
-from app.database import get_connection, get_latest_ibovespa_data
+from app.database import get_latest_ibovespa_data
 from app.main import app
+
+import subprocess
 
 client = TestClient(app)
 
 
-@pytest.fixture(autouse=True)
-def setup_db():
-    # Use an in-memory DB for tests to not mess with the real one, or just clear the real one
-    from app.database import init_db
-
-    init_db()
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM ibovespa_cache")
-    conn.commit()
-    conn.close()
-    yield
+def test_data_db_not_in_git():
+    # Run git ls-files to ensure data.db is not tracked
+    result = subprocess.run(
+        ["git", "ls-files", "data.db"], capture_output=True, text=True, check=True
+    )
+    assert result.stdout.strip() == "", "data.db should not be tracked by git"
 
 
 def load_fixture(name):

@@ -1,8 +1,9 @@
 import sqlite3
 from dataclasses import dataclass
+import os
 from datetime import datetime
 
-DB_PATH = "data.db"
+DB_PATH = os.environ.get("DATABASE_PATH", "data.db")
 
 
 @dataclass

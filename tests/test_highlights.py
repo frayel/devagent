@@ -3,7 +3,6 @@ import os
 from unittest import mock
 
 import httpx
-import pytest
 import respx
 from fastapi.testclient import TestClient
 
@@ -13,20 +12,10 @@ from app.collectors.highlights import (
     fetch_brapi,
     fetch_yfinance,
 )
-from app.database import get_connection, get_latest_highlights_data
+from app.database import get_latest_highlights_data
 from app.main import app
 
 client = TestClient(app)
-
-
-@pytest.fixture(autouse=True)
-def setup_db():
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM highlights_cache")
-    conn.commit()
-    conn.close()
-    yield
 
 
 def generate_mock_brapi_data():

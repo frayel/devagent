@@ -13,7 +13,7 @@ Veja [`docs/STATE.md`](docs/STATE.md). As próximas ideias ficam em [`docs/BACKL
 ```bash
 python3.12 -m venv .venv && . .venv/bin/activate
 pip install -r requirements-dev.txt
-python -m app.collectors.ibovespa      # coleta e grava no SQLite
+python -m app.collectors.ibovespa      # coleta e grava no SQLite (data.db por padrão, configurável via DATABASE_PATH)
 uvicorn app.main:app --reload          # http://localhost:8000
 ```
 
