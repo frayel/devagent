@@ -31,7 +31,7 @@ jobs:
           # O auditor não pode ser alterado por quem ele audita: PRs que mexem
           # nestes caminhos esperam revisão humana.
           protegidos=$(gh pr diff "$pr" -R "$GITHUB_REPOSITORY" --name-only \
-            | grep -E '^(auditoria/|docs/agents/auditor\.md$|scripts/guardiao_prs\.py$|\.github/workflows/(automerge|auditoria-[a-z-]+|pr-guardiao)\.yml$)' || true)
+            | grep -E '^(auditoria/|docs/agents/auditor\.md$|scripts/guardiao_prs\.py$|scripts/jules\.py$|\.github/workflows/(automerge|jules|auditoria-[a-z-]+|pr-guardiao)\.yml$)' || true)
           if [ -n "$protegidos" ]; then
             gh label create revisao-humana -R "$GITHUB_REPOSITORY" --color FBCA04 \
               --description "Mexe no auditor; merge só com aprovação humana" 2>/dev/null || true

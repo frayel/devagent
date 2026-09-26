@@ -1,0 +1,32 @@
+name: Auditoria LLM
+
+# Dispara o auditor LLM (persona docs/agents/auditor.md) no Jules pela API,
+# uma vez por dia útil depois do fechamento do pregão. O workflow jules.yml
+# destrava a sessão se ela parar esperando aprovação.
+#
+# ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
+on:
+  schedule:
+    - cron: "41 21 * * 1-5" # 18h41 BRT
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  auditor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Iniciar sessão do auditor
+        run: |
+          if [ -z "$JULES_API_KEY" ]; then
+            echo "::warning::Crie o secret JULES_API_KEY (https://jules.google.com/settings#api)."
+            exit 0
+          fi
+          python3 scripts/jules.py iniciar auditor

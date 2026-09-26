@@ -61,12 +61,15 @@ scripts/
   render_status.py     # status e logs do último deploy no Render
   estado_github.py     # PRs abertos (CI, conflito) e issues; primeiro comando da execução
   guardiao_prs.py      # regras do guardião de PRs (roda no GitHub Actions)
+  jules.py             # cria e destrava sessões do Jules pela API (roda no GitHub Actions)
 render.yaml
 .github/workflows/
   ci.yml               # lint, tipos, testes e smoke test com dependências de produção
   automerge.yml        # squash merge quando o CI passa
   deploy-check.yml     # confere o deploy após o merge; abre issue `deploy-falhou`
   pr-guardiao.yml      # cobra, fecha e limpa PRs travados; issue `tentativa-falhou`
+  jules.yml            # dispara o desenvolvedor e aprova planos pendentes
+  auditoria-llm.yml    # dispara o auditor LLM uma vez por dia útil
   auditoria-producao.yml # audita produção contra fontes independentes; issue `producao-incorreta`
   auditoria-achados.yml  # transforma achados do auditor LLM em issues
 auditoria/             # auditor de produção (PROTEGIDO: você não altera)

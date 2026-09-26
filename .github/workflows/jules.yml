@@ -1,0 +1,56 @@
+name: Jules
+
+# Dispara o desenvolvedor autônomo pela API do Jules e destrava sessões que
+# pararem esperando aprovação de plano ou resposta a uma pergunta.
+# Substitui a tarefa agendada criada pela interface web, que pode parar em
+# "aguardando aprovação" mesmo com o prompt pedindo o contrário.
+#
+# ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
+on:
+  schedule:
+    # Desenvolvedor: a cada 2 horas, das 8h às 22h BRT.
+    - cron: "5 11-23/2,1 * * *"
+    # Destravar: a cada 15 minutos.
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      acao:
+        description: "O que fazer"
+        type: choice
+        options: [destravar, desenvolvedor, auditor, listar]
+        default: desenvolvedor
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jules
+  cancel-in-progress: false
+
+jobs:
+  jules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Executar
+        run: |
+          if [ -z "$JULES_API_KEY" ]; then
+            echo "::warning::Crie o secret JULES_API_KEY (https://jules.google.com/settings#api)."
+            exit 0
+          fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            acao="${{ inputs.acao }}"
+          elif [ "${{ github.event.schedule }}" = "*/15 * * * *" ]; then
+            acao="destravar"
+          else
+            acao="desenvolvedor"
+          fi
+          case "$acao" in
+            destravar|listar) python3 scripts/jules.py "$acao" ;;
+            *) python3 scripts/jules.py iniciar "$acao" && python3 scripts/jules.py destravar ;;
+          esac
