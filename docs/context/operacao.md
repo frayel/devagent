@@ -8,6 +8,11 @@ Jules abre PR → CI (lint, tipos, testes, smoke) → automerge.yml faz squash m
 → se falhou, abre issue `deploy-falhou` com logs → agente corrige no Passo 1
 → se live, auditoria-producao.yml confere o site contra fontes independentes
 → se o dado está errado, abre issue `producao-incorreta` → agente corrige no Passo 1
+
+PR com CI falhando ou em conflito → pr-guardiao.yml comenta @jules com o log
+→ Jules corrige na mesma branch → CI passa → automerge
+→ sem reação em 3 h, 4ª falha ou conflito grande → PR fechado + issue `tentativa-falhou`
+→ spec continua `ready` na main → próximo ciclo refaz, lendo a issue
 ```
 
 ## Workflows
@@ -18,9 +23,10 @@ Jules abre PR → CI (lint, tipos, testes, smoke) → automerge.yml faz squash m
 | `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch |
 | `deploy-check.yml` | após o auto-merge, a cada 6 h, manual | consulta o Render; abre ou fecha issues `deploy-falhou`; dispara a auditoria quando o deploy fica live |
 | `auditoria-producao.yml` | a cada 30 min no pregão, antes da abertura, após deploy | roda `auditoria/auditar.py` contra produção; abre ou fecha issues `producao-incorreta` |
+| `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | roda `scripts/guardiao_prs.py`: cobra `@jules` (até 3x), fecha PR sem reação em 3 h, com conflito grande (> 3 arquivos ou > 40 linhas) ou substituído (`Substitui #N`); abre issue `tentativa-falhou`; apaga branches órfãs com mais de 24 h |
 | `auditoria-achados.yml` | de hora em hora e após merge de PR `auditoria:` | abre issues para os achados do auditor LLM em `docs/auditoria/achados/` |
 
-O `automerge.yml` não faz merge de PRs que alteram o auditor (`auditoria/`, `docs/agents/auditor.md`, `automerge.yml`, `auditoria-*.yml`): aplica o label `revisao-humana` e espera um humano.
+O `automerge.yml` não faz merge de PRs que alteram o auditor ou o guardião (`auditoria/`, `docs/agents/auditor.md`, `automerge.yml`, `auditoria-*.yml`, `pr-guardiao.yml`, `scripts/guardiao_prs.py`): aplica o label `revisao-humana` e espera um humano.
 
 Merges feitos pelo `GITHUB_TOKEN` não disparam o `ci.yml` na `main`; por isso a verificação pós-merge fica no `deploy-check.yml`.
 

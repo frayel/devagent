@@ -2,7 +2,7 @@ name: Auto-merge
 
 # Faz squash merge de qualquer PR assim que o workflow CI passa.
 # O Jules abre PRs mas não faz merge; este workflow fecha o ciclo.
-# Exceção: PRs que alteram o auditor ficam com label `revisao-humana`.
+# Exceção: PRs que alteram o auditor ou o guardião de PRs ficam com label `revisao-humana`.
 on:
   workflow_run:
     workflows: [CI]
@@ -31,7 +31,7 @@ jobs:
           # O auditor não pode ser alterado por quem ele audita: PRs que mexem
           # nestes caminhos esperam revisão humana.
           protegidos=$(gh pr diff "$pr" -R "$GITHUB_REPOSITORY" --name-only \
-            | grep -E '^(auditoria/|docs/agents/auditor\.md$|\.github/workflows/(automerge|auditoria-[a-z-]+)\.yml$)' || true)
+            | grep -E '^(auditoria/|docs/agents/auditor\.md$|scripts/guardiao_prs\.py$|\.github/workflows/(automerge|auditoria-[a-z-]+|pr-guardiao)\.yml$)' || true)
           if [ -n "$protegidos" ]; then
             gh label create revisao-humana -R "$GITHUB_REPOSITORY" --color FBCA04 \
               --description "Mexe no auditor; merge só com aprovação humana" 2>/dev/null || true

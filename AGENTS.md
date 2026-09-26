@@ -59,11 +59,14 @@ docs/
   skills/              # procedimentos reutilizáveis, um arquivo por tarefa recorrente
 scripts/
   render_status.py     # status e logs do último deploy no Render
+  estado_github.py     # PRs abertos (CI, conflito) e issues; primeiro comando da execução
+  guardiao_prs.py      # regras do guardião de PRs (roda no GitHub Actions)
 render.yaml
 .github/workflows/
   ci.yml               # lint, tipos, testes e smoke test com dependências de produção
   automerge.yml        # squash merge quando o CI passa
   deploy-check.yml     # confere o deploy após o merge; abre issue `deploy-falhou`
+  pr-guardiao.yml      # cobra, fecha e limpa PRs travados; issue `tentativa-falhou`
   auditoria-producao.yml # audita produção contra fontes independentes; issue `producao-incorreta`
   auditoria-achados.yml  # transforma achados do auditor LLM em issues
 auditoria/             # auditor de produção (PROTEGIDO: você não altera)
@@ -77,17 +80,25 @@ Se algum desses arquivos não existir, criá-lo faz parte da primeira execução
 
 ## 5. O ciclo de decisão
 
-No início de cada execução, leia `docs/STATE.md`, os três últimos relatórios em `docs/runs/`, as issues abertas, os PRs abertos e as specs. Consulte o índice da seção 13 e leia as skills e os contextos que tocam a tarefa. Depois percorra a lista abaixo **em ordem** e execute **somente o primeiro item aplicável**.
+**Primeiro comando de toda execução:**
+
+```bash
+git fetch origin
+python scripts/estado_github.py
+```
+
+Se a sessão foi aberta por um comentário `@jules` num PR, você já está na branch desse PR: trate-o pelo Passo 2 e não troque de branch. O script lista os PRs abertos com o estado do CI e de conflito, e as issues abertas. Depois leia `docs/STATE.md`, os três últimos relatórios em `docs/runs/` e as specs. Consulte o índice da seção 13 e leia as skills e os contextos que tocam a tarefa. Então percorra a lista abaixo **em ordem** e execute **somente o primeiro item aplicável**.
 
 ### Regra de continuidade (vale antes de qualquer passo)
 
-O merge não é feito por você. Ele é feito pelo workflow `.github/workflows/automerge.yml`, que faz squash merge de todo PR assim que o CI passa. Por isso:
+O merge não é feito por você. Ele é feito pelo workflow `automerge.yml`, que faz squash merge de todo PR assim que o CI passa. PR que não passa no CI fica parado e trava o ciclo inteiro. Por isso:
 
 - PRs com título iniciado por `auditoria:` ou com label `revisao-humana` não são seus: não os revise, não os feche, não faça commits neles e não os conte na regra abaixo.
-- **Só pode existir um PR aberto do agente por vez.** Antes de criar uma branch, liste os PRs abertos. Se houver algum, você **não** começa trabalho novo a partir da `main`: faça checkout da branch desse PR e trate-o pelo Passo 3. Novos commits vão para a mesma branch, nunca para um PR novo.
-- Se houver mais de um PR aberto do agente, mantenha o mais antigo, feche os outros com um comentário apontando o que foi mantido e leve para ele o que houver de útil nos fechados.
+- **Só pode existir um PR aberto do agente por vez.** Se `estado_github.py` mostrar um, o único trabalho permitido é destravá-lo (Passo 2), depois de garantir que produção não está quebrada (Passo 1). Novos commits vão para a branch desse PR, nunca para um PR novo.
+- **Todo trabalho parte da `main` atual.** Antes de dar push, traga a `main` (`git fetch origin && git merge origin/main`). Nunca reescreva um arquivo inteiro a partir de uma cópia antiga: isso desfaz o trabalho de outros PRs.
 - O estado verdadeiro do projeto é a `main`. Trabalho que não chegou à `main` ainda não existe para o ciclo.
-- Se o repositório ainda não tem código (não existe `app/main.py`), o Passo 1 não se aplica: vá direto ao Passo 4 ou ao Passo 6.
+- O workflow `pr-guardiao.yml` vigia os PRs: cobra o Jules quando o CI falha, fecha PRs sem reação ou com conflito grande e registra o motivo numa issue `tentativa-falhou`.
+- Se o repositório ainda não tem código (não existe `app/main.py`), o Passo 1 não se aplica: vá direto ao Passo 4, ao Passo 6 ou ao Passo 7.
 
 ### Passo 1 · Verificar e corrigir
 
@@ -111,29 +122,29 @@ Se algo falhar: diagnostique pela causa raiz (não pelo sintoma), escreva um tes
 
 A integração nativa do Jules com o Render corrige builds que falham nos PRs do próprio Jules. Ela não substitui este passo, porque não enxerga o que já chegou à `main`.
 
-### Passo 2 · Publicar o que está pendente
+### Passo 2 · Destravar o PR aberto
 
-O merge acontece sozinho quando o CI passa, e o Render publica tudo que chega à `main`. Este passo existe para conferir que isso aconteceu. Ele se aplica quando há commits na `main` que não chegaram à produção, ou um PR com CI verde há mais de uma hora que continua aberto:
+Aplica-se quando existe um PR do agente aberto. Siga a skill `docs/skills/destravar-pr.md`, na branch do próprio PR:
 
-- PR verde e não mergeado: verifique se há conflito com a `main`. Se houver, faça rebase na mesma branch e dê push. Se não houver, registre o bloqueio (o workflow de auto-merge falhou) conforme a seção 10.
-- Commits na `main` fora da produção: se a variável `RENDER_DEPLOY_HOOK_URL` estiver disponível, chame o hook.
-- Após o deploy, confirme o `/healthz` e registre a versão em `docs/STATE.md` no próximo PR.
+- **CI falhando** (testes, lint, formatação, tipos, smoke ou hook de pre-commit): reproduza localmente, corrija a causa e dê push na mesma branch. Esta é a prioridade máxima depois de produção.
+- **Conflito com a `main`:** meça. Se for pequeno (até 3 arquivos e cerca de 40 linhas), resolva, rode a verificação completa e dê push. Se for grande, não resolva: o guardião fecha o PR, a spec continua `ready` na `main` e o próximo ciclo refaz o trabalho. Registre no relatório e encerre.
+- **Comentários de revisão não resolvidos:** aplique as correções ou responda explicando por que não aplicou.
+- **CI verde, sem conflito, aberto há mais de uma hora:** o auto-merge falhou. Registre o bloqueio conforme a seção 10.
 
 Encerre a execução.
 
-### Passo 3 · Revisar PRs abertos
+### Passo 3 · Conferir a publicação
 
-Para cada PR aberto, do mais antigo para o mais novo, trate **um**:
+O Render publica tudo que chega à `main`. Este passo se aplica quando há commits na `main` que não chegaram à produção:
 
-- Se há comentários de revisão não resolvidos: aplique as correções pedidas ou responda no PR explicando por que não aplicou.
-- Se o PR não tem revisão: revise você mesmo segundo o checklist da seção 8 e registre as observações como comentário.
-- Se o PR está obsoleto ou conflita com `main` de forma irrecuperável: feche com uma explicação e reabra o trabalho a partir de `main`.
+- Se a variável `RENDER_DEPLOY_HOOK_URL` estiver disponível, chame o hook.
+- Após o deploy, confirme o `/healthz` e registre a versão em `docs/STATE.md` no próximo PR.
 
 Encerre a execução.
 
 ### Passo 4 · Implementar uma especificação
 
-Escolha a spec com `status: ready` de menor número. Mude para `in-progress`, implemente, escreva os testes, atualize `docs/STATE.md` e `CHANGELOG.md`, marque a spec como `done` no mesmo PR e abra o PR com prefixo `feat:`.
+Escolha a spec com `status: ready` de menor número. Antes de começar, procure issues abertas com label `tentativa-falhou` sobre ela: leia o motivo da tentativa anterior, evite repetir o erro e inclua `Closes #N` no PR. Mude para `in-progress`, implemente, escreva os testes, atualize `docs/STATE.md` e `CHANGELOG.md`, marque a spec como `done` no mesmo PR e abra o PR com prefixo `feat:`.
 
 Se a spec for grande demais para um PR de até ~400 linhas alteradas (excluindo testes e fixtures), divida-a em specs menores, marque a original como `draft` e encerre. A implementação fica para a próxima execução.
 
@@ -147,9 +158,26 @@ Aplica-se quando existe pelo menos um destes sinais:
 
 Faça a melhoria mais valiosa da lista, seguindo a skill `docs/skills/auto-melhoria.md`, e abra um PR com prefixo `agent:` (mudanças em `AGENTS.md` ou `docs/skills/`) ou `docs:` (demais documentos). Encerre a execução.
 
-### Passo 6 · Imaginar a próxima feature
+### Passo 6 · Tratar issues abertas
 
-Se não há nada especificado:
+Antes de imaginar qualquer feature nova, esvazie a fila de issues. Ficam de fora: `deploy-falhou` e `producao-incorreta` (tratadas no Passo 1), `tentativa-falhou` (lidas no Passo 4) e `bloqueado`, enquanto espera ação humana. Se um comentário humano posterior ao bloqueio trouxer a resposta, remova o label e trate a issue.
+
+Escolha **uma** issue, na ordem: label `prioridade` primeiro, depois a mais antiga. Leia o corpo e todos os comentários. Então classifique e aja:
+
+| Tipo | Ação |
+|---|---|
+| Bug ou erro | Reproduza, escreva um teste que falhe, corrija. PR `fix:` com `Closes #N`. |
+| Pedido de feature ou melhoria | Transforme em spec `ready` seguindo `docs/skills/escrever-spec.md`, com link para a issue. PR `docs:` que referencia a issue sem fechá-la. A implementação vem pelo Passo 4, e o PR `feat:` fecha a issue com `Closes #N`. |
+| Mudança de instruções, documentação ou processo | Siga `docs/skills/auto-melhoria.md`. PR `agent:` ou `docs:` com `Closes #N`. |
+| Pergunta | Responda na issue com base no código e nos documentos, e feche. Se faltar documentação, corrija com um PR `docs:`. |
+| Duplicada, inválida ou já resolvida | Comente explicando, com link para a issue original ou o commit que resolveu, e feche. |
+| Ambígua | Adote a interpretação mais conservadora, registre-a na issue e siga. Se nem assim for seguro agir, aplique `bloqueado`, pergunte na issue o que falta e encerre. |
+
+Se uma issue já tem spec `ready` ou `in-progress` vinculada, o Passo 4 cuida dela. Encerre a execução.
+
+### Passo 7 · Imaginar a próxima feature
+
+Só se aplica quando não há produção quebrada, PR aberto, spec `ready`, pendência de documentação nem issue tratável.
 
 1. Leia `docs/BACKLOG.md`, `docs/STATE.md` e `docs/context/dominio-b3.md`.
 2. Liste de 5 a 8 ideias novas, cada uma com: valor para o investidor, fonte de dados necessária, esforço estimado (P/M/G) e risco (legal, técnico, de confiabilidade dos dados).
@@ -167,7 +195,7 @@ A primeira spec (`001-ibovespa-hoje.md`) é o MVP e deve conter uma única infor
 
 Ela inclui a fundação: FastAPI, `/healthz`, template base com o aviso legal, `render.yaml`, CI e um coletor com cache.
 
-Sugestões de incrementos, que o Passo 5 pode reordenar ou substituir:
+Sugestões de incrementos, que o Passo 7 pode reordenar ou substituir:
 
 1. Maiores altas e baixas do dia (tabela).
 2. Mapa de calor setorial.
@@ -246,7 +274,8 @@ item numa checagem.
 - Não peça aprovação de plano nem faça perguntas. Diante de ambiguidade, escolha a opção mais conservadora, registre a decisão no relatório e siga.
 - Nunca apague dados de produção, specs `done` ou relatórios em `docs/runs/`.
 - Nunca adicione dependência sem justificar no PR.
-- Nunca desative ou apague testes para fazer o CI passar.
+- Nunca desative ou apague testes para fazer o CI passar. Nunca use `git commit --no-verify` para contornar um hook.
+- Nunca altere o guardião (`scripts/guardiao_prs.py`, `.github/workflows/pr-guardiao.yml`) para afrouxar suas regras; esses arquivos esperam revisão humana.
 - Nunca altere `auditoria/`, `docs/agents/auditor.md`, `docs/auditoria/` nem os workflows `automerge.yml` e `auditoria-*.yml`. Eles pertencem ao auditor e mudanças ali exigem revisão humana.
 - Se ficar bloqueado (credencial ausente, fonte fora do ar, ambiguidade na spec), registre o bloqueio em `docs/STATE.md`, abra uma issue com label `bloqueado` e encerre. Não invente contornos.
 - Se duas execuções seguidas falharem no mesmo ponto, pare de tentar e peça ajuda na issue.
@@ -257,7 +286,7 @@ Toda execução termina criando `docs/runs/AAAA-MM-DD-HHMM.md`:
 
 ```markdown
 ## Passo executado
-(1 a 6, com o motivo de os anteriores não se aplicarem)
+(1 a 7, com o motivo de os anteriores não se aplicarem)
 
 ## O que foi feito
 ## PR
@@ -301,7 +330,9 @@ Você tem autonomia para melhorar este repositório **e a si mesmo**: o `README.
 | `docs/context/operacao.md` | Render, variáveis, workflows, como diagnosticar | antes de mexer em deploy ou CI |
 | `docs/skills/diagnosticar-deploy.md` | procedimento para deploy quebrado | Passo 1 |
 | `docs/skills/criar-coletor.md` | procedimento para nova fonte de dados | ao implementar coletor |
-| `docs/skills/escrever-spec.md` | como escrever uma boa spec | Passo 6 e ao dividir specs |
+| `docs/skills/destravar-pr.md` | CI falhando, conflito ou revisão num PR aberto | Passo 2 |
+| `docs/skills/escrever-spec.md` | como escrever uma boa spec | Passo 7, ao transformar issue em spec e ao dividir specs |
+| `docs/decisions/` | ADRs; `001-guardiao-de-prs.md` explica o Passo 2 e o guardião | antes de mudar o ciclo de decisão |
 | `docs/skills/auto-melhoria.md` | como alterar instruções, skills e contextos | Passo 5 |
 | `auditoria/README.md` | o que o auditor verifica e o contrato `/api/snapshot` | ao tratar issue `producao-incorreta` e ao publicar painel novo |
 
@@ -321,7 +352,7 @@ Você pode reescrever qualquer parte deste arquivo, **exceto enfraquecer** estes
 - o aviso legal e a exigência de fonte, data, método e confiança (seção 2);
 - as regras de coleta de dados (seção 9);
 - os limites do agente (seção 10);
-- a regra de continuidade (um PR aberto por vez; merge só pelo workflow);
+- a regra de continuidade (um PR aberto por vez; merge só pelo workflow; destravar antes de criar);
 - a proibição de apagar testes, specs `done` e relatórios;
 - a independência do auditor: você não altera nem afrouxa `auditoria/` e não edita `docs/auditoria/`.
 

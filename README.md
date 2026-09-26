@@ -30,11 +30,16 @@ pytest -q
 As instruções estão em [`AGENTS.md`](AGENTS.md). Em resumo, cada execução faz uma única coisa, na primeira situação que se aplicar:
 
 1. corrigir produção ou testes quebrados;
-2. conferir se o que foi mergeado chegou à produção;
-3. tratar o PR aberto;
+2. destravar o PR aberto (CI falhando, conflito, revisão);
+3. conferir se o que foi mergeado chegou à produção;
 4. implementar a próxima spec;
 5. melhorar documentação, skills e as próprias instruções;
-6. propor novas features e escrever a próxima spec.
+6. tratar a issue aberta mais prioritária;
+7. propor novas features e escrever a próxima spec.
+
+Para pedir algo ao agente, abra uma issue. O label `prioridade` a coloca no começo da fila.
+
+Nenhum PR fica parado: o guardião (`pr-guardiao.yml`) cobra o Jules quando o CI falha e, sem reação, fecha o PR e registra o motivo para o próximo ciclo refazer o trabalho.
 
 Procedimentos recorrentes ficam em [`docs/skills/`](docs/skills/) e conhecimento durável em [`docs/context/`](docs/context/). Cada execução deixa um relatório com retrospectiva em [`docs/runs/`](docs/runs/).
 
