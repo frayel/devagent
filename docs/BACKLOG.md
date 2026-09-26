@@ -27,14 +27,6 @@
 
 **Lição para a retrospectiva:** o Passo 1.3 (saúde de produção) deveria ter pegado isso, porque o horário exibido é o da coleta e o histórico é de 2023. Vale reforçar a checagem: comparar o valor exibido com uma fonte independente e conferir se a última data do histórico é o pregão mais recente.
 
-### Coletor de destaques viola as regras de coleta (seção 9)
-
-`app/collectors/highlights.py`, no fallback do Yahoo, faz 30 requisições seguidas, uma por ticker, sem o intervalo mínimo de 2 segundos por domínio. Nenhum dos coletores tem retry com backoff, e o User-Agent imita um navegador em vez de identificar o projeto.
-
-- [ ] Intervalo mínimo de 2 s entre requisições ao mesmo domínio, num utilitário comum em `app/collectors/`, com teste que verifique o intervalo (tempo mockado, sem `sleep` real).
-- [ ] Retry com backoff exponencial para erros 429 e 5xx, com teste.
-- [ ] User-Agent identificável (nome do projeto e URL do repositório) nos dois coletores.
-
 ### Critérios da spec 002 marcados como cobertos sem teste
 
 A spec 002 foi marcada `done`, mas os testes não cobrem três critérios:

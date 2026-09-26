@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import httpx
 
 from app.database import HighlightsData, save_highlights_data
+from app.collectors.utils import fetch_with_retry
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -56,8 +57,7 @@ def fetch_brapi() -> HighlightsData | None:
     url = f"https://brapi.dev/api/quote/{tickers_str}?token={BRAPI_TOKEN}&fundamental=false"
 
     try:
-        response = httpx.get(url, timeout=15.0)
-        response.raise_for_status()
+        response = fetch_with_retry(url, timeout=15.0)
         data = response.json()
 
         if "results" not in data or not data["results"]:
@@ -105,18 +105,13 @@ def fetch_brapi() -> HighlightsData | None:
 
 
 def fetch_yfinance() -> HighlightsData | None:
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) B3Dashboard/1.0"
-    }
-
     parsed_results = []
 
-    with httpx.Client(headers=headers, timeout=10.0) as client:
+    with httpx.Client(timeout=10.0) as client:
         for ticker in TICKERS:
             url = f"https://query2.finance.yahoo.com/v8/finance/chart/{ticker}.SA?range=1d&interval=1d"
             try:
-                response = client.get(url)
-                response.raise_for_status()
+                response = fetch_with_retry(url, client=client)
                 data = response.json()
 
                 if (
