@@ -26,6 +26,10 @@
 
 **Lição para a retrospectiva:** o Passo 1.3 (saúde de produção) deveria ter pegado isso, porque o horário exibido é o da coleta e o histórico é de 2023. Vale reforçar a checagem: comparar o valor exibido com uma fonte independente e conferir se a última data do histórico é o pregão mais recente.
 
+### Expor `/api/snapshot` para o auditor
+
+O auditor de produção hoje extrai os números do HTML, o que quebra se o template mudar. Implementar o endpoint conforme o contrato em `auditoria/README.md`, com teste em `tests/`. Não altere `auditoria/`: quando o endpoint existir, o auditor passa a usá-lo sozinho.
+
 ## Features
 
 | Feature | Valor | Fonte de dados | Esforço (P/M/G) | Risco |
