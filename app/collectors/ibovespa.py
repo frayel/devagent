@@ -75,7 +75,6 @@ def fetch_yfinance() -> IbovespaData | None:
         result = data["chart"]["result"][0]
         meta = result["meta"]
         current_price = meta.get("regularMarketPrice")
-        previous_close = meta.get("chartPreviousClose")
 
         timestamps = result["timestamp"]
         closes = result["indicators"]["quote"][0]["close"]
@@ -89,6 +88,11 @@ def fetch_yfinance() -> IbovespaData | None:
         valid_history = [(d, c) for d, c in zip(dates, closes) if c is not None]
         valid_dates = [v[0] for v in valid_history]
         valid_closes = [v[1] for v in valid_history]
+
+        if len(valid_closes) > 1:
+            previous_close = valid_closes[-2]
+        else:
+            previous_close = meta.get("previousClose") or meta.get("chartPreviousClose")
 
         history_json = json.dumps(
             {"dates": valid_dates[-30:], "closes": valid_closes[-30:]}

@@ -4,7 +4,7 @@
       {
         "meta": {
           "regularMarketPrice": 131000.0,
-          "chartPreviousClose": 132000.0
+          "chartPreviousClose": 100000.0
         },
         "timestamp": [1695600000, 1695686400, 1695772800],
         "indicators": {

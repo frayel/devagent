@@ -77,6 +77,7 @@ def test_collect_and_save_fallback():
         db_data = get_latest_ibovespa_data()
         assert db_data is not None
         assert db_data.current_price == 131000.0
+        assert db_data.previous_close == 132000.0
         assert db_data.fonte == "yfinance"
 
 

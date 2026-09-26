@@ -27,14 +27,6 @@
 
 **Lição para a retrospectiva:** o Passo 1.3 (saúde de produção) deveria ter pegado isso, porque o horário exibido é o da coleta e o histórico é de 2023. Vale reforçar a checagem: comparar o valor exibido com uma fonte independente e conferir se a última data do histórico é o pregão mais recente.
 
-### Fallback do Yahoo calcula variação mensal como se fosse do dia
-
-`fetch_yfinance` em `app/collectors/ibovespa.py` pede `range=1mo` e usa `meta.chartPreviousClose` como fechamento anterior. Com esse range, o campo é o fechamento anterior ao **primeiro** candle do gráfico, ou seja, de cerca de um mês atrás. Quando a brapi falha, a "variação do dia" exibida é a variação do mês. O teste `test_collect_and_save_fallback` confirma esse valor sem perceber o problema, porque o fixture foi montado com a mesma premissa.
-
-- [ ] Usar como fechamento anterior o penúltimo `close` válido da série diária (ou `meta.previousClose` quando presente), não `chartPreviousClose`.
-- [ ] Refazer `tests/fixtures/yfinance_response.json` com uma série em que `chartPreviousClose` seja diferente do penúltimo fechamento, e testar que a variação usa o penúltimo.
-- [ ] Registrar a armadilha em `docs/context/fontes-de-dados.md`.
-
 ### Coletor de destaques viola as regras de coleta (seção 9)
 
 `app/collectors/highlights.py`, no fallback do Yahoo, faz 30 requisições seguidas, uma por ticker, sem o intervalo mínimo de 2 segundos por domínio. Nenhum dos coletores tem retry com backoff, e o User-Agent imita um navegador em vez de identificar o projeto.
