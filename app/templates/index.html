@@ -45,4 +45,58 @@
         <p>Dados não disponíveis no momento.</p>
     {% endif %}
 </div>
+
+<div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+    <!-- Maiores Altas -->
+    <div class="card" style="flex: 1; min-width: 300px; margin-bottom: 0;">
+        <h3 style="margin-top: 0;">Maiores Altas</h3>
+        {% if highlights and highlights.highs %}
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #eee; text-align: left;">
+                    <th style="padding: 8px 0;">Ativo</th>
+                    <th style="padding: 8px 0; text-align: right;">Preço</th>
+                    <th style="padding: 8px 0; text-align: right;">Var</th>
+                </tr>
+                {% for asset in highlights.highs %}
+                <tr style="border-bottom: 1px solid #f9f9f9;">
+                    <td style="padding: 8px 0; font-weight: bold;">{{ asset.ticker }}</td>
+                    <td style="padding: 8px 0; text-align: right;">{{ asset.price_formatted }}</td>
+                    <td style="padding: 8px 0; text-align: right;" class="{% if asset.is_positive %}positive{% elif asset.is_negative %}negative{% else %}neutral{% endif %}">{{ asset.change_percent_formatted }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <div class="text-small" style="margin-top: 10px;">
+                Última atualização: {{ highlights.time }}
+            </div>
+        {% else %}
+            <p>Dados não disponíveis no momento.</p>
+        {% endif %}
+    </div>
+
+    <!-- Maiores Baixas -->
+    <div class="card" style="flex: 1; min-width: 300px; margin-bottom: 0;">
+        <h3 style="margin-top: 0;">Maiores Baixas</h3>
+        {% if highlights and highlights.lows %}
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #eee; text-align: left;">
+                    <th style="padding: 8px 0;">Ativo</th>
+                    <th style="padding: 8px 0; text-align: right;">Preço</th>
+                    <th style="padding: 8px 0; text-align: right;">Var</th>
+                </tr>
+                {% for asset in highlights.lows %}
+                <tr style="border-bottom: 1px solid #f9f9f9;">
+                    <td style="padding: 8px 0; font-weight: bold;">{{ asset.ticker }}</td>
+                    <td style="padding: 8px 0; text-align: right;">{{ asset.price_formatted }}</td>
+                    <td style="padding: 8px 0; text-align: right;" class="{% if asset.is_positive %}positive{% elif asset.is_negative %}negative{% else %}neutral{% endif %}">{{ asset.change_percent_formatted }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <div class="text-small" style="margin-top: 10px;">
+                Última atualização: {{ highlights.time }}
+            </div>
+        {% else %}
+            <p>Dados não disponíveis no momento.</p>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}
