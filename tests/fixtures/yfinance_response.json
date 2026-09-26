@@ -1,0 +1,20 @@
+{
+  "chart": {
+    "result": [
+      {
+        "meta": {
+          "regularMarketPrice": 131000.0,
+          "chartPreviousClose": 132000.0
+        },
+        "timestamp": [1695600000, 1695686400, 1695772800],
+        "indicators": {
+          "quote": [
+            {
+              "close": [130000.0, 132000.0, 131000.0]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

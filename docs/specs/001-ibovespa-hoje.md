@@ -1,7 +1,7 @@
 ---
 id: 001
 titulo: Ibovespa Hoje (MVP)
-status: ready
+status: done
 esforco: P
 ---
 

@@ -1,0 +1,13 @@
+{
+  "results": [
+    {
+      "regularMarketPrice": 130000.5,
+      "regularMarketPreviousClose": 129000.0,
+      "historicalDataPrice": [
+        {"date": 1695600000, "close": 128000.0},
+        {"date": 1695686400, "close": 129000.0},
+        {"date": 1695772800, "close": 130000.5}
+      ]
+    }
+  ]
+}
