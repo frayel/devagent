@@ -2,6 +2,7 @@ name: Auto-merge
 
 # Faz squash merge de qualquer PR assim que o workflow CI passa.
 # O Jules abre PRs mas não faz merge; este workflow fecha o ciclo.
+# Exceção: PRs que alteram o auditor ficam com label `revisao-humana`.
 on:
   workflow_run:
     workflows: [CI]
@@ -10,6 +11,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   merge:
@@ -25,4 +27,23 @@ jobs:
         run: |
           pr=$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number -q '.[0].number')
           if [ -z "$pr" ]; then echo "Nenhum PR aberto para $BRANCH"; exit 0; fi
+
+          # O auditor não pode ser alterado por quem ele audita: PRs que mexem
+          # nestes caminhos esperam revisão humana.
+          protegidos=$(gh pr diff "$pr" -R "$GITHUB_REPOSITORY" --name-only \
+            | grep -E '^(auditoria/|docs/agents/auditor\.md$|\.github/workflows/(automerge|auditoria-[a-z-]+)\.yml$)' || true)
+          if [ -n "$protegidos" ]; then
+            gh label create revisao-humana -R "$GITHUB_REPOSITORY" --color FBCA04 \
+              --description "Mexe no auditor; merge só com aprovação humana" 2>/dev/null || true
+            gh pr edit "$pr" -R "$GITHUB_REPOSITORY" --add-label revisao-humana
+            gh pr comment "$pr" -R "$GITHUB_REPOSITORY" --body "$(printf 'Merge automático suspenso: este PR altera arquivos protegidos do auditor.\n\n```\n%s\n```\n\nUm humano precisa revisar e fazer o merge.' "$protegidos")"
+            exit 0
+          fi
+
           gh pr merge "$pr" -R "$GITHUB_REPOSITORY" --squash --delete-branch
+
+          # Achados do auditor LLM viram issues logo após o merge.
+          title=$(gh pr view "$pr" -R "$GITHUB_REPOSITORY" --json title -q .title)
+          case "$title" in
+            auditoria:*) gh workflow run auditoria-achados.yml -R "$GITHUB_REPOSITORY" --ref main ;;
+          esac

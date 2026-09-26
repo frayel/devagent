@@ -46,6 +46,11 @@ def init_db() -> None:
             lows_json TEXT NOT NULL
         )
     """)
+    # Add index to optimize get_latest_ibovespa_data() which does ORDER BY timestamp DESC LIMIT 1
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_ibovespa_cache_timestamp
+        ON ibovespa_cache(timestamp DESC)
+    """)
     conn.commit()
     conn.close()
 

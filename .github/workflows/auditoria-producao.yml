@@ -1,0 +1,99 @@
+name: Auditoria de produção
+
+# Confere o site publicado contra fontes independentes e regras de plausibilidade
+# (auditoria/auditar.py). Se algo estiver errado, abre uma issue
+# `producao-incorreta`; quando a auditoria volta a passar, fecha a issue.
+#
+# ARQUIVO PROTEGIDO: mudanças aqui ou em auditoria/ exigem revisão humana
+# (o automerge.yml não faz merge desses PRs).
+on:
+  schedule:
+    # Pregão da B3: 10h às 17h BRT (13h às 20h UTC), mais o pós-fechamento.
+    - cron: "7,37 13-21 * * 1-5"
+    # Antes da abertura: confere o fechamento do dia anterior.
+    - cron: "23 11 * * 1-5"
+    # Fim de semana: uma vez por dia.
+    - cron: "41 14 * * 0,6"
+  # Disparado pelo deploy-check.yml quando um deploy fica live.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: auditoria-producao
+  cancel-in-progress: false
+
+jobs:
+  auditar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar navegador
+        run: |
+          pip install playwright==1.47.0
+          python -m playwright install --with-deps chromium
+
+      - name: Auditar
+        id: auditoria
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL || 'https://devagent-vb52.onrender.com' }}
+        run: |
+          set +e
+          python -m auditoria.auditar --navegador --saida relatorio
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          cat relatorio/relatorio.md >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      - name: Guardar evidências
+        uses: actions/upload-artifact@v4
+        with:
+          name: auditoria-${{ github.run_id }}
+          path: relatorio/
+          retention-days: 30
+
+      - name: Abrir ou atualizar issue
+        if: steps.auditoria.outputs.code != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create producao-incorreta --color D93F0B \
+            --description "Produção exibe dado errado ou está fora do ar" 2>/dev/null || true
+          falhas=$(python3 -c "import json;d=json.load(open('relatorio/relatorio.json'));print(' '.join(sorted(r['id'] for r in d['resultados'] if r['status']=='falha')))")
+          body=$(printf '%s\n\nEvidências (relatório JSON e screenshot): %s\n\nO agente trata esta issue no Passo 1 do AGENTS.md. Não altere `auditoria/` para fazê-la passar.\n\n<!-- falhas: %s -->' \
+            "$(cat relatorio/relatorio.md)" "$RUN_URL" "$falhas")
+          existing=$(gh issue list --label producao-incorreta --state open --json number -q '.[0].number')
+          if [ -z "$existing" ]; then
+            gh issue create --title "Produção incorreta: $falhas" --label producao-incorreta --body "$body"
+          else
+            # Só comenta quando o conjunto de falhas muda, para não inundar a issue.
+            last=$(gh issue view "$existing" --json body,comments \
+              -q '([.body] + [.comments[].body]) | last' | grep -o '<!-- falhas: .* -->' || true)
+            if [ "$last" != "<!-- falhas: $falhas -->" ]; then
+              gh issue comment "$existing" --body "$body"
+            else
+              echo "Mesmas falhas da última notificação; issue #$existing mantida."
+            fi
+          fi
+
+      - name: Fechar issue se produção voltou ao normal
+        if: steps.auditoria.outputs.code == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          for n in $(gh issue list --label producao-incorreta --state open --json number,title \
+                      -q '.[] | select(.title | startswith("Produção incorreta")) | .number'); do
+            gh issue close "$n" --comment "Auditoria passou em $RUN_URL."
+          done
