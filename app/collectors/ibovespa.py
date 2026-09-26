@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import httpx
 
 from app.database import IbovespaData, save_ibovespa_data
+from app.collectors.utils import fetch_with_retry
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,8 +21,7 @@ def fetch_brapi() -> IbovespaData | None:
 
     url = f"https://brapi.dev/api/quote/^BVSP?token={BRAPI_TOKEN}&range=1mo&interval=1d&fundamental=false"
     try:
-        response = httpx.get(url, timeout=10.0)
-        response.raise_for_status()
+        response = fetch_with_retry(url, timeout=10.0)
         data = response.json()
 
         if "results" not in data or not data["results"]:
@@ -66,10 +66,8 @@ def fetch_yfinance() -> IbovespaData | None:
     url = (
         "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=1mo&interval=1d"
     )
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     try:
-        response = httpx.get(url, headers=headers, timeout=10.0)
-        response.raise_for_status()
+        response = fetch_with_retry(url, timeout=10.0)
         data = response.json()
 
         result = data["chart"]["result"][0]
