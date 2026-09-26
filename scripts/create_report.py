@@ -1,7 +1,7 @@
 import datetime
 import os
 
-now = datetime.datetime.now()
+now = datetime.datetime.now(datetime.timezone.utc)
 filename = f"docs/runs/{now.strftime('%Y-%m-%d-%H%M')}.md"
 os.makedirs("docs/runs", exist_ok=True)
 
