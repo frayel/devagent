@@ -1,6 +1,6 @@
 import httpx
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 from app.collectors.utils import fetch_with_retry, USER_AGENT
 
 
