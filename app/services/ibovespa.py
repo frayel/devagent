@@ -1,8 +1,9 @@
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from app.database import get_latest_ibovespa_data
 
 
-def get_ibovespa_view_data() -> Optional[Dict[str, Any]]:
+def get_ibovespa_view_data() -> dict[str, Any] | None:
     data = get_latest_ibovespa_data()
     if not data:
         return None

@@ -1,13 +1,14 @@
 import json
 import os
-import pytest
-import respx
-import httpx
 from unittest import mock
 
-from app.collectors.ibovespa import fetch_brapi, fetch_yfinance, collect_and_save
-from app.database import get_latest_ibovespa_data, get_connection
+import httpx
+import pytest
+import respx
 from fastapi.testclient import TestClient
+
+from app.collectors.ibovespa import collect_and_save, fetch_brapi, fetch_yfinance
+from app.database import get_connection, get_latest_ibovespa_data
 from app.main import app
 
 client = TestClient(app)
@@ -25,7 +26,7 @@ def setup_db():
 
 
 def load_fixture(name):
-    with open(f"tests/fixtures/{name}", "r") as f:
+    with open(f"tests/fixtures/{name}") as f:
         return json.load(f)
 
 

@@ -1,7 +1,7 @@
 import sqlite3
-from typing import Optional
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Optional
 
 DB_PATH = "data.db"
 
@@ -55,7 +55,7 @@ def save_ibovespa_data(data: IbovespaData) -> None:
     conn.close()
 
 
-def get_latest_ibovespa_data() -> Optional[IbovespaData]:
+def get_latest_ibovespa_data() -> IbovespaData | None:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""

@@ -1,17 +1,17 @@
-import httpx
-import os
 import json
 import logging
+import os
+import sys
 from datetime import datetime, timezone
-from typing import Optional
 
-from app.database import save_ibovespa_data, IbovespaData
+import httpx
+
+from app.database import IbovespaData, save_ibovespa_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-def fetch_brapi() -> Optional[IbovespaData]:
+def fetch_brapi() -> IbovespaData | None:
     BRAPI_TOKEN = os.environ.get("BRAPI_TOKEN")
     if not BRAPI_TOKEN:
         logger.warning("BRAPI_TOKEN not set, skipping brapi.dev")
@@ -37,11 +37,7 @@ def fetch_brapi() -> Optional[IbovespaData]:
             return None
 
         # extract dates and closes
-        dates = [
-            datetime.fromtimestamp(h["date"], tz=timezone.utc).strftime("%Y-%m-%d")
-            for h in history
-            if "date" in h and "close" in h
-        ]
+        dates = [datetime.fromtimestamp(h["date"], tz=timezone.utc).strftime("%Y-%m-%d") for h in history if "date" in h and "close" in h]
         closes = [h["close"] for h in history if "date" in h and "close" in h]
 
         if not dates or not closes:
@@ -55,15 +51,12 @@ def fetch_brapi() -> Optional[IbovespaData]:
             previous_close=previous_close,
             history_json=history_json,
         )
-    except Exception as e:
+    except httpx.HTTPError as e:
         logger.error(f"Error fetching from brapi: {e}")
         return None
 
-
-def fetch_yfinance() -> Optional[IbovespaData]:
-    url = (
-        "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=1mo&interval=1d"
-    )
+def fetch_yfinance() -> IbovespaData | None:
+    url = "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=1mo&interval=1d"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     try:
         response = httpx.get(url, headers=headers, timeout=10.0)
@@ -78,19 +71,14 @@ def fetch_yfinance() -> Optional[IbovespaData]:
         timestamps = result["timestamp"]
         closes = result["indicators"]["quote"][0]["close"]
 
-        dates = [
-            datetime.fromtimestamp(t, tz=timezone.utc).strftime("%Y-%m-%d")
-            for t in timestamps
-        ]
+        dates = [datetime.fromtimestamp(t, tz=timezone.utc).strftime("%Y-%m-%d") for t in timestamps]
 
         # filter out None closes
         valid_history = [(d, c) for d, c in zip(dates, closes) if c is not None]
         valid_dates = [v[0] for v in valid_history]
         valid_closes = [v[1] for v in valid_history]
 
-        history_json = json.dumps(
-            {"dates": valid_dates[-30:], "closes": valid_closes[-30:]}
-        )
+        history_json = json.dumps({"dates": valid_dates[-30:], "closes": valid_closes[-30:]})
 
         return IbovespaData(
             timestamp=datetime.now(timezone.utc),
@@ -98,10 +86,9 @@ def fetch_yfinance() -> Optional[IbovespaData]:
             previous_close=previous_close,
             history_json=history_json,
         )
-    except Exception as e:
+    except httpx.HTTPError as e:
         logger.error(f"Error fetching from yfinance: {e}")
         return None
-
 
 def collect_and_save() -> bool:
     logger.info("Starting collection...")
@@ -118,8 +105,7 @@ def collect_and_save() -> bool:
         logger.error("Failed to collect data from all sources.")
         return False
 
-
 if __name__ == "__main__":
     success = collect_and_save()
     if not success:
-        exit(1)
+        sys.exit(1)
