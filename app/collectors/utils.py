@@ -32,7 +32,7 @@ def fetch_with_retry(
     client: httpx.Client | None = None,
     max_retries: int = 3,
     backoff_factor: float = 1.0,
-    **kwargs
+    **kwargs,
 ) -> httpx.Response:
     domain = _get_domain(url)
 
@@ -57,7 +57,7 @@ def fetch_with_retry(
             status_code = e.response.status_code
             if status_code == 429 or status_code >= 500:
                 if attempt < max_retries - 1:
-                    sleep_time = backoff_factor * (2 ** attempt)
+                    sleep_time = backoff_factor * (2**attempt)
                     logger.warning(
                         f"HTTP {status_code} on {url}. Retrying in {sleep_time:.2f}s "
                         f"(attempt {attempt + 1}/{max_retries})"
@@ -67,7 +67,7 @@ def fetch_with_retry(
             raise  # Raise if not retryable or max retries reached
         except httpx.RequestError as e:
             if attempt < max_retries - 1:
-                sleep_time = backoff_factor * (2 ** attempt)
+                sleep_time = backoff_factor * (2**attempt)
                 logger.warning(
                     f"Request error {type(e).__name__} on {url}. Retrying in {sleep_time:.2f}s "
                     f"(attempt {attempt + 1}/{max_retries})"
