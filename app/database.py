@@ -13,6 +13,14 @@ class IbovespaData:
     history_json: str
 
 
+@dataclass
+class AltasBaixasData:
+    timestamp: datetime
+    top_altas_json: str
+    top_baixas_json: str
+    source: str
+
+
 def get_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -35,6 +43,21 @@ def init_db() -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_ibovespa_cache_timestamp
         ON ibovespa_cache(timestamp DESC)
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS altas_baixas_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME NOT NULL,
+            top_altas_json TEXT NOT NULL,
+            top_baixas_json TEXT NOT NULL,
+            source TEXT NOT NULL
+        )
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_altas_baixas_cache_timestamp
+        ON altas_baixas_cache(timestamp DESC)
     """)
     conn.commit()
     conn.close()
@@ -77,6 +100,47 @@ def get_latest_ibovespa_data() -> IbovespaData | None:
             current_price=row["current_price"],
             previous_close=row["previous_close"],
             history_json=row["history_json"],
+        )
+    return None
+
+
+def save_altas_baixas_data(data: AltasBaixasData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO altas_baixas_cache (timestamp, top_altas_json, top_baixas_json, source)
+        VALUES (?, ?, ?, ?)
+    """,
+        (
+            data.timestamp.isoformat(),
+            data.top_altas_json,
+            data.top_baixas_json,
+            data.source,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_altas_baixas_data() -> AltasBaixasData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT timestamp, top_altas_json, top_baixas_json, source
+        FROM altas_baixas_cache
+        ORDER BY timestamp DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return AltasBaixasData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            top_altas_json=row["top_altas_json"],
+            top_baixas_json=row["top_baixas_json"],
+            source=row["source"],
         )
     return None
 

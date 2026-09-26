@@ -1,7 +1,7 @@
 ---
 id: 002
 titulo: Maiores Altas e Baixas do Dia
-status: ready
+status: done
 esforco: P
 ---
 
