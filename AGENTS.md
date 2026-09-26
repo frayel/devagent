@@ -79,7 +79,7 @@ O merge não é feito por você. Ele é feito pelo workflow `.github/workflows/a
 - **Só pode existir um PR aberto do agente por vez.** Antes de criar uma branch, liste os PRs abertos. Se houver algum, você **não** começa trabalho novo a partir da `main`: faça checkout da branch desse PR e trate-o pelo Passo 3. Novos commits vão para a mesma branch, nunca para um PR novo.
 - Se houver mais de um PR aberto do agente, mantenha o mais antigo, feche os outros com um comentário apontando o que foi mantido e leve para ele o que houver de útil nos fechados.
 - O estado verdadeiro do projeto é a `main`. Trabalho que não chegou à `main` ainda não existe para o ciclo.
-- Se o repositório ainda não tem código (não existe `app/main.py`), o Passo 1 não se aplica: vá direto ao Passo 4, ao Passo 6 ou ao Passo 7.
+- Se o repositório ainda não tem código (não existe `app/main.py`), o Passo 1 não se aplica: vá direto ao Passo 4 ou ao Passo 6.
 
 ### Passo 1 · Verificar e corrigir
 
@@ -138,26 +138,9 @@ Aplica-se quando existe pelo menos um destes sinais:
 
 Faça a melhoria mais valiosa da lista, seguindo a skill `docs/skills/auto-melhoria.md`, e abra um PR com prefixo `agent:` (mudanças em `AGENTS.md` ou `docs/skills/`) ou `docs:` (demais documentos). Encerre a execução.
 
-### Passo 6 · Tratar issues abertas
+### Passo 6 · Imaginar a próxima feature
 
-Antes de imaginar qualquer feature nova, esvazie a fila de issues. Issues `deploy-falhou` não entram aqui, porque já foram tratadas no Passo 1. Issues com label `bloqueado` também ficam de fora enquanto esperam ação humana, a menos que um comentário humano posterior ao bloqueio tenha trazido a resposta: nesse caso, remova o label e trate a issue.
-
-Escolha **uma** issue, na ordem: label `prioridade` primeiro, depois a mais antiga. Leia o corpo e todos os comentários. Então classifique e aja:
-
-| Tipo | Ação |
-|---|---|
-| Bug ou erro | Reproduza, escreva um teste que falhe, corrija. PR `fix:` com `Closes #N`. |
-| Pedido de feature ou melhoria | Transforme em spec `ready` seguindo `docs/skills/escrever-spec.md`, com link para a issue. PR `docs:` que referencia a issue (sem fechá-la). Comente na issue o número da spec. A implementação vem pelo Passo 4 na próxima execução, e o PR `feat:` fecha a issue com `Closes #N`. |
-| Mudança de instruções, documentação ou processo | Siga `docs/skills/auto-melhoria.md`. PR `agent:` ou `docs:` com `Closes #N`. |
-| Pergunta | Responda na issue com base no código e nos documentos. Se a resposta revelar documentação faltando, corrija no mesmo ciclo com um PR `docs:`. Feche a issue ao responder. |
-| Duplicada, inválida ou já resolvida | Comente explicando, com link para a issue original ou o commit que resolveu, e feche. |
-| Ambígua | Adote a interpretação mais conservadora, registre-a em comentário na issue e siga. Se nem assim for possível agir com segurança, aplique `bloqueado`, pergunte na issue o que falta e encerre. |
-
-Se uma issue já tem spec `ready` ou `in-progress` vinculada, ela não entra neste passo: o Passo 4 cuida dela. Encerre a execução.
-
-### Passo 7 · Imaginar a próxima feature
-
-Só se aplica quando não há deploy quebrado, PR aberto, spec `ready`, pendência de documentação nem issue tratável.
+Se não há nada especificado:
 
 1. Leia `docs/BACKLOG.md`, `docs/STATE.md` e `docs/context/dominio-b3.md`.
 2. Liste de 5 a 8 ideias novas, cada uma com: valor para o investidor, fonte de dados necessária, esforço estimado (P/M/G) e risco (legal, técnico, de confiabilidade dos dados).
@@ -175,7 +158,7 @@ A primeira spec (`001-ibovespa-hoje.md`) é o MVP e deve conter uma única infor
 
 Ela inclui a fundação: FastAPI, `/healthz`, template base com o aviso legal, `render.yaml`, CI e um coletor com cache.
 
-Sugestões de incrementos, que o Passo 7 pode reordenar ou substituir:
+Sugestões de incrementos, que o Passo 5 pode reordenar ou substituir:
 
 1. Maiores altas e baixas do dia (tabela).
 2. Mapa de calor setorial.
@@ -256,7 +239,7 @@ Toda execução termina criando `docs/runs/AAAA-MM-DD-HHMM.md`:
 
 ```markdown
 ## Passo executado
-(1 a 7, com o motivo de os anteriores não se aplicarem)
+(1 a 6, com o motivo de os anteriores não se aplicarem)
 
 ## O que foi feito
 ## PR
@@ -300,7 +283,7 @@ Você tem autonomia para melhorar este repositório **e a si mesmo**: o `README.
 | `docs/context/operacao.md` | Render, variáveis, workflows, como diagnosticar | antes de mexer em deploy ou CI |
 | `docs/skills/diagnosticar-deploy.md` | procedimento para deploy quebrado | Passo 1 |
 | `docs/skills/criar-coletor.md` | procedimento para nova fonte de dados | ao implementar coletor |
-| `docs/skills/escrever-spec.md` | como escrever uma boa spec | Passo 7, ao transformar issue em spec e ao dividir specs |
+| `docs/skills/escrever-spec.md` | como escrever uma boa spec | Passo 6 e ao dividir specs |
 | `docs/skills/auto-melhoria.md` | como alterar instruções, skills e contextos | Passo 5 |
 
 Ao criar um arquivo novo em `docs/context/` ou `docs/skills/`, acrescente-o a este índice no mesmo PR.

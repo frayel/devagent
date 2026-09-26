@@ -1,6 +1,6 @@
 # Skill · Escrever uma boa especificação
 
-Use no Passo 7, ao transformar uma issue em spec (Passo 6) e ao dividir uma spec grande. Spec nascida de issue traz o link da issue no *Problema*.
+Use no Passo 6 e ao dividir uma spec grande.
 
 - **Uma pergunta do investidor por spec.** Se o título precisa de "e", provavelmente são duas.
 - **Cabe em um PR de ~400 linhas** (sem testes e fixtures). Se não couber, divida antes de marcar `ready`.
