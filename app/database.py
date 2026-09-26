@@ -11,6 +11,7 @@ class IbovespaData:
     current_price: float
     previous_close: float
     history_json: str
+    fonte: str = "brapi"
 
 
 @dataclass
@@ -35,9 +36,19 @@ def init_db() -> None:
             timestamp DATETIME NOT NULL,
             current_price REAL NOT NULL,
             previous_close REAL NOT NULL,
-            history_json TEXT NOT NULL
+            history_json TEXT NOT NULL,
+            fonte TEXT NOT NULL DEFAULT 'brapi'
         )
     """)
+
+    # Migrar a tabela antiga caso exista e não tenha a coluna fonte
+    try:
+        cursor.execute("SELECT fonte FROM ibovespa_cache LIMIT 1")
+    except sqlite3.OperationalError:
+        cursor.execute(
+            "ALTER TABLE ibovespa_cache ADD COLUMN fonte TEXT NOT NULL DEFAULT 'brapi'"
+        )
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS highlights_cache (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,14 +71,15 @@ def save_ibovespa_data(data: IbovespaData) -> None:
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO ibovespa_cache (timestamp, current_price, previous_close, history_json)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO ibovespa_cache (timestamp, current_price, previous_close, history_json, fonte)
+        VALUES (?, ?, ?, ?, ?)
     """,
         (
             data.timestamp.isoformat(),
             data.current_price,
             data.previous_close,
             data.history_json,
+            data.fonte,
         ),
     )
     conn.commit()
@@ -78,7 +90,7 @@ def get_latest_ibovespa_data() -> IbovespaData | None:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT timestamp, current_price, previous_close, history_json
+        SELECT timestamp, current_price, previous_close, history_json, fonte
         FROM ibovespa_cache
         ORDER BY timestamp DESC
         LIMIT 1
@@ -92,6 +104,7 @@ def get_latest_ibovespa_data() -> IbovespaData | None:
             current_price=row["current_price"],
             previous_close=row["previous_close"],
             history_json=row["history_json"],
+            fonte=row["fonte"],
         )
     return None
 

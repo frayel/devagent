@@ -17,6 +17,9 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def setup_db():
     # Use an in-memory DB for tests to not mess with the real one, or just clear the real one
+    from app.database import init_db
+
+    init_db()
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM ibovespa_cache")
@@ -43,6 +46,7 @@ def test_fetch_brapi_success():
         assert data is not None
         assert data.current_price == 130000.5
         assert data.previous_close == 129000.0
+        assert data.fonte == "brapi"
 
 
 @respx.mock
@@ -55,6 +59,7 @@ def test_fetch_yfinance_success():
     assert data is not None
     assert data.current_price == 131000.0
     assert data.previous_close == 132000.0
+    assert data.fonte == "yfinance"
 
 
 @respx.mock
@@ -77,6 +82,7 @@ def test_collect_and_save_fallback():
         db_data = get_latest_ibovespa_data()
         assert db_data is not None
         assert db_data.current_price == 131000.0
+        assert db_data.fonte == "yfinance"
 
 
 @respx.mock
