@@ -34,10 +34,7 @@ As instruções estão em [`AGENTS.md`](AGENTS.md). Em resumo, cada execução f
 3. tratar o PR aberto;
 4. implementar a próxima spec;
 5. melhorar documentação, skills e as próprias instruções;
-6. tratar a issue aberta mais prioritária;
-7. propor novas features e escrever a próxima spec.
-
-Para pedir algo ao agente, abra uma issue. O label `prioridade` a coloca no começo da fila.
+6. propor novas features e escrever a próxima spec.
 
 Procedimentos recorrentes ficam em [`docs/skills/`](docs/skills/) e conhecimento durável em [`docs/context/`](docs/context/). Cada execução deixa um relatório com retrospectiva em [`docs/runs/`](docs/runs/).
 
