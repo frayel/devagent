@@ -1,6 +1,8 @@
 -r requirements.txt
 pytest
-ruff
+# Versão fixa: o ruff 0.16 ampliou as regras padrão e quebrou o CI sem mudança no código.
+# Para atualizar, crie um ruff.toml com as regras explícitas e corrija os achados no mesmo PR.
+ruff==0.15.22
 mypy
 httpx
 respx

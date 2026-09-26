@@ -17,7 +17,8 @@
 
 - [ ] Remover `data.db` do repositório com `git rm --cached data.db`, mantendo a regra no `.gitignore`.
 - [ ] Tornar o caminho do banco configurável (ex.: `DATABASE_PATH`, com padrão `data.db`), documentar em `README.md` e `docs/context/operacao.md`.
-- [ ] Isolar os testes: fixture que aponta o banco para `tmp_path` do pytest. Nenhum teste pode criar ou alterar `data.db` na raiz.
+- [ ] Isolar os testes: fixture em `tests/conftest.py` que aponta o banco para `tmp_path` do pytest, valendo para `test_ibovespa.py` e `test_highlights.py` (este copiou o mesmo padrão e grava em `highlights_cache` do banco real). Nenhum teste pode criar ou alterar `data.db` na raiz.
+- [ ] Declarar também a coleta de `app.collectors.highlights` no agendamento.
 - [ ] Declarar o cron job de coleta no `render.yaml` (`python -m app.collectors.ibovespa`), conforme a seção 12 do `AGENTS.md`. Verificar se web service e cron job compartilham o armazenamento: no Render, disco persistente não é compartilhado entre serviços, e no plano gratuito o disco é efêmero. Se não houver armazenamento compartilhado, registrar ADR em `docs/decisions/` com a alternativa escolhida (Postgres do Render via `DATABASE_URL`, ou coleta no startup do web service mais atualização periódica em background) e, se depender de configuração no painel do Render, abrir issue `bloqueado` com o ajuste exato.
 - [ ] Coletar ao subir a aplicação quando o banco estiver vazio, para o painel não nascer sem dados após cada deploy.
 - [ ] Teste de regressão: falha se `data.db` estiver no índice do git (`git ls-files data.db` vazio).
@@ -25,6 +26,30 @@
 - [ ] Atualizar `docs/STATE.md` (hoje afirma que a coleta funciona) e `CHANGELOG.md`.
 
 **Lição para a retrospectiva:** o Passo 1.3 (saúde de produção) deveria ter pegado isso, porque o horário exibido é o da coleta e o histórico é de 2023. Vale reforçar a checagem: comparar o valor exibido com uma fonte independente e conferir se a última data do histórico é o pregão mais recente.
+
+### Fallback do Yahoo calcula variação mensal como se fosse do dia
+
+`fetch_yfinance` em `app/collectors/ibovespa.py` pede `range=1mo` e usa `meta.chartPreviousClose` como fechamento anterior. Com esse range, o campo é o fechamento anterior ao **primeiro** candle do gráfico, ou seja, de cerca de um mês atrás. Quando a brapi falha, a "variação do dia" exibida é a variação do mês. O teste `test_collect_and_save_fallback` confirma esse valor sem perceber o problema, porque o fixture foi montado com a mesma premissa.
+
+- [ ] Usar como fechamento anterior o penúltimo `close` válido da série diária (ou `meta.previousClose` quando presente), não `chartPreviousClose`.
+- [ ] Refazer `tests/fixtures/yfinance_response.json` com uma série em que `chartPreviousClose` seja diferente do penúltimo fechamento, e testar que a variação usa o penúltimo.
+- [ ] Registrar a armadilha em `docs/context/fontes-de-dados.md`.
+
+### Coletor de destaques viola as regras de coleta (seção 9)
+
+`app/collectors/highlights.py`, no fallback do Yahoo, faz 30 requisições seguidas, uma por ticker, sem o intervalo mínimo de 2 segundos por domínio. Nenhum dos coletores tem retry com backoff, e o User-Agent imita um navegador em vez de identificar o projeto.
+
+- [ ] Intervalo mínimo de 2 s entre requisições ao mesmo domínio, num utilitário comum em `app/collectors/`, com teste que verifique o intervalo (tempo mockado, sem `sleep` real).
+- [ ] Retry com backoff exponencial para erros 429 e 5xx, com teste.
+- [ ] User-Agent identificável (nome do projeto e URL do repositório) nos dois coletores.
+
+### Critérios da spec 002 marcados como cobertos sem teste
+
+A spec 002 foi marcada `done`, mas os testes não cobrem três critérios:
+
+- [ ] "O painel não quebra se a fonte retornar menos que 5 ativos": teste com 3 ativos na resposta.
+- [ ] "A fonte e hora da coleta são explicitadas na tela": o template mostra só a hora. Exibir a fonte usada (brapi ou Yahoo), gravada junto com o cache, e testar as duas na página.
+- [ ] Ordenação do ranking: o mock usa a mesma variação para todos os ativos, então a ordem nunca é verificada. Testar com variações distintas que a maior alta vem primeiro e a maior baixa vem primeiro.
 
 ### Expor `/api/snapshot` para o auditor
 
