@@ -1,0 +1,31 @@
+name: Achados da auditoria
+
+# Abre issues para os achados que o auditor LLM (Jules) registrou em
+# docs/auditoria/achados/. Merges feitos pelo GITHUB_TOKEN não disparam
+# eventos de push, por isso o automerge.yml chama este workflow depois de
+# fazer merge de um PR `auditoria:`, e ele também roda de hora em hora.
+#
+# ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
+on:
+  schedule:
+    - cron: "53 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  abrir-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Abrir issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python -m auditoria.achados_para_issues
