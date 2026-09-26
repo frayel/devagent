@@ -55,6 +55,7 @@ def fetch_brapi() -> IbovespaData | None:
             current_price=current_price,
             previous_close=previous_close,
             history_json=history_json,
+            fonte="brapi",
         )
     except httpx.HTTPError as e:
         logger.error(f"Error fetching from brapi: {e}")
@@ -98,6 +99,7 @@ def fetch_yfinance() -> IbovespaData | None:
             current_price=current_price,
             previous_close=previous_close,
             history_json=history_json,
+            fonte="yfinance",
         )
     except httpx.HTTPError as e:
         logger.error(f"Error fetching from yfinance: {e}")
