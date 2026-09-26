@@ -37,7 +37,7 @@ As instruções estão em [`AGENTS.md`](AGENTS.md). Em resumo, cada execução f
 6. tratar a issue aberta mais prioritária;
 7. propor novas features e escrever a próxima spec.
 
-Para pedir algo ao agente, abra uma issue. O label `prioridade` a coloca no começo da fila.
+Para pedir algo ao agente, abra uma issue. O label `prioridade` faz o agente tratá-la no Passo 1, antes de specs e features; sem o label, ela espera na fila do Passo 6. Defeitos conhecidos também podem ser registrados na seção *Correções* de `docs/BACKLOG.md`, que entra no mesmo Passo 1.
 
 Nenhum PR fica parado: o guardião (`pr-guardiao.yml`) cobra o Jules quando o CI falha e, sem reação, fecha o PR e registra o motivo para o próximo ciclo refazer o trabalho.
 

@@ -48,7 +48,7 @@ app/
 tests/
 docs/
   STATE.md             # estado atual do sistema (fonte da verdade do agente)
-  BACKLOG.md           # ideias priorizadas, ainda não especificadas
+  BACKLOG.md           # seção Correções (Passo 1) e ideias de features (Passo 7)
   specs/
     NNN-titulo.md      # especificações; status: draft | ready | in-progress | done
   decisions/
@@ -117,6 +117,11 @@ Produção quebrada vem antes de qualquer outra coisa. Verifique, nesta ordem:
    ```
 
 5. **Ambiente de produção simulado.** Em um virtualenv limpo, instale só `requirements.txt`, suba a aplicação com o `startCommand` do `render.yaml` e faça `curl` em `/healthz`. É o mesmo teste do job `smoke` do CI.
+6. **Correções prioritárias.** Se as verificações acima passaram, trate **uma** correção pendente, nesta ordem:
+   1. a primeira entrada da seção *Correções* de `docs/BACKLOG.md`, que um humano ou o agente registrou como defeito conhecido;
+   2. a issue aberta mais antiga com label `prioridade` (exceto as com `bloqueado`), classificada pela tabela do Passo 6.
+
+   Se já existe um PR do agente aberto, destrave-o antes (Passo 2): a regra de continuidade vale aqui também. Ao terminar uma entrada do backlog, remova-a da seção *Correções* no mesmo PR `fix:` e registre a correção no `CHANGELOG.md`. Se a correção depender de configuração no painel do Render, abra uma issue `bloqueado` com o ajuste exato, cite-a na entrada do backlog e encerre. Entradas que citam issue `bloqueado` ainda aberta são puladas nas execuções seguintes.
 
 Se algo falhar: diagnostique pela causa raiz (não pelo sintoma), escreva um teste que reproduza o problema quando for possível, corrija, abra um PR com prefixo `fix:` citando `Closes #N` da issue e encerre a execução. Se a correção envolver configuração que só existe no painel do Render (variável de ambiente, plano, disco), você não tem como aplicá-la: descreva o ajuste exato na issue, aplique o label `bloqueado` e encerre.
 
@@ -160,9 +165,9 @@ Faça a melhoria mais valiosa da lista, seguindo a skill `docs/skills/auto-melho
 
 ### Passo 6 · Tratar issues abertas
 
-Antes de imaginar qualquer feature nova, esvazie a fila de issues. Ficam de fora: `deploy-falhou` e `producao-incorreta` (tratadas no Passo 1), `tentativa-falhou` (lidas no Passo 4) e `bloqueado`, enquanto espera ação humana. Se um comentário humano posterior ao bloqueio trouxer a resposta, remova o label e trate a issue.
+Antes de imaginar qualquer feature nova, esvazie a fila de issues. Ficam de fora: `deploy-falhou`, `producao-incorreta` e `prioridade` (tratadas no Passo 1), `tentativa-falhou` (lidas no Passo 4) e `bloqueado`, enquanto espera ação humana. Se um comentário humano posterior ao bloqueio trouxer a resposta, remova o label e trate a issue.
 
-Escolha **uma** issue, na ordem: label `prioridade` primeiro, depois a mais antiga. Leia o corpo e todos os comentários. Então classifique e aja:
+Escolha **uma** issue, a mais antiga. Leia o corpo e todos os comentários. Então classifique e aja:
 
 | Tipo | Ação |
 |---|---|
@@ -332,7 +337,7 @@ Você tem autonomia para melhorar este repositório **e a si mesmo**: o `README.
 | `docs/skills/criar-coletor.md` | procedimento para nova fonte de dados | ao implementar coletor |
 | `docs/skills/destravar-pr.md` | CI falhando, conflito ou revisão num PR aberto | Passo 2 |
 | `docs/skills/escrever-spec.md` | como escrever uma boa spec | Passo 7, ao transformar issue em spec e ao dividir specs |
-| `docs/decisions/` | ADRs; `001-guardiao-de-prs.md` explica o Passo 2 e o guardião | antes de mudar o ciclo de decisão |
+| `docs/decisions/` | ADRs; `001` explica o Passo 2 e o guardião, `002` as correções prioritárias no Passo 1 | antes de mudar o ciclo de decisão |
 | `docs/skills/auto-melhoria.md` | como alterar instruções, skills e contextos | Passo 5 |
 | `auditoria/README.md` | o que o auditor verifica e o contrato `/api/snapshot` | ao tratar issue `producao-incorreta` e ao publicar painel novo |
 
