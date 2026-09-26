@@ -1,0 +1,67 @@
+name: Deploy check
+
+# Depois de cada merge automático (e a cada 6 horas), confere o deploy no Render.
+# Se falhou, abre uma issue com label `deploy-falhou` contendo os logs.
+# O agente trata essas issues com prioridade máxima (Passo 1 do AGENTS.md).
+on:
+  workflow_run:
+    workflows: [Auto-merge]
+    types: [completed]
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Consultar Render
+        id: render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          set +e
+          python3 scripts/render_status.py --wait 900 --commit "$(git rev-parse HEAD)" > status.json
+          code=$?
+          cat status.json
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Abrir issue se o deploy falhou
+        if: steps.render.outputs.code == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create deploy-falhou --color B60205 \
+            --description "Deploy no Render falhou" 2>/dev/null || true
+          existing=$(gh issue list --label deploy-falhou --state open --json number -q '.[0].number')
+          body=$(printf 'O deploy do commit `%s` falhou no Render.\n\n```json\n%s\n```\n\nO agente deve tratar esta issue no Passo 1 do AGENTS.md.' \
+            "$(git rev-parse --short HEAD)" "$(cat status.json)")
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "Deploy falhou no Render ($(git rev-parse --short HEAD))" \
+              --label deploy-falhou --body "$body"
+          fi
+
+      - name: Fechar issues se o deploy voltou
+        if: steps.render.outputs.code == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for n in $(gh issue list --label deploy-falhou --state open --json number -q '.[].number'); do
+            gh issue close "$n" --comment "Deploy do commit $(git rev-parse --short HEAD) está live."
+          done
+
+      - name: Avisar configuração ausente
+        if: steps.render.outputs.code == '3'
+        run: echo "::warning::Configure os secrets RENDER_API_KEY e RENDER_SERVICE_ID para verificar o deploy."

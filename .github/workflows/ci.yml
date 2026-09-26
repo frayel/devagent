@@ -29,3 +29,34 @@ jobs:
     - name: Test with pytest
       run: |
         pytest -q
+
+  # Reproduz o ambiente do Render: só as dependências de produção,
+  # o mesmo startCommand do render.yaml e o healthCheckPath.
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - name: Install production dependencies only
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Boot and health check
+      env:
+        PORT: "8000"
+      run: |
+        start=$(python3 -c "import yaml,sys;print(yaml.safe_load(open('render.yaml'))['services'][0]['startCommand'])" 2>/dev/null \
+          || echo 'uvicorn app.main:app --host 0.0.0.0 --port $PORT')
+        eval "$start" > server.log 2>&1 &
+        for i in $(seq 1 30); do
+          if curl -fsS "http://127.0.0.1:$PORT/healthz"; then
+            echo; echo "healthz ok"
+            curl -fsS -o /dev/null "http://127.0.0.1:$PORT/" || { echo "página inicial falhou"; cat server.log; exit 1; }
+            echo "página inicial ok"; exit 0
+          fi
+          sleep 1
+        done
+        echo "A aplicação não respondeu em /healthz. Log:"; cat server.log; exit 1

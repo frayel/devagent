@@ -53,8 +53,16 @@ docs/
     NNN-titulo.md      # ADRs
   runs/
     AAAA-MM-DD-HHMM.md # relatório de cada execução
+  context/             # conhecimento durável: arquitetura, domínio B3, fontes, operação
+  skills/              # procedimentos reutilizáveis, um arquivo por tarefa recorrente
+scripts/
+  render_status.py     # status e logs do último deploy no Render
 render.yaml
-.github/workflows/ci.yml
+.github/workflows/
+  ci.yml               # lint, tipos, testes e smoke test com dependências de produção
+  automerge.yml        # squash merge quando o CI passa
+  deploy-check.yml     # confere o deploy após o merge; abre issue `deploy-falhou`
+README.md              # porta de entrada para humanos
 CHANGELOG.md
 ```
 
@@ -62,7 +70,7 @@ Se algum desses arquivos não existir, criá-lo faz parte da primeira execução
 
 ## 5. O ciclo de decisão
 
-No início de cada execução, leia `docs/STATE.md`, os três últimos relatórios em `docs/runs/`, os PRs abertos e as specs. Depois percorra a lista abaixo **em ordem** e execute **somente o primeiro item aplicável**.
+No início de cada execução, leia `docs/STATE.md`, os três últimos relatórios em `docs/runs/`, as issues abertas, os PRs abertos e as specs. Consulte o índice da seção 13 e leia as skills e os contextos que tocam a tarefa. Depois percorra a lista abaixo **em ordem** e execute **somente o primeiro item aplicável**.
 
 ### Regra de continuidade (vale antes de qualquer passo)
 
@@ -71,21 +79,28 @@ O merge não é feito por você. Ele é feito pelo workflow `.github/workflows/a
 - **Só pode existir um PR aberto do agente por vez.** Antes de criar uma branch, liste os PRs abertos. Se houver algum, você **não** começa trabalho novo a partir da `main`: faça checkout da branch desse PR e trate-o pelo Passo 3. Novos commits vão para a mesma branch, nunca para um PR novo.
 - Se houver mais de um PR aberto do agente, mantenha o mais antigo, feche os outros com um comentário apontando o que foi mantido e leve para ele o que houver de útil nos fechados.
 - O estado verdadeiro do projeto é a `main`. Trabalho que não chegou à `main` ainda não existe para o ciclo.
-- Se o repositório ainda não tem código (não existe `app/main.py`), o Passo 1 não se aplica: vá direto ao Passo 4 ou ao Passo 5.
+- Se o repositório ainda não tem código (não existe `app/main.py`), o Passo 1 não se aplica: vá direto ao Passo 4 ou ao Passo 6.
 
 ### Passo 1 · Verificar e corrigir
 
-Rode:
+Produção quebrada vem antes de qualquer outra coisa. Verifique, nesta ordem:
 
-```
-ruff check . && ruff format --check .
-mypy app
-pytest -q
-```
+1. **Issues abertas com label `deploy-falhou`.** O workflow `deploy-check.yml` abre essas issues com o status e os logs do Render depois de cada merge. Siga a skill `docs/skills/diagnosticar-deploy.md`.
+2. **Status do deploy no Render.** Se `RENDER_API_KEY` e `RENDER_SERVICE_ID` estiverem no ambiente, rode `python scripts/render_status.py`. Código de saída 1 significa deploy falho e o JSON traz os logs. Se as variáveis não existirem, dependa do item 1 e registre a ausência no relatório.
+3. **Saúde de produção.** Se `PRODUCTION_URL` estiver disponível, consulte `GET {PRODUCTION_URL}/healthz` e a página inicial, e verifique se a última coleta tem menos de 24 horas em dia útil.
+4. **Qualidade local.**
 
-Se houver acesso à rede, consulte `GET {PRODUCTION_URL}/healthz` e verifique se a última coleta registrada tem menos de 24 horas em dia útil.
+   ```
+   ruff check . && ruff format --check .
+   mypy app
+   pytest -q
+   ```
 
-Se algo falhar: diagnostique, escreva um teste que reproduza o problema, corrija, abra um PR com prefixo `fix:` e encerre a execução.
+5. **Ambiente de produção simulado.** Em um virtualenv limpo, instale só `requirements.txt`, suba a aplicação com o `startCommand` do `render.yaml` e faça `curl` em `/healthz`. É o mesmo teste do job `smoke` do CI.
+
+Se algo falhar: diagnostique pela causa raiz (não pelo sintoma), escreva um teste que reproduza o problema quando for possível, corrija, abra um PR com prefixo `fix:` citando `Closes #N` da issue e encerre a execução. Se a correção envolver configuração que só existe no painel do Render (variável de ambiente, plano, disco), você não tem como aplicá-la: descreva o ajuste exato na issue, aplique o label `bloqueado` e encerre.
+
+A integração nativa do Jules com o Render corrige builds que falham nos PRs do próprio Jules. Ela não substitui este passo, porque não enxerga o que já chegou à `main`.
 
 ### Passo 2 · Publicar o que está pendente
 
@@ -113,14 +128,24 @@ Escolha a spec com `status: ready` de menor número. Mude para `in-progress`, im
 
 Se a spec for grande demais para um PR de até ~400 linhas alteradas (excluindo testes e fixtures), divida-a em specs menores, marque a original como `draft` e encerre. A implementação fica para a próxima execução.
 
-### Passo 5 · Imaginar a próxima feature
+### Passo 5 · Cuidar da documentação e do próprio agente
+
+Aplica-se quando existe pelo menos um destes sinais:
+
+- Algum dos três últimos relatórios tem item pendente na seção *Retrospectiva*.
+- `README.md`, `docs/STATE.md` ou `docs/context/` descrevem algo diferente do que está na `main` (comando que não existe mais, feature não listada, variável nova não documentada).
+- Um mesmo tipo de problema apareceu em duas execuções e ainda não existe skill para ele.
+
+Faça a melhoria mais valiosa da lista, seguindo a skill `docs/skills/auto-melhoria.md`, e abra um PR com prefixo `agent:` (mudanças em `AGENTS.md` ou `docs/skills/`) ou `docs:` (demais documentos). Encerre a execução.
+
+### Passo 6 · Imaginar a próxima feature
 
 Se não há nada especificado:
 
-1. Leia `docs/BACKLOG.md` e `docs/STATE.md`.
+1. Leia `docs/BACKLOG.md`, `docs/STATE.md` e `docs/context/dominio-b3.md`.
 2. Liste de 5 a 8 ideias novas, cada uma com: valor para o investidor, fonte de dados necessária, esforço estimado (P/M/G) e risco (legal, técnico, de confiabilidade dos dados).
 3. Adicione as ideias ao backlog, ordenadas por valor dividido por esforço.
-4. Transforme **apenas a primeira** em spec com `status: ready`, usando o modelo da seção 7.
+4. Transforme **apenas a primeira** em spec com `status: ready`, usando o modelo da seção 7 e a skill `docs/skills/escrever-spec.md`.
 5. Abra um PR com prefixo `docs:`.
 
 Encerre a execução.
@@ -184,6 +209,8 @@ Fórmulas, janelas, tratamento de dados ausentes.
 - Falha de uma fonte degrada só o seu painel, sem derrubar a página?
 - Nenhum segredo no código ou nos logs?
 - `docs/STATE.md` e `CHANGELOG.md` atualizados?
+- `README.md` e `docs/context/` continuam verdadeiros depois desta mudança? Toda variável de ambiente nova está documentada?
+- As dependências usadas em produção estão em `requirements.txt` (e não só em `requirements-dev.txt`)? O job `smoke` do CI passou?
 
 ## 9. Regras de coleta de dados
 
@@ -212,7 +239,7 @@ Toda execução termina criando `docs/runs/AAAA-MM-DD-HHMM.md`:
 
 ```markdown
 ## Passo executado
-(1 a 5, com o motivo de os anteriores não se aplicarem)
+(1 a 6, com o motivo de os anteriores não se aplicarem)
 
 ## O que foi feito
 ## PR
@@ -220,6 +247,10 @@ Toda execução termina criando `docs/runs/AAAA-MM-DD-HHMM.md`:
 (comandos rodados e resultado)
 
 ## Próximo passo provável
+
+## Retrospectiva
+- O que nas instruções, skills ou contextos atrapalhou, faltou ou estava errado nesta execução?
+- Melhoria proposta (vira trabalho do Passo 5), ou "nenhuma".
 ```
 
 ## 12. Configuração esperada
@@ -230,7 +261,48 @@ Variáveis de ambiente (no Render e, quando necessário, no ambiente do Jules):
 |---|---|
 | `PRODUCTION_URL` | URL pública do serviço no Render |
 | `RENDER_DEPLOY_HOOK_URL` | disparo manual de deploy (opcional) |
+| `RENDER_API_KEY` | leitura do status e dos logs de deploy (ambiente do Jules e secret do GitHub) |
+| `RENDER_SERVICE_ID` | id `srv-...` do web service (ambiente do Jules e secret do GitHub) |
 | `BRAPI_TOKEN` | token da brapi.dev |
 | `DATABASE_URL` | quando migrar de SQLite para Postgres |
 
 `render.yaml` deve declarar: um web service (`uvicorn app.main:app`), um cron job de coleta em dias úteis a cada 15 minutos durante o pregão, `healthCheckPath: /healthz` e `autoDeploy: true`.
+
+## 13. Documentação viva e autoaperfeiçoamento
+
+Você tem autonomia para melhorar este repositório **e a si mesmo**: o `README.md`, este `AGENTS.md`, as skills e os contextos. Documentação é parte do produto; instrução desatualizada é bug.
+
+### Índice
+
+| Arquivo | Para que serve | Leia quando |
+|---|---|---|
+| `README.md` | visão geral, como rodar, como publicar | sempre que mudar comando, variável ou feature |
+| `docs/context/arquitetura.md` | componentes, fluxo de dados, decisões vigentes | antes de mexer em estrutura |
+| `docs/context/dominio-b3.md` | conceitos do mercado, pregão, horários, armadilhas | antes de spec ou cálculo financeiro |
+| `docs/context/fontes-de-dados.md` | cada fonte: URL, limites, termos, confiabilidade | antes de criar ou alterar coletor |
+| `docs/context/operacao.md` | Render, variáveis, workflows, como diagnosticar | antes de mexer em deploy ou CI |
+| `docs/skills/diagnosticar-deploy.md` | procedimento para deploy quebrado | Passo 1 |
+| `docs/skills/criar-coletor.md` | procedimento para nova fonte de dados | ao implementar coletor |
+| `docs/skills/escrever-spec.md` | como escrever uma boa spec | Passo 6 e ao dividir specs |
+| `docs/skills/auto-melhoria.md` | como alterar instruções, skills e contextos | Passo 5 |
+
+Ao criar um arquivo novo em `docs/context/` ou `docs/skills/`, acrescente-o a este índice no mesmo PR.
+
+### Regras de manutenção contínua (valem em todo PR)
+
+- Todo PR atualiza os documentos que a mudança tornou falsos. Isso não conta como "outra coisa" na regra de uma coisa por execução.
+- Toda execução termina com a *Retrospectiva* do relatório. É assim que o agente aprende entre execuções que não compartilham memória.
+- Quando um problema se repetir, transforme a solução em skill. Quando descobrir um fato durável sobre o domínio, uma fonte ou a operação, registre-o em `docs/context/`.
+- Prefira editar e condensar a acrescentar. Um arquivo curto e verdadeiro vale mais que um longo e contraditório.
+
+### Limites do autoaperfeiçoamento
+
+Você pode reescrever qualquer parte deste arquivo, **exceto enfraquecer** estes itens, que só podem ser mantidos ou reforçados:
+
+- o aviso legal e a exigência de fonte, data, método e confiança (seção 2);
+- as regras de coleta de dados (seção 9);
+- os limites do agente (seção 10);
+- a regra de continuidade (um PR aberto por vez; merge só pelo workflow);
+- a proibição de apagar testes, specs `done` e relatórios.
+
+Toda mudança em `AGENTS.md` vai num PR próprio com prefixo `agent:`, explica no corpo o problema observado (com link para o relatório que o revelou) e a mudança feita. Mudanças que alterem o ciclo de decisão ou o stack também ganham um ADR em `docs/decisions/`.
