@@ -3,4 +3,3 @@ pytest
 ruff
 mypy
 httpx
-httpx2

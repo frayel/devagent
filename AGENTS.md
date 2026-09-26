@@ -64,6 +64,15 @@ Se algum desses arquivos não existir, criá-lo faz parte da primeira execução
 
 No início de cada execução, leia `docs/STATE.md`, os três últimos relatórios em `docs/runs/`, os PRs abertos e as specs. Depois percorra a lista abaixo **em ordem** e execute **somente o primeiro item aplicável**.
 
+### Regra de continuidade (vale antes de qualquer passo)
+
+O merge não é feito por você. Ele é feito pelo workflow `.github/workflows/automerge.yml`, que faz squash merge de todo PR assim que o CI passa. Por isso:
+
+- **Só pode existir um PR aberto do agente por vez.** Antes de criar uma branch, liste os PRs abertos. Se houver algum, você **não** começa trabalho novo a partir da `main`: faça checkout da branch desse PR e trate-o pelo Passo 3. Novos commits vão para a mesma branch, nunca para um PR novo.
+- Se houver mais de um PR aberto do agente, mantenha o mais antigo, feche os outros com um comentário apontando o que foi mantido e leve para ele o que houver de útil nos fechados.
+- O estado verdadeiro do projeto é a `main`. Trabalho que não chegou à `main` ainda não existe para o ciclo.
+- Se o repositório ainda não tem código (não existe `app/main.py`), o Passo 1 não se aplica: vá direto ao Passo 4 ou ao Passo 5.
+
 ### Passo 1 · Verificar e corrigir
 
 Rode:
@@ -80,11 +89,11 @@ Se algo falhar: diagnostique, escreva um teste que reproduza o problema, corrija
 
 ### Passo 2 · Publicar o que está pendente
 
-Se existe trabalho pronto e ainda não publicado (PR aprovado com CI verde, ou commits em `main` que não chegaram à produção):
+O merge acontece sozinho quando o CI passa, e o Render publica tudo que chega à `main`. Este passo existe para conferir que isso aconteceu. Ele se aplica quando há commits na `main` que não chegaram à produção, ou um PR com CI verde há mais de uma hora que continua aberto:
 
-- Garanta que o PR tenha o label `autodeploy`, que aciona o merge automático quando o CI passa.
-- Se a variável `RENDER_DEPLOY_HOOK_URL` estiver disponível e o deploy automático não tiver disparado, chame o hook.
-- Após o deploy, confirme o `/healthz` e registre a versão em `docs/STATE.md`.
+- PR verde e não mergeado: verifique se há conflito com a `main`. Se houver, faça rebase na mesma branch e dê push. Se não houver, registre o bloqueio (o workflow de auto-merge falhou) conforme a seção 10.
+- Commits na `main` fora da produção: se a variável `RENDER_DEPLOY_HOOK_URL` estiver disponível, chame o hook.
+- Após o deploy, confirme o `/healthz` e registre a versão em `docs/STATE.md` no próximo PR.
 
 Encerre a execução.
 
@@ -189,6 +198,8 @@ Fórmulas, janelas, tratamento de dados ausentes.
 ## 10. Limites do agente
 
 - Nunca faça push direto em `main`. Todo trabalho passa por PR.
+- Nunca abra um PR novo enquanto houver outro PR do agente aberto (veja a regra de continuidade).
+- Não peça aprovação de plano nem faça perguntas. Diante de ambiguidade, escolha a opção mais conservadora, registre a decisão no relatório e siga.
 - Nunca apague dados de produção, specs `done` ou relatórios em `docs/runs/`.
 - Nunca adicione dependência sem justificar no PR.
 - Nunca desative ou apague testes para fazer o CI passar.
