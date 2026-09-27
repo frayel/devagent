@@ -2,21 +2,9 @@
 
 ## Correções (prioridade sobre qualquer feature)
 
-### Critérios da spec 002 marcados como cobertos sem teste
-
-A spec 002 foi marcada `done`, mas os testes não cobrem três critérios:
-
-- [ ] "O painel não quebra se a fonte retornar menos que 5 ativos": teste com 3 ativos na resposta.
-- [ ] "A fonte e hora da coleta são explicitadas na tela": o template mostra só a hora. Exibir a fonte usada (brapi ou Yahoo), gravada junto com o cache, e testar as duas na página.
-- [ ] Ordenação do ranking: o mock usa a mesma variação para todos os ativos, então a ordem nunca é verificada. Testar com variações distintas que a maior alta vem primeiro e a maior baixa vem primeiro.
-
 ### Expor `/api/snapshot` para o auditor
 
 O auditor de produção hoje extrai os números do HTML, o que quebra se o template mudar. Implementar o endpoint conforme o contrato em `auditoria/README.md`, com teste em `tests/`. Não altere `auditoria/`: quando o endpoint existir, o auditor passa a usá-lo sozinho.
-
-### Testes de maiores altas e baixas levam 2 minutos
-
-`tests/test_highlights.py` espera o limite real de 1 requisição a cada 2 s por domínio: `test_collect_and_save_fallback` e `test_fetch_yfinance_success` levam cerca de 60 s cada. Neutralizar `time.sleep` do limitador nesses testes (como faz `tests/test_highlights_lista.py`) sem mudar o comportamento em produção.
 
 ## Features
 
