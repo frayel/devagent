@@ -548,6 +548,7 @@ def auditar(
     referencia: Callable[[str | None], tuple[Referencia | None, list[str]]] = (
         obter_referencia
     ),
+    espera_coleta: float = 90.0,
 ) -> list[Resultado]:
     agora = agora or datetime.now(timezone.utc)
     url = url.rstrip("/")
@@ -565,6 +566,11 @@ def auditar(
     )
 
     status, html = baixar(f"{url}/", timeout=60, tentativas=2)
+    if status == 200 and "Dados não disponíveis" in html and espera_coleta:
+        # O Render hiberna e perde o disco; ao acordar, a app coleta em
+        # segundo plano. Espera essa primeira coleta antes de reprovar.
+        time.sleep(espera_coleta)
+        status, html = baixar(f"{url}/", timeout=60, tentativas=2)
     r.append(
         Resultado(
             "app.home",

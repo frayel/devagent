@@ -15,7 +15,7 @@ Retrato do sistema como está na `main`. Atualize no mesmo PR que mudar algo aqu
 ## Fluxo de dados
 
 ```
-fonte externa → coletor (cron) → SQLite → serviço → template → navegador
+fonte externa → coletor (agendador no web service) → SQLite → serviço → template → navegador
 ```
 
 A página nunca chama fontes externas. Se o banco estiver vazio, o painel mostra "dado indisponível".
@@ -25,4 +25,4 @@ A página nunca chama fontes externas. Se o banco estiver vazio, o painel mostra
 - `app/database.py` cria a tabela no momento do import (`init_db()` no fim do módulo).
 - O caminho do banco (`data.db`) é fixo e relativo ao diretório de trabalho.
 - O arquivo `data.db` está versionado no git; banco não deveria ir para o repositório (`.gitignore`).
-- `render.yaml` ainda não declara o Cron Job do coletor, então em produção ninguém alimenta o banco.
+- A coleta roda dentro do web service (`app/agendador.py`, ADR 004): ao subir e depois em intervalos. O SQLite é efêmero no plano gratuito do Render e renasce vazio a cada deploy ou hibernação.

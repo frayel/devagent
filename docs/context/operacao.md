@@ -40,7 +40,8 @@ Merges feitos pelo `GITHUB_TOKEN` não disparam o `ci.yml` na `main`; por isso a
 | `RENDER_SERVICE_ID` | secret do GitHub e ambiente do Jules | id `srv-...` do web service |
 | `JULES_API_KEY` | secret do GitHub | criar e destravar sessões do Jules (`scripts/jules.py`) |
 | `PRODUCTION_URL` | ambiente do Jules; variável (não secret) do GitHub, opcional | auditoria de produção; padrão `https://devagent-vb52.onrender.com` |
-| `BRAPI_TOKEN` | Render | coletor brapi |
+| `BRAPI_TOKEN` | Render | coletor brapi (sem ele, a coleta usa só o Yahoo Finance) |
+| `COLETA_AUTOMATICA` | Render, opcional | `0` desliga a coleta dentro do web service |
 | `DATABASE_PATH` | Variável de ambiente (opcional) | caminho do banco SQLite (padrão `data.db`) |
 
 ## Render: cuidados

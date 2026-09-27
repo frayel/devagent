@@ -38,7 +38,7 @@ Toda recomendação exibida precisa mostrar: a fonte, a data da coleta, o métod
 | Dados de mercado | brapi.dev (API), yfinance (tickers `.SA`) | fontes estruturadas primeiro |
 | Scraping | httpx + selectolax; Playwright só se inevitável | leve por padrão |
 | Armazenamento | SQLite em disco persistente do Render, ou Postgres do Render quando necessário | começar simples |
-| Agendamento de coleta | Render Cron Job | separa coleta de exibição |
+| Agendamento de coleta | laço no próprio web service (`app/agendador.py`, ADR 004) | no plano gratuito o disco é efêmero e não é compartilhado com um Cron Job |
 | Testes | pytest, respx para mockar HTTP | testes não acessam a internet |
 | Qualidade | ruff (lint e format), mypy no modo básico | |
 | CI | GitHub Actions | |
@@ -285,7 +285,7 @@ item numa checagem.
 - Prefira APIs oficiais ou públicas. Recorra a scraping só quando não houver alternativa, e registre a decisão na spec.
 - Respeite `robots.txt` e os termos de uso. Se uma fonte proibir coleta automatizada, não a use.
 - No máximo 1 requisição a cada 2 segundos por domínio. User-Agent identificável.
-- Faça cache de toda resposta; nunca colete a cada visita ao painel. A coleta roda no Cron Job e o site lê do banco.
+- Faça cache de toda resposta; nunca colete a cada visita ao painel. A coleta roda no agendador do web service (`app/agendador.py`) e o site lê do banco.
 - Não colete dados atrás de login ou paywall.
 - Opiniões de terceiros aparecem resumidas e atribuídas, com link para a fonte original, nunca copiadas na íntegra.
 - Dados de mercado podem ter atraso; exiba o atraso quando a fonte o informar.
@@ -336,7 +336,7 @@ Variáveis de ambiente (no Render e, quando necessário, no ambiente do Jules):
 | `BRAPI_TOKEN` | token da brapi.dev |
 | `DATABASE_URL` | quando migrar de SQLite para Postgres |
 
-`render.yaml` deve declarar: um web service (`uvicorn app.main:app`), um cron job de coleta em dias úteis a cada 15 minutos durante o pregão, `healthCheckPath: /healthz` e `autoDeploy: true`.
+`render.yaml` deve declarar: um web service (`uvicorn app.main:app`), `healthCheckPath: /healthz` e `autoDeploy: true`. A coleta roda dentro do web service (ADR 004); `COLETA_AUTOMATICA=0` a desliga.
 
 ## 13. Documentação viva e autoaperfeiçoamento
 
@@ -356,7 +356,7 @@ Você tem autonomia para melhorar este repositório **e a si mesmo**: o `README.
 | `docs/skills/destravar-pr.md` | CI falhando, conflito ou revisão num PR aberto | Passo 2 |
 | `docs/skills/descobrir-ideias.md` | como gerar ideias originais e escolher a próxima | Passo 7 |
 | `docs/skills/escrever-spec.md` | como escrever uma boa spec | Passo 7, ao transformar issue em spec e ao dividir specs |
-| `docs/decisions/` | ADRs; `001` explica o Passo 2 e o guardião, `002` as correções prioritárias no Passo 1, `003` o escopo aberto e o Passo 7 criativo | antes de mudar o ciclo de decisão |
+| `docs/decisions/` | ADRs; `001` explica o Passo 2 e o guardião, `002` as correções prioritárias no Passo 1, `003` o escopo aberto e o Passo 7 criativo, `004` a coleta dentro do web service | antes de mudar o ciclo de decisão |
 | `docs/skills/auto-melhoria.md` | como alterar instruções, skills e contextos | Passo 5 |
 | `auditoria/README.md` | o que o auditor verifica e o contrato `/api/snapshot` | ao tratar issue `producao-incorreta` e ao publicar painel novo |
 

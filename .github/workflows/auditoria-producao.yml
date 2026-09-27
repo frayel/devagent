@@ -73,7 +73,10 @@ jobs:
           falhas=$(python3 -c "import json;d=json.load(open('relatorio/relatorio.json'));print(' '.join(sorted(r['id'] for r in d['resultados'] if r['status']=='falha')))")
           body=$(printf '%s\n\nEvidências (relatório JSON e screenshot): %s\n\nO agente trata esta issue no Passo 1 do AGENTS.md. Não altere `auditoria/` para fazê-la passar.\n\n<!-- falhas: %s -->' \
             "$(cat relatorio/relatorio.md)" "$RUN_URL" "$falhas")
-          existing=$(gh issue list --label producao-incorreta --state open --json number -q '.[0].number')
+          # Só a issue aberta por este workflow (título "Produção incorreta").
+          # As issues do auditor LLM também têm o label, mas não são o alvo.
+          existing=$(gh issue list --label producao-incorreta --state open --json number,title \
+            -q '[.[] | select(.title | startswith("Produção incorreta"))] | sort_by(.number) | .[0].number // empty')
           if [ -z "$existing" ]; then
             gh issue create --title "Produção incorreta: $falhas" --label producao-incorreta --body "$body"
           else
@@ -98,7 +101,9 @@ jobs:
               print("manter")
           ')
             case "$decisao" in
-              comentar) gh issue comment "$existing" --body "$body" ;;
+              comentar)
+                gh issue comment "$existing" --body "$body"
+                gh issue edit "$existing" --title "Produção incorreta: $falhas" ;;
               correcao-falhou)
                 gh issue comment "$existing" --body "$(printf '**A correção mergeada não resolveu:** produção continua com as mesmas falhas.\n\n%s' "$body")" ;;
               *) echo "Mesmas falhas da última notificação; issue #$existing mantida." ;;

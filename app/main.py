@@ -1,3 +1,7 @@
+import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -7,8 +11,20 @@ from datetime import datetime, timezone
 from app.services.ibovespa import get_ibovespa_view_data
 from app.services.highlights import get_highlights_view_data
 from app.database import get_latest_ibovespa_data
+from app import agendador
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    tarefa = None
+    if agendador.coleta_ligada():
+        tarefa = asyncio.create_task(agendador.laco_de_coleta())
+    yield
+    if tarefa:
+        tarefa.cancel()
+
+
+app = FastAPI(lifespan=lifespan)
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -26,6 +42,12 @@ async def add_security_headers(request: Request, call_next):
 @app.get("/healthz")
 def healthz():
     return {"status": "ok"}
+
+
+@app.get("/api/coleta")
+def coleta():
+    """Diagnóstico da coleta automática (última rodada e último erro)."""
+    return {"ligada": agendador.coleta_ligada(), **agendador.estado}
 
 
 @app.get("/api/snapshot")
