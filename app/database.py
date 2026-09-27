@@ -20,6 +20,7 @@ class HighlightsData:
     timestamp: datetime
     highs_json: str
     lows_json: str
+    fonte: str = "brapi"
 
 
 def get_connection() -> sqlite3.Connection:
@@ -55,9 +56,18 @@ def init_db() -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp DATETIME NOT NULL,
             highs_json TEXT NOT NULL,
-            lows_json TEXT NOT NULL
+            lows_json TEXT NOT NULL,
+            fonte TEXT NOT NULL DEFAULT 'brapi'
         )
     """)
+    # Migrar a tabela antiga caso exista e não tenha a coluna fonte
+    try:
+        cursor.execute("SELECT fonte FROM highlights_cache LIMIT 1")
+    except sqlite3.OperationalError:
+        cursor.execute(
+            "ALTER TABLE highlights_cache ADD COLUMN fonte TEXT NOT NULL DEFAULT 'brapi'"
+        )
+
     # Add index to optimize get_latest_ibovespa_data() which does ORDER BY timestamp DESC LIMIT 1
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_ibovespa_cache_timestamp
@@ -115,13 +125,14 @@ def save_highlights_data(data: HighlightsData) -> None:
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO highlights_cache (timestamp, highs_json, lows_json)
-        VALUES (?, ?, ?)
+        INSERT INTO highlights_cache (timestamp, highs_json, lows_json, fonte)
+        VALUES (?, ?, ?, ?)
     """,
         (
             data.timestamp.isoformat(),
             data.highs_json,
             data.lows_json,
+            data.fonte,
         ),
     )
     conn.commit()
@@ -132,7 +143,7 @@ def get_latest_highlights_data() -> HighlightsData | None:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT timestamp, highs_json, lows_json
+        SELECT timestamp, highs_json, lows_json, fonte
         FROM highlights_cache
         ORDER BY timestamp DESC
         LIMIT 1
@@ -145,6 +156,7 @@ def get_latest_highlights_data() -> HighlightsData | None:
             timestamp=datetime.fromisoformat(row["timestamp"]),
             highs_json=row["highs_json"],
             lows_json=row["lows_json"],
+            fonte=row["fonte"],
         )
     return None
 

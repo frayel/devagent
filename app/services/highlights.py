@@ -45,4 +45,5 @@ def get_highlights_view_data() -> dict[str, Any] | None:
         "highs": highs_formatted,
         "lows": lows_formatted,
         "time": time_formatted,
+        "fonte": getattr(data, "fonte", "brapi"),
     }

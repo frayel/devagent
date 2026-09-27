@@ -78,6 +78,7 @@ def test_fetch_brapi_success():
         assert len(lows) == 5
         assert highs[0]["change_percent"] > 0
         assert lows[0]["change_percent"] < 0
+        assert data.fonte == "brapi"
 
 
 @respx.mock
@@ -97,6 +98,7 @@ def test_fetch_yfinance_success():
 
     assert len(highs) == 5
     assert len(lows) == 5
+    assert data.fonte == "yfinance"
 
 
 @respx.mock
@@ -144,3 +146,4 @@ def test_index_route():
     assert "Maiores Baixas" in response.text
     assert "HIGH0" in response.text
     assert "LOW0" in response.text
+    assert "Fonte: brapi" in response.text

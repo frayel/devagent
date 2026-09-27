@@ -42,6 +42,7 @@ def test_lista_brapi_monta_ranking(monkeypatch):
         "ATIV3",
         "ATIV4",
     ]
+    assert data.fonte == "brapi"
 
 
 @respx.mock

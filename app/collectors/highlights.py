@@ -93,6 +93,7 @@ def fetch_brapi_lista() -> HighlightsData | None:
         timestamp=datetime.now(timezone.utc),
         highs_json=json.dumps(ativos[:5]),
         lows_json=json.dumps(sorted(ativos[-5:], key=lambda x: x["change_percent"])),
+        fonte="brapi",
     )
 
 
@@ -147,6 +148,7 @@ def fetch_brapi() -> HighlightsData | None:
             timestamp=datetime.now(timezone.utc),
             highs_json=json.dumps(highs),
             lows_json=json.dumps(lows),
+            fonte="brapi",
         )
     except httpx.HTTPError as e:
         logger.error(f"Error fetching highlights from brapi: {e}")
@@ -199,6 +201,7 @@ def fetch_yfinance() -> HighlightsData | None:
         timestamp=datetime.now(timezone.utc),
         highs_json=json.dumps(highs),
         lows_json=json.dumps(lows),
+        fonte="yfinance",
     )
 
 
