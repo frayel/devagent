@@ -40,6 +40,12 @@ def snapshot():
         else 0.0
     )
 
+    history_data = (
+        json.loads(data.history_json)
+        if data.history_json
+        else {"dates": [], "closes": []}
+    )
+
     return {
         "gerado_em": datetime.now(timezone.utc).isoformat(),
         "paineis": {
@@ -49,9 +55,10 @@ def snapshot():
                 "variacao_pct": variation_pct,
                 "coletado_em": data.timestamp.isoformat(),
                 "fonte": getattr(data, "fonte", "brapi"),
-                "historico": json.loads(data.history_json)
-                if data.history_json
-                else {"datas": [], "fechamentos": []},
+                "historico": {
+                    "datas": history_data.get("dates", []),
+                    "fechamentos": history_data.get("closes", []),
+                },
             }
         },
     }
