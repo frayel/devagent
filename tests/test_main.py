@@ -19,3 +19,8 @@ def test_security_headers():
         response.headers.get("Strict-Transport-Security")
         == "max-age=31536000; includeSubDomains"
     )
+    csp = response.headers.get("Content-Security-Policy")
+    assert csp is not None
+    assert "default-src 'self'" in csp
+    assert "https://unpkg.com" in csp
+    assert "https://cdn.plot.ly" in csp
