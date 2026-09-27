@@ -8,16 +8,19 @@ name: Jules
 # ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
 on:
   schedule:
-    # Desenvolvedor: a cada 2 horas, das 8h às 22h BRT.
-    - cron: "5 11-23/2,1 * * *"
-    # Destravar: a cada 15 minutos.
+    # Desenvolvedor: a cada 2 horas, 24 h por dia.
+    - cron: "5 */2 * * *"
+    # Destravar: a cada 15 minutos (o GitHub pode atrasar ou pular
+    # agendamentos curtos em horários de pico; cada disparo do desenvolvedor
+    # também destrava).
     - cron: "*/15 * * * *"
+  # Execução manual. O auditor LLM tem workflow próprio (auditoria-llm.yml).
   workflow_dispatch:
     inputs:
       acao:
         description: "O que fazer"
         type: choice
-        options: [destravar, desenvolvedor, auditor, listar]
+        options: [desenvolvedor, destravar, listar]
         default: desenvolvedor
 
 permissions:
