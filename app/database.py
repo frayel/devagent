@@ -73,6 +73,12 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_ibovespa_cache_timestamp
         ON ibovespa_cache(timestamp DESC)
     """)
+
+    # Add index to optimize get_latest_highlights_data() which does ORDER BY timestamp DESC LIMIT 1
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_highlights_cache_timestamp
+        ON highlights_cache(timestamp DESC)
+    """)
     conn.commit()
     conn.close()
 
