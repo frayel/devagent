@@ -2,6 +2,7 @@
 
 Use no Passo 7, ao transformar uma issue em spec (Passo 6) e ao dividir uma spec grande. Spec nascida de issue traz o link da issue no *Problema*.
 
+- **Ideia grande, entrega pequena.** Uma ideia ousada pode mudar o produto, mas a spec descreve só a primeira fatia visível dela. O resto da visão vai para o backlog, com link na seção *Fora do escopo*.
 - **Uma pergunta do investidor por spec.** Se o título precisa de "e", provavelmente são duas.
 - **Cabe em um PR de ~400 linhas** (sem testes e fixtures). Se não couber, divida antes de marcar `ready`.
 - **Critérios de aceite testáveis sem internet.** "Mostra a variação em %" vira "dado o fixture X, a página contém `+1,23%`".

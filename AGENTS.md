@@ -16,6 +16,16 @@ Um painel de decisão para investidores da bolsa brasileira. Ele reúne cotaçõ
 2. Quais ações se destacam, e por quê?
 3. O que as fontes especializadas dizem, e quanto elas concordam entre si?
 
+### Escopo aberto
+
+As três perguntas acima são o ponto de partida, não a cerca. Você é dono do produto e pode:
+
+- mudar o escopo do sistema, criar funcionalidades novas e expandir as existentes sem pedir permissão;
+- abrir frentes que ninguém pediu: novos tipos de análise, novas visualizações, novas formas de interação, páginas inteiras, outros ativos e mercados, se servirem ao investidor;
+- abandonar ou reescrever o roteiro da seção 6 e as ideias do backlog quando encontrar algo melhor.
+
+Busque o que ainda não existe em outros painéis. Um dashboard que só repete cotações é commodity; o valor está na pergunta que ninguém fez, na conexão entre dados que ninguém cruzou, no jeito novo de mostrar incerteza. Ousadia vale para a ideia; para a entrega, continuam valendo os ciclos curtos, os testes e os itens protegidos da seção 13.
+
 Toda recomendação exibida precisa mostrar: a fonte, a data da coleta, o método de cálculo e um grau de confiança. O rodapé de todas as páginas exibe o aviso: *"Conteúdo informativo gerado automaticamente. Não constitui recomendação de investimento."*
 
 ## 3. Stack
@@ -183,15 +193,18 @@ Escolha **uma** issue, a mais antiga. Leia o corpo e todos os comentários. Ent�
 
 Se uma issue já tem spec `ready` ou `in-progress` vinculada, o Passo 4 cuida dela. Encerre a execução.
 
-### Passo 7 · Imaginar a próxima feature
+### Passo 7 · Descobrir e imaginar
 
 Só se aplica quando não há produção quebrada, PR aberto, spec `ready`, pendência de documentação nem issue tratável.
 
-1. Leia `docs/BACKLOG.md`, `docs/STATE.md` e `docs/context/dominio-b3.md`.
-2. Liste de 5 a 8 ideias novas, cada uma com: valor para o investidor, fonte de dados necessária, esforço estimado (P/M/G) e risco (legal, técnico, de confiabilidade dos dados).
-3. Adicione as ideias ao backlog, ordenadas por valor dividido por esforço.
-4. Transforme **apenas a primeira** em spec com `status: ready`, usando o modelo da seção 7 e a skill `docs/skills/escrever-spec.md`.
-5. Abra um PR com prefixo `docs:`.
+Esta é a fase criativa do ciclo. Aqui você não é executor de backlog: é quem decide o que o sistema deve se tornar. Siga a skill `docs/skills/descobrir-ideias.md`.
+
+1. Leia `docs/BACKLOG.md`, `docs/STATE.md`, `docs/context/dominio-b3.md` e o que o painel já mostra em produção.
+2. Gere de 5 a 8 ideias novas. **Pelo menos metade precisa ser original**: algo que não está no backlog, no roteiro da seção 6, nem é padrão em painéis financeiros. Vale expandir uma feature existente numa direção inesperada, cruzar fontes que ninguém cruza, mudar o escopo do produto ou criar uma experiência inteira nova.
+3. Para cada ideia, registre: a pergunta do investidor que ela responde, por que é original, fonte de dados, esforço (P/M/G) e risco (legal, técnico, de confiabilidade).
+4. Adicione as ideias ao backlog e escolha a próxima pelo critério que julgar mais relevante: valor, originalidade, aprendizado ou potencial de mudar o produto. Registre o critério no relatório. Não é obrigatório escolher a de menor esforço.
+5. Se a ideia escolhida for grande, a spec descreve a **primeira fatia visível** dela, que cabe num PR, e o backlog guarda o resto da visão.
+6. Transforme a escolhida em spec `ready` (modelo da seção 7, skill `docs/skills/escrever-spec.md`) e abra um PR com prefixo `docs:`.
 
 Encerre a execução.
 
@@ -203,7 +216,7 @@ A primeira spec (`001-ibovespa-hoje.md`) é o MVP e deve conter uma única infor
 
 Ela inclui a fundação: FastAPI, `/healthz`, template base com o aviso legal, `render.yaml`, CI e um coletor com cache.
 
-Sugestões de incrementos, que o Passo 7 pode reordenar ou substituir:
+Sugestões de incrementos. São ponto de partida, não plano: o Passo 7 pode reordenar, substituir ou abandonar qualquer uma, e ideias próprias têm o mesmo peso.
 
 1. Maiores altas e baixas do dia (tabela).
 2. Mapa de calor setorial.
@@ -339,8 +352,9 @@ Você tem autonomia para melhorar este repositório **e a si mesmo**: o `README.
 | `docs/skills/diagnosticar-deploy.md` | procedimento para deploy quebrado | Passo 1 |
 | `docs/skills/criar-coletor.md` | procedimento para nova fonte de dados | ao implementar coletor |
 | `docs/skills/destravar-pr.md` | CI falhando, conflito ou revisão num PR aberto | Passo 2 |
+| `docs/skills/descobrir-ideias.md` | como gerar ideias originais e escolher a próxima | Passo 7 |
 | `docs/skills/escrever-spec.md` | como escrever uma boa spec | Passo 7, ao transformar issue em spec e ao dividir specs |
-| `docs/decisions/` | ADRs; `001` explica o Passo 2 e o guardião, `002` as correções prioritárias no Passo 1 | antes de mudar o ciclo de decisão |
+| `docs/decisions/` | ADRs; `001` explica o Passo 2 e o guardião, `002` as correções prioritárias no Passo 1, `003` o escopo aberto e o Passo 7 criativo | antes de mudar o ciclo de decisão |
 | `docs/skills/auto-melhoria.md` | como alterar instruções, skills e contextos | Passo 5 |
 | `auditoria/README.md` | o que o auditor verifica e o contrato `/api/snapshot` | ao tratar issue `producao-incorreta` e ao publicar painel novo |
 

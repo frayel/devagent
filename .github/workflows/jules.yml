@@ -14,13 +14,15 @@ on:
     # agendamentos curtos em horários de pico; cada disparo do desenvolvedor
     # também destrava).
     - cron: "*/15 * * * *"
-  # Execução manual. O auditor LLM tem workflow próprio (auditoria-llm.yml).
+  # Execução manual. O auditor LLM também é agendado pelo auditoria-llm.yml;
+  # disparar pelos dois lugares é seguro, porque jules.py não cria sessão
+  # nova se já houver uma ativa da mesma persona.
   workflow_dispatch:
     inputs:
       acao:
         description: "O que fazer"
         type: choice
-        options: [desenvolvedor, destravar, listar]
+        options: [desenvolvedor, auditor, destravar, listar]
         default: desenvolvedor
 
 permissions:
