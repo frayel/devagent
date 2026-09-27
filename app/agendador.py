@@ -27,8 +27,12 @@ FIM_PREGAO = time(18, 15)
 NO_PREGAO = timedelta(minutes=15)
 FORA_DO_PREGAO = timedelta(hours=2)
 
-# Estado da última rodada, exposto em /healthz para diagnóstico.
-estado: dict[str, str | None] = {"ultima_coleta": None, "ultimo_erro": None}
+# Estado da última rodada, exposto em /api/coleta para diagnóstico.
+estado: dict[str, str | None] = {
+    "ultima_coleta": None,
+    "ultimo_erro": None,
+    "detalhes": None,
+}
 
 
 def coleta_ligada() -> bool:
@@ -45,8 +49,32 @@ def intervalo(agora: datetime) -> timedelta:
     return FORA_DO_PREGAO
 
 
+class _Memoria(logging.Handler):
+    """Guarda os avisos e erros dos coletores da rodada, para /api/coleta."""
+
+    def __init__(self) -> None:
+        super().__init__(level=logging.WARNING)
+        self.linhas: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.linhas.append(f"{record.name}: {record.getMessage()}"[:300])
+
+
 def coletar_tudo() -> None:
     """Roda os coletores em sequência. Falha de um não impede o outro."""
+    memoria = _Memoria()
+    raiz = logging.getLogger("app.collectors")
+    raiz.addHandler(memoria)
+    estado["ultimo_erro"] = None
+    try:
+        _coletar()
+    finally:
+        raiz.removeHandler(memoria)
+        estado["detalhes"] = "\n".join(memoria.linhas[-10:]) or None
+    estado["ultima_coleta"] = datetime.now(timezone.utc).isoformat()
+
+
+def _coletar() -> None:
     for nome, coletor in (("ibovespa", ibovespa), ("highlights", highlights)):
         try:
             ok = coletor.collect_and_save()
@@ -55,7 +83,6 @@ def coletar_tudo() -> None:
         except Exception as e:  # noqa: BLE001 - o laço não pode morrer
             logger.exception("Coleta de %s falhou", nome)
             estado["ultimo_erro"] = f"{nome}: {e}"
-    estado["ultima_coleta"] = datetime.now(timezone.utc).isoformat()
 
 
 async def laco_de_coleta() -> None:

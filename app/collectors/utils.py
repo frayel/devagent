@@ -5,7 +5,11 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-USER_AGENT = "B3Dashboard/1.0 (+https://github.com/b3-dashboard)"
+# Identificável (seção 9 do AGENTS.md) e com prefixo "Mozilla/5.0 (compatible; ...)",
+# o formato dos robôs conhecidos: o Yahoo Finance recusa User-Agents fora dele.
+USER_AGENT = (
+    "Mozilla/5.0 (compatible; B3Dashboard/1.0; +https://github.com/frayel/devagent)"
+)
 MIN_DELAY = 2.0  # 2 seconds per domain
 
 # Store the last request time per domain
