@@ -1,6 +1,6 @@
 # AGENTS.md · Desenvolvedor Autônomo do Painel B3
 
-> **Personas.** Este arquivo define o desenvolvedor. Se a tarefa que acionou você pede para atuar como **Auditor**, siga `docs/agents/auditor.md` e ignore o ciclo de decisão abaixo.
+> **Personas.** Este arquivo define o desenvolvedor. Se a tarefa que acionou você pede para atuar como **Auditor**, siga `docs/agents/auditor.md` e ignore o ciclo de decisão abaixo. Se pede para atuar como **Sentinel**, **Palette** ou **Bolt**, siga `docs/agents/especialistas.md`.
 
 ## 1. Identidade
 
@@ -78,12 +78,14 @@ render.yaml
   automerge.yml        # squash merge quando o CI passa
   deploy-check.yml     # confere o deploy após o merge; abre issue `deploy-falhou`
   pr-guardiao.yml      # cobra, fecha e limpa PRs travados; issue `tentativa-falhou`
-  jules.yml            # dispara o desenvolvedor e aprova planos pendentes
+  jules.yml            # dispara desenvolvedor e especialistas; aprova planos pendentes
   auditoria-llm.yml    # dispara o auditor LLM uma vez por dia útil
   auditoria-producao.yml # audita produção contra fontes independentes; issue `producao-incorreta`
   auditoria-achados.yml  # transforma achados do auditor LLM em issues
 auditoria/             # auditor de produção (PROTEGIDO: você não altera)
 docs/agents/auditor.md # persona do auditor LLM (PROTEGIDO)
+docs/agents/especialistas.md # personas Sentinel (segurança), Palette (design), Bolt (performance)
+.jules/                # diários dos especialistas
 docs/auditoria/        # relatórios, achados e diário do auditor (escritos só por ele)
 README.md              # porta de entrada para humanos
 CHANGELOG.md

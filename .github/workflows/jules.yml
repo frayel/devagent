@@ -1,6 +1,6 @@
 name: Jules
 
-# Dispara o desenvolvedor autônomo pela API do Jules e destrava sessões que
+# Dispara o desenvolvedor e os especialistas (Sentinel, Palette, Bolt) pela API do Jules e destrava sessões que
 # pararem esperando aprovação de plano ou resposta a uma pergunta.
 # Substitui a tarefa agendada criada pela interface web, que pode parar em
 # "aguardando aprovação" mesmo com o prompt pedindo o contrário.
@@ -8,10 +8,14 @@ name: Jules
 # ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
 on:
   schedule:
-    # Desenvolvedor: a cada 2 horas, 24 h por dia.
-    - cron: "5 */2 * * *"
+    # Horários em UTC (BRT = UTC-3). Um disparo a cada 2 horas, 24 h por dia:
+    # 9 para o desenvolvedor e 1 por dia para cada especialista.
+    - cron: "5 0,2,4,8,10,14,16,20,22 * * *" # desenvolvedor
+    - cron: "5 6 * * *" # seguranca (Sentinel), 03h05 BRT
+    - cron: "5 12 * * *" # performance (Bolt), 09h05 BRT
+    - cron: "5 18 * * *" # design (Palette), 15h05 BRT
     # Destravar: a cada 15 minutos (o GitHub pode atrasar ou pular
-    # agendamentos curtos em horários de pico; cada disparo do desenvolvedor
+    # agendamentos curtos em horários de pico; cada disparo acima
     # também destrava).
     - cron: "*/15 * * * *"
   # Execução manual. O auditor LLM também é agendado pelo auditoria-llm.yml;
@@ -22,7 +26,7 @@ on:
       acao:
         description: "O que fazer"
         type: choice
-        options: [desenvolvedor, auditor, destravar, listar]
+        options: [desenvolvedor, seguranca, design, performance, auditor, destravar, listar]
         default: desenvolvedor
 
 permissions:
@@ -50,10 +54,14 @@ jobs:
           fi
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             acao="${{ inputs.acao }}"
-          elif [ "${{ github.event.schedule }}" = "*/15 * * * *" ]; then
-            acao="destravar"
           else
-            acao="desenvolvedor"
+            case "${{ github.event.schedule }}" in
+              "*/15 * * * *") acao="destravar" ;;
+              "5 6 * * *") acao="seguranca" ;;
+              "5 12 * * *") acao="performance" ;;
+              "5 18 * * *") acao="design" ;;
+              *) acao="desenvolvedor" ;;
+            esac
           fi
           case "$acao" in
             destravar|listar) python3 scripts/jules.py "$acao" ;;

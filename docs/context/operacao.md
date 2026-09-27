@@ -23,7 +23,7 @@ PR com CI falhando ou em conflito → pr-guardiao.yml comenta @jules com o log
 | `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch |
 | `deploy-check.yml` | após o auto-merge, a cada 6 h, manual | consulta o Render; abre ou fecha issues `deploy-falhou`; dispara a auditoria quando o deploy fica live |
 | `auditoria-producao.yml` | a cada 30 min no pregão, antes da abertura, após deploy | roda `auditoria/auditar.py` contra produção; abre ou fecha issues `producao-incorreta` |
-| `jules.yml` | a cada 2 h (24 h por dia), a cada 15 min, manual | cria a sessão do desenvolvedor pela API do Jules (`scripts/jules.py`), sem exigir aprovação de plano; a cada 15 min aprova planos pendentes e responde perguntas paradas |
+| `jules.yml` | a cada 2 h (24 h por dia), a cada 15 min, manual | cria sessões pela API do Jules (`scripts/jules.py`), sem exigir aprovação de plano: desenvolvedor 9x por dia; Sentinel 03h05, Bolt 09h05 e Palette 15h05 (BRT), uma vez cada; só uma persona que altera código trabalha por vez; a cada 15 min aprova planos pendentes e responde perguntas paradas |
 | `auditoria-llm.yml` | dias úteis 18h41 BRT, manual | cria a sessão do auditor LLM pela API do Jules |
 | `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | roda `scripts/guardiao_prs.py`: cobra `@jules` (até 3x), fecha PR sem reação em 3 h, com conflito grande (> 3 arquivos ou > 40 linhas) ou substituído (`Substitui #N`); abre issue `tentativa-falhou`; apaga branches órfãs com mais de 24 h |
 | `auditoria-achados.yml` | de hora em hora e após merge de PR `auditoria:` | abre issues para os achados do auditor LLM em `docs/auditoria/achados/` |

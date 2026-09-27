@@ -9,6 +9,7 @@ e sessões que mesmo assim pararem são destravadas aqui.
 Uso:
     python scripts/jules.py iniciar desenvolvedor
     python scripts/jules.py iniciar auditor
+    python scripts/jules.py iniciar seguranca | design | performance
     python scripts/jules.py destravar          # aprova planos e responde perguntas
     python scripts/jules.py listar
     python scripts/jules.py iniciar auditor --dry-run
@@ -66,6 +67,39 @@ PERSONAS = {
         ),
     },
 }
+
+ESPECIALISTA = (
+    "Você é {nome}, especialista em {tema} deste repositório, não o desenvolvedor. "
+    "Leia e siga docs/agents/especialistas.md: as regras comuns e a seção "
+    "{nome}. Ignore o ciclo de decisão do AGENTS.md. Se já existir PR aberto "
+    "do agente, encerre sem mudanças. Entregue no máximo um PR, com título "
+    'iniciado por "{prefixo}". Não peça aprovação e não faça perguntas.'
+)
+PERSONAS.update(
+    {
+        "seguranca": {
+            "titulo": "Sentinel · segurança",
+            "prompt": ESPECIALISTA.format(
+                nome="Sentinel", tema="segurança", prefixo="🛡️ Sentinel:"
+            ),
+        },
+        "design": {
+            "titulo": "Palette · design",
+            "prompt": ESPECIALISTA.format(
+                nome="Palette", tema="design e experiência", prefixo="🎨 Palette:"
+            ),
+        },
+        "performance": {
+            "titulo": "Bolt · performance",
+            "prompt": ESPECIALISTA.format(
+                nome="Bolt", tema="performance", prefixo="⚡ Bolt:"
+            ),
+        },
+    }
+)
+# Personas que alteram o código. Só uma delas trabalha por vez, para não
+# abrirem PRs concorrentes (a regra de um PR aberto do agente por vez).
+CONSTRUTORAS = {"desenvolvedor", "seguranca", "design", "performance"}
 
 RESPOSTA_PADRAO = (
     "Não há humano acompanhando esta sessão. Não espere respostas nem "
@@ -128,9 +162,11 @@ def iniciar(persona: str, dry_run: bool) -> int:
     if dry_run:
         print(json.dumps(corpo, ensure_ascii=False, indent=2))
         return 0
+    grupo = CONSTRUTORAS if persona in CONSTRUTORAS else {persona}
+    titulos = tuple(PERSONAS[x]["titulo"] for x in grupo)
     for s in sessoes_do_repo():
-        if s.get("title", "").startswith(p["titulo"]) and s.get("state") in ATIVOS:
-            print(f"Já existe sessão ativa de {persona}: {s['name']} ({s['state']})")
+        if s.get("title", "").startswith(titulos) and s.get("state") in ATIVOS:
+            print(f"Sessão ativa impede {persona}: {s.get('title')} ({s['state']})")
             return 0
     nova = chamar("POST", "sessions", corpo)
     print(f"Sessão criada: {nova.get('name')} {nova.get('url', '')}")
