@@ -2,10 +2,6 @@
 
 ## Correções (prioridade sobre qualquer feature)
 
-### Expor `/api/snapshot` para o auditor
-
-O auditor de produção hoje extrai os números do HTML, o que quebra se o template mudar. Implementar o endpoint conforme o contrato em `auditoria/README.md`, com teste em `tests/`. Não altere `auditoria/`: quando o endpoint existir, o auditor passa a usá-lo sozinho.
-
 ## Features
 
 | Feature | Valor | Fonte de dados | Esforço (P/M/G) | Risco |
