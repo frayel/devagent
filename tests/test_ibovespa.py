@@ -101,4 +101,5 @@ def test_index_route():
     response = client.get("/")
     assert response.status_code == 200
     assert "130.000 pontos" in response.text
-    assert "+1.000 (+0.78%)" in response.text
+    assert "+1.000 (+0,78%)" in response.text
+    assert "Fonte: brapi" in response.text
