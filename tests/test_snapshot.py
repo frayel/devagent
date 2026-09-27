@@ -33,6 +33,7 @@ def test_snapshot_with_data():
     assert ibov["valor"] == 183476.86
     assert ibov["fechamento_anterior"] == 182050.10
     import pytest
+
     # calculation: (183476.86 - 182050.10) / 182050.10 * 100
     expected_pct = ((183476.86 - 182050.10) / 182050.10) * 100
     assert ibov["variacao_pct"] == pytest.approx(expected_pct)
