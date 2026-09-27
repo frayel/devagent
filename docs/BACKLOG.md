@@ -14,6 +14,10 @@ A spec 002 foi marcada `done`, mas os testes não cobrem três critérios:
 
 O auditor de produção hoje extrai os números do HTML, o que quebra se o template mudar. Implementar o endpoint conforme o contrato em `auditoria/README.md`, com teste em `tests/`. Não altere `auditoria/`: quando o endpoint existir, o auditor passa a usá-lo sozinho.
 
+### Testes de maiores altas e baixas levam 2 minutos
+
+`tests/test_highlights.py` espera o limite real de 1 requisição a cada 2 s por domínio: `test_collect_and_save_fallback` e `test_fetch_yfinance_success` levam cerca de 60 s cada. Neutralizar `time.sleep` do limitador nesses testes (como faz `tests/test_highlights_lista.py`) sem mudar o comportamento em produção.
+
 ## Features
 
 | Feature | Valor | Fonte de dados | Esforço (P/M/G) | Risco |

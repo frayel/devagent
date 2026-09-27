@@ -47,6 +47,55 @@ TICKERS = [
 ]
 
 
+UNIVERSO = 100  # ações mais negociadas do dia que entram no ranking
+LISTA_URL = (
+    "https://brapi.dev/api/quote/list"
+    f"?type=stock&sortBy=volume&sortOrder=desc&limit={UNIVERSO}"
+)
+
+
+def fetch_brapi_lista() -> HighlightsData | None:
+    """Uma única requisição ao /api/quote/list da brapi (não exige token).
+
+    O plano gratuito da brapi não aceita vários ativos em /api/quote, e 30
+    requisições por coleta estourariam a cota mensal. A listagem traz a
+    variação do dia de todas as ações; o ranking usa as UNIVERSO mais
+    negociadas, para não premiar papéis sem liquidez.
+    """
+    token = os.environ.get("BRAPI_TOKEN")
+    url = LISTA_URL + (f"&token={token}" if token else "")
+    try:
+        data = fetch_with_retry(url, timeout=15.0).json()
+    except Exception as e:  # noqa: BLE001 - qualquer falha cai no plano B
+        logger.error(f"Error fetching brapi quote list: {type(e).__name__}: {e}")
+        return None
+
+    ativos = []
+    for item in data.get("stocks") or []:
+        change = item.get("change")
+        close = item.get("close")
+        if change is None or not close or item.get("type") not in (None, "stock"):
+            continue
+        ativos.append(
+            {
+                "ticker": item.get("stock", ""),
+                "price": float(close),
+                "change_percent": float(change),
+            }
+        )
+
+    if len(ativos) < 10:
+        logger.error(f"brapi quote list returned only {len(ativos)} usable stocks")
+        return None
+
+    ativos.sort(key=lambda x: x["change_percent"], reverse=True)
+    return HighlightsData(
+        timestamp=datetime.now(timezone.utc),
+        highs_json=json.dumps(ativos[:5]),
+        lows_json=json.dumps(sorted(ativos[-5:], key=lambda x: x["change_percent"])),
+    )
+
+
 def fetch_brapi() -> HighlightsData | None:
     BRAPI_TOKEN = os.environ.get("BRAPI_TOKEN")
     if not BRAPI_TOKEN:
@@ -155,7 +204,10 @@ def fetch_yfinance() -> HighlightsData | None:
 
 def collect_and_save() -> bool:
     logger.info("Starting highlights collection...")
-    data = fetch_brapi()
+    data = fetch_brapi_lista()
+    if not data:
+        logger.info("Falling back highlights to brapi quote by ticker...")
+        data = fetch_brapi()
     if not data:
         logger.info("Falling back highlights to yfinance...")
         data = fetch_yfinance()
