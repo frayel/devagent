@@ -77,14 +77,32 @@ jobs:
           if [ -z "$existing" ]; then
             gh issue create --title "Produção incorreta: $falhas" --label producao-incorreta --body "$body"
           else
-            # Só comenta quando o conjunto de falhas muda, para não inundar a issue.
-            last=$(gh issue view "$existing" --json body,comments \
-              -q '([.body] + [.comments[].body]) | last' | grep -o '<!-- falhas: .* -->' || true)
-            if [ "$last" != "<!-- falhas: $falhas -->" ]; then
-              gh issue comment "$existing" --body "$body"
-            else
-              echo "Mesmas falhas da última notificação; issue #$existing mantida."
-            fi
+            # Comenta quando o conjunto de falhas muda, ou quando um PR declarou
+            # corrigir a issue depois da última notificação e produção continua
+            # falhando (para a correção malsucedida ficar visível na issue).
+            decisao=$(gh issue view "$existing" --json body,comments | FALHAS="$falhas" python3 -c '
+          import json, os, sys
+          d = json.load(sys.stdin)
+          textos = [d.get("body") or ""] + [c.get("body") or "" for c in d.get("comments", [])]
+          marca = "<!-- falhas: "
+          ultimo = max((i for i, t in enumerate(textos) if marca in t), default=-1)
+          if ultimo < 0:
+              print("comentar"); sys.exit()
+          anterior = textos[ultimo].split(marca, 1)[1].split(" -->", 1)[0]
+          correcao = any("<!-- correcao-mergeada -->" in t for t in textos[ultimo + 1:])
+          if anterior != os.environ["FALHAS"]:
+              print("comentar")
+          elif correcao:
+              print("correcao-falhou")
+          else:
+              print("manter")
+          ')
+            case "$decisao" in
+              comentar) gh issue comment "$existing" --body "$body" ;;
+              correcao-falhou)
+                gh issue comment "$existing" --body "$(printf '**A correção mergeada não resolveu:** produção continua com as mesmas falhas.\n\n%s' "$body")" ;;
+              *) echo "Mesmas falhas da última notificação; issue #$existing mantida." ;;
+            esac
           fi
 
       - name: Fechar issue se produção voltou ao normal

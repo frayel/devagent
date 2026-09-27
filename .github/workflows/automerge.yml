@@ -42,6 +42,22 @@ jobs:
 
           gh pr merge "$pr" -R "$GITHUB_REPOSITORY" --squash --delete-branch
 
+          # O GitHub não fecha de forma confiável as issues citadas com
+          # "Closes #N" quando o merge é feito pelo GITHUB_TOKEN. Fechamos aqui.
+          # Issues de produção (deploy-falhou, producao-incorreta) só fecham
+          # quando a verificação passa: recebem um aviso e ficam abertas.
+          corpo=$(gh pr view "$pr" -R "$GITHUB_REPOSITORY" --json body -q '.body // ""')
+          for n in $(printf '%s' "$corpo" | grep -oiE '\b(close[sd]?|fix(e[sd])?|resolve[sd]?)[: ]+#[0-9]+' | grep -oE '[0-9]+$' | sort -u); do
+            info=$(gh issue view "$n" -R "$GITHUB_REPOSITORY" --json state,labels \
+              -q '.state + " " + ([.labels[].name] | join(","))' 2>/dev/null) || continue
+            case "$info" in
+              OPEN*deploy-falhou*|OPEN*producao-incorreta*)
+                gh issue comment "$n" -R "$GITHUB_REPOSITORY" --body "$(printf 'O PR #%s, que declara corrigir esta issue, foi mergeado. Ela fecha sozinha quando a verificação de produção passar; se continuar falhando, a auditoria avisa aqui.\n\n<!-- correcao-mergeada -->' "$pr")" ;;
+              OPEN*)
+                gh issue close "$n" -R "$GITHUB_REPOSITORY" --comment "Fechada pelo PR #$pr, mergeado na main." ;;
+            esac
+          done
+
           # Achados do auditor LLM viram issues logo após o merge.
           title=$(gh pr view "$pr" -R "$GITHUB_REPOSITORY" --json title -q .title)
           case "$title" in
