@@ -19,7 +19,7 @@ def get_ibovespa_view_data() -> dict[str, Any] | None:
     # format strings for view
     current_formatted = f"{int(data.current_price):,}".replace(",", ".")
     variation_formatted = f"{int(variation):,}".replace(",", ".")
-    variation_percent_formatted = f"{variation_percent:.2f}%"
+    variation_percent_formatted = f"{variation_percent:.2f}%".replace(".", ",")
 
     if variation > 0:
         variation_formatted = f"+{variation_formatted}"
@@ -36,4 +36,5 @@ def get_ibovespa_view_data() -> dict[str, Any] | None:
         "is_negative": is_negative,
         "time": time_formatted,
         "history_json": data.history_json,
+        "fonte": data.fonte,
     }
