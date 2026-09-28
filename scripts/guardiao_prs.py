@@ -12,6 +12,7 @@ Regras (mantenha em sincronia com docs/skills/destravar-pr.md):
     - Conflito pequeno (<= CONFLITO_MAX_ARQUIVOS e <= CONFLITO_MAX_LINHAS): pede ao Jules
       para resolver. Conflito grande: fecha o PR; o próximo ciclo refaz a partir da main.
     - PR cujo corpo diz "Substitui #N": fecha o #N.
+    - Issue citada com Closes/Fixes/Resolves num PR mergeado nos últimos 7 dias: fecha.
     - Ao fechar, abre issue `tentativa-falhou` com o motivo, para o próximo ciclo aprender.
 """
 
@@ -181,7 +182,61 @@ def medir_conflito(branch: str) -> tuple[list[str], int] | None:
         sh("git", "reset", "-q", "--hard", check=False)
 
 
+PALAVRA_CHAVE = re.compile(
+    r"(?i)\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)[: ]+#(\d+)"
+)
+ISSUES_DE_PRODUCAO = {"deploy-falhou", "producao-incorreta"}
+DIAS_FECHAR_CITADAS = 7
+
+
+def fechar_issues_citadas() -> None:
+    """Fecha issues citadas com Closes/Fixes/Resolves em PRs mergeados recentes.
+
+    Reserva do passo equivalente no automerge.yml: cobre merges manuais e
+    merges feitos antes de o automerge ter permissão de issues. Issues de
+    produção ficam abertas: quem as fecha é a verificação que as abriu.
+    """
+    desde = (agora() - timedelta(days=DIAS_FECHAR_CITADAS)).strftime("%Y-%m-%d")
+    prs = gh_json(
+        "pr",
+        "list",
+        "--state",
+        "merged",
+        "--search",
+        f"merged:>={desde}",
+        "--json",
+        "number,title,body,commits",
+        "--limit",
+        "100",
+    )
+    for pr in prs:
+        textos = [pr["title"], pr.get("body") or ""] + [
+            f"{c.get('messageHeadline', '')} {c.get('messageBody', '')}"
+            for c in pr.get("commits", [])
+        ]
+        for n in sorted({int(x) for x in PALAVRA_CHAVE.findall("\n".join(textos))}):
+            try:
+                issue = gh_json("issue", "view", str(n), "--json", "state,labels")
+            except (RuntimeError, json.JSONDecodeError):
+                continue  # número de PR, issue inexistente ou sem acesso
+            labels = {lbl["name"] for lbl in issue.get("labels", [])}
+            if issue.get("state") != "OPEN" or labels & ISSUES_DE_PRODUCAO:
+                continue
+            sh(
+                "gh",
+                "issue",
+                "close",
+                str(n),
+                "--comment",
+                f"Fechada pelo PR #{pr['number']}, mergeado na main "
+                "(fechamento feito pelo guardião).",
+                check=False,
+            )
+            print(f"Issue #{n} fechada (citada no PR #{pr['number']})")
+
+
 def varredura() -> None:
+    fechar_issues_citadas()
     prs = prs_do_agente()
     fechados: set[int] = set()
 

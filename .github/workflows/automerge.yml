@@ -12,6 +12,7 @@ permissions:
   contents: write
   pull-requests: write
   actions: write
+  issues: write # sem isto o gh issue view/close falha e as issues citadas nunca fecham
 
 jobs:
   merge:
@@ -46,10 +47,13 @@ jobs:
           # "Closes #N" quando o merge é feito pelo GITHUB_TOKEN. Fechamos aqui.
           # Issues de produção (deploy-falhou, producao-incorreta) só fecham
           # quando a verificação passa: recebem um aviso e ficam abertas.
-          corpo=$(gh pr view "$pr" -R "$GITHUB_REPOSITORY" --json body -q '.body // ""')
+          # Procura as palavras-chave no título, no corpo e nas mensagens dos commits.
+          corpo=$(gh pr view "$pr" -R "$GITHUB_REPOSITORY" --json title,body,commits \
+            -q '[.title, (.body // ""), (.commits[] | .messageHeadline + " " + .messageBody)] | join("\n")')
           for n in $(printf '%s' "$corpo" | grep -oiE '\b(close[sd]?|fix(e[sd])?|resolve[sd]?)[: ]+#[0-9]+' | grep -oE '[0-9]+$' | sort -u); do
             info=$(gh issue view "$n" -R "$GITHUB_REPOSITORY" --json state,labels \
-              -q '.state + " " + ([.labels[].name] | join(","))' 2>/dev/null) || continue
+              -q '.state + " " + ([.labels[].name] | join(","))') \
+              || { echo "::warning::Não consegui ler a issue #$n citada no PR #$pr."; continue; }
             case "$info" in
               OPEN*deploy-falhou*|OPEN*producao-incorreta*)
                 gh issue comment "$n" -R "$GITHUB_REPOSITORY" --body "$(printf 'O PR #%s, que declara corrigir esta issue, foi mergeado. Ela fecha sozinha quando a verificação de produção passar; se continuar falhando, a auditoria avisa aqui.\n\n<!-- correcao-mergeada -->' "$pr")" ;;

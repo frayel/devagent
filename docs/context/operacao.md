@@ -20,17 +20,17 @@ PR com CI falhando ou em conflito → pr-guardiao.yml comenta @jules com o log
 | Arquivo | Dispara | Faz |
 |---|---|---|
 | `ci.yml` | PR e push na `main` | ruff, mypy, pytest; job `smoke` sobe a app só com `requirements.txt` e testa `/healthz` e `/` |
-| `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch |
+| `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch; fecha as issues citadas com `Closes/Fixes/Resolves #N` no título, corpo ou commits do PR (exceto `deploy-falhou` e `producao-incorreta`) |
 | `deploy-check.yml` | após o auto-merge, a cada 6 h, manual | consulta o Render; abre ou fecha issues `deploy-falhou`; dispara a auditoria quando o deploy fica live |
 | `auditoria-producao.yml` | a cada 30 min no pregão, antes da abertura, após deploy | roda `auditoria/auditar.py` contra produção; abre ou fecha issues `producao-incorreta` |
 | `jules.yml` | de hora em hora aos :47 (24 h por dia), destravar aos :04, :19, :34 e :49, manual | cria sessões pela API do Jules (`scripts/jules.py`), sem exigir aprovação de plano: desenvolvedor 21x por dia (pula se a sessão anterior ainda estiver ativa ou se a cota de `JULES_LIMITE_DIARIO` chegar à reserva de 4); Sentinel 03h47, Bolt 09h47 e Palette 15h47 (BRT), uma vez cada; só uma persona que altera código trabalha por vez; a cada 15 min aprova planos pendentes e responde perguntas paradas |
 | `auditoria-llm.yml` | dias úteis 18h41 BRT, manual | cria a sessão do auditor LLM pela API do Jules |
-| `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | roda `scripts/guardiao_prs.py`: cobra `@jules` (até 3x), fecha PR sem reação em 3 h, com conflito grande (> 3 arquivos ou > 40 linhas) ou substituído (`Substitui #N`); abre issue `tentativa-falhou`; apaga branches órfãs com mais de 24 h |
+| `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | roda `scripts/guardiao_prs.py`: cobra `@jules` (até 3x), fecha PR sem reação em 3 h, com conflito grande (> 3 arquivos ou > 40 linhas) ou substituído (`Substitui #N`); abre issue `tentativa-falhou`; fecha issues citadas com `Closes #N` em PRs mergeados nos últimos 7 dias; apaga branches órfãs com mais de 24 h |
 | `auditoria-achados.yml` | de hora em hora e após merge de PR `auditoria:` | abre issues para os achados do auditor LLM em `docs/auditoria/achados/` |
 
 O `automerge.yml` não faz merge de PRs que alteram o auditor ou o guardião (`auditoria/`, `docs/agents/auditor.md`, `automerge.yml`, `auditoria-*.yml`, `pr-guardiao.yml`, `scripts/guardiao_prs.py`, `jules.yml`, `scripts/jules.py`): aplica o label `revisao-humana` e espera um humano.
 
-Merges feitos pelo `GITHUB_TOKEN` não disparam o `ci.yml` na `main`; por isso a verificação pós-merge fica no `deploy-check.yml`.
+Merges feitos pelo `GITHUB_TOKEN` não fecham issues pelas palavras-chave `Closes #N` (o GitHub não processa); por isso o `automerge.yml` as fecha explicitamente, e precisa da permissão `issues: write`. Esses merges também não disparam o `ci.yml` na `main`; por isso a verificação pós-merge fica no `deploy-check.yml`.
 
 ## Variáveis e secrets
 

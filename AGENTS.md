@@ -189,11 +189,13 @@ Escolha **uma** issue, a mais antiga. Leia o corpo e todos os comentários. Ent�
 | Bug ou erro | Reproduza, escreva um teste que falhe, corrija. PR `fix:` com `Closes #N`. |
 | Pedido de feature ou melhoria | Transforme em spec `ready` seguindo `docs/skills/escrever-spec.md`, com link para a issue. PR `docs:` que referencia a issue sem fechá-la. A implementação vem pelo Passo 4, e o PR `feat:` fecha a issue com `Closes #N`. |
 | Mudança de instruções, documentação ou processo | Siga `docs/skills/auto-melhoria.md`. PR `agent:` ou `docs:` com `Closes #N`. |
-| Pergunta | Responda na issue com base no código e nos documentos, e feche. Se faltar documentação, corrija com um PR `docs:`. |
-| Duplicada, inválida ou já resolvida | Comente explicando, com link para a issue original ou o commit que resolveu, e feche. |
+| Pergunta | Responda no corpo de um PR `docs:` com `Closes #N`, com base no código e nos documentos. Aproveite o PR para acrescentar a resposta à documentação. |
+| Duplicada, inválida ou já resolvida | Abra um PR `docs:` com o relatório da execução e, no corpo, `Closes #N` e a explicação, com link para a issue original ou o PR/commit que resolveu. |
 | Ambígua | Adote a interpretação mais conservadora, registre-a na issue e siga. Se nem assim for seguro agir, aplique `bloqueado`, pergunte na issue o que falta e encerre. |
 
 Se uma issue já tem spec `ready` ou `in-progress` vinculada, o Passo 4 cuida dela. Encerre a execução.
+
+**Como issues são fechadas.** Você não tem permissão para comentar em issues nem para fechá-las. Toda issue que você resolve fecha pelo PR: escreva `Closes #N` (uma linha por issue) no corpo do PR. Depois do merge, o `automerge.yml` fecha as issues citadas, e o guardião repete a checagem de hora em hora. Issues `deploy-falhou` e `producao-incorreta` não fecham assim: só fecham quando a verificação que as abriu passar. Não use contornos como commits vazios com "Closes": o squash merge descarta essas mensagens.
 
 ### Passo 7 · Descobrir e imaginar
 
