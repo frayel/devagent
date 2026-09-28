@@ -158,34 +158,41 @@ def fetch_brapi() -> HighlightsData | None:
 def fetch_yfinance() -> HighlightsData | None:
     parsed_results = []
 
+    # Batching tickers in groups of 15 to respect URL length and API limits
+    batch_size = 15
+    batches = [TICKERS[i : i + batch_size] for i in range(0, len(TICKERS), batch_size)]
+
     with httpx.Client(timeout=10.0) as client:
-        for ticker in TICKERS:
-            url = f"https://query2.finance.yahoo.com/v8/finance/chart/{ticker}.SA?range=1d&interval=1d"
+        for batch in batches:
+            symbols = ",".join([f"{t}.SA" for t in batch])
+            url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
             try:
                 response = fetch_with_retry(url, client=client)
                 data = response.json()
 
-                if (
-                    "chart" not in data
-                    or "result" not in data["chart"]
-                    or not data["chart"]["result"]
-                ):
-                    continue
+                for item in data.get("spark", {}).get("result", []):
+                    if not item.get("response"):
+                        continue
 
-                meta = data["chart"]["result"][0]["meta"]
-                price = meta.get("regularMarketPrice")
-                prev_close = meta.get("chartPreviousClose")
+                    symbol = item.get("symbol", "").replace(".SA", "")
+                    meta = item["response"][0].get("meta", {})
+                    price = meta.get("regularMarketPrice")
+                    prev_close = meta.get("chartPreviousClose")
 
-                if price is None or prev_close is None or prev_close == 0:
-                    continue
+                    if price is None or prev_close is None or prev_close == 0:
+                        continue
 
-                change_percent = ((price - prev_close) / prev_close) * 100
+                    change_percent = ((price - prev_close) / prev_close) * 100
 
-                parsed_results.append(
-                    {"ticker": ticker, "price": price, "change_percent": change_percent}
-                )
+                    parsed_results.append(
+                        {
+                            "ticker": symbol,
+                            "price": price,
+                            "change_percent": change_percent,
+                        }
+                    )
             except httpx.HTTPError as e:
-                logger.error(f"Error fetching {ticker} from yfinance: {e}")
+                logger.error(f"Error fetching batch {symbols} from yfinance: {e}")
                 continue
 
     if not parsed_results:
