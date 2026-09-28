@@ -10,7 +10,7 @@ import json
 from datetime import datetime, timezone
 from app.services.ibovespa import get_ibovespa_view_data
 from app.services.highlights import get_highlights_view_data
-from app.database import get_latest_ibovespa_data
+from app.database import get_latest_ibovespa_data, get_latest_highlights_data
 from app import agendador
 
 
@@ -74,7 +74,7 @@ def snapshot():
         else {"dates": [], "closes": []}
     )
 
-    return {
+    resp = {
         "gerado_em": datetime.now(timezone.utc).isoformat(),
         "paineis": {
             "ibovespa": {
@@ -90,6 +90,19 @@ def snapshot():
             }
         },
     }
+
+    highlights_data = get_latest_highlights_data()
+    if highlights_data:
+        highs = json.loads(highlights_data.highs_json) if highlights_data.highs_json else []
+        lows = json.loads(highlights_data.lows_json) if highlights_data.lows_json else []
+        resp["paineis"]["altas_baixas"] = {
+            "coletado_em": highlights_data.timestamp.isoformat(),
+            "fonte": getattr(highlights_data, "fonte", "brapi"),
+            "altas": highs,
+            "baixas": lows,
+        }
+
+    return resp
 
 
 @app.get("/", response_class=HTMLResponse)
