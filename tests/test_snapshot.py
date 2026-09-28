@@ -3,7 +3,12 @@ from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
 
-from app.database import IbovespaData, HighlightsData, save_ibovespa_data, save_highlights_data
+from app.database import (
+    IbovespaData,
+    HighlightsData,
+    save_ibovespa_data,
+    save_highlights_data,
+)
 from app.main import app
 
 client = TestClient(app)
@@ -24,8 +29,12 @@ def test_snapshot_with_data():
 
     highlights_data = HighlightsData(
         timestamp=now,
-        highs_json=json.dumps([{"ticker": "HIGH1", "price": 10.0, "change_percent": 5.0}]),
-        lows_json=json.dumps([{"ticker": "LOW1", "price": 5.0, "change_percent": -5.0}]),
+        highs_json=json.dumps(
+            [{"ticker": "HIGH1", "price": 10.0, "change_percent": 5.0}]
+        ),
+        lows_json=json.dumps(
+            [{"ticker": "LOW1", "price": 5.0, "change_percent": -5.0}]
+        ),
         fonte="yfinance",
     )
     save_highlights_data(highlights_data)
@@ -52,5 +61,9 @@ def test_snapshot_with_data():
 
     altas_baixas = resp_data["paineis"]["altas_baixas"]
     assert altas_baixas["fonte"] == "yfinance"
-    assert altas_baixas["altas"] == [{"ticker": "HIGH1", "price": 10.0, "change_percent": 5.0}]
-    assert altas_baixas["baixas"] == [{"ticker": "LOW1", "price": 5.0, "change_percent": -5.0}]
+    assert altas_baixas["altas"] == [
+        {"ticker": "HIGH1", "price": 10.0, "change_percent": 5.0}
+    ]
+    assert altas_baixas["baixas"] == [
+        {"ticker": "LOW1", "price": 5.0, "change_percent": -5.0}
+    ]

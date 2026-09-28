@@ -93,8 +93,12 @@ def snapshot():
 
     highlights_data = get_latest_highlights_data()
     if highlights_data:
-        highs = json.loads(highlights_data.highs_json) if highlights_data.highs_json else []
-        lows = json.loads(highlights_data.lows_json) if highlights_data.lows_json else []
+        highs = (
+            json.loads(highlights_data.highs_json) if highlights_data.highs_json else []
+        )
+        lows = (
+            json.loads(highlights_data.lows_json) if highlights_data.lows_json else []
+        )
         resp["paineis"]["altas_baixas"] = {
             "coletado_em": highlights_data.timestamp.isoformat(),
             "fonte": getattr(highlights_data, "fonte", "brapi"),
