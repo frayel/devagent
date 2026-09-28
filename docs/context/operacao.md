@@ -15,6 +15,14 @@ PR com CI falhando ou em conflito → pr-guardiao.yml comenta @jules com o log
 → spec continua `ready` na main → próximo ciclo refaz, lendo a issue
 ```
 
+## Agenda: o relógio
+
+O cron do GitHub Actions é "melhor esforço" e, neste repositório, descarta a maior parte dos disparos (em 2026-09-28, 5 de cerca de 60 execuções previstas do `jules.yml` em 10 h; o mesmo com os demais). Disparos por `workflow_dispatch` não são descartados.
+
+Por isso a agenda roda pelo `relogio.yml`: a cada quarto de hora, `scripts/relogio.py` lê as linhas `cron:` dos workflows e dispara por `workflow_dispatch` os que estão na hora; depois o relógio dorme até o próximo quarto de hora e dispara a si mesmo. Um cron de 10 min no próprio relógio só religa a corrente se ela parar. Os crons continuam escritos em cada workflow e são a fonte da agenda; o `jules.yml` ignora eventos `schedule` para não criar sessões duplicadas quando um disparo atrasado do GitHub chega.
+
+Para parar a agenda, desative o workflow *Relógio* em *Actions*. Para mudar um horário, edite o cron no workflow correspondente.
+
 ## Workflows
 
 | Arquivo | Dispara | Faz |
@@ -23,12 +31,13 @@ PR com CI falhando ou em conflito → pr-guardiao.yml comenta @jules com o log
 | `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch |
 | `deploy-check.yml` | após o auto-merge, a cada 6 h, manual | consulta o Render; abre ou fecha issues `deploy-falhou`; dispara a auditoria quando o deploy fica live |
 | `auditoria-producao.yml` | a cada 30 min no pregão, antes da abertura, após deploy | roda `auditoria/auditar.py` contra produção; abre ou fecha issues `producao-incorreta` |
-| `jules.yml` | de hora em hora (24 h por dia), a cada 15 min, manual | cria sessões pela API do Jules (`scripts/jules.py`), sem exigir aprovação de plano: desenvolvedor 21x por dia (pula se a sessão anterior ainda estiver ativa ou se a cota de `JULES_LIMITE_DIARIO` chegar à reserva de 4); Sentinel 03h05, Bolt 09h05 e Palette 15h05 (BRT), uma vez cada; só uma persona que altera código trabalha por vez; a cada 15 min aprova planos pendentes e responde perguntas paradas |
+| `relogio.yml` | a cada 15 min, redisparando a si mesmo; cron de 10 min só religa | dispara por `workflow_dispatch` os workflows cujo cron cai no quarto de hora |
+| `jules.yml` | pelo relógio: de hora em hora (24 h por dia) e a cada 15 min; manual | cria sessões pela API do Jules (`scripts/jules.py`), sem exigir aprovação de plano: desenvolvedor 21x por dia (pula se a sessão anterior ainda estiver ativa ou se a cota de `JULES_LIMITE_DIARIO` chegar à reserva de 4); Sentinel 03h05, Bolt 09h05 e Palette 15h05 (BRT), uma vez cada; só uma persona que altera código trabalha por vez; a cada 15 min aprova planos pendentes e responde perguntas paradas |
 | `auditoria-llm.yml` | dias úteis 18h41 BRT, manual | cria a sessão do auditor LLM pela API do Jules |
 | `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | roda `scripts/guardiao_prs.py`: cobra `@jules` (até 3x), fecha PR sem reação em 3 h, com conflito grande (> 3 arquivos ou > 40 linhas) ou substituído (`Substitui #N`); abre issue `tentativa-falhou`; apaga branches órfãs com mais de 24 h |
 | `auditoria-achados.yml` | de hora em hora e após merge de PR `auditoria:` | abre issues para os achados do auditor LLM em `docs/auditoria/achados/` |
 
-O `automerge.yml` não faz merge de PRs que alteram o auditor ou o guardião (`auditoria/`, `docs/agents/auditor.md`, `automerge.yml`, `auditoria-*.yml`, `pr-guardiao.yml`, `scripts/guardiao_prs.py`, `jules.yml`, `scripts/jules.py`): aplica o label `revisao-humana` e espera um humano.
+O `automerge.yml` não faz merge de PRs que alteram o auditor ou o guardião (`auditoria/`, `docs/agents/auditor.md`, `automerge.yml`, `auditoria-*.yml`, `pr-guardiao.yml`, `scripts/guardiao_prs.py`, `jules.yml`, `scripts/jules.py`, `relogio.yml`, `scripts/relogio.py`): aplica o label `revisao-humana` e espera um humano.
 
 Merges feitos pelo `GITHUB_TOKEN` não disparam o `ci.yml` na `main`; por isso a verificação pós-merge fica no `deploy-check.yml`.
 

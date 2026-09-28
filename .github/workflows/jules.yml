@@ -6,6 +6,9 @@ name: Jules
 # "aguardando aprovação" mesmo com o prompt pedindo o contrário.
 #
 # ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
+# Quem dispara este workflow é o relogio.yml, por workflow_dispatch, lendo os
+# crons abaixo. O cron do GitHub descarta a maior parte dos disparos; por isso
+# o job ignora eventos `schedule` (evita sessão duplicada quando um atrasado chega).
 on:
   schedule:
     # Horários em UTC (BRT = UTC-3). Um disparo por hora, 24 h por dia:
@@ -41,6 +44,7 @@ concurrency:
 
 jobs:
   jules:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:

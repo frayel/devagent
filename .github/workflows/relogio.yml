@@ -1,0 +1,66 @@
+name: Relógio
+
+# Motor da agenda. O cron do GitHub descarta a maior parte dos disparos deste
+# repositório; workflow_dispatch não. Cada execução:
+#   1. dispara (por workflow_dispatch) os workflows cujo cron cai neste
+#      quarto de hora (scripts/relogio.py lê os crons dos próprios arquivos);
+#   2. espera até o próximo quarto de hora;
+#   3. dispara a si mesma. A corrente não para.
+# O cron abaixo é só a religação: se nenhuma execução da corrente estiver
+# rodando ou na fila, ele a reinicia.
+#
+# ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/10 * * * *"
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  religar:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Reiniciar a corrente se ela parou
+        run: |
+          vivos=$(gh run list -R "$GITHUB_REPOSITORY" --workflow relogio.yml \
+            --event workflow_dispatch --limit 20 --json status \
+            -q '[.[] | select(.status != "completed")] | length')
+          if [ "$vivos" = "0" ]; then
+            echo "Corrente parada: religando."
+            gh workflow run relogio.yml -R "$GITHUB_REPOSITORY" --ref main
+          else
+            echo "Corrente viva ($vivos execução(ões) ativa(s) ou na fila)."
+          fi
+
+  tique:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: relogio-tique
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Disparar o que está na hora
+        run: python3 scripts/relogio.py
+      - name: Esperar o próximo quarto de hora
+        run: |
+          espera=$(python3 -c "import time;t=time.time();print(int(900 - t % 900) + 20)")
+          echo "Dormindo ${espera}s."
+          sleep "$espera"
+      - name: Continuar a corrente
+        # Cancelar a execução à mão interrompe a corrente (o religar reinicia em até 10 min;
+        # para parar de vez, desative o workflow em Actions).
+        if: ${{ !cancelled() }}
+        run: gh workflow run relogio.yml -R "$GITHUB_REPOSITORY" --ref main
