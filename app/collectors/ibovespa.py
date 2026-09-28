@@ -19,7 +19,7 @@ def fetch_brapi() -> IbovespaData | None:
         logger.warning("BRAPI_TOKEN not set, skipping brapi.dev")
         return None
 
-    url = f"https://brapi.dev/api/quote/^BVSP?token={BRAPI_TOKEN}&range=1mo&interval=1d&fundamental=false"
+    url = f"https://brapi.dev/api/quote/^BVSP?token={BRAPI_TOKEN}&range=2mo&interval=1d&fundamental=false"
     try:
         response = fetch_with_retry(url, timeout=10.0)
         data = response.json()
@@ -64,7 +64,7 @@ def fetch_brapi() -> IbovespaData | None:
 
 def fetch_yfinance() -> IbovespaData | None:
     url = (
-        "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=1mo&interval=1d"
+        "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=2mo&interval=1d"
     )
     try:
         response = fetch_with_retry(url, timeout=10.0)
