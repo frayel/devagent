@@ -26,6 +26,9 @@
                 x: historyData.dates,
                 y: historyData.closes,
                 type: 'scatter',
+
+                hovertemplate: '%{x}<br><b>%{y:,.0f} pontos</b><extra></extra>',
+
                 mode: 'lines',
                 line: {
                     color: '{{ "#28a745" if data.is_positive else "#dc3545" if data.is_negative else "#6c757d" }}',
@@ -35,7 +38,8 @@
             const layout = {
                 margin: { t: 10, r: 10, l: 40, b: 30 },
                 xaxis: { showgrid: false },
-                yaxis: { showgrid: true, gridcolor: '#eee' },
+                separators: ',.',
+                yaxis: { showgrid: true, gridcolor: '#eee', tickformat: ',.0f' },
                 paper_bgcolor: 'rgba(0,0,0,0)',
                 plot_bgcolor: 'rgba(0,0,0,0)'
             };
