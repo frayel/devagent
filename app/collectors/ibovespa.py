@@ -19,7 +19,7 @@ def fetch_brapi() -> IbovespaData | None:
         logger.warning("BRAPI_TOKEN not set, skipping brapi.dev")
         return None
 
-    url = f"https://brapi.dev/api/quote/^BVSP?token={BRAPI_TOKEN}&range=2mo&interval=1d&fundamental=false"
+    url = f"https://brapi.dev/api/quote/%5EBVSP?token={BRAPI_TOKEN}&range=2mo&interval=1d&fundamental=false"
     try:
         response = fetch_with_retry(url, timeout=10.0)
         data = response.json()
