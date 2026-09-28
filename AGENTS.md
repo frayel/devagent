@@ -72,14 +72,12 @@ scripts/
   estado_github.py     # PRs abertos (CI, conflito) e issues; primeiro comando da execução
   guardiao_prs.py      # regras do guardião de PRs (roda no GitHub Actions)
   jules.py             # cria e destrava sessões do Jules pela API (roda no GitHub Actions)
-  relogio.py           # lê os crons dos workflows e os dispara por workflow_dispatch
 render.yaml
 .github/workflows/
   ci.yml               # lint, tipos, testes e smoke test com dependências de produção
   automerge.yml        # squash merge quando o CI passa
   deploy-check.yml     # confere o deploy após o merge; abre issue `deploy-falhou`
   pr-guardiao.yml      # cobra, fecha e limpa PRs travados; issue `tentativa-falhou`
-  relogio.yml          # motor da agenda: a cada 15 min dispara os workflows na hora e se redispara
   jules.yml            # dispara desenvolvedor e especialistas; aprova planos pendentes
   auditoria-llm.yml    # dispara o auditor LLM uma vez por dia útil
   auditoria-producao.yml # audita produção contra fontes independentes; issue `producao-incorreta`

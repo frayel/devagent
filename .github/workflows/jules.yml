@@ -6,24 +6,23 @@ name: Jules
 # "aguardando aprovação" mesmo com o prompt pedindo o contrário.
 #
 # ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
-# Quem dispara este workflow é o relogio.yml, por workflow_dispatch, lendo os
-# crons abaixo. O cron do GitHub descarta a maior parte dos disparos; por isso
-# o job ignora eventos `schedule` (evita sessão duplicada quando um atrasado chega).
 on:
   schedule:
-    # Horários em UTC (BRT = UTC-3). Um disparo por hora, 24 h por dia:
+    # Horários em UTC (BRT = UTC-3). Minutos quebrados de propósito: o GitHub
+    # atrasa e descarta mais os agendamentos perto da virada da hora.
+    # Um disparo por hora, 24 h por dia:
     # 21 para o desenvolvedor e, nas horas 6, 12 e 18, um para cada especialista.
     # Se a sessão anterior do desenvolvedor ainda estiver ativa, o disparo é pulado.
     # Com o repo variable JULES_LIMITE_DIARIO, o desenvolvedor para antes de
     # consumir a cota reservada aos especialistas e ao auditor.
-    - cron: "5 0-5,7-11,13-17,19-23 * * *" # desenvolvedor
-    - cron: "5 6 * * *" # seguranca (Sentinel), 03h05 BRT
-    - cron: "5 12 * * *" # performance (Bolt), 09h05 BRT
-    - cron: "5 18 * * *" # design (Palette), 15h05 BRT
+    - cron: "47 0-5,7-11,13-17,19-23 * * *" # desenvolvedor
+    - cron: "47 6 * * *" # seguranca (Sentinel), 03h47 BRT
+    - cron: "47 12 * * *" # performance (Bolt), 09h47 BRT
+    - cron: "47 18 * * *" # design (Palette), 15h47 BRT
     # Destravar: a cada 15 minutos (o GitHub pode atrasar ou pular
     # agendamentos curtos em horários de pico; cada disparo acima
     # também destrava).
-    - cron: "*/15 * * * *"
+    - cron: "4,19,34,49 * * * *"
   # Execução manual. O auditor LLM também é agendado pelo auditoria-llm.yml;
   # disparar pelos dois lugares é seguro, porque jules.py não cria sessão
   # nova se já houver uma ativa da mesma persona.
@@ -44,7 +43,6 @@ concurrency:
 
 jobs:
   jules:
-    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -64,10 +62,10 @@ jobs:
             acao="${{ inputs.acao }}"
           else
             case "${{ github.event.schedule }}" in
-              "*/15 * * * *") acao="destravar" ;;
-              "5 6 * * *") acao="seguranca" ;;
-              "5 12 * * *") acao="performance" ;;
-              "5 18 * * *") acao="design" ;;
+              "4,19,34,49 * * * *") acao="destravar" ;;
+              "47 6 * * *") acao="seguranca" ;;
+              "47 12 * * *") acao="performance" ;;
+              "47 18 * * *") acao="design" ;;
               *) acao="desenvolvedor" ;;
             esac
           fi
