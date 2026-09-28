@@ -23,7 +23,7 @@ PR com CI falhando ou em conflito → pr-guardiao.yml comenta @jules com o log
 | `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch |
 | `deploy-check.yml` | após o auto-merge, a cada 6 h, manual | consulta o Render; abre ou fecha issues `deploy-falhou`; dispara a auditoria quando o deploy fica live |
 | `auditoria-producao.yml` | a cada 30 min no pregão, antes da abertura, após deploy | roda `auditoria/auditar.py` contra produção; abre ou fecha issues `producao-incorreta` |
-| `jules.yml` | a cada 2 h (24 h por dia), a cada 15 min, manual | cria sessões pela API do Jules (`scripts/jules.py`), sem exigir aprovação de plano: desenvolvedor 9x por dia; Sentinel 03h05, Bolt 09h05 e Palette 15h05 (BRT), uma vez cada; só uma persona que altera código trabalha por vez; a cada 15 min aprova planos pendentes e responde perguntas paradas |
+| `jules.yml` | de hora em hora (24 h por dia), a cada 15 min, manual | cria sessões pela API do Jules (`scripts/jules.py`), sem exigir aprovação de plano: desenvolvedor 21x por dia (pula se a sessão anterior ainda estiver ativa ou se a cota de `JULES_LIMITE_DIARIO` chegar à reserva de 4); Sentinel 03h05, Bolt 09h05 e Palette 15h05 (BRT), uma vez cada; só uma persona que altera código trabalha por vez; a cada 15 min aprova planos pendentes e responde perguntas paradas |
 | `auditoria-llm.yml` | dias úteis 18h41 BRT, manual | cria a sessão do auditor LLM pela API do Jules |
 | `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | roda `scripts/guardiao_prs.py`: cobra `@jules` (até 3x), fecha PR sem reação em 3 h, com conflito grande (> 3 arquivos ou > 40 linhas) ou substituído (`Substitui #N`); abre issue `tentativa-falhou`; apaga branches órfãs com mais de 24 h |
 | `auditoria-achados.yml` | de hora em hora e após merge de PR `auditoria:` | abre issues para os achados do auditor LLM em `docs/auditoria/achados/` |
@@ -39,6 +39,7 @@ Merges feitos pelo `GITHUB_TOKEN` não disparam o `ci.yml` na `main`; por isso a
 | `RENDER_API_KEY` | secret do GitHub e ambiente do Jules | ler status e logs de deploy |
 | `RENDER_SERVICE_ID` | secret do GitHub e ambiente do Jules | id `srv-...` do web service |
 | `JULES_API_KEY` | secret do GitHub | criar e destravar sessões do Jules (`scripts/jules.py`) |
+| `JULES_LIMITE_DIARIO` | variável (não secret) do GitHub, opcional | tarefas do plano do Jules por 24 h (15, 100 ou 300); o desenvolvedor para ao chegar a 4 do limite, reservando a cota dos especialistas e do auditor |
 | `PRODUCTION_URL` | ambiente do Jules; variável (não secret) do GitHub, opcional | auditoria de produção; padrão `https://devagent-vb52.onrender.com` |
 | `BRAPI_TOKEN` | Render | coletor brapi (sem ele, a coleta usa só o Yahoo Finance) |
 | `COLETA_AUTOMATICA` | Render, opcional | `0` desliga a coleta dentro do web service |

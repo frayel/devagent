@@ -8,9 +8,12 @@ name: Jules
 # ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
 on:
   schedule:
-    # Horários em UTC (BRT = UTC-3). Um disparo a cada 2 horas, 24 h por dia:
-    # 9 para o desenvolvedor e 1 por dia para cada especialista.
-    - cron: "5 0,2,4,8,10,14,16,20,22 * * *" # desenvolvedor
+    # Horários em UTC (BRT = UTC-3). Um disparo por hora, 24 h por dia:
+    # 21 para o desenvolvedor e, nas horas 6, 12 e 18, um para cada especialista.
+    # Se a sessão anterior do desenvolvedor ainda estiver ativa, o disparo é pulado.
+    # Com o repo variable JULES_LIMITE_DIARIO, o desenvolvedor para antes de
+    # consumir a cota reservada aos especialistas e ao auditor.
+    - cron: "5 0-5,7-11,13-17,19-23 * * *" # desenvolvedor
     - cron: "5 6 * * *" # seguranca (Sentinel), 03h05 BRT
     - cron: "5 12 * * *" # performance (Bolt), 09h05 BRT
     - cron: "5 18 * * *" # design (Palette), 15h05 BRT
@@ -42,6 +45,7 @@ jobs:
     timeout-minutes: 5
     env:
       JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+      JULES_LIMITE_DIARIO: ${{ vars.JULES_LIMITE_DIARIO }}
     steps:
       - uses: actions/checkout@v4
         with:

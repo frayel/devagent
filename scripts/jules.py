@@ -147,6 +147,28 @@ def _data(s: dict[str, Any], campo: str) -> datetime:
     return datetime.fromisoformat(valor.replace("Z", "+00:00"))
 
 
+# O Jules limita tarefas por janela móvel de 24 h (15 no plano gratuito,
+# 100 no Pro, 300 no Ultra). Se JULES_LIMITE_DIARIO estiver definido, o
+# desenvolvedor deixa de criar sessões quando só restar a reserva para os
+# especialistas e o auditor, que rodam uma vez por dia cada.
+RESERVA_DIARIA = 4
+
+
+def cota_esgotada(sessoes: list[dict[str, Any]]) -> bool:
+    limite = os.environ.get("JULES_LIMITE_DIARIO", "").strip()
+    if not limite.isdigit():
+        return False
+    corte = datetime.now(timezone.utc) - timedelta(hours=24)
+    usadas = sum(1 for s in sessoes if _data(s, "createTime") >= corte)
+    if usadas >= int(limite) - RESERVA_DIARIA:
+        print(
+            f"Cota: {usadas} sessões nas últimas 24 h, limite {limite} "
+            f"com reserva de {RESERVA_DIARIA}. Desenvolvedor não iniciado."
+        )
+        return True
+    return False
+
+
 def iniciar(persona: str, dry_run: bool) -> int:
     p = PERSONAS[persona]
     corpo = {
@@ -164,7 +186,10 @@ def iniciar(persona: str, dry_run: bool) -> int:
         return 0
     grupo = CONSTRUTORAS if persona in CONSTRUTORAS else {persona}
     titulos = tuple(PERSONAS[x]["titulo"] for x in grupo)
-    for s in sessoes_do_repo():
+    sessoes = sessoes_do_repo()
+    if persona == "desenvolvedor" and cota_esgotada(sessoes):
+        return 0
+    for s in sessoes:
         if s.get("title", "").startswith(titulos) and s.get("state") in ATIVOS:
             print(f"Sessão ativa impede {persona}: {s.get('title')} ({s['state']})")
             return 0
