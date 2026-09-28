@@ -43,6 +43,10 @@ def test_fetch_brapi_success():
         assert data.previous_close == 129000.0
         assert data.fonte == "brapi"
 
+        history_json = json.loads(data.history_json)
+        assert len(history_json["dates"]) <= 30
+        assert len(history_json["closes"]) <= 30
+
 
 @respx.mock
 def test_fetch_yfinance_success():
@@ -55,6 +59,10 @@ def test_fetch_yfinance_success():
     assert data.current_price == 131000.0
     assert data.previous_close == 132000.0
     assert data.fonte == "yfinance"
+
+    history_json = json.loads(data.history_json)
+    assert len(history_json["dates"]) <= 30
+    assert len(history_json["closes"]) <= 30
 
 
 @respx.mock
