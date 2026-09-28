@@ -127,7 +127,9 @@ def test_fetch_yfinance_success(monkeypatch):
     batches = [TICKERS[i : i + batch_size] for i in range(0, len(TICKERS), batch_size)]
     for batch_idx, batch in enumerate(batches):
         symbols = ",".join([f"{t}.SA" for t in batch])
-        yfinance_data = generate_mock_yfinance_batch_data(batch, global_offset=batch_idx * batch_size)
+        yfinance_data = generate_mock_yfinance_batch_data(
+            batch, global_offset=batch_idx * batch_size
+        )
         respx.get(
             f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
         ).respond(status_code=200, json=yfinance_data)
@@ -173,7 +175,9 @@ def test_collect_and_save_fallback(monkeypatch):
         ]
         for batch_idx, batch in enumerate(batches):
             symbols = ",".join([f"{t}.SA" for t in batch])
-            yfinance_data = generate_mock_yfinance_batch_data(batch, global_offset=batch_idx * batch_size)
+            yfinance_data = generate_mock_yfinance_batch_data(
+                batch, global_offset=batch_idx * batch_size
+            )
             respx.get(
                 f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
             ).respond(status_code=200, json=yfinance_data)
@@ -265,7 +269,9 @@ def test_index_route_yfinance(monkeypatch):
         ]
         for batch_idx, batch in enumerate(batches):
             symbols = ",".join([f"{t}.SA" for t in batch])
-            yfinance_data = generate_mock_yfinance_batch_data(batch, global_offset=batch_idx * batch_size)
+            yfinance_data = generate_mock_yfinance_batch_data(
+                batch, global_offset=batch_idx * batch_size
+            )
             respx.get(
                 f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
             ).respond(status_code=200, json=yfinance_data)
