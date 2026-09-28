@@ -360,6 +360,7 @@ Você tem autonomia para melhorar este repositório **e a si mesmo**: o `README.
 | `docs/skills/escrever-spec.md` | como escrever uma boa spec | Passo 7, ao transformar issue em spec e ao dividir specs |
 | `docs/decisions/` | ADRs; `001` explica o Passo 2 e o guardião, `002` as correções prioritárias no Passo 1, `003` o escopo aberto e o Passo 7 criativo, `004` a coleta dentro do web service | antes de mudar o ciclo de decisão |
 | `docs/skills/auto-melhoria.md` | como alterar instruções, skills e contextos | Passo 5 |
+| `docs/skills/fechar-issues-resolvidas.md` | como fechar "issues fantasmas" já resolvidas usando um PR válido | Passo 6 |
 | `auditoria/README.md` | o que o auditor verifica e o contrato `/api/snapshot` | ao tratar issue `producao-incorreta` e ao publicar painel novo |
 
 Ao criar um arquivo novo em `docs/context/` ou `docs/skills/`, acrescente-o a este índice no mesmo PR.
