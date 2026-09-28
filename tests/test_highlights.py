@@ -44,17 +44,45 @@ def generate_mock_brapi_data():
 def generate_mock_yfinance_data(ticker, is_high=False, multiplier=1):
     price = (100.0 + multiplier * 2) if is_high else (80.0 - multiplier * 2)
     return {
-        "chart": {
+        "spark": {
             "result": [
                 {
-                    "meta": {
-                        "regularMarketPrice": price,
-                        "chartPreviousClose": 90.0,
-                    }
+                    "symbol": f"{ticker}.SA",
+                    "response": [
+                        {
+                            "meta": {
+                                "regularMarketPrice": price,
+                                "chartPreviousClose": 90.0,
+                            }
+                        }
+                    ],
                 }
             ]
         }
     }
+
+
+def generate_mock_yfinance_batch_data(batch_tickers, global_offset=0):
+    results = []
+    for i, ticker in enumerate(batch_tickers):
+        idx = global_offset + i
+        is_high = idx % 2 == 0
+        multiplier = idx // 2
+        price = (100.0 + multiplier * 2) if is_high else (80.0 - multiplier * 2)
+        results.append(
+            {
+                "symbol": f"{ticker}.SA",
+                "response": [
+                    {
+                        "meta": {
+                            "regularMarketPrice": price,
+                            "chartPreviousClose": 90.0,
+                        }
+                    }
+                ],
+            }
+        )
+    return {"spark": {"result": results}}
 
 
 @respx.mock
@@ -94,11 +122,16 @@ def test_fetch_brapi_success(monkeypatch):
 @respx.mock
 def test_fetch_yfinance_success(monkeypatch):
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
-    for i, ticker in enumerate(TICKERS):
-        is_high = i % 2 == 0
-        yfinance_data = generate_mock_yfinance_data(ticker, is_high, i // 2)
+
+    batch_size = 15
+    batches = [TICKERS[i : i + batch_size] for i in range(0, len(TICKERS), batch_size)]
+    for batch_idx, batch in enumerate(batches):
+        symbols = ",".join([f"{t}.SA" for t in batch])
+        yfinance_data = generate_mock_yfinance_batch_data(
+            batch, global_offset=batch_idx * batch_size
+        )
         respx.get(
-            f"https://query2.finance.yahoo.com/v8/finance/chart/{ticker}.SA?range=1d&interval=1d"
+            f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
         ).respond(status_code=200, json=yfinance_data)
 
     data = fetch_yfinance()
@@ -128,12 +161,25 @@ def test_collect_and_save_fallback(monkeypatch):
             )
         ).respond(status_code=500)
 
+        # Brapi list fails too
+        respx.get(
+            httpx.URL(
+                "https://brapi.dev/api/quote/list?type=stock&sortBy=volume&sortOrder=desc&limit=100&token=test_token"
+            )
+        ).respond(status_code=500)
+
         # Yfinance succeeds
-        for i, ticker in enumerate(TICKERS):
-            is_high = i % 2 == 0
-            yfinance_data = generate_mock_yfinance_data(ticker, is_high, i // 2)
+        batch_size = 15
+        batches = [
+            TICKERS[i : i + batch_size] for i in range(0, len(TICKERS), batch_size)
+        ]
+        for batch_idx, batch in enumerate(batches):
+            symbols = ",".join([f"{t}.SA" for t in batch])
+            yfinance_data = generate_mock_yfinance_batch_data(
+                batch, global_offset=batch_idx * batch_size
+            )
             respx.get(
-                f"https://query2.finance.yahoo.com/v8/finance/chart/{ticker}.SA?range=1d&interval=1d"
+                f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
             ).respond(status_code=200, json=yfinance_data)
 
         success = collect_and_save()
@@ -209,12 +255,25 @@ def test_index_route_yfinance(monkeypatch):
             )
         ).respond(status_code=500)
 
+        # Brapi list fails too
+        respx.get(
+            httpx.URL(
+                "https://brapi.dev/api/quote/list?type=stock&sortBy=volume&sortOrder=desc&limit=100&token=test_token"
+            )
+        ).respond(status_code=500)
+
         # Yfinance succeeds
-        for i, ticker in enumerate(TICKERS):
-            is_high = i % 2 == 0
-            yfinance_data = generate_mock_yfinance_data(ticker, is_high, i // 2)
+        batch_size = 15
+        batches = [
+            TICKERS[i : i + batch_size] for i in range(0, len(TICKERS), batch_size)
+        ]
+        for batch_idx, batch in enumerate(batches):
+            symbols = ",".join([f"{t}.SA" for t in batch])
+            yfinance_data = generate_mock_yfinance_batch_data(
+                batch, global_offset=batch_idx * batch_size
+            )
             respx.get(
-                f"https://query2.finance.yahoo.com/v8/finance/chart/{ticker}.SA?range=1d&interval=1d"
+                f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
             ).respond(status_code=200, json=yfinance_data)
 
         collect_and_save()
