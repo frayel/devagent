@@ -3,7 +3,12 @@ from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
 
-from app.database import IbovespaData, save_ibovespa_data
+from app.database import (
+    IbovespaData,
+    HighlightsData,
+    save_ibovespa_data,
+    save_highlights_data,
+)
 from app.main import app
 
 client = TestClient(app)
@@ -21,6 +26,18 @@ def test_snapshot_with_data():
         fonte="brapi",
     )
     save_ibovespa_data(data)
+
+    highlights_data = HighlightsData(
+        timestamp=now,
+        highs_json=json.dumps(
+            [{"ticker": "HIGH1", "price": 10.0, "change_percent": 5.0}]
+        ),
+        lows_json=json.dumps(
+            [{"ticker": "LOW1", "price": 5.0, "change_percent": -5.0}]
+        ),
+        fonte="yfinance",
+    )
+    save_highlights_data(highlights_data)
 
     response = client.get("/api/snapshot")
     assert response.status_code == 200
@@ -41,3 +58,12 @@ def test_snapshot_with_data():
     assert ibov["fonte"] == "brapi"
     assert ibov["historico"]["datas"] == ["2026-09-25", "2026-09-28"]
     assert ibov["historico"]["fechamentos"] == [182050.1, 183476.86]
+
+    altas_baixas = resp_data["paineis"]["altas_baixas"]
+    assert altas_baixas["fonte"] == "yfinance"
+    assert altas_baixas["altas"] == [
+        {"ticker": "HIGH1", "price": 10.0, "change_percent": 5.0}
+    ]
+    assert altas_baixas["baixas"] == [
+        {"ticker": "LOW1", "price": 5.0, "change_percent": -5.0}
+    ]
