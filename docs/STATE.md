@@ -15,3 +15,8 @@
   - Coletor com fonte de dados brapi.dev e fallback yfinance, rastreando lista de 30 tickers de alta liquidez.
   - Exibição de duas tabelas com top 5 altas e baixas (variação percentual).
   - Tratamento de falhas e UI para dados não disponíveis.
+- Spec 003 (Médias Móveis de 21 e 200 dias para o Ibovespa):
+  - Inclusão dos campos `mm21` e `mm200` no cache `ibovespa_cache`.
+  - Cálculo de médias móveis baseado em histórico estendido (`1y`).
+  - Card "Tendência (Ibovespa)" com sinais de alta, baixa ou neutra.
+  - Atualização automática em cada coleta com fallback para dados insuficientes.

@@ -1,7 +1,7 @@
 ---
 id: 003
 titulo: Médias Móveis de 21 e 200 dias para o Ibovespa
-status: ready
+status: done
 esforco: P
 ---
 
@@ -28,12 +28,12 @@ O investidor quer saber rapidamente se a tendência do Ibovespa a curto e longo 
 - Regra de Sinal: Se Preço Atual > MM, então "Alta". Se Preço Atual < MM, então "Baixa". Se igual, "Neutra".
 
 ## Critérios de aceite
-- [ ] A coleta traz dados suficientes de histórico para calcular a MM200 (busca usando range `1y` ou maior no yfinance).
-- [ ] O cálculo das médias desconsidera fins de semana/feriados (usa os últimos 21/200 candles retornados).
-- [ ] O banco de dados armazena os valores calculados em cache adequadamente.
-- [ ] Se o número de dados for inferior a 200, a MM200 não é exibida, informando "Dados insuficientes".
-- [ ] Testes unitários validam a precisão do cálculo da média aritmética usando fixtures.
-- [ ] A exibição das médias apresenta a fonte e horário da última atualização.
+- [x] A coleta traz dados suficientes de histórico para calcular a MM200 (busca usando range `1y` ou maior no yfinance).
+- [x] O cálculo das médias desconsidera fins de semana/feriados (usa os últimos 21/200 candles retornados).
+- [x] O banco de dados armazena os valores calculados em cache adequadamente.
+- [x] Se o número de dados for inferior a 200, a MM200 não é exibida, informando "Dados insuficientes".
+- [x] Testes unitários validam a precisão do cálculo da média aritmética usando fixtures.
+- [x] A exibição das médias apresenta a fonte e horário da última atualização.
 
 ## Invariantes de produção
 - A página mostra MM21 e MM200 com sinais indicativos (Alta/Baixa).

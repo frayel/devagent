@@ -87,6 +87,10 @@ def snapshot():
                     "datas": history_data.get("dates", []),
                     "fechamentos": history_data.get("closes", []),
                 },
+                "medias_moveis": {
+                    "mm21": data.mm21,
+                    "mm200": data.mm200,
+                },
             }
         },
     }

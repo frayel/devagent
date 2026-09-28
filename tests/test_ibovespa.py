@@ -6,7 +6,12 @@ import httpx
 import respx
 from fastapi.testclient import TestClient
 
-from app.collectors.ibovespa import collect_and_save, fetch_brapi, fetch_yfinance
+from app.collectors.ibovespa import (
+    collect_and_save,
+    fetch_brapi,
+    fetch_yfinance,
+    calc_mm,
+)
 from app.database import get_latest_ibovespa_data
 from app.main import app
 
@@ -34,7 +39,7 @@ def test_fetch_brapi_success():
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
         respx.get(
             httpx.URL(
-                "https://brapi.dev/api/quote/%5EBVSP?token=test_token&range=2mo&interval=1d&fundamental=false"
+                "https://brapi.dev/api/quote/%5EBVSP?token=test_token&range=1y&interval=1d&fundamental=false"
             )
         ).respond(status_code=200, json=brapi_data)
         data = fetch_brapi()
@@ -46,13 +51,29 @@ def test_fetch_brapi_success():
         history_json = json.loads(data.history_json)
         assert len(history_json["dates"]) <= 30
         assert len(history_json["closes"]) <= 30
+        assert data.mm21 is None or isinstance(data.mm21, float)
+        assert data.mm200 is None or isinstance(data.mm200, float)
+
+
+def test_calculate_moving_averages():
+    closes = [10.0, 20.0, 30.0, 40.0, 50.0]
+
+    # Not enough data for moving average of 10
+    assert calc_mm(closes, 10) is None
+
+    # Moving average of 3
+    # last 3 are 30.0, 40.0, 50.0
+    assert calc_mm(closes, 3) == 40.0
+
+    # Moving average of 5
+    assert calc_mm(closes, 5) == 30.0
 
 
 @respx.mock
 def test_fetch_yfinance_success():
     yfinance_data = load_fixture("yfinance_response.json")
     respx.get(
-        "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=2mo&interval=1d"
+        "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=1y&interval=1d"
     ).respond(status_code=200, json=yfinance_data)
     data = fetch_yfinance()
     assert data is not None
@@ -72,11 +93,11 @@ def test_collect_and_save_fallback():
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
         respx.get(
             httpx.URL(
-                "https://brapi.dev/api/quote/%5EBVSP?token=test_token&range=2mo&interval=1d&fundamental=false"
+                "https://brapi.dev/api/quote/%5EBVSP?token=test_token&range=1y&interval=1d&fundamental=false"
             )
         ).respond(status_code=500)
         respx.get(
-            "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=2mo&interval=1d"
+            "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=1y&interval=1d"
         ).respond(status_code=200, json=yfinance_data)
 
         success = collect_and_save()
@@ -101,7 +122,7 @@ def test_index_route():
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
         respx.get(
             httpx.URL(
-                "https://brapi.dev/api/quote/%5EBVSP?token=test_token&range=2mo&interval=1d&fundamental=false"
+                "https://brapi.dev/api/quote/%5EBVSP?token=test_token&range=1y&interval=1d&fundamental=false"
             )
         ).respond(status_code=200, json=brapi_data)
         collect_and_save()
