@@ -13,6 +13,8 @@ class IbovespaData:
     previous_close: float
     history_json: str
     fonte: str = "brapi"
+    mm21: float | None = None
+    mm200: float | None = None
 
 
 @dataclass
@@ -39,7 +41,9 @@ def init_db() -> None:
             current_price REAL NOT NULL,
             previous_close REAL NOT NULL,
             history_json TEXT NOT NULL,
-            fonte TEXT NOT NULL DEFAULT 'brapi'
+            fonte TEXT NOT NULL DEFAULT 'brapi',
+            mm21 REAL,
+            mm200 REAL
         )
     """)
 
@@ -50,6 +54,13 @@ def init_db() -> None:
         cursor.execute(
             "ALTER TABLE ibovespa_cache ADD COLUMN fonte TEXT NOT NULL DEFAULT 'brapi'"
         )
+
+    # Migrar a tabela antiga caso exista e não tenha as colunas mm21 e mm200
+    try:
+        cursor.execute("SELECT mm21 FROM ibovespa_cache LIMIT 1")
+    except sqlite3.OperationalError:
+        cursor.execute("ALTER TABLE ibovespa_cache ADD COLUMN mm21 REAL")
+        cursor.execute("ALTER TABLE ibovespa_cache ADD COLUMN mm200 REAL")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS highlights_cache (
@@ -88,8 +99,8 @@ def save_ibovespa_data(data: IbovespaData) -> None:
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO ibovespa_cache (timestamp, current_price, previous_close, history_json, fonte)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO ibovespa_cache (timestamp, current_price, previous_close, history_json, fonte, mm21, mm200)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     """,
         (
             data.timestamp.isoformat(),
@@ -97,6 +108,8 @@ def save_ibovespa_data(data: IbovespaData) -> None:
             data.previous_close,
             data.history_json,
             data.fonte,
+            data.mm21,
+            data.mm200,
         ),
     )
     conn.commit()
@@ -107,7 +120,7 @@ def get_latest_ibovespa_data() -> IbovespaData | None:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT timestamp, current_price, previous_close, history_json, fonte
+        SELECT timestamp, current_price, previous_close, history_json, fonte, mm21, mm200
         FROM ibovespa_cache
         ORDER BY timestamp DESC
         LIMIT 1
@@ -122,6 +135,8 @@ def get_latest_ibovespa_data() -> IbovespaData | None:
             previous_close=row["previous_close"],
             history_json=row["history_json"],
             fonte=row["fonte"],
+            mm21=row["mm21"],
+            mm200=row["mm200"],
         )
     return None
 

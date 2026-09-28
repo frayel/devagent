@@ -46,6 +46,51 @@
     {% endif %}
 </div>
 
+<!-- Card Tendência (Ibovespa) -->
+<div class="card" style="margin-top: 20px;">
+    <h2>Tendência (Ibovespa)</h2>
+    {% if data %}
+        <div style="display: flex; gap: 40px; margin-top: 10px;">
+            <!-- Curto Prazo MM21 -->
+            <div>
+                <h3>Curto Prazo (21 dias)</h3>
+                {% if data.mm21 %}
+                    <div style="font-size: 1.5em; font-weight: bold;">
+                        {{ data.mm21 }}
+                    </div>
+                    <div style="font-size: 1.1em; margin-top: 5px;"
+                         class="{% if data.mm21_signal == 'Alta' %}positive{% elif data.mm21_signal == 'Baixa' %}negative{% else %}neutral{% endif %}">
+                        Sinal: {{ data.mm21_signal }}
+                    </div>
+                {% else %}
+                    <p>Dados insuficientes</p>
+                {% endif %}
+            </div>
+
+            <!-- Longo Prazo MM200 -->
+            <div>
+                <h3>Longo Prazo (200 dias)</h3>
+                {% if data.mm200 %}
+                    <div style="font-size: 1.5em; font-weight: bold;">
+                        {{ data.mm200 }}
+                    </div>
+                    <div style="font-size: 1.1em; margin-top: 5px;"
+                         class="{% if data.mm200_signal == 'Alta' %}positive{% elif data.mm200_signal == 'Baixa' %}negative{% else %}neutral{% endif %}">
+                        Sinal: {{ data.mm200_signal }}
+                    </div>
+                {% else %}
+                    <p>Dados insuficientes</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="text-small" style="margin-top: 15px;">
+            Última atualização: {{ data.time }} | Fonte: {{ data.fonte }}
+        </div>
+    {% else %}
+        <p>Tendência indisponível</p>
+    {% endif %}
+</div>
+
 <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
     <!-- Maiores Altas -->
     <div class="card" style="flex: 1; min-width: 300px; margin-bottom: 0;">

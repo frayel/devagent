@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- feat: Implementa painéis de "Tendência (Ibovespa)" com médias móveis de curto e longo prazo (Spec 003).
 - feat: Implementa painéis de Maiores Altas e Maiores Baixas (Spec 002).
 ### Fixed
 - fix: Implementa testes para o endpoint `/api/snapshot` conforme contrato do auditor de produção e registra a conclusão no backlog.

@@ -13,13 +13,19 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def calc_mm(closes: list[float], window: int) -> float | None:
+    if len(closes) < window:
+        return None
+    return sum(closes[-window:]) / window
+
+
 def fetch_brapi() -> IbovespaData | None:
     BRAPI_TOKEN = os.environ.get("BRAPI_TOKEN")
     if not BRAPI_TOKEN:
         logger.warning("BRAPI_TOKEN not set, skipping brapi.dev")
         return None
 
-    url = f"https://brapi.dev/api/quote/%5EBVSP?token={BRAPI_TOKEN}&range=2mo&interval=1d&fundamental=false"
+    url = f"https://brapi.dev/api/quote/%5EBVSP?token={BRAPI_TOKEN}&range=1y&interval=1d&fundamental=false"
     try:
         response = fetch_with_retry(url, timeout=10.0)
         data = response.json()
@@ -48,6 +54,15 @@ def fetch_brapi() -> IbovespaData | None:
         if not dates or not closes:
             return None
 
+        # Calculate moving averages
+        # Append current price to closes if it's not already closed (current_price not exactly the last close)
+        calc_closes = closes.copy()
+        if current_price and (not calc_closes or current_price != calc_closes[-1]):
+            calc_closes.append(current_price)
+
+        mm21 = calc_mm(calc_closes, 21)
+        mm200 = calc_mm(calc_closes, 200)
+
         history_json = json.dumps({"dates": dates[-30:], "closes": closes[-30:]})
 
         return IbovespaData(
@@ -56,6 +71,8 @@ def fetch_brapi() -> IbovespaData | None:
             previous_close=previous_close,
             history_json=history_json,
             fonte="brapi",
+            mm21=mm21,
+            mm200=mm200,
         )
     except httpx.HTTPError as e:
         logger.error(f"Error fetching from brapi: {e}")
@@ -63,9 +80,7 @@ def fetch_brapi() -> IbovespaData | None:
 
 
 def fetch_yfinance() -> IbovespaData | None:
-    url = (
-        "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=2mo&interval=1d"
-    )
+    url = "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=1y&interval=1d"
     try:
         response = fetch_with_retry(url, timeout=10.0)
         data = response.json()
@@ -92,6 +107,13 @@ def fetch_yfinance() -> IbovespaData | None:
         else:
             previous_close = meta.get("previousClose") or meta.get("chartPreviousClose")
 
+        calc_closes = valid_closes.copy()
+        if current_price and (not calc_closes or current_price != calc_closes[-1]):
+            calc_closes.append(current_price)
+
+        mm21 = calc_mm(calc_closes, 21)
+        mm200 = calc_mm(calc_closes, 200)
+
         history_json = json.dumps(
             {"dates": valid_dates[-30:], "closes": valid_closes[-30:]}
         )
@@ -102,6 +124,8 @@ def fetch_yfinance() -> IbovespaData | None:
             previous_close=previous_close,
             history_json=history_json,
             fonte="yfinance",
+            mm21=mm21,
+            mm200=mm200,
         )
     except httpx.HTTPError as e:
         logger.error(f"Error fetching from yfinance: {e}")
