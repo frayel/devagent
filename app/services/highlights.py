@@ -41,9 +41,17 @@ def get_highlights_view_data() -> dict[str, Any] | None:
 
     time_formatted = data.timestamp.strftime("%d/%m/%Y %H:%M:%S UTC")
 
+    dispersion_pct = None
+    if data.total_count and data.up_count is not None and data.total_count > 0:
+        dispersion_pct = (data.up_count / data.total_count) * 100
+
     return {
         "highs": highs_formatted,
         "lows": lows_formatted,
         "time": time_formatted,
         "fonte": getattr(data, "fonte", "brapi"),
+        "up_count": data.up_count,
+        "down_count": data.down_count,
+        "total_count": data.total_count,
+        "dispersion_pct": dispersion_pct,
     }

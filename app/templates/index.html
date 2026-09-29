@@ -50,6 +50,30 @@
     {% endif %}
 </div>
 
+<!-- Termômetro de Dispersão -->
+<div class="card" style="margin-top: 20px;">
+    <h2>Termômetro de Dispersão</h2>
+    {% if highlights and highlights.dispersion_pct is not none %}
+        <div style="font-size: 1.5em; font-weight: bold; margin-top: 10px;">
+            {% if highlights.dispersion_pct > 60 %}
+                <span class="positive">{{ "%.0f"|format(highlights.dispersion_pct) }}% em alta - Euforia</span>
+            {% elif highlights.dispersion_pct < 40 %}
+                <span class="negative">{{ "%.0f"|format(highlights.dispersion_pct) }}% em alta - Pessimismo</span>
+            {% else %}
+                <span class="neutral">{{ "%.0f"|format(highlights.dispersion_pct) }}% em alta - Neutro</span>
+            {% endif %}
+        </div>
+        <div style="font-size: 1.1em; margin-top: 5px;">
+            {{ highlights.up_count }} subiram vs {{ highlights.down_count }} caíram (amostra de {{ highlights.total_count }} ações de alta liquidez)
+        </div>
+        <div class="text-small" style="margin-top: 15px;">
+            Última atualização: {{ highlights.time }} | Fonte: {{ highlights.fonte }}
+        </div>
+    {% else %}
+        <p>Dados insuficientes</p>
+    {% endif %}
+</div>
+
 <!-- Card Tendência (Ibovespa) -->
 <div class="card" style="margin-top: 20px;">
     <h2>Tendência (Ibovespa)</h2>

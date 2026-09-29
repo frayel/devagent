@@ -103,12 +103,25 @@ def snapshot():
         lows = (
             json.loads(highlights_data.lows_json) if highlights_data.lows_json else []
         )
-        resp["paineis"]["altas_baixas"] = {
+        altas_baixas_panel = {
             "coletado_em": highlights_data.timestamp.isoformat(),
             "fonte": getattr(highlights_data, "fonte", "brapi"),
             "altas": highs,
             "baixas": lows,
         }
+
+        up_count = getattr(highlights_data, "up_count", None)
+        down_count = getattr(highlights_data, "down_count", None)
+        total_count = getattr(highlights_data, "total_count", None)
+
+        if up_count is not None and down_count is not None and total_count:
+            altas_baixas_panel["dispersao"] = {
+                "em_alta": up_count,
+                "em_baixa": down_count,
+                "proporcao_alta_pct": (up_count / total_count) * 100,
+            }
+
+        resp["paineis"]["altas_baixas"] = altas_baixas_panel
 
     return resp
 

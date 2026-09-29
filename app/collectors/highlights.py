@@ -71,6 +71,8 @@ def fetch_brapi_lista() -> HighlightsData | None:
         return None
 
     ativos = []
+    up_count = 0
+    down_count = 0
     for item in data.get("stocks") or []:
         change = item.get("change")
         close = item.get("close")
@@ -83,6 +85,10 @@ def fetch_brapi_lista() -> HighlightsData | None:
                 "change_percent": float(change),
             }
         )
+        if float(change) > 0:
+            up_count += 1
+        elif float(change) < 0:
+            down_count += 1
 
     if len(ativos) < 10:
         logger.error(f"brapi quote list returned only {len(ativos)} usable stocks")
@@ -94,6 +100,9 @@ def fetch_brapi_lista() -> HighlightsData | None:
         highs_json=json.dumps(ativos[:5]),
         lows_json=json.dumps(sorted(ativos[-5:], key=lambda x: x["change_percent"])),
         fonte="brapi",
+        up_count=up_count,
+        down_count=down_count,
+        total_count=len(ativos),
     )
 
 
@@ -115,6 +124,8 @@ def fetch_brapi() -> HighlightsData | None:
             return None
 
         parsed_results = []
+        up_count = 0
+        down_count = 0
         for result in data["results"]:
             price = result.get("regularMarketPrice")
             prev_close = result.get("regularMarketPreviousClose")
@@ -131,6 +142,10 @@ def fetch_brapi() -> HighlightsData | None:
                     "change_percent": change_percent,
                 }
             )
+            if change_percent > 0:
+                up_count += 1
+            elif change_percent < 0:
+                down_count += 1
 
         if not parsed_results:
             return None
@@ -149,6 +164,9 @@ def fetch_brapi() -> HighlightsData | None:
             highs_json=json.dumps(highs),
             lows_json=json.dumps(lows),
             fonte="brapi",
+            up_count=up_count,
+            down_count=down_count,
+            total_count=len(parsed_results),
         )
     except httpx.HTTPError as e:
         logger.error(f"Error fetching highlights from brapi: {e}")
@@ -157,6 +175,8 @@ def fetch_brapi() -> HighlightsData | None:
 
 def fetch_yfinance() -> HighlightsData | None:
     parsed_results = []
+    up_count = 0
+    down_count = 0
 
     # Batching tickers in groups of 15 to respect URL length and API limits
     batch_size = 15
@@ -191,6 +211,10 @@ def fetch_yfinance() -> HighlightsData | None:
                             "change_percent": change_percent,
                         }
                     )
+                    if change_percent > 0:
+                        up_count += 1
+                    elif change_percent < 0:
+                        down_count += 1
             except httpx.HTTPError as e:
                 logger.error(f"Error fetching batch {symbols} from yfinance: {e}")
                 continue
@@ -209,6 +233,9 @@ def fetch_yfinance() -> HighlightsData | None:
         highs_json=json.dumps(highs),
         lows_json=json.dumps(lows),
         fonte="yfinance",
+        up_count=up_count,
+        down_count=down_count,
+        total_count=len(parsed_results),
     )
 
 
