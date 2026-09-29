@@ -1,4 +1,5 @@
 from typing import Any
+import json
 
 from app.database import get_latest_ibovespa_data
 
@@ -51,6 +52,13 @@ def get_ibovespa_view_data() -> dict[str, Any] | None:
     # convert timestamp to local display
     time_formatted = data.timestamp.strftime("%d/%m/%Y %H:%M:%S UTC")
 
+    history_dict = {}
+    if data.history_json:
+        try:
+            history_dict = json.loads(data.history_json)
+        except json.JSONDecodeError:
+            pass
+
     return {
         "current_price": current_formatted,
         "variation": variation_formatted,
@@ -58,7 +66,7 @@ def get_ibovespa_view_data() -> dict[str, Any] | None:
         "is_positive": is_positive,
         "is_negative": is_negative,
         "time": time_formatted,
-        "history_json": data.history_json,
+        "history_dict": history_dict,
         "fonte": data.fonte,
         "mm21": mm21_formatted,
         "mm21_signal": mm21_signal,
