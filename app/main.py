@@ -118,7 +118,7 @@ def snapshot():
             altas_baixas_panel["dispersao"] = {
                 "em_alta": up_count,
                 "em_baixa": down_count,
-                "proporcao_alta_pct": (up_count / total_count) * 100
+                "proporcao_alta_pct": (up_count / total_count) * 100,
             }
 
         resp["paineis"]["altas_baixas"] = altas_baixas_panel
