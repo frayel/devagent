@@ -21,7 +21,7 @@
         <div id="ibov-chart" style="width: 100%; height: 300px; margin-top: 20px;"></div>
 
         <script>
-            const historyData = {{ data.history_json | safe }};
+            const historyData = {{ data.history_dict | tojson }};
             const trace = {
                 x: historyData.dates,
                 y: historyData.closes,
