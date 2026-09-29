@@ -2,7 +2,7 @@
 id: 2026-09-26-ibovespa-formato-decimal
 severidade: baixa
 painel: ibovespa
-status: aberto
+status: resolvido
 visto_em: 2026-09-26T05:12-03:00
 ---
 
@@ -28,3 +28,6 @@ Acessar `https://devagent-vb52.onrender.com` e inspecionar a variação em porce
 
 ## Invariante proposta
 Usar Regex para capturar os percentuais e garantir que usem `,` (vírgula) para separação das casas decimais.
+
+## Resolução
+Verificado como corrigido em produção durante a auditoria de 2026-09-29. A auditoria determinística passou sem falhas e a inspeção exploratória não encontrou os problemas relatados.

@@ -2,7 +2,7 @@
 id: 2026-09-26-ibov-sem-dado-de-teste
 severidade: alta
 painel: ibovespa
-status: aberto
+status: resolvido
 visto_em: 2026-09-26T05:12-03:00
 ---
 
@@ -23,3 +23,6 @@ Rodar `python -m auditoria.auditar --navegador`.
 
 ## Invariante proposta
 A própria `ibov.sem_dado_de_teste` já cobre isso.
+
+## Resolução
+Verificado como corrigido em produção durante a auditoria de 2026-09-29. A auditoria determinística passou sem falhas e a inspeção exploratória não encontrou os problemas relatados.
