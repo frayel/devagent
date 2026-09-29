@@ -1,0 +1,19 @@
+# Configuração do núcleo devagent para este projeto. Veja devagent/README.md.
+
+[projeto]
+nome = "NOME DO PRODUTO"
+# Repositório no GitHub; a fonte do Jules é sources/github/<repositorio>.
+repositorio = "dono/repositorio"
+# URL publicada. A variável de ambiente PRODUCTION_URL tem precedência.
+producao_url = ""
+fuso = "America/Sao_Paulo"
+# Palavras do domínio que não podem aparecer dentro de devagent/.
+termos_do_dominio = ["TERMO DO DOMÍNIO"]
+
+[verificacao]
+verify = "make verify"
+smoke = "make smoke"
+audit = "make audit"
+
+[deploy]
+adaptador = "render"

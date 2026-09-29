@@ -1,0 +1,39 @@
+# Configuração do núcleo devagent para este projeto.
+# O núcleo (pasta devagent/) lê este arquivo e não conhece mais nada do produto.
+# Para adotar o núcleo em outro projeto, veja devagent/README.md.
+
+[projeto]
+nome = "Painel B3"
+# Repositório no GitHub; a fonte do Jules é sources/github/<repositorio>.
+repositorio = "frayel/devagent"
+# URL publicada. A variável de ambiente PRODUCTION_URL tem precedência.
+producao_url = "https://devagent-vb52.onrender.com"
+# Fuso usado nos relatórios da auditoria.
+fuso = "America/Sao_Paulo"
+# Palavras do domínio que não podem aparecer dentro de devagent/.
+# O teste devagent/tests/test_fronteira.py reprova o CI se aparecerem.
+termos_do_dominio = [
+  "B3",
+  "Ibovespa",
+  "IBOV",
+  "BVSP",
+  "brapi",
+  "pregão",
+  "pregões",
+  "investidor",
+  "Yahoo",
+  "Stooq",
+  "yfinance",
+  "cotação",
+]
+
+# Contrato entre o núcleo e o projeto: o CI, o guardião e o ciclo do agente
+# só chamam estes comandos. O que cada alvo faz está no Makefile do projeto.
+[verificacao]
+verify = "make verify"
+smoke = "make smoke"
+audit = "make audit"
+
+[deploy]
+# Adaptador de plataforma usado pelo deploy-check.yml e pelo Passo 1.
+adaptador = "render"

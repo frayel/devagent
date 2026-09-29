@@ -7,16 +7,19 @@ sessão criada sem `requirePlanApproval` tem o plano aprovado automaticamente,
 e sessões que mesmo assim pararem são destravadas aqui.
 
 Uso:
-    python scripts/jules.py iniciar desenvolvedor
-    python scripts/jules.py iniciar auditor
-    python scripts/jules.py iniciar seguranca | design | performance
-    python scripts/jules.py destravar          # aprova planos e responde perguntas
-    python scripts/jules.py listar
-    python scripts/jules.py iniciar auditor --dry-run
+    python -m devagent.adaptadores.jules iniciar desenvolvedor
+    python -m devagent.adaptadores.jules iniciar auditor
+    python -m devagent.adaptadores.jules iniciar seguranca | design | performance
+    python -m devagent.adaptadores.jules destravar   # aprova planos e responde perguntas
+    python -m devagent.adaptadores.jules listar
+    python -m devagent.adaptadores.jules iniciar auditor --dry-run
 
 Variáveis de ambiente:
     JULES_API_KEY   chave criada em https://jules.google.com/settings#api
-    JULES_SOURCE    opcional; padrão sources/github/frayel/devagent
+    JULES_SOURCE    opcional; padrão sources/github/<repositorio do devagent.toml>
+
+O nome do produto e o repositório vêm do devagent.toml; os prompts só apontam
+para os arquivos do núcleo (devagent/CICLO.md e devagent/agents/).
 
 Só usa a biblioteca padrão.
 """
@@ -32,8 +35,11 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from devagent.config import PROJETO
+
 API = "https://jules.googleapis.com/v1alpha"
-SOURCE = os.environ.get("JULES_SOURCE", "sources/github/frayel/devagent")
+SOURCE = os.environ.get("JULES_SOURCE", f"sources/github/{PROJETO['repositorio']}")
+PRODUTO = PROJETO["nome"]
 ATIVOS = {
     "QUEUED",
     "PLANNING",
@@ -47,9 +53,10 @@ PERSONAS = {
     "desenvolvedor": {
         "titulo": "Desenvolvedor · ciclo",
         "prompt": (
-            "Você é o desenvolvedor autônomo deste repositório. Execute uma "
-            "iteração do ciclo de decisão do AGENTS.md: leia o estado, escolha "
-            "o primeiro passo aplicável, entregue um PR e o relatório em "
+            "Você é o desenvolvedor autônomo deste repositório. Leia o AGENTS.md "
+            "e execute uma iteração do ciclo de decisão de devagent/CICLO.md, "
+            "construindo o produto de PRODUTO.md: leia o estado, escolha o "
+            "primeiro passo aplicável, entregue um PR e o relatório em "
             "docs/runs/. Não peça aprovação de plano e não faça perguntas: diante "
             "de ambiguidade, escolha a opção mais conservadora, registre a "
             "decisão no relatório e siga."
@@ -58,10 +65,11 @@ PERSONAS = {
     "auditor": {
         "titulo": "Auditor · produção",
         "prompt": (
-            "Você é o Auditor de Produção do Painel B3, não o desenvolvedor. "
-            "Leia e siga docs/agents/auditor.md do começo ao fim. Ignore o ciclo "
-            "de decisão do AGENTS.md; dele valem só as seções 2, 9 e 10. Não "
-            "altere app/, tests/, docs/specs/ nem AGENTS.md. Entregue um único "
+            f"Você é o Auditor de Produção de {PRODUTO}, não o desenvolvedor. "
+            "Leia e siga devagent/agents/auditor.md do começo ao fim. Ignore o "
+            "ciclo de decisão de devagent/CICLO.md. Não altere o código da "
+            "aplicação, os testes, as specs, AGENTS.md, PRODUTO.md nem "
+            "devagent/. Entregue um único "
             'PR com título "auditoria: AAAA-MM-DD · N achados", contendo só '
             "arquivos de docs/auditoria/. Não peça aprovação e não faça perguntas."
         ),
@@ -70,8 +78,8 @@ PERSONAS = {
 
 ESPECIALISTA = (
     "Você é {nome}, especialista em {tema} deste repositório, não o desenvolvedor. "
-    "Leia e siga docs/agents/especialistas.md: as regras comuns e a seção "
-    "{nome}. Ignore o ciclo de decisão do AGENTS.md. Se já existir PR aberto "
+    "Leia e siga devagent/agents/especialistas.md: as regras comuns e a seção "
+    "{nome}. Ignore o ciclo de decisão de devagent/CICLO.md. Se já existir PR aberto "
     "do agente, encerre sem mudanças. Entregue no máximo um PR, com título "
     'iniciado por "{prefixo}". Não peça aprovação e não faça perguntas.'
 )

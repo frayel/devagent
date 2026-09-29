@@ -5,7 +5,7 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-# Identificável (seção 9 do AGENTS.md) e com prefixo "Mozilla/5.0 (compatible; ...)",
+# Identificável (seção 5 do PRODUTO.md) e com prefixo "Mozilla/5.0 (compatible; ...)",
 # o formato dos robôs conhecidos: o Yahoo Finance recusa User-Agents fora dele.
 USER_AGENT = (
     "Mozilla/5.0 (compatible; B3Dashboard/1.0; +https://github.com/frayel/devagent)"

@@ -5,7 +5,7 @@ regras que qualquer dado verdadeiro obedece. Não lê o banco nem importa o
 código da aplicação: olha para produção como um investidor olharia.
 
 Uso:
-    python -m auditoria.auditar                      # usa PRODUCTION_URL
+    python -m auditoria.auditar                      # usa PRODUCTION_URL ou devagent.toml
     python -m auditoria.auditar --url https://...    # outra URL
     python -m auditoria.auditar --navegador          # também abre a página no Chromium
     python -m auditoria.auditar --saida relatorio/   # grava relatorio.json, .md e screenshot
@@ -15,26 +15,34 @@ Avisos e checagens inconclusivas (por exemplo, fonte de referência fora do ar)
 não reprovam, mas aparecem no relatório.
 
 Só usa a biblioteca padrão. O modo --navegador precisa do Playwright.
+
+O harness (resultado, relatório, checagens de aplicação e navegador) está no
+núcleo, em devagent/auditoria/nucleo.py. Aqui ficam só as checagens deste produto.
 """
 
 from __future__ import annotations
 
-import argparse
 import json
-import os
 import re
 import sys
-import time
-import urllib.error
 import urllib.request
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 
 from auditoria import calendario
+from devagent.auditoria import nucleo
+from devagent.auditoria.nucleo import (
+    AVISO,
+    FALHA,
+    INCONCLUSIVO,
+    OK,
+    Resultado,
+    br,
+    checar_navegador,
+)
 
-URL_PADRAO = "https://devagent-vb52.onrender.com"
 RAIZ = Path(__file__).resolve().parent.parent
 FIXTURES = RAIZ / "tests" / "fixtures"
 AVISO_LEGAL = "Não constitui recomendação de investimento"
@@ -49,46 +57,8 @@ FAIXA_PLAUSIVEL = (40_000.0, 600_000.0)
 HISTORICO_MINIMO = 15  # pregões no gráfico de 30 dias
 
 
-# --------------------------------------------------------------------------
-# Resultado
-# --------------------------------------------------------------------------
-
-OK, FALHA, AVISO, INCONCLUSIVO = "ok", "falha", "aviso", "inconclusivo"
-
-
-def br(x: float, casas: int = 2) -> str:
-    """Formata número no padrão brasileiro: 183.476,86."""
-    return f"{x:,.{casas}f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-
-@dataclass
-class Resultado:
-    id: str
-    status: str
-    titulo: str
-    detalhe: str = ""
-    evidencia: dict[str, Any] = field(default_factory=dict)
-
-
-# --------------------------------------------------------------------------
-# HTTP
-# --------------------------------------------------------------------------
-
-
 def baixar(url: str, timeout: float = 30.0, tentativas: int = 1) -> tuple[int, str]:
-    ultimo_erro: Exception | None = None
-    for i in range(tentativas):
-        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-        try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                return resp.status, resp.read().decode("utf-8", "replace")
-        except urllib.error.HTTPError as e:
-            return e.code, e.read().decode("utf-8", "replace")
-        except (urllib.error.URLError, TimeoutError, OSError) as e:
-            ultimo_erro = e
-            if i + 1 < tentativas:
-                time.sleep(10)
-    raise ConnectionError(f"{url}: {ultimo_erro}")
+    return nucleo.baixar(url, timeout, tentativas, user_agent=USER_AGENT)
 
 
 # --------------------------------------------------------------------------
@@ -244,25 +214,7 @@ def obter_referencia(evitar: str | None) -> tuple[Referencia | None, list[str]]:
 
 def numeros_dos_fixtures(pasta: Path = FIXTURES) -> set[float]:
     """Números com cara de preço (>= 1000 e < 1e7) presentes nos fixtures."""
-    achados: set[float] = set()
-
-    def varrer(x: Any) -> None:
-        if isinstance(x, dict):
-            for v in x.values():
-                varrer(v)
-        elif isinstance(x, list):
-            for v in x:
-                varrer(v)
-        elif isinstance(x, (int, float)) and not isinstance(x, bool):
-            if 1_000 <= x < 10_000_000:
-                achados.add(round(float(x), 2))
-
-    for arq in sorted(pasta.glob("**/*.json")):
-        try:
-            varrer(json.loads(arq.read_text(encoding="utf-8")))
-        except ValueError:
-            continue
-    return achados
+    return nucleo.numeros_dos_fixtures(pasta, 1_000, 10_000_000)
 
 
 # --------------------------------------------------------------------------
@@ -487,54 +439,6 @@ def checar_referencia(
     return r
 
 
-def checar_navegador(url: str, saida: Path | None) -> list[Resultado]:
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        return [Resultado("pagina.navegador", INCONCLUSIVO, "Playwright não instalado")]
-    erros: list[str] = []
-    with sync_playwright() as pw:
-        exe = os.environ.get("CHROMIUM_PATH")
-        browser = (
-            pw.chromium.launch(executable_path=exe) if exe else pw.chromium.launch()
-        )
-        page = browser.new_page(viewport={"width": 1280, "height": 900})
-        page.on(
-            "console",
-            lambda m: erros.append(m.text) if m.type == "error" else None,
-        )
-        page.on("pageerror", lambda e: erros.append(str(e)))
-        page.goto(url, wait_until="networkidle", timeout=90_000)
-        graficos = page.evaluate(
-            """() => Array.from(document.querySelectorAll('.js-plotly-plot')).map(el => ({
-                id: el.id,
-                pontos: (el.data || []).reduce((n, t) => n + ((t.y || []).length), 0)
-            }))"""
-        )
-        if saida:
-            page.screenshot(path=str(saida / "producao.png"), full_page=True)
-        browser.close()
-
-    r = [
-        Resultado(
-            "pagina.sem_erros_js",
-            OK if not erros else FALHA,
-            "Página carrega sem erros de JavaScript",
-            "; ".join(erros[:5]),
-        )
-    ]
-    vazios = [g["id"] or "(sem id)" for g in graficos if g["pontos"] < 2]
-    r.append(
-        Resultado(
-            "pagina.graficos_desenhados",
-            OK if graficos and not vazios else FALHA,
-            "Gráficos desenhados com dados",
-            f"{len(graficos)} gráfico(s) desenhado(s); vazios: {vazios or 'nenhum'}",
-        )
-    )
-    return r
-
-
 # --------------------------------------------------------------------------
 # Orquestração
 # --------------------------------------------------------------------------
@@ -554,38 +458,16 @@ def auditar(
     url = url.rstrip("/")
     r: list[Resultado] = []
 
-    # O plano gratuito do Render hiberna: a primeira resposta pode levar um minuto.
-    status, _ = baixar(f"{url}/healthz", timeout=90, tentativas=3)
-    r.append(
-        Resultado(
-            "app.healthz",
-            OK if status == 200 else FALHA,
-            "/healthz responde 200",
-            f"HTTP {status}",
-        )
+    # O Render hiberna e perde o disco; ao acordar, a app coleta em segundo
+    # plano. checar_pagina espera essa primeira coleta antes de reprovar.
+    r.append(nucleo.checar_saude(url))
+    pagina, _, html = nucleo.checar_pagina(
+        url,
+        aviso_obrigatorio=AVISO_LEGAL,
+        marcador_sem_dados="Dados não disponíveis",
+        espera_sem_dados=espera_coleta,
     )
-
-    status, html = baixar(f"{url}/", timeout=60, tentativas=2)
-    if status == 200 and "Dados não disponíveis" in html and espera_coleta:
-        # O Render hiberna e perde o disco; ao acordar, a app coleta em
-        # segundo plano. Espera essa primeira coleta antes de reprovar.
-        time.sleep(espera_coleta)
-        status, html = baixar(f"{url}/", timeout=60, tentativas=2)
-    r.append(
-        Resultado(
-            "app.home",
-            OK if status == 200 else FALHA,
-            "Página inicial responde 200",
-            f"HTTP {status}",
-        )
-    )
-    r.append(
-        Resultado(
-            "app.aviso_legal",
-            OK if AVISO_LEGAL in html else FALHA,
-            "Aviso legal presente na página",
-        )
-    )
+    r += pagina
 
     painel = extrair_do_html(html)
     s_status, s_corpo = baixar(f"{url}/api/snapshot", timeout=30)
@@ -635,62 +517,12 @@ def auditar(
     return r
 
 
-def relatorio_md(url: str, agora: datetime, resultados: list[Resultado]) -> str:
-    icone = {OK: "✅", FALHA: "❌", AVISO: "⚠️", INCONCLUSIVO: "❔"}
-    falhas = [x for x in resultados if x.status == FALHA]
-    linhas = [
-        f"# Auditoria de produção · {agora.astimezone(calendario.BRT):%d/%m/%Y %H:%M} BRT",
-        "",
-        f"URL: {url}  ",
-        f"Resultado: **{len(falhas)} falha(s)** em {len(resultados)} checagens.",
-        "",
-        "| | Checagem | Detalhe |",
-        "|---|---|---|",
-    ]
-    for x in sorted(
-        resultados, key=lambda x: [FALHA, AVISO, INCONCLUSIVO, OK].index(x.status)
-    ):
-        detalhe = x.detalhe.replace("|", "\\|")
-        linhas.append(f"| {icone[x.status]} | `{x.id}` {x.titulo} | {detalhe} |")
-    return "\n".join(linhas) + "\n"
-
-
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--url", default=os.environ.get("PRODUCTION_URL") or URL_PADRAO)
-    ap.add_argument("--navegador", action="store_true")
-    ap.add_argument("--saida", type=Path)
-    args = ap.parse_args(argv)
-
-    agora = datetime.now(timezone.utc)
-    if args.saida:
-        args.saida.mkdir(parents=True, exist_ok=True)
-    try:
-        resultados = auditar(args.url, agora, args.navegador, args.saida)
-    except ConnectionError as e:
-        resultados = [Resultado("app.acessivel", FALHA, "Produção inacessível", str(e))]
-        codigo = 3
-    else:
-        codigo = 1 if any(x.status == FALHA for x in resultados) else 0
-
-    md = relatorio_md(args.url, agora, resultados)
-    print(md)
-    if args.saida:
-        (args.saida / "relatorio.md").write_text(md, encoding="utf-8")
-        (args.saida / "relatorio.json").write_text(
-            json.dumps(
-                {
-                    "url": args.url,
-                    "quando": agora.isoformat(),
-                    "codigo": codigo,
-                    "resultados": [asdict(x) for x in resultados],
-                },
-                ensure_ascii=False,
-                indent=2,
-            ),
-            encoding="utf-8",
-        )
-    return codigo
+    return nucleo.executar(
+        lambda url, agora, navegador, saida: auditar(url, agora, navegador, saida),
+        __doc__.splitlines()[0],
+        argv,
+    )
 
 
 if __name__ == "__main__":

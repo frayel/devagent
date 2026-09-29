@@ -5,7 +5,7 @@
 
 ## Contexto
 
-O painel publicou o Ibovespa em 130.000 pontos, valor do fixture de teste (os testes gravavam no `data.db` real, o arquivo foi versionado e não existia cron job de coleta). O defeito foi registrado na seção *Correções* de `docs/BACKLOG.md`, mas o backlog só era lido no Passo 7. A spec 002 estava `ready` e passou na frente pelo Passo 4, construindo uma feature nova sobre um banco que não recebia dados. Issues com label `prioridade` tinham o mesmo problema: esperavam atrás das specs, no Passo 6.
+O produto publicou um valor que era de um fixture de teste (os testes gravavam no `data.db` real, o arquivo foi versionado e não existia cron job de coleta). O defeito foi registrado na seção *Correções* de `docs/BACKLOG.md`, mas o backlog só era lido no Passo 7. A spec 002 estava `ready` e passou na frente pelo Passo 4, construindo uma feature nova sobre um banco que não recebia dados. Issues com label `prioridade` tinham o mesmo problema: esperavam atrás das specs, no Passo 6.
 
 ## Decisão
 

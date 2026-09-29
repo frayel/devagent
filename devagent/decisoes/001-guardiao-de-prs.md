@@ -9,7 +9,7 @@ Um PR do agente falhou no CI e ficou aberto. As execuções seguintes do Jules n
 
 ## Decisão
 
-1. `scripts/estado_github.py` é o primeiro comando de toda execução e mostra PRs (CI, conflito) e issues sem precisar de token.
+1. `scripts/estado_github.py` (hoje `devagent/estado_github.py`) é o primeiro comando de toda execução e mostra PRs (CI, conflito) e issues sem precisar de token.
 2. Destravar o PR aberto vira o Passo 2, logo depois de produção quebrada.
 3. O workflow `pr-guardiao.yml` age mesmo se o agente não agir: cobra `@jules` com o log (até 3 vezes), fecha PRs sem reação em 3 h, com conflito grande (> 3 arquivos ou > 40 linhas) ou substituídos, e registra o motivo numa issue `tentativa-falhou`.
 4. Conflito pequeno é resolvido na própria branch; conflito grande não é resolvido: o PR é fechado e o próximo ciclo refaz o trabalho sobre a `main` atual, porque a spec continua `ready` lá.

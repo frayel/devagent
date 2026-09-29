@@ -1,0 +1,17 @@
+# Caminhos protegidos: PRs que alteram qualquer um destes arquivos não recebem
+# merge automático. O automerge.yml lê esta lista da main (nunca do PR),
+# aplica o label `revisao-humana` e espera um humano.
+#
+# Uma expressão regular estendida por linha, casada com o caminho do arquivo.
+# Este arquivo está na própria lista: afrouxá-lo também exige revisão humana.
+#
+# Núcleo: separação de poderes entre quem trabalha e quem vigia.
+^devagent/protegidos\.txt$
+^devagent/guardiao_prs\.py$
+^devagent/adaptadores/jules\.py$
+^devagent/auditoria/
+^devagent/agents/auditor\.md$
+^\.github/workflows/(automerge|jules|pr-guardiao|auditoria-[a-z-]+)\.yml$
+#
+# Projeto: as checagens do auditor sobre este produto.
+^auditoria/

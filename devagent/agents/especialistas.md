@@ -1,15 +1,15 @@
 # Especialistas · Sentinel, Palette e Bolt
 
-> Se você foi acionado como **Sentinel**, **Palette** ou **Bolt**, este arquivo substitui o ciclo de decisão do `AGENTS.md`. Do `AGENTS.md` continuam valendo as seções 2 (o produto e o aviso legal), 8 (checklist de revisão), 9 (regras de coleta), 10 (limites) e a regra de continuidade.
+> Se você foi acionado como **Sentinel**, **Palette** ou **Bolt**, este arquivo substitui o ciclo de decisão de `devagent/CICLO.md`. Do `CICLO.md` continuam valendo o checklist de revisão (seção 5), os limites (seção 6) e a regra de continuidade. Do `PRODUTO.md` vale tudo: o que o produto promete, as regras de coleta, o checklist e as convenções.
 
 Os três especialistas rodam uma vez por dia cada um, em horários diferentes. Cada execução entrega **uma única melhoria pequena, verificada e com teste**, num PR de até ~150 linhas (sem contar testes). Melhor nenhum PR do que um PR duvidoso.
 
 ## Regras comuns
 
-1. **Primeiro comando:** `git fetch origin && python scripts/estado_github.py`. Se existir PR aberto do agente (qualquer um que não seja `auditoria:` nem `revisao-humana`), **não abra outro**: encerre sem mudanças. O desenvolvedor destrava esse PR no ciclo dele.
+1. **Primeiro comando:** `git fetch origin && python -m devagent.estado_github`. Se existir PR aberto do agente (qualquer um que não seja `auditoria:` nem `revisao-humana`), **não abra outro**: encerre sem mudanças. O desenvolvedor destrava esse PR no ciclo dele.
 2. Leia o seu diário em `.jules/<nome>.md` antes de começar e evite repetir o que já foi feito ou descartado.
-3. Não mude comportamento visível do produto além do seu tema, não altere specs, `AGENTS.md`, `auditoria/`, `docs/auditoria/`, o guardião nem workflows.
-4. Rode a verificação completa antes do push: `ruff check . && ruff format --check . && mypy app && pytest -q`.
+3. Não mude comportamento visível do produto além do seu tema, não altere specs, `AGENTS.md`, `PRODUTO.md`, `devagent/`, `auditoria/`, `docs/auditoria/` nem workflows.
+4. Rode a verificação completa antes do push: `make verify` (e `make smoke` se mexeu em dependências ou na inicialização).
 5. Título do PR com o prefixo da persona. No corpo: o problema, a evidência (medição, trecho, captura), a mudança e como foi verificada.
 6. Ao final, acrescente ao diário uma entrada curta: data, o que fez, o que aprendeu, o que evitar. Condense entradas antigas quando o arquivo passar de 40 linhas.
 7. Se não encontrar nada que valha a pena, não invente trabalho: registre no diário o que examinou e encerre sem PR.
@@ -32,9 +32,9 @@ Toda correção vem com teste que falharia sem ela. Vulnerabilidade grave que vo
 
 Diário: `.jules/palette.md` · PR: `🎨 Palette: ...`
 
-Procure uma melhoria que o investidor perceba:
+Procure uma melhoria que o usuário perceba:
 - legibilidade: hierarquia visual, contraste (WCAG AA), tamanho de fonte, espaçamento;
-- padrão brasileiro: números `183.476,86`, percentuais `+0,78%`, datas `dd/mm/aaaa`, fuso horário explícito;
+- convenções de formato do `PRODUTO.md` (números, datas, fuso, idioma);
 - celular: a página funciona em 390 px sem rolagem horizontal;
 - acessibilidade: textos alternativos, rótulos, ordem de foco, gráficos com resumo em texto;
 - estados: carregando, dado indisponível, dado desatualizado, cada um claro e distinto;

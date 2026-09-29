@@ -1,7 +1,7 @@
 name: Guardião de PRs
 
-# Impede que PRs do agente fiquem travados. Regras em scripts/guardiao_prs.py
-# e docs/skills/destravar-pr.md.
+# Impede que PRs do agente fiquem travados. Regras em devagent/guardiao_prs.py
+# e devagent/skills/destravar-pr.md.
 on:
   workflow_run:
     workflows: [CI, Auto-merge]
@@ -35,7 +35,7 @@ jobs:
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-
-          python3 scripts/guardiao_prs.py
+          python3 -m devagent.guardiao_prs
           --ci-falhou "${{ github.event.workflow_run.head_branch }}"
           --run-id "${{ github.event.workflow_run.id }}"
 
@@ -54,5 +54,6 @@ jobs:
         run: |
           git config user.name "guardiao-prs"
           git config user.email "guardiao-prs@users.noreply.github.com"
-          cp scripts/guardiao_prs.py "$RUNNER_TEMP/guardiao.py"
-          python3 "$RUNNER_TEMP/guardiao.py" --varredura
+          # A varredura troca de branch; roda de uma cópia do núcleo tirada da main.
+          cp -r devagent "$RUNNER_TEMP/devagent"
+          PYTHONPATH="$RUNNER_TEMP" python3 -P -m devagent.guardiao_prs --varredura

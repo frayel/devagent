@@ -1,6 +1,6 @@
 # Skill · Destravar um PR aberto
 
-Use no Passo 2, quando `python scripts/estado_github.py` mostrar um PR do agente aberto, ou quando o guardião comentar `@jules` num PR seu.
+Use no Passo 2, quando `python -m devagent.estado_github` mostrar um PR do agente aberto, ou quando o guardião comentar `@jules` num PR seu.
 
 Um PR aberto bloqueia todo o ciclo, porque só pode existir um de cada vez. Destravá-lo tem prioridade sobre qualquer trabalho novo.
 
@@ -18,19 +18,19 @@ Trabalhe **sempre nesta branch** e dê push nela. Nunca abra PR novo para o mesm
 Reproduza exatamente o que o CI roda:
 
 ```bash
-pip install -r requirements-dev.txt
-ruff check . && ruff format --check .
-mypy app
-pytest -q
-# smoke: só dependências de produção
-python -m venv /tmp/prod && /tmp/prod/bin/pip install -q -r requirements.txt
-PORT=8000 /tmp/prod/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-sleep 3 && curl -fsS localhost:8000/healthz && curl -fsS -o /dev/null localhost:8000/
+make install
+make verify
+# smoke: só dependências de produção, num ambiente limpo
+python -m venv /tmp/prod && . /tmp/prod/bin/activate
+make install-prod PY=python && make smoke PY=python
+deactivate
 ```
+
+Os alvos são o contrato do projeto (`Makefile`, seção `[verificacao]` do `devagent.toml`): o que cada um roda por dentro depende do stack.
 
 Se o guardião colou o log da falha no PR, comece por ele. Corrija a causa, não o sintoma. Nunca apague nem desative teste. Rode tudo de novo antes do push.
 
-**Formatação reprovada** (`ruff format --check`): rode `ruff format .` e faça commit. **Hook de pre-commit barrando o commit**: leia a mensagem do hook, corrija o que ele aponta e faça o commit de novo. Nunca use `--no-verify`.
+**Formatação reprovada**: rode o formatador do stack (veja o `Makefile`) e faça commit. **Hook de pre-commit barrando o commit**: leia a mensagem do hook, corrija o que ele aponta e faça o commit de novo. Nunca use `--no-verify`.
 
 ## 3. Conflito com a `main`
 

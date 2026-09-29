@@ -1,12 +1,13 @@
 """Guardião de PRs: impede que PRs do agente fiquem travados.
 
-Roda no GitHub Actions (workflow pr-guardiao.yml) com o gh CLI autenticado.
+Roda no GitHub Actions (workflow pr-guardiao.yml) com o gh CLI autenticado:
+    python -m devagent.guardiao_prs ...
 
 Modos:
     --ci-falhou BRANCH --run-id ID   CI falhou num PR: cobra o Jules ou fecha o PR
     --varredura                      conflitos, PRs sem reação, substituídos, branches órfãs
 
-Regras (mantenha em sincronia com docs/skills/destravar-pr.md):
+Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
     - CI falhou: comenta @jules com o log, até MAX_TENTATIVAS. Depois fecha o PR.
     - Sem reação: se o guardião cobrou e não houve commit novo em SEM_REACAO_HORAS, fecha.
     - Conflito pequeno (<= CONFLITO_MAX_ARQUIVOS e <= CONFLITO_MAX_LINHAS): pede ao Jules
@@ -24,6 +25,8 @@ import re
 import subprocess
 from datetime import datetime, timedelta, timezone
 from typing import Any
+
+from devagent.config import VERIFICACAO
 
 MAX_TENTATIVAS = 3
 SEM_REACAO_HORAS = 3
@@ -139,8 +142,8 @@ def ci_falhou(branch: str, run_id: str) -> None:
         pr["number"],
         f"{MARCA_CI}\n@jules o CI falhou neste PR (cobrança {tentativas + 1} de "
         f"{MAX_TENTATIVAS}). Corrija **nesta mesma branch**, sem abrir PR novo. "
-        "Reproduza localmente com `ruff check . && ruff format --check . && mypy app "
-        "&& pytest -q` e o smoke test descrito em `docs/skills/destravar-pr.md`.\n\n"
+        f"Reproduza localmente com `{VERIFICACAO['verify']}` e `{VERIFICACAO['smoke']}` "
+        "(veja `devagent/skills/destravar-pr.md`).\n\n"
         f"Se não houver commit novo em {SEM_REACAO_HORAS} h, este PR será fechado.\n\n"
         f"<details><summary>Log da falha</summary>\n\n```\n{log}\n```\n</details>",
     )

@@ -70,6 +70,6 @@ jobs:
             esac
           fi
           case "$acao" in
-            destravar|listar) python3 scripts/jules.py "$acao" ;;
-            *) python3 scripts/jules.py iniciar "$acao" && python3 scripts/jules.py destravar ;;
+            destravar|listar) python3 -m devagent.adaptadores.jules "$acao" ;;
+            *) python3 -m devagent.adaptadores.jules iniciar "$acao" && python3 -m devagent.adaptadores.jules destravar ;;
           esac
