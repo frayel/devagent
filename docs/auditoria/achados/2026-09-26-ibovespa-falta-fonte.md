@@ -2,7 +2,7 @@
 id: 2026-09-26-ibovespa-falta-fonte
 severidade: media
 painel: ibovespa
-status: aberto
+status: resolvido
 visto_em: 2026-09-26T05:12-03:00
 ---
 
@@ -27,3 +27,6 @@ Acessar `https://devagent-vb52.onrender.com` e inspecionar visualmente o painel 
 
 ## Invariante proposta
 Verificar se os blocos de atualização contêm palavras-chave relativas às fontes, por exemplo, verificando o texto das tags com classe `text-small`.
+
+## Resolução
+Verificado como corrigido em produção durante a auditoria de 2026-09-29. A auditoria determinística passou sem falhas e a inspeção exploratória não encontrou os problemas relatados.

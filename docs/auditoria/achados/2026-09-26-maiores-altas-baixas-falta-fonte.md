@@ -2,7 +2,7 @@
 id: 2026-09-26-maiores-altas-baixas-falta-fonte
 severidade: media
 painel: altas-baixas
-status: aberto
+status: resolvido
 visto_em: 2026-09-26T05:12-03:00
 ---
 
@@ -28,3 +28,6 @@ Acessar `https://devagent-vb52.onrender.com` e inspecionar a base das tabelas "M
 
 ## Invariante proposta
 Verificar que a menção de horário venha acompanhada do texto com a fonte do dado (`yfinance`, `brapi` ou semelhante).
+
+## Resolução
+Verificado como corrigido em produção durante a auditoria de 2026-09-29. A auditoria determinística passou sem falhas e a inspeção exploratória não encontrou os problemas relatados.
