@@ -2,7 +2,8 @@ name: Auto-merge
 
 # Faz squash merge de qualquer PR assim que o workflow CI passa.
 # O Jules abre PRs mas não faz merge; este workflow fecha o ciclo.
-# Exceção: PRs que alteram o auditor ou o guardião de PRs ficam com label `revisao-humana`.
+# Exceção: PRs que alteram caminhos de devagent/protegidos.txt ficam com label
+# `revisao-humana`. A lista é lida da main, nunca do PR.
 on:
   workflow_run:
     workflows: [CI]
@@ -21,6 +22,12 @@ jobs:
       github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          sparse-checkout: devagent/protegidos.txt
+          sparse-checkout-cone-mode: false
+
       - name: Merge do PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -29,15 +36,22 @@ jobs:
           pr=$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number -q '.[0].number')
           if [ -z "$pr" ]; then echo "Nenhum PR aberto para $BRANCH"; exit 0; fi
 
-          # O auditor não pode ser alterado por quem ele audita: PRs que mexem
-          # nestes caminhos esperam revisão humana.
-          protegidos=$(gh pr diff "$pr" -R "$GITHUB_REPOSITORY" --name-only \
-            | grep -E '^(auditoria/|docs/agents/auditor\.md$|scripts/guardiao_prs\.py$|scripts/jules\.py$|\.github/workflows/(automerge|jules|auditoria-[a-z-]+|pr-guardiao)\.yml$)' || true)
+          # Quem é vigiado não altera quem vigia: PRs que mexem nos caminhos de
+          # devagent/protegidos.txt (lido da main) esperam revisão humana.
+          padroes="$RUNNER_TEMP/protegidos.txt"
+          grep -vE '^[[:space:]]*(#|$)' devagent/protegidos.txt > "$padroes" 2>/dev/null || true
+          if [ -s "$padroes" ]; then
+            protegidos=$(gh pr diff "$pr" -R "$GITHUB_REPOSITORY" --name-only \
+              | grep -E -f "$padroes" || true)
+          else
+            # Sem a lista, ninguém sabe o que é protegido: na dúvida, não faz merge.
+            protegidos="devagent/protegidos.txt ausente ou vazio na main"
+          fi
           if [ -n "$protegidos" ]; then
             gh label create revisao-humana -R "$GITHUB_REPOSITORY" --color FBCA04 \
-              --description "Mexe no auditor; merge só com aprovação humana" 2>/dev/null || true
+              --description "Mexe em caminho protegido; merge só com aprovação humana" 2>/dev/null || true
             gh pr edit "$pr" -R "$GITHUB_REPOSITORY" --add-label revisao-humana
-            gh pr comment "$pr" -R "$GITHUB_REPOSITORY" --body "$(printf 'Merge automático suspenso: este PR altera arquivos protegidos do auditor.\n\n```\n%s\n```\n\nUm humano precisa revisar e fazer o merge.' "$protegidos")"
+            gh pr comment "$pr" -R "$GITHUB_REPOSITORY" --body "$(printf 'Merge automático suspenso: este PR altera caminhos protegidos (devagent/protegidos.txt).\n\n```\n%s\n```\n\nUm humano precisa revisar e fazer o merge.' "$protegidos")"
             exit 0
           fi
 

@@ -1,9 +1,9 @@
 """Consulta o status do último deploy no Render e, se falhou, traz os logs.
 
 Uso:
-    python scripts/render_status.py            # consulta uma vez
-    python scripts/render_status.py --wait 900 # espera até 900 s o deploy terminar
-    python scripts/render_status.py --commit <sha>  # deploy de um commit específico
+    python -m devagent.adaptadores.render_status            # consulta uma vez
+    python -m devagent.adaptadores.render_status --wait 900 # espera até 900 s o deploy terminar
+    python -m devagent.adaptadores.render_status --commit <sha>  # deploy de um commit específico
 
 Variáveis de ambiente:
     RENDER_API_KEY     chave da API do Render (Account Settings > API Keys)

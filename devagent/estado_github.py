@@ -1,10 +1,10 @@
 """Mostra o estado do repositório no GitHub: PRs abertos, CI, conflitos e issues.
 
-Primeiro comando de toda execução do agente (seção 5 do AGENTS.md).
+Primeiro comando de toda execução do agente (devagent/CICLO.md).
 
 Uso:
-    python scripts/estado_github.py          # texto legível
-    python scripts/estado_github.py --json   # para scripts
+    python -m devagent.estado_github          # texto legível
+    python -m devagent.estado_github --json   # para scripts
 
 Funciona sem autenticação em repositório público (limite de 60 req/h).
 Se GITHUB_TOKEN ou GH_TOKEN estiver no ambiente, usa o token.

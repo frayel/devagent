@@ -1,14 +1,15 @@
 name: Auditoria de produção
 
 # Confere o site publicado contra fontes independentes e regras de plausibilidade
-# (auditoria/auditar.py). Se algo estiver errado, abre uma issue
+# (make audit: harness em devagent/auditoria/nucleo.py, checagens do produto em
+# auditoria/auditar.py). Se algo estiver errado, abre uma issue
 # `producao-incorreta`; quando a auditoria volta a passar, fecha a issue.
 #
 # ARQUIVO PROTEGIDO: mudanças aqui ou em auditoria/ exigem revisão humana
 # (o automerge.yml não faz merge desses PRs).
 on:
   schedule:
-    # Pregão da B3: 10h às 17h BRT (13h às 20h UTC), mais o pós-fechamento.
+    # Horários do projeto. Pregão da B3: 10h às 17h BRT (13h às 20h UTC), mais o pós-fechamento.
     - cron: "7,37 13-21 * * 1-5"
     # Antes da abertura: confere o fechamento do dia anterior.
     - cron: "23 11 * * 1-5"
@@ -46,10 +47,11 @@ jobs:
       - name: Auditar
         id: auditoria
         env:
-          PRODUCTION_URL: ${{ vars.PRODUCTION_URL || 'https://devagent-vb52.onrender.com' }}
+          # Vazio: o auditor usa producao_url do devagent.toml.
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
         run: |
           set +e
-          python -m auditoria.auditar --navegador --saida relatorio
+          make audit PY=python ARGS="--navegador --saida relatorio"
           code=$?
           echo "code=$code" >> "$GITHUB_OUTPUT"
           cat relatorio/relatorio.md >> "$GITHUB_STEP_SUMMARY"
@@ -71,7 +73,7 @@ jobs:
           gh label create producao-incorreta --color D93F0B \
             --description "Produção exibe dado errado ou está fora do ar" 2>/dev/null || true
           falhas=$(python3 -c "import json;d=json.load(open('relatorio/relatorio.json'));print(' '.join(sorted(r['id'] for r in d['resultados'] if r['status']=='falha')))")
-          body=$(printf '%s\n\nEvidências (relatório JSON e screenshot): %s\n\nO agente trata esta issue no Passo 1 do AGENTS.md. Não altere `auditoria/` para fazê-la passar.\n\n<!-- falhas: %s -->' \
+          body=$(printf '%s\n\nEvidências (relatório JSON e screenshot): %s\n\nO agente trata esta issue no Passo 1 de devagent/CICLO.md. Não altere a auditoria para fazê-la passar.\n\n<!-- falhas: %s -->' \
             "$(cat relatorio/relatorio.md)" "$RUN_URL" "$falhas")
           # Só a issue aberta por este workflow (título "Produção incorreta").
           # As issues do auditor LLM também têm o label, mas não são o alvo.

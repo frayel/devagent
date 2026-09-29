@@ -6,15 +6,15 @@ Ele tem duas camadas:
 
 | Camada | Onde | Quando roda | O que entrega |
 |---|---|---|---|
-| Determinística | `auditoria/auditar.py`, workflow `auditoria-producao.yml` | a cada 30 min no pregão, antes da abertura, após cada deploy | issue `producao-incorreta`, fechada sozinha quando volta a passar |
-| Exploratória (LLM) | persona `docs/agents/auditor.md`, tarefa agendada no Jules | uma vez por dia | relatório e achados em `docs/auditoria/`, que viram issues pelo `auditoria-achados.yml` |
+| Determinística | harness em `devagent/auditoria/nucleo.py`, checagens deste produto em `auditoria/auditar.py`, workflow `auditoria-producao.yml` | a cada 30 min no pregão, antes da abertura, após cada deploy | issue `producao-incorreta`, fechada sozinha quando volta a passar |
+| Exploratória (LLM) | persona `devagent/agents/auditor.md`, tarefa agendada no Jules | uma vez por dia | relatório e achados em `docs/auditoria/`, que viram issues pelo `auditoria-achados.yml` |
 
 ## Separação de poderes
 
-Quem é auditado não altera o auditor. O `automerge.yml` recusa merge automático de PRs que mexam em:
+Quem é auditado não altera o auditor. O `automerge.yml` recusa merge automático de PRs que mexam nos caminhos de `devagent/protegidos.txt`, entre eles:
 
-- `auditoria/`
-- `docs/agents/auditor.md`
+- `auditoria/` e `devagent/auditoria/`
+- `devagent/agents/auditor.md`
 - `.github/workflows/automerge.yml` e `.github/workflows/auditoria-*.yml`
 
 Esses PRs recebem o label `revisao-humana` e esperam aprovação manual. Isso vale também para o auditor LLM quando ele propõe checagens novas.
@@ -34,8 +34,8 @@ Fonte independente fora do ar gera resultado `inconclusivo`, que não reprova.
 ## Rodar localmente
 
 ```
-python -m auditoria.auditar                        # contra PRODUCTION_URL ou a URL padrão
-python -m auditoria.auditar --url http://127.0.0.1:8000 --navegador --saida /tmp/aud
+make audit                                         # contra PRODUCTION_URL ou producao_url do devagent.toml
+make audit ARGS="--url http://127.0.0.1:8000 --navegador --saida /tmp/aud"
 pytest -q auditoria
 ```
 
@@ -65,4 +65,4 @@ Hoje o auditor extrai os números do HTML, o que quebra se o template mudar. A a
 
 ## Painel novo, checagem nova
 
-Toda spec tem a seção **Invariantes de produção**. Ao publicar um painel, o desenvolvedor acrescenta o painel ao `/api/snapshot`. Um humano, ou o auditor LLM num PR com revisão humana, transforma as invariantes em funções `checar_*` em `auditar.py`, com teste em `auditoria/tests/`.
+Toda spec tem a seção **Invariantes de produção**. Ao publicar um painel, o desenvolvedor acrescenta o painel ao `/api/snapshot`. Um humano, ou o auditor LLM num PR com revisão humana, transforma as invariantes em funções `checar_*` em `auditar.py`, com teste em `auditoria/tests/`. Checagens que valem para qualquer site (saúde, página, navegador, vazamento de fixtures) ficam no harness do núcleo.

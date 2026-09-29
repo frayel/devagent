@@ -28,4 +28,4 @@ jobs:
       - name: Abrir issues
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python -m auditoria.achados_para_issues
+        run: python -m devagent.auditoria.achados_para_issues

@@ -1,7 +1,7 @@
 name: Auditoria LLM
 
-# Dispara o auditor LLM (persona docs/agents/auditor.md) no Jules pela API,
-# uma vez por dia útil depois do fechamento do pregão. O workflow jules.yml
+# Dispara o auditor LLM (persona devagent/agents/auditor.md) no Jules pela API.
+# Horário do projeto: uma vez por dia útil depois do fechamento do pregão. O workflow jules.yml
 # destrava a sessão se ela parar esperando aprovação.
 #
 # ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
@@ -29,4 +29,4 @@ jobs:
             echo "::warning::Crie o secret JULES_API_KEY (https://jules.google.com/settings#api)."
             exit 0
           fi
-          python3 scripts/jules.py iniciar auditor
+          python3 -m devagent.adaptadores.jules iniciar auditor

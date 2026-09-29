@@ -3,6 +3,7 @@
 > **Coleta em produção (2026-09-27):** até esta data nenhuma coleta rodava em produção; o painel exibia "Dados não disponíveis". A coleta agora roda no próprio web service (`app/agendador.py`, ADR 004). Diagnóstico: `GET /api/coleta`.
 
 ## Implementado
+- Núcleo do agente separado do produto (ADR 005 em `devagent/decisoes/`): processo em `devagent/`, produto em `PRODUTO.md`, contrato no `Makefile` e no `devagent.toml`.
 - Configuração inicial do projeto (FastAPI, Ruff, Mypy, Pytest).
 - Spec 001 (Ibovespa Hoje):
   - Banco de dados SQLite (`ibovespa_cache`).

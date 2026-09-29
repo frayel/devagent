@@ -5,7 +5,7 @@ Use ao implementar uma spec que traga uma fonte nova.
 ## Antes do código
 
 1. Registre a fonte em `docs/context/fontes-de-dados.md`: URL, formato, autenticação, limites, termos de uso, `robots.txt`, atraso dos dados e fonte reserva.
-2. Se a fonte proíbe coleta automatizada, pare e escolha outra (seção 9 do `AGENTS.md`).
+2. Se a fonte proíbe coleta automatizada, pare e escolha outra (seção 5 do `PRODUTO.md`).
 
 ## Estrutura
 

@@ -6,9 +6,9 @@ script abre uma issue para cada achado com `status: aberto` que ainda não
 tenha issue (o id do achado no corpo evita duplicatas).
 
 Severidade alta ganha o label `producao-incorreta` e entra no Passo 1 do
-AGENTS.md; média e baixa viram bugs comuns, tratados no Passo 6.
+devagent/CICLO.md; média e baixa viram bugs comuns, tratados no Passo 6.
 
-Uso: python -m auditoria.achados_para_issues [--dry-run]
+Uso: python -m devagent.auditoria.achados_para_issues [--dry-run]
 Precisa do gh autenticado (GH_TOKEN).
 """
 
@@ -20,7 +20,7 @@ import re
 import subprocess
 from pathlib import Path
 
-PASTA = Path(__file__).resolve().parent.parent / "docs" / "auditoria" / "achados"
+PASTA = Path(__file__).resolve().parents[2] / "docs" / "auditoria" / "achados"
 LABELS = {
     "auditoria": ("5319E7", "Achado do auditor de produção"),
     "producao-incorreta": ("D93F0B", "Produção exibe dado errado ou está fora do ar"),
