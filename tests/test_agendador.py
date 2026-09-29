@@ -27,8 +27,8 @@ def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
         chamados.append("highlights")
         return True
 
-    monkeypatch.setattr(agendador.ibovespa, "collect_and_save", quebra)
-    monkeypatch.setattr(agendador.highlights, "collect_and_save", funciona)
+    monkeypatch.setattr("app.collectors.ibovespa.collect_and_save", quebra)
+    monkeypatch.setattr("app.collectors.highlights.collect_and_save", funciona)
     agendador.coletar_tudo()
     assert chamados == ["ibovespa", "highlights"]
     assert "fonte fora" in (agendador.estado["ultimo_erro"] or "")

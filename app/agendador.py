@@ -17,7 +17,6 @@ import logging
 import os
 from datetime import datetime, time, timedelta, timezone
 
-from app.collectors import highlights, ibovespa
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +74,8 @@ def coletar_tudo() -> None:
 
 
 def _coletar() -> None:
+    from app.collectors import highlights, ibovespa
+
     for nome, coletor in (("ibovespa", ibovespa), ("highlights", highlights)):
         try:
             ok = coletor.collect_and_save()
