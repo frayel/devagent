@@ -29,3 +29,9 @@
 | Relatório Dinâmico de "Hoje vs Pior Dia do Ano" | Comparação direta do clima atual com o pior pregão dos últimos 12 meses. | yfinance / brapi | P | Baixo |
 | Radar de Inversão de Curva de Juros | Mostrar se os juros curtos ultrapassaram os longos e os últimos 3 vezes que isso ocorreu, como o Ibovespa reagiu nos 6 meses seguintes (Cruzamentos). | Scraping B3/yahoo | G | Alto (dificuldade de achar a fonte) |
 | Sentimento de Mercado Baseado na Dispersão | Proporção de ações subindo x caindo, independentemente do peso do Ibov (Incerteza, saindo do óbvio). | brapi | P | Baixo |
+| Correlação Ibovespa vs S&P500 em tempo real | Mostrar como o clima lá fora está "puxando" o Brasil (Incerteza/Cruzamento) | yfinance | M | Baixo |
+| Probabilidade de nova máxima histórica no ano | Calcular chance do Ibov renovar topo usando velocidade do fluxo recente | brapi.dev / yfinance | G | Médio (Complexidade estatística) |
+| Ranking de Volatilidade Absoluta | Quais papéis dão os solavancos mais fortes, independente da direção? | yfinance | P | Baixo |
+| Painel de Incerteza Analítica | Onde o mercado discorda mais? Ações com maior range de preços-alvo. | CVM / Scraping | G | Alto (Scraping sensível) |
+| Simulador "E se?" Histórico | Como a cesta atual se comportou no Joesley Day ou auge da pandemia | yfinance | M | Médio |
+| Alerta de "Volume Oculto" Intraday | Ações onde o volume de negócios destoa do book aparente | brapi.dev | M | Baixo |
