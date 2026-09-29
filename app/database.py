@@ -23,6 +23,9 @@ class HighlightsData:
     highs_json: str
     lows_json: str
     fonte: str = "brapi"
+    up_count: int | None = None
+    down_count: int | None = None
+    total_count: int | None = None
 
 
 def get_connection() -> sqlite3.Connection:
@@ -68,7 +71,10 @@ def init_db() -> None:
             timestamp DATETIME NOT NULL,
             highs_json TEXT NOT NULL,
             lows_json TEXT NOT NULL,
-            fonte TEXT NOT NULL DEFAULT 'brapi'
+            fonte TEXT NOT NULL DEFAULT 'brapi',
+            up_count INTEGER,
+            down_count INTEGER,
+            total_count INTEGER
         )
     """)
     # Migrar a tabela antiga caso exista e não tenha a coluna fonte
@@ -78,6 +84,14 @@ def init_db() -> None:
         cursor.execute(
             "ALTER TABLE highlights_cache ADD COLUMN fonte TEXT NOT NULL DEFAULT 'brapi'"
         )
+
+    # Migrar a tabela antiga caso exista e não tenha colunas de contagem
+    try:
+        cursor.execute("SELECT up_count FROM highlights_cache LIMIT 1")
+    except sqlite3.OperationalError:
+        cursor.execute("ALTER TABLE highlights_cache ADD COLUMN up_count INTEGER")
+        cursor.execute("ALTER TABLE highlights_cache ADD COLUMN down_count INTEGER")
+        cursor.execute("ALTER TABLE highlights_cache ADD COLUMN total_count INTEGER")
 
     # Add index to optimize get_latest_ibovespa_data() which does ORDER BY timestamp DESC LIMIT 1
     cursor.execute("""
@@ -146,14 +160,17 @@ def save_highlights_data(data: HighlightsData) -> None:
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO highlights_cache (timestamp, highs_json, lows_json, fonte)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO highlights_cache (timestamp, highs_json, lows_json, fonte, up_count, down_count, total_count)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     """,
         (
             data.timestamp.isoformat(),
             data.highs_json,
             data.lows_json,
             data.fonte,
+            data.up_count,
+            data.down_count,
+            data.total_count,
         ),
     )
     conn.commit()
@@ -164,7 +181,7 @@ def get_latest_highlights_data() -> HighlightsData | None:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT timestamp, highs_json, lows_json, fonte
+        SELECT timestamp, highs_json, lows_json, fonte, up_count, down_count, total_count
         FROM highlights_cache
         ORDER BY timestamp DESC
         LIMIT 1
@@ -178,6 +195,9 @@ def get_latest_highlights_data() -> HighlightsData | None:
             highs_json=row["highs_json"],
             lows_json=row["lows_json"],
             fonte=row["fonte"],
+            up_count=row["up_count"],
+            down_count=row["down_count"],
+            total_count=row["total_count"],
         )
     return None
 

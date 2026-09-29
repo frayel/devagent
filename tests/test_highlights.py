@@ -117,6 +117,9 @@ def test_fetch_brapi_success(monkeypatch):
         assert lows[0]["ticker"] == "LOW4"  # Largest negative variation: 72 vs 90
 
         assert data.fonte == "brapi"
+        assert data.up_count == 5
+        assert data.down_count == 5
+        assert data.total_count == 10
 
 
 @respx.mock
@@ -147,6 +150,9 @@ def test_fetch_yfinance_success(monkeypatch):
     assert highs[0]["change_percent"] > highs[1]["change_percent"]
     assert lows[0]["change_percent"] < lows[1]["change_percent"]
     assert data.fonte == "yfinance"
+    assert data.up_count == 15
+    assert data.down_count == 15
+    assert data.total_count == 30
 
 
 @respx.mock
@@ -210,6 +216,10 @@ def test_index_route(monkeypatch):
     assert "HIGH0" in response.text
     assert "LOW0" in response.text
     assert "Fonte: brapi" in response.text
+    assert "Termômetro de Dispersão" in response.text
+    assert "5 subiram vs 5 caíram" in response.text
+    assert "amostra de 10 ações" in response.text
+    assert "50% em alta" in response.text
 
 
 @respx.mock
@@ -240,6 +250,10 @@ def test_fetch_less_than_5_assets(monkeypatch):
     response = client.get("/")
     assert response.status_code == 200
     assert "ASSET0" in response.text
+    assert "Termômetro de Dispersão" in response.text
+    assert "3 subiram vs 0 caíram" in response.text
+    assert "amostra de 3 ações" in response.text
+    assert "100% em alta" in response.text
 
 
 @respx.mock
@@ -281,3 +295,7 @@ def test_index_route_yfinance(monkeypatch):
     response = client.get("/")
     assert response.status_code == 200
     assert "Fonte: yfinance" in response.text
+    assert "Termômetro de Dispersão" in response.text
+    assert "15 subiram vs 15 caíram" in response.text
+    assert "amostra de 30 ações" in response.text
+    assert "50% em alta" in response.text

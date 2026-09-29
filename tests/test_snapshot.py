@@ -36,6 +36,9 @@ def test_snapshot_with_data():
             [{"ticker": "LOW1", "price": 5.0, "change_percent": -5.0}]
         ),
         fonte="yfinance",
+        up_count=1,
+        down_count=1,
+        total_count=2,
     )
     save_highlights_data(highlights_data)
 
@@ -67,3 +70,7 @@ def test_snapshot_with_data():
     assert altas_baixas["baixas"] == [
         {"ticker": "LOW1", "price": 5.0, "change_percent": -5.0}
     ]
+    assert "dispersao" in altas_baixas
+    assert altas_baixas["dispersao"]["em_alta"] == 1
+    assert altas_baixas["dispersao"]["em_baixa"] == 1
+    assert altas_baixas["dispersao"]["proporcao_alta_pct"] == 50.0
