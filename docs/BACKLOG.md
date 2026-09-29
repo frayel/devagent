@@ -24,3 +24,8 @@
 | Termômetro de Risco Macro (DI, Dólar, VIX) | Indicador visual simplificado se o cenário global é de aversão ou apetite a risco | brapi.dev / Yahoo Finance | M | Alto (dificuldade em calibrar pesos dos índices) |
 | Simulador Histórico de Rentabilidade vs CDI | Comparar se ter segurado o ativo superou o risco zero no período de X anos | yfinance | G | Médio (cálculo complexo de dias úteis e variação do CDI) |
 | Força Relativa contra o Ibovespa | Quais ações superaram sistematicamente o Ibov nos últimos 5 ou 30 pregões | yfinance | P | Baixo |
+| Probabilidade de Fechamento de Gap | Dado um gap de abertura de > 2%, qual a probabilidade histórica de ele fechar no mesmo dia? (Incerteza como produto e cruzamento do próprio histórico) | yfinance | M | Médio |
+| Risco de Correção do Ibov (Esticado) | Quão distante o Ibov está da sua média de 20 e histórico de regressão à média (Incerteza). | yfinance | M | Baixo |
+| Relatório Dinâmico de "Hoje vs Pior Dia do Ano" | Comparação direta do clima atual com o pior pregão dos últimos 12 meses. | yfinance / brapi | P | Baixo |
+| Radar de Inversão de Curva de Juros | Mostrar se os juros curtos ultrapassaram os longos e os últimos 3 vezes que isso ocorreu, como o Ibovespa reagiu nos 6 meses seguintes (Cruzamentos). | Scraping B3/yahoo | G | Alto (dificuldade de achar a fonte) |
+| Sentimento de Mercado Baseado na Dispersão | Proporção de ações subindo x caindo, independentemente do peso do Ibov (Incerteza, saindo do óbvio). | brapi | P | Baixo |
