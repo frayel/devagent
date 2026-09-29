@@ -21,3 +21,8 @@
   - Cálculo de médias móveis baseado em histórico estendido (`1y`).
   - Card "Tendência (Ibovespa)" com sinais de alta, baixa ou neutra.
   - Atualização automática em cada coleta com fallback para dados insuficientes.
+- Spec 005 (Alertas de Volume Anormal):
+  - Banco de dados SQLite (`volume_alert_cache`).
+  - Coletor buscando volume das 30 ações mais líquidas via `yfinance` (spark endpoint).
+  - Cálculo de anomalia (volume atual > 50% da média das últimas 3 semanas).
+  - Exibição de tabela de alertas na home e via contrato `/api/snapshot`.
