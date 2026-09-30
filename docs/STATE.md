@@ -21,6 +21,10 @@
   - Cálculo de médias móveis baseado em histórico estendido (`1y`).
   - Card "Tendência (Ibovespa)" com sinais de alta, baixa ou neutra.
   - Atualização automática em cada coleta com fallback para dados insuficientes.
+- Spec 004 (Sentimento de Mercado Baseado na Dispersão):
+  - Termômetro de dispersão na página inicial com contagem de altas/baixas e proporção.
+  - Banco de dados SQLite (`highlights_cache`) armazena as contagens.
+  - Exposição no JSON `/api/snapshot`.
 - Spec 005 (Alertas de Volume Anormal):
   - Banco de dados SQLite (`volume_alert_cache`).
   - Coletor buscando volume das 30 ações mais líquidas via `yfinance` (spark endpoint).
