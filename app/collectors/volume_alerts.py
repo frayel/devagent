@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 def fetch_yfinance() -> VolumeAlertsData | None:
     parsed_results = []
+    successful_fetches = 0
 
     batch_size = 15
     batches = [TICKERS[i : i + batch_size] for i in range(0, len(TICKERS), batch_size)]
@@ -27,6 +28,7 @@ def fetch_yfinance() -> VolumeAlertsData | None:
             try:
                 response = fetch_with_retry(url, client=client)
                 data = response.json()
+                successful_fetches += 1
 
                 for item in data.get("spark", {}).get("result", []):
                     if not item.get("response"):
@@ -83,7 +85,7 @@ def fetch_yfinance() -> VolumeAlertsData | None:
                 logger.error(f"Error fetching batch {symbols} from yfinance: {e}")
                 continue
 
-    if not parsed_results:
+    if successful_fetches == 0:
         return None
 
     # Sort by ratio descending
