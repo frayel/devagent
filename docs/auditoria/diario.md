@@ -2,6 +2,6 @@
 
 Memória entre execuções do auditor LLM. No máximo 20 linhas: condense em vez de acumular.
 
-- 2026-09-29 · Execução da auditoria. Todos os achados anteriores (uso de dados de teste, ausência de fonte de dados e erro no formato decimal da variação percentual) foram confirmados como **resolvidos** na produção atual (`https://devagent-vb52.onrender.com`).
-- A auditoria determinística retornou 0 falhas em 18 checagens. Os valores do Ibovespa batem com a fonte (yfinance), e os gráficos mostram o período e dados corretos.
-- Pendente de verificar para a próxima execução: Manter a monitoria para assegurar que as APIs fonte (brapi/yfinance) não mudem seus formatos ou apresentem indisponibilidades persistentes que afetem a integridade e precisão dos dados ao longo do tempo.
+- 2026-09-30 · Auditoria não encontrou regressões em Spec 001-004 e det. `make audit` retornou 0 falhas.
+- Foi aberto um novo achado de severidade `alta` (Ausência do Radar de Volume Anormal), referente à Spec 005. Embora conste como "done", a feature não existe na produção web, falhando também a API `/api/snapshot`.
+- Pendente de verificar para a próxima execução: validar em produção se o Radar de Volume Anormal da Spec 005 foi corretamente submetido, exibe dados e respeita o layout das demais specs.
