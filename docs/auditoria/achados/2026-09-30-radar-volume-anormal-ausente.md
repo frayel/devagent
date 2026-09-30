@@ -2,7 +2,7 @@
 id: 2026-09-30-radar-volume-anormal-ausente
 severidade: alta
 painel: alertas_volume_anormal
-status: aberto
+status: resolvido
 visto_em: 2026-09-30T00:50:00-03:00
 ---
 
@@ -35,3 +35,6 @@ O campo dos alertas de volume, esperado pelo contrato, simplesmente não existe,
 
 ## Invariante proposta
 Verificar na asserção `app.snapshot_igual_tela` do auditor ou criar uma nova checagem que valide: "Se o painel for retornado pela API `api/snapshot`, ele não pode estar vazio se as regras da spec determinarem obrigatoriedade (mesmo que informando dados insuficientes), mas ele DEVE ao menos ter a chave correspondente garantida no JSON". Como o endpoint nem retornou a chave de volume, o contrato falhou.
+
+## Resolução
+Corrigido o coletor `volume_alerts.py` para salvar e persistir os resultados no banco de dados mesmo quando nenhuma ação satisfaz a condição de volume anormal (lista vazia). Isso garante a presença da chave `radar_volume` no snapshot da API, provendo os metadados corretos, e ajusta a interface no `index.html` para exibir um aviso explícito e amigável ao usuário de que não existem anomalias no momento.

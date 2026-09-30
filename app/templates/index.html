@@ -77,7 +77,8 @@
 <!-- Radar de Volume Anormal -->
 <div class="card" style="margin-top: 20px;">
     <h2>Radar de Volume Anormal</h2>
-    {% if volume_alerts and volume_alerts.alerts %}
+    {% if volume_alerts %}
+        {% if volume_alerts.alerts %}
         <div style="margin-top: 10px;">
             <p>Ações com volume diário atípico comparado à média móvel de 21 dias:</p>
             <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
@@ -95,6 +96,9 @@
                 {% endfor %}
             </table>
         </div>
+        {% else %}
+        <p>Nenhuma ação apresentando volume anormal no momento.</p>
+        {% endif %}
         <div class="text-small" style="margin-top: 15px;">
             Última atualização: {{ volume_alerts.time }} | Fonte: {{ volume_alerts.fonte }}
         </div>
