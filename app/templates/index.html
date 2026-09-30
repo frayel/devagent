@@ -74,6 +74,35 @@
     {% endif %}
 </div>
 
+<!-- Radar de Volume Anormal -->
+<div class="card" style="margin-top: 20px;">
+    <h2>Radar de Volume Anormal</h2>
+    {% if volume_alerts and volume_alerts.alerts %}
+        <div style="margin-top: 10px;">
+            <p>Ações com volume diário atípico comparado à média móvel de 21 dias:</p>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                <tr style="border-bottom: 1px solid #eee; text-align: left;">
+                    <th style="padding: 8px 0;">Ticker</th>
+                    <th style="padding: 8px 0; text-align: right;">Preço</th>
+                    <th style="padding: 8px 0; text-align: right;">Anomalia</th>
+                </tr>
+                {% for alert in volume_alerts.alerts %}
+                <tr style="border-bottom: 1px solid #f9f9f9;">
+                    <td style="padding: 8px 0; font-weight: bold;">{{ alert.ticker }}</td>
+                    <td style="padding: 8px 0; text-align: right;">{{ alert.price_formatted }}</td>
+                    <td style="padding: 8px 0; text-align: right;" class="positive">{{ alert.ratio_formatted }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="text-small" style="margin-top: 15px;">
+            Última atualização: {{ volume_alerts.time }} | Fonte: {{ volume_alerts.fonte }}
+        </div>
+    {% else %}
+        <p>Dados insuficientes no momento.</p>
+    {% endif %}
+</div>
+
 <!-- Card Tendência (Ibovespa) -->
 <div class="card" style="margin-top: 20px;">
     <h2>Tendência (Ibovespa)</h2>

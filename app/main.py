@@ -10,7 +10,12 @@ import json
 from datetime import datetime, timezone
 from app.services.ibovespa import get_ibovespa_view_data
 from app.services.highlights import get_highlights_view_data
-from app.database import get_latest_ibovespa_data, get_latest_highlights_data
+from app.services.volume_alerts import get_volume_alerts_view_data
+from app.database import (
+    get_latest_ibovespa_data,
+    get_latest_highlights_data,
+    get_latest_volume_alerts_data,
+)
 from app import agendador
 
 
@@ -58,42 +63,37 @@ def coleta():
 
 @app.get("/api/snapshot")
 def snapshot():
+    resp = {"gerado_em": datetime.now(timezone.utc).isoformat(), "paineis": {}}
+
     data = get_latest_ibovespa_data()
-    if not data:
-        return {"gerado_em": datetime.now(timezone.utc).isoformat(), "paineis": {}}
+    if data:
+        variation_pct = (
+            ((data.current_price - data.previous_close) / data.previous_close) * 100
+            if data.previous_close
+            else 0.0
+        )
 
-    variation_pct = (
-        ((data.current_price - data.previous_close) / data.previous_close) * 100
-        if data.previous_close
-        else 0.0
-    )
+        history_data = (
+            json.loads(data.history_json)
+            if data.history_json
+            else {"dates": [], "closes": []}
+        )
 
-    history_data = (
-        json.loads(data.history_json)
-        if data.history_json
-        else {"dates": [], "closes": []}
-    )
-
-    resp = {
-        "gerado_em": datetime.now(timezone.utc).isoformat(),
-        "paineis": {
-            "ibovespa": {
-                "valor": data.current_price,
-                "fechamento_anterior": data.previous_close,
-                "variacao_pct": variation_pct,
-                "coletado_em": data.timestamp.isoformat(),
-                "fonte": getattr(data, "fonte", "brapi"),
-                "historico": {
-                    "datas": history_data.get("dates", []),
-                    "fechamentos": history_data.get("closes", []),
-                },
-                "medias_moveis": {
-                    "mm21": data.mm21,
-                    "mm200": data.mm200,
-                },
-            }
-        },
-    }
+        resp["paineis"]["ibovespa"] = {
+            "valor": data.current_price,
+            "fechamento_anterior": data.previous_close,
+            "variacao_pct": variation_pct,
+            "coletado_em": data.timestamp.isoformat(),
+            "fonte": getattr(data, "fonte", "brapi"),
+            "historico": {
+                "datas": history_data.get("dates", []),
+                "fechamentos": history_data.get("closes", []),
+            },
+            "medias_moveis": {
+                "mm21": data.mm21,
+                "mm200": data.mm200,
+            },
+        }
 
     highlights_data = get_latest_highlights_data()
     if highlights_data:
@@ -123,6 +123,21 @@ def snapshot():
 
         resp["paineis"]["altas_baixas"] = altas_baixas_panel
 
+    volume_alerts_data = get_latest_volume_alerts_data()
+    if volume_alerts_data:
+        alerts = (
+            json.loads(volume_alerts_data.alerts_json)
+            if volume_alerts_data.alerts_json
+            else []
+        )
+        resp["paineis"]["radar_volume"] = {
+            "coletado_em": volume_alerts_data.timestamp.isoformat(),
+            "fonte": getattr(volume_alerts_data, "fonte", "yfinance"),
+            "alertas": alerts,
+        }
+    else:
+        resp["paineis"]["radar_volume"] = {}
+
     return resp
 
 
@@ -130,8 +145,13 @@ def snapshot():
 async def index(request: Request):
     data = get_ibovespa_view_data()
     highlights = get_highlights_view_data()
+    volume_alerts = get_volume_alerts_view_data()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={"data": data, "highlights": highlights},
+        context={
+            "data": data,
+            "highlights": highlights,
+            "volume_alerts": volume_alerts,
+        },
     )
