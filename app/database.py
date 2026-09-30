@@ -28,6 +28,13 @@ class HighlightsData:
     total_count: int | None = None
 
 
+@dataclass
+class VolumeAlertsData:
+    timestamp: datetime
+    alerts_json: str
+    fonte: str = "yfinance"
+
+
 def get_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -103,6 +110,20 @@ def init_db() -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_highlights_cache_timestamp
         ON highlights_cache(timestamp DESC)
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS volume_alerts_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME NOT NULL,
+            alerts_json TEXT NOT NULL,
+            fonte TEXT NOT NULL DEFAULT 'yfinance'
+        )
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_volume_alerts_cache_timestamp
+        ON volume_alerts_cache(timestamp DESC)
     """)
     conn.commit()
     conn.close()
@@ -198,6 +219,45 @@ def get_latest_highlights_data() -> HighlightsData | None:
             up_count=row["up_count"],
             down_count=row["down_count"],
             total_count=row["total_count"],
+        )
+    return None
+
+
+def save_volume_alerts_data(data: VolumeAlertsData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO volume_alerts_cache (timestamp, alerts_json, fonte)
+        VALUES (?, ?, ?)
+    """,
+        (
+            data.timestamp.isoformat(),
+            data.alerts_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_volume_alerts_data() -> VolumeAlertsData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT timestamp, alerts_json, fonte
+        FROM volume_alerts_cache
+        ORDER BY timestamp DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return VolumeAlertsData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            alerts_json=row["alerts_json"],
+            fonte=row["fonte"],
         )
     return None
 
