@@ -45,6 +45,9 @@ def fetch_with_retry(
         headers["User-Agent"] = USER_AGENT
         kwargs["headers"] = headers
 
+    if "timeout" not in kwargs:
+        kwargs["timeout"] = 10.0
+
     for attempt in range(max_retries):
         _enforce_rate_limit(domain)
 

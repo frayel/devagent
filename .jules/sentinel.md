@@ -12,3 +12,8 @@
 **Vulnerability:** Missing Content-Security-Policy header and unpinned dependencies in `requirements.txt`.
 **Learning:** The previous security fix added some headers but missed Content-Security-Policy (CSP), which is important for mitigating XSS attacks. The application relies on external CDNs for scripts and styles (htmx, plotly). Added a CSP header to whitelist these sources. Additionally, dependencies in `requirements.txt` were unpinned, which could lead to supply chain attacks or accidental breakage from new vulnerable versions. Pinned versions.
 **Prevention:** Always configure CSP with a strict whitelist of domains. Always pin dependencies in `requirements.txt` and check them with a tool like `pip-audit`.
+
+## 2026-09-30 - Enforce Default HTTP Timeout in Collectors
+**Vulnerability:** Missing default timeout on HTTP requests to external APIs (`httpx.get`).
+**Learning:** `fetch_with_retry` lacked a strict default timeout. If not explicitly passed by the caller, `httpx.get` uses a default that may be too generous or could lead to the application hanging indefinitely (Resource Exhaustion / Denial of Service) if the remote service stops responding. Implemented a default 10.0-second timeout injected via `kwargs`.
+**Prevention:** Always set explicit, reasonable timeouts for outbound network requests to avoid hanging threads and resource exhaustion.

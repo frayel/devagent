@@ -131,3 +131,26 @@ def test_user_agent_header_not_overwritten():
         kwargs = mock_get.call_args[1]
         assert "headers" in kwargs
         assert kwargs["headers"].get("User-Agent") == "CustomAgent"
+
+
+def test_timeout_is_enforced():
+    import app.collectors.utils as utils
+
+    utils._last_request_time = {}
+
+    with patch("httpx.get") as mock_get:
+        mock_get.return_value = httpx.Response(
+            200, request=httpx.Request("GET", "https://example.com/api")
+        )
+
+        fetch_with_retry("https://example.com/api")
+
+        kwargs = mock_get.call_args[1]
+        assert "timeout" in kwargs
+        assert kwargs["timeout"] == 10.0
+
+        fetch_with_retry("https://example.com/api", timeout=5.0)
+
+        kwargs2 = mock_get.call_args[1]
+        assert "timeout" in kwargs2
+        assert kwargs2["timeout"] == 5.0
