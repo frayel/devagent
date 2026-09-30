@@ -1,7 +1,7 @@
 ---
 id: 004
 titulo: Sentimento de Mercado Baseado na Dispersão
-status: ready
+status: done
 esforco: P
 ---
 
