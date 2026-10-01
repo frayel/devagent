@@ -2,6 +2,5 @@
 
 Memória entre execuções do auditor LLM. No máximo 20 linhas: condense em vez de acumular.
 
-- 2026-09-30 · Auditoria não encontrou regressões em Spec 001-004 e det. `make audit` retornou 0 falhas.
-- Foi aberto um novo achado de severidade `alta` (Ausência do Radar de Volume Anormal), referente à Spec 005. Embora conste como "done", a feature não existe na produção web, falhando também a API `/api/snapshot`.
-- Pendente de verificar para a próxima execução: validar em produção se o Radar de Volume Anormal da Spec 005 foi corretamente submetido, exibe dados e respeita o layout das demais specs.
+- 2026-10-01 · Auditoria não encontrou regressões. O painel de Radar de Volume Anormal (Spec 005) foi validado em produção: a interface e a API estão consistentes. `make audit` retornou 0 falhas.
+- Pendente de verificar para a próxima execução: auditar os dados brutos da "Dispersão" (Spec 004) comparando o percentual de altas com o balanço de todo o mercado (e.g., via Investing ou B3) para validar a eficácia da amostragem reduzida.
