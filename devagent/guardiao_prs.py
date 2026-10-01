@@ -192,6 +192,17 @@ ISSUES_DE_PRODUCAO = {"deploy-falhou", "producao-incorreta"}
 DIAS_FECHAR_CITADAS = 7
 
 
+def mensagens_dos_commits(numero: int) -> list[str]:
+    """Mensagens completas dos commits de um PR, pela API REST."""
+    try:
+        commits = gh_json(
+            "api", f"repos/{{owner}}/{{repo}}/pulls/{numero}/commits?per_page=100"
+        )
+    except (RuntimeError, json.JSONDecodeError):
+        return []
+    return [(c.get("commit") or {}).get("message", "") for c in commits]
+
+
 def fechar_issues_citadas() -> None:
     """Fecha issues citadas com Closes/Fixes/Resolves em PRs mergeados recentes.
 
@@ -207,16 +218,18 @@ def fechar_issues_citadas() -> None:
         "merged",
         "--search",
         f"merged:>={desde}",
+        # Sem o campo commits: o gh o traduz em commits(first:100) com
+        # authors(first:100) por commit, e com 100 PRs a consulta GraphQL
+        # passa do teto de 500 mil nós do GitHub e é recusada inteira.
         "--json",
-        "number,title,body,commits",
+        "number,title,body",
         "--limit",
         "100",
     )
     for pr in prs:
-        textos = [pr["title"], pr.get("body") or ""] + [
-            f"{c.get('messageHeadline', '')} {c.get('messageBody', '')}"
-            for c in pr.get("commits", [])
-        ]
+        textos = [pr["title"], pr.get("body") or ""] + mensagens_dos_commits(
+            pr["number"]
+        )
         for n in sorted({int(x) for x in PALAVRA_CHAVE.findall("\n".join(textos))}):
             try:
                 issue = gh_json("issue", "view", str(n), "--json", "state,labels")
@@ -239,7 +252,12 @@ def fechar_issues_citadas() -> None:
 
 
 def varredura() -> None:
-    fechar_issues_citadas()
+    # Um passo auxiliar com defeito não pode cegar os outros: de 28/09 a 30/09
+    # uma falha aqui derrubou a varredura inteira em toda execução.
+    try:
+        fechar_issues_citadas()
+    except Exception as erro:  # noqa: BLE001
+        print(f"::warning::fechar_issues_citadas falhou: {erro}")
     prs = prs_do_agente()
     fechados: set[int] = set()
 
