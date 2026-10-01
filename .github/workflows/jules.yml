@@ -8,43 +8,67 @@ name: Jules
 # ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
 on:
   schedule:
-    # Horários em UTC (BRT = UTC-3). Minutos quebrados de propósito: o GitHub
-    # atrasa e descarta mais os agendamentos perto da virada da hora.
-    # Um disparo por hora, 24 h por dia:
-    # 21 para o desenvolvedor e, nas horas 6, 12 e 18, um para cada especialista.
-    # Se a sessão anterior do desenvolvedor ainda estiver ativa, o disparo é pulado.
-    # Com o repo variable JULES_LIMITE_DIARIO, o desenvolvedor para antes de
-    # consumir a cota reservada aos especialistas e ao auditor.
-    - cron: "47 0-5,7-11,13-17,19-23 * * *" # desenvolvedor
-    - cron: "47 6 * * *" # seguranca (Sentinel), 03h47 BRT
-    - cron: "47 12 * * *" # performance (Bolt), 09h47 BRT
-    - cron: "47 18 * * *" # design (Palette), 15h47 BRT
-    # Destravar: a cada 15 minutos (o GitHub pode atrasar ou pular
-    # agendamentos curtos em horários de pico; cada disparo acima
-    # também destrava).
-    - cron: "4,19,34,49 * * * *"
-  # Execução manual. O auditor LLM também é agendado pelo auditoria-llm.yml;
-  # disparar pelos dois lugares é seguro, porque jules.py não cria sessão
-  # nova se já houver uma ativa da mesma persona.
+    # O cron do GitHub não é relógio: em 30/09 e 01/10 ele executou cerca de
+    # 1 em cada 10 disparos agendados, com buracos de até 3,5 h. Por isso o
+    # trabalho roda no job "vigia", um laço de ~5h40 que inicia a persona de
+    # cada hora, destrava a cada 5 min e, ao terminar, dispara o próximo vigia
+    # por workflow_dispatch (que não é descartado). Estes crons só ressuscitam
+    # a corrente se ela se romper; com um vigia rodando, ficam na fila do
+    # grupo de concorrência e um substitui o outro.
+    - cron: "11 */3 * * *"
+    - cron: "41 1-23/3 * * *"
   workflow_dispatch:
     inputs:
       acao:
         description: "O que fazer"
         type: choice
-        options: [desenvolvedor, seguranca, design, performance, auditor, destravar, listar]
-        default: desenvolvedor
+        options: [vigiar, desenvolvedor, seguranca, design, performance, auditor, destravar, listar]
+        default: vigiar
 
 permissions:
   contents: read
 
-concurrency:
-  group: jules
-  cancel-in-progress: false
-
 jobs:
-  jules:
+  vigia:
+    if: github.event_name == 'schedule' || inputs.acao == 'vigiar'
+    runs-on: ubuntu-latest
+    # Teto do GitHub para um job: 6 h. O laço dura 340 min.
+    timeout-minutes: 355
+    permissions:
+      contents: read
+      actions: write
+    concurrency:
+      group: jules-vigia
+      cancel-in-progress: false
+    env:
+      JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+      JULES_LIMITE_DIARIO: ${{ vars.JULES_LIMITE_DIARIO }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Vigiar
+        run: |
+          if [ -z "$JULES_API_KEY" ]; then
+            echo "::warning::Crie o secret JULES_API_KEY (https://jules.google.com/settings#api)."
+            exit 0
+          fi
+          python3 -u -m devagent.adaptadores.jules vigiar
+      - name: Passar o turno
+        # Roda mesmo se o laço falhar ou estourar o tempo, para a corrente
+        # não morrer. Não roda se alguém cancelar o vigia de propósito.
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run jules.yml --repo "$GITHUB_REPOSITORY" --ref main -f acao=vigiar
+
+  avulso:
+    if: github.event_name == 'workflow_dispatch' && inputs.acao != 'vigiar'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    concurrency:
+      group: jules
+      cancel-in-progress: false
     env:
       JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
       JULES_LIMITE_DIARIO: ${{ vars.JULES_LIMITE_DIARIO }}
@@ -53,23 +77,14 @@ jobs:
         with:
           ref: main
       - name: Executar
+        env:
+          ACAO: ${{ inputs.acao }}
         run: |
           if [ -z "$JULES_API_KEY" ]; then
             echo "::warning::Crie o secret JULES_API_KEY (https://jules.google.com/settings#api)."
             exit 0
           fi
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            acao="${{ inputs.acao }}"
-          else
-            case "${{ github.event.schedule }}" in
-              "4,19,34,49 * * * *") acao="destravar" ;;
-              "47 6 * * *") acao="seguranca" ;;
-              "47 12 * * *") acao="performance" ;;
-              "47 18 * * *") acao="design" ;;
-              *) acao="desenvolvedor" ;;
-            esac
-          fi
-          case "$acao" in
-            destravar|listar) python3 -m devagent.adaptadores.jules "$acao" ;;
-            *) python3 -m devagent.adaptadores.jules iniciar "$acao" && python3 -m devagent.adaptadores.jules destravar ;;
+          case "$ACAO" in
+            destravar|listar) python3 -m devagent.adaptadores.jules "$ACAO" ;;
+            *) python3 -m devagent.adaptadores.jules iniciar "$ACAO" && python3 -m devagent.adaptadores.jules destravar ;;
           esac
