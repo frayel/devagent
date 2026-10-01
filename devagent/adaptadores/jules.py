@@ -11,6 +11,7 @@ Uso:
     python -m devagent.adaptadores.jules iniciar auditor
     python -m devagent.adaptadores.jules iniciar seguranca | design | performance
     python -m devagent.adaptadores.jules destravar   # aprova planos e responde perguntas
+    python -m devagent.adaptadores.jules vigiar      # relógio próprio: inicia e destrava em laço
     python -m devagent.adaptadores.jules listar
     python -m devagent.adaptadores.jules iniciar auditor --dry-run
 
@@ -30,6 +31,7 @@ import argparse
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -109,10 +111,16 @@ PERSONAS.update(
 # abrirem PRs concorrentes (a regra de um PR aberto do agente por vez).
 CONSTRUTORAS = {"desenvolvedor", "seguranca", "design", "performance"}
 
+# O Jules às vezes encerra o turno anunciando o que vai fazer e pedindo
+# confirmação ("posso seguir?"), mesmo com o prompt proibindo perguntas.
+# A resposta confirma a decisão que ele já tomou; mandar escolher "a opção
+# mais conservadora" o levava a perguntar de novo ou a não fazer nada.
 RESPOSTA_PADRAO = (
-    "Não há humano acompanhando esta sessão. Não espere respostas nem "
-    "aprovação. Escolha a opção mais conservadora, registre a decisão no "
-    "relatório ou no corpo do PR e continue até abrir o PR."
+    "Sim, siga. Não há humano acompanhando esta sessão e ninguém vai "
+    "responder: execute agora o que você já decidiu ou propôs, sem pedir "
+    "confirmação de novo. Se apresentou opções, fique com a que recomendou "
+    "(ou com a mais conservadora, se não recomendou nenhuma). Registre a "
+    "decisão no relatório ou no corpo do PR e continue até abrir o PR."
 )
 
 
@@ -223,6 +231,55 @@ def destravar(espera_minutos: int) -> int:
     return 0
 
 
+# Persona de cada hora (UTC) no relógio próprio. Nas demais horas, o
+# desenvolvedor. Em BRT: Sentinel 03h, Bolt 09h, Palette 15h.
+PERSONA_DA_HORA = {6: "seguranca", 12: "performance", 18: "design"}
+
+
+def vigiar(duracao_minutos: int, intervalo_minutos: int, espera_minutos: int) -> int:
+    """Laço que substitui o cron do GitHub, que descarta a maioria dos disparos.
+
+    A cada hora nova, tenta iniciar a persona da hora (as travas de sessão
+    ativa e de cota continuam valendo). A cada intervalo, destrava. Um erro
+    numa volta não encerra o laço.
+    """
+    fim = datetime.now(timezone.utc) + timedelta(minutes=duracao_minutos)
+    ultima_hora: int | None = None
+    # Na troca de turno entre vigias, não inicia de novo a persona da hora
+    # se o vigia anterior já a iniciou nesta mesma hora.
+    try:
+        hora_atual = datetime.now(timezone.utc).replace(
+            minute=0, second=0, microsecond=0
+        )
+        titulos = tuple(PERSONAS[x]["titulo"] for x in CONSTRUTORAS)
+        if any(
+            s.get("title", "").startswith(titulos)
+            and _data(s, "createTime") >= hora_atual
+            for s in sessoes_do_repo()
+        ):
+            ultima_hora = hora_atual.hour
+    except Exception as erro:  # noqa: BLE001
+        print(f"::warning::leitura inicial das sessões falhou: {erro}")
+    while True:
+        agora = datetime.now(timezone.utc)
+        if agora >= fim:
+            return 0
+        if agora.hour != ultima_hora:
+            persona = PERSONA_DA_HORA.get(agora.hour, "desenvolvedor")
+            try:
+                iniciar(persona, dry_run=False)
+                ultima_hora = agora.hour
+            except Exception as erro:  # noqa: BLE001
+                print(f"::warning::iniciar {persona} falhou: {erro}")
+        try:
+            destravar(espera_minutos)
+        except Exception as erro:  # noqa: BLE001
+            print(f"::warning::destravar falhou: {erro}")
+        sys.stdout.flush()
+        restante = (fim - datetime.now(timezone.utc)).total_seconds()
+        time.sleep(max(0.0, min(intervalo_minutos * 60, restante)))
+
+
 def listar() -> int:
     for s in sessoes_do_repo():
         print(
@@ -238,13 +295,19 @@ def main(argv: list[str] | None = None) -> int:
     i.add_argument("persona", choices=sorted(PERSONAS))
     i.add_argument("--dry-run", action="store_true")
     d = sub.add_parser("destravar")
-    d.add_argument("--espera-minutos", type=int, default=10)
+    d.add_argument("--espera-minutos", type=int, default=5)
+    v = sub.add_parser("vigiar")
+    v.add_argument("--duracao-minutos", type=int, default=340)
+    v.add_argument("--intervalo-minutos", type=int, default=5)
+    v.add_argument("--espera-minutos", type=int, default=5)
     sub.add_parser("listar")
     args = ap.parse_args(argv)
     if args.cmd == "iniciar":
         return iniciar(args.persona, args.dry_run)
     if args.cmd == "destravar":
         return destravar(args.espera_minutos)
+    if args.cmd == "vigiar":
+        return vigiar(args.duracao_minutos, args.intervalo_minutos, args.espera_minutos)
     return listar()
 
 
