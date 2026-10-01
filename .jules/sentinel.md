@@ -17,3 +17,7 @@
 **Vulnerability:** Missing default timeout on HTTP requests to external APIs (`httpx.get`).
 **Learning:** `fetch_with_retry` lacked a strict default timeout. If not explicitly passed by the caller, `httpx.get` uses a default that may be too generous or could lead to the application hanging indefinitely (Resource Exhaustion / Denial of Service) if the remote service stops responding. Implemented a default 10.0-second timeout injected via `kwargs`.
 **Prevention:** Always set explicit, reasonable timeouts for outbound network requests to avoid hanging threads and resource exhaustion.
+## 2026-10-01 - Add Referrer-Policy and Permissions-Policy Headers
+**Vulnerability:** Missing `Referrer-Policy` and `Permissions-Policy` headers.
+**Learning:** The application lacked `Referrer-Policy` and `Permissions-Policy` headers. `Referrer-Policy` controls how much referrer information (sent with the Referer header) should be included with requests, protecting user privacy. `Permissions-Policy` allows site operators to disable access to browser features like the camera, microphone, and geolocation, reducing the attack surface. Added both to the global security middleware.
+**Prevention:** Always include `Referrer-Policy` and `Permissions-Policy` headers in addition to other standard security headers to enhance user privacy and restrict unused browser capabilities.
