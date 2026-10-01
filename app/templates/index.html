@@ -205,4 +205,58 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Sensibilidade ao Dólar -->
+<div class="card" style="margin-top: 20px;">
+    <h2>Sensibilidade ao Dólar</h2>
+    <p>Correlação com a variação do dólar (BRL=X) nos últimos 30 dias.</p>
+    {% if dolar_correlation %}
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;">
+            <div style="flex: 1; min-width: 200px;">
+                <h3 style="margin-top: 0; font-size: 1.1em;">Correlação Positiva (Beneficiadas)</h3>
+                {% if dolar_correlation.positivas %}
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="border-bottom: 1px solid #eee; text-align: left;">
+                            <th style="padding: 8px 0;">Ativo</th>
+                            <th style="padding: 8px 0; text-align: right;">Correlação</th>
+                        </tr>
+                        {% for asset in dolar_correlation.positivas %}
+                        <tr style="border-bottom: 1px solid #f9f9f9;">
+                            <td style="padding: 8px 0; font-weight: bold;">{{ asset.ticker }}</td>
+                            <td style="padding: 8px 0; text-align: right;" class="positive">+{{ asset.correlation_formatted }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    <p>Sem correlações positivas relevantes.</p>
+                {% endif %}
+            </div>
+
+            <div style="flex: 1; min-width: 200px;">
+                <h3 style="margin-top: 0; font-size: 1.1em;">Correlação Negativa (Prejudicadas)</h3>
+                {% if dolar_correlation.negativas %}
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="border-bottom: 1px solid #eee; text-align: left;">
+                            <th style="padding: 8px 0;">Ativo</th>
+                            <th style="padding: 8px 0; text-align: right;">Correlação</th>
+                        </tr>
+                        {% for asset in dolar_correlation.negativas %}
+                        <tr style="border-bottom: 1px solid #f9f9f9;">
+                            <td style="padding: 8px 0; font-weight: bold;">{{ asset.ticker }}</td>
+                            <td style="padding: 8px 0; text-align: right;" class="negative">{{ asset.correlation_formatted }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    <p>Sem correlações negativas relevantes.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="text-small" style="margin-top: 15px;">
+            Última atualização: {{ dolar_correlation.time }} | Fonte: {{ dolar_correlation.fonte }}
+        </div>
+    {% else %}
+        <p>Dados não disponíveis no momento.</p>
+    {% endif %}
+</div>
 {% endblock %}

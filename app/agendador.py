@@ -74,12 +74,13 @@ def coletar_tudo() -> None:
 
 
 def _coletar() -> None:
-    from app.collectors import highlights, ibovespa, volume_alerts
+    from app.collectors import highlights, ibovespa, volume_alerts, dolar_correlation
 
     for nome, coletor in (
         ("ibovespa", ibovespa),
         ("highlights", highlights),
         ("volume_alerts", volume_alerts),
+        ("dolar_correlation", dolar_correlation),
     ):
         try:
             ok = coletor.collect_and_save()
