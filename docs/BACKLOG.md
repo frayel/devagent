@@ -41,3 +41,9 @@
 | Sensibilidade ao Dólar | Responde: Quais ações se beneficiam ou sofrem quando o dólar sobe? Originalidade: Mostra a correlação simples recente de ações vs BRL=X. | yfinance | P | Baixo |
 | Tempo Médio de Recuperação (TMR) | Responde: Se cair, quanto tempo leva em média para voltar? Originalidade: Mede tempo de drawdown em vez de rentabilidade. | yfinance | G | Médio |
 | Gêmeos de Comportamento | Responde: Quais ações estão andando de mãos dadas recentemente? Originalidade: Encontra os pares com maior correlação no último mês. | yfinance | M | Baixo |
+| Fator Mola (Resiliência Intraday) | Identificar as ações que mais rebatem após atingirem a mínima do dia | yfinance | P | Baixo |
+| Ibovespa Sombra (Equally Weighted) | Mostrar como o índice se comportaria se todas as ações tivessem o mesmo peso | yfinance | M | Baixo |
+| Alerta de Distância da Média 200 | Mostrar os papéis mais esticados em relação à sua média longa | yfinance | P | Baixo |
+| Volume em Leilão | Exibir papéis com atividade anormal nos leilões de abertura e fechamento | brapi | M | Alto (dificuldade na coleta do volume exato de leilão) |
+| Correlação com S&P 500 Futuro | Identificar as ações locais mais sensíveis aos solavancos do índice futuro americano antes da abertura | yfinance | M | Baixo |
+| Sentimento Setorial Cruzado | Agrupar os setores com maior disparidade interna (metade caindo, metade subindo) | brapi | P | Baixo |
