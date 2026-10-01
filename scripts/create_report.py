@@ -3,7 +3,9 @@ import os
 import sys
 
 if len(sys.argv) < 7:
-    print("Usage: python create_report.py <passo> <feito> <pr> <verificacao> <proximo> <retrospectiva>")
+    print(
+        "Usage: python create_report.py <passo> <feito> <pr> <verificacao> <proximo> <retrospectiva>"
+    )
     sys.exit(1)
 
 passo = sys.argv[1]
