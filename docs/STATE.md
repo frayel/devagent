@@ -3,6 +3,12 @@
 > **Coleta em produção (2026-09-27):** até esta data nenhuma coleta rodava em produção; o painel exibia "Dados não disponíveis". A coleta agora roda no próprio web service (`app/agendador.py`, ADR 004). Diagnóstico: `GET /api/coleta`.
 
 ## Implementado
+- Spec 006 (Sensibilidade ao Dólar):
+  - Banco de dados SQLite (`dolar_correlation_cache`).
+  - Coletor com fonte de dados yfinance para BRL=X e 30 ações de alta liquidez.
+  - Cálculo de correlação de Pearson sobre os retornos dos últimos 30 pregões sobrepostos.
+  - Exibição de tabela de maiores correlações positivas e negativas.
+  - Adicionado ao contrato `/api/snapshot`.
 - Núcleo do agente separado do produto (ADR 005 em `devagent/decisoes/`): processo em `devagent/`, produto em `PRODUTO.md`, contrato no `Makefile` e no `devagent.toml`.
 - Configuração inicial do projeto (FastAPI, Ruff, Mypy, Pytest).
 - Spec 001 (Ibovespa Hoje):

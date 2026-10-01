@@ -11,10 +11,12 @@ from datetime import datetime, timezone
 from app.services.ibovespa import get_ibovespa_view_data
 from app.services.highlights import get_highlights_view_data
 from app.services.volume_alerts import get_volume_alerts_view_data
+from app.services.dolar_correlation import get_dolar_correlation_view_data
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_highlights_data,
     get_latest_volume_alerts_data,
+    get_latest_dolar_correlation_data,
 )
 from app import agendador
 
@@ -140,6 +142,27 @@ def snapshot():
     else:
         resp["paineis"]["radar_volume"] = {}
 
+    dolar_corr_data = get_latest_dolar_correlation_data()
+    if dolar_corr_data:
+        positivas = (
+            json.loads(dolar_corr_data.positivas_json)
+            if dolar_corr_data.positivas_json
+            else []
+        )
+        negativas = (
+            json.loads(dolar_corr_data.negativas_json)
+            if dolar_corr_data.negativas_json
+            else []
+        )
+        resp["paineis"]["sensibilidade_dolar"] = {
+            "coletado_em": dolar_corr_data.timestamp.isoformat(),
+            "fonte": getattr(dolar_corr_data, "fonte", "yfinance"),
+            "positivas": positivas,
+            "negativas": negativas,
+        }
+    else:
+        resp["paineis"]["sensibilidade_dolar"] = {}
+
     return resp
 
 
@@ -148,6 +171,7 @@ async def index(request: Request):
     data = get_ibovespa_view_data()
     highlights = get_highlights_view_data()
     volume_alerts = get_volume_alerts_view_data()
+    dolar_correlation = get_dolar_correlation_view_data()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -155,5 +179,6 @@ async def index(request: Request):
             "data": data,
             "highlights": highlights,
             "volume_alerts": volume_alerts,
+            "dolar_correlation": dolar_correlation,
         },
     )

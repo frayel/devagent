@@ -1,7 +1,7 @@
 ---
 id: 006
 titulo: Sensibilidade ao Dólar
-status: ready
+status: done
 esforco: P
 ---
 
