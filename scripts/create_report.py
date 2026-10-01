@@ -1,20 +1,41 @@
 import datetime
 import os
+import sys
+
+if len(sys.argv) < 7:
+    print(
+        "Usage: python create_report.py <passo> <feito> <pr> <verificacao> <proximo> <retrospectiva>"
+    )
+    sys.exit(1)
+
+passo = sys.argv[1]
+feito = sys.argv[2]
+pr = sys.argv[3]
+verificacao = sys.argv[4]
+proximo = sys.argv[5]
+retrospectiva = sys.argv[6]
 
 now = datetime.datetime.now(datetime.timezone.utc)
 filename = f"docs/runs/{now.strftime('%Y-%m-%d-%H%M')}.md"
 os.makedirs("docs/runs", exist_ok=True)
 
-report_content = """# Run Report
+report_content = f"""## Passo executado
+{passo}
 
-## Task
-Identify and implement ONE small performance improvement that makes the application measurably faster or more efficient.
+## O que foi feito
+{feito}
 
-## Action
-Added a database index `idx_ibovespa_cache_timestamp` on the `timestamp DESC` column in `ibovespa_cache` table to optimize the `ORDER BY timestamp DESC LIMIT 1` query in `get_latest_ibovespa_data()`.
+## PR
+{pr}
 
-## Result
-Optimization implemented successfully. Tests pass, and no regression introduced.
+## Verificação
+{verificacao}
+
+## Próximo passo provável
+{proximo}
+
+## Retrospectiva
+- {retrospectiva}
 """
 
 with open(filename, "w") as f:
