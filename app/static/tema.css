@@ -157,8 +157,9 @@ header .hora { margin-left: auto; font-size: var(--fs-meta); color: var(--texto-
 
 .rot { color: var(--texto-2); font-size: var(--fs-meta); }
 
-.hero { display: flex; align-items: baseline; gap: var(--e2); }
-.hero .valor { line-height: 1; }
+.hero, .kpi { display: flex; align-items: baseline; gap: var(--e2); }
+.hero .valor { line-height: 1; font-size: var(--fs-hero); }
+.kpi .valor { line-height: 1; font-size: var(--fs-kpi); }
 
 table { width: 100%; border-collapse: collapse; font-size: var(--fs-base); }
 th { text-align: left; font-weight: 400; color: var(--texto-2); padding: 0 var(--e2) var(--e1) var(--e2); font-size: var(--fs-meta); border-bottom: 1px solid var(--borda); background: var(--superficie-2); }

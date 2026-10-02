@@ -6,3 +6,7 @@
 - **O que fiz:** Adicionei formatação com separadores no padrão brasileiro (vírgula para decimal, ponto para milhar) no tooltip hover do gráfico do Ibovespa, usando as propriedades `separators` e `hovertemplate` do Plotly, para melhorar a legibilidade e a aderência ao padrão nacional. Verifiquei visualmente com screenshots do desktop e mobile após injetar a alteração.
 - **O que aprendi:** A configuração visual interativa de gráficos do Plotly no frontend necessita do `separators` na propriedade `layout`, e no trace é necessário um template de tooltip bem definido com formatação numérica como `%{y:,.0f}` que respeita esses separadores.
 - **O que evitar:** Evitar deixar `pytest` ser atrapalhado por warnings irrelevantes, e sempre validar com visualizadores web headless.
+## 2026-10-02
+- **O que fiz:** Ajustei a macro de KPI (`kpi()`) em `app/templates/componentes.html` para renderizar as variações (`variacao_str`), que estavam sendo ocultadas na interface, e ajustei as tags `<span>` na passagem de dados de `app/templates/index.html` para a `tabela_ativos` usando a tupla segura do Jinja.
+- **O que aprendi:** Templates podem definir macros com propriedades não utilizadas inadvertidamente, causando falta de dados na interface. Ao aplicar `| safe` no Jinja num dicionário depois de uma concatenação `~`, é preciso envolver a expressão inteira com parênteses, senão o `safe` só se aplica ao último termo (`'</span>'`).
+- **O que evitar:** Evitar recriar strings em dicionários Jinja sem agrupar toda a expressão de HTML antes do filtro `| safe`.

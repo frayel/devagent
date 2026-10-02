@@ -15,9 +15,12 @@
 {% endmacro %}
 
 {% macro kpi(valor, rotulo, variacao_str, is_hero=False) %}
-<div class="{% if is_hero %}hero{% else %}hero{% endif %}">
-  <div class="valor num">{{ valor }}</div>
-  <div class="rot">{{ rotulo }}</div>
+<div class="kpi-container">
+  {% if rotulo %}<div class="rot">{{ rotulo }}</div>{% endif %}
+  <div class="{% if is_hero %}hero{% else %}kpi{% endif %}">
+    <div class="valor num">{{ valor }}</div>
+  </div>
+  {% if variacao_str %}{{ variacao_str | safe }}{% endif %}
 </div>
 {% endmacro %}
 
