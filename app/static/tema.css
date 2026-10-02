@@ -187,3 +187,7 @@ td.barra i.l { background: var(--destaque); opacity: 0.2; }
 .vazio { padding: var(--e5); text-align: center; color: var(--texto-2); font-size: var(--fs-meta); }
 
 footer { margin-top: 40px; text-align: center; font-size: var(--fs-meta); color: var(--texto-3); padding-bottom: 20px; }
+
+@media (max-width: 767px) {
+  .duas { grid-template-columns: 1fr; }
+}

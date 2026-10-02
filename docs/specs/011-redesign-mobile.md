@@ -1,7 +1,7 @@
 ---
 id: 011
 titulo: Revisão de Experiência (Foco Mobile)
-status: ready
+status: done
 esforco: P
 ---
 

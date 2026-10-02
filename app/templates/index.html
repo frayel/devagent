@@ -114,6 +114,26 @@
     {% endif %}
 {% endcall %}
 
+<!-- Linha Força Relativa -->
+{% call painel("Força Relativa (30 dias)", 4, "Comparação da rentabilidade acumulada de 30 ações de alta liquidez frente ao Ibovespa em 30 pregões.", forca_relativa.fonte if forca_relativa else "", forca_relativa.timestamp.strftime('%H:%M') if forca_relativa else "") %}
+    {% if forca_relativa %}
+        <div class="linha-kpis">
+            <div class="kpi-secundario">
+                <span class="rotulo">Maior Força</span>
+                <strong>{{ forca_relativa.maior.ticker }}</strong>
+                {{ variacao((forca_relativa.maior.forca_relativa * 100)|round(2) ~ "% vs IBOV", forca_relativa.maior.forca_relativa) }}
+            </div>
+            <div class="kpi-secundario">
+                <span class="rotulo">Menor Força</span>
+                <strong>{{ forca_relativa.menor.ticker }}</strong>
+                {{ variacao((forca_relativa.menor.forca_relativa * 100)|round(2) ~ "% vs IBOV", forca_relativa.menor.forca_relativa) }}
+            </div>
+        </div>
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
 {% call painel("Radar de volume", 4, "Volume do dia dividido pela média dos últimos 21 pregões. Aparecem as razões acima de 1,5×.", volume_alerts.fonte if volume_alerts else "", volume_alerts.time if volume_alerts else "") %}
     {% if volume_alerts %}
         {% if volume_alerts.alerts %}
@@ -160,25 +180,6 @@
     {% endif %}
 {% endcall %}
 
-<!-- Linha Força Relativa -->
-{% call painel("Força Relativa (30 dias)", 4, "Comparação da rentabilidade acumulada de 30 ações de alta liquidez frente ao Ibovespa em 30 pregões.", forca_relativa.fonte if forca_relativa else "", forca_relativa.timestamp.strftime('%H:%M') if forca_relativa else "") %}
-    {% if forca_relativa %}
-        <div class="linha-kpis">
-            <div class="kpi-secundario">
-                <span class="rotulo">Maior Força</span>
-                <strong>{{ forca_relativa.maior.ticker }}</strong>
-                {{ variacao((forca_relativa.maior.forca_relativa * 100)|round(2) ~ "% vs IBOV", forca_relativa.maior.forca_relativa) }}
-            </div>
-            <div class="kpi-secundario">
-                <span class="rotulo">Menor Força</span>
-                <strong>{{ forca_relativa.menor.ticker }}</strong>
-                {{ variacao((forca_relativa.menor.forca_relativa * 100)|round(2) ~ "% vs IBOV", forca_relativa.menor.forca_relativa) }}
-            </div>
-        </div>
-    {% else %}
-        {{ estado('indisponivel') }}
-    {% endif %}
-{% endcall %}
 
 {% call painel("Sensibilidade ao dólar", 8, "Correlação de Pearson entre retornos diários da ação e do BRL=X nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "") %}
     {% if dolar_correlation %}
