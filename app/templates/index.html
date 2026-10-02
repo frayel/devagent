@@ -1,262 +1,180 @@
 {% extends "base.html" %}
+{% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado %}
 
 {% block content %}
-<div class="card">
-    <h2>Ibovespa Hoje</h2>
-
+<!-- Linha 1 -->
+{% call painel("Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "") %}
     {% if data %}
-        <div style="font-size: 2em; font-weight: bold;">
-            {{ data.current_price }} pontos
-        </div>
-
-        <div style="font-size: 1.2em; margin-top: 5px;"
-             class="{% if data.is_positive %}positive{% elif data.is_negative %}negative{% else %}neutral{% endif %}">
-            {{ data.variation }} ({{ data.variation_percent }})
-        </div>
-
-        <div class="text-small" style="margin-top: 10px;">
-            Última atualização: {{ data.time }} | Fonte: {{ data.fonte }}
-        </div>
-
-        <div id="ibov-chart" style="width: 100%; height: 300px; margin-top: 20px;"></div>
-
+        {{ kpi(data.current_price|default("") + " pontos", "", variacao(data.variation ~ " (" ~ data.variation_percent ~ ")", data.variation_raw|default(0)), True) }}
+        {% if data.history_dict and data.history_dict.dates %}
+        <div id="grafico-ibovespa" class="grafico" ></div>
         <script>
-            const historyData = {{ data.history_dict | tojson }};
-            const trace = {
-                x: historyData.dates,
-                y: historyData.closes,
-                type: 'scatter',
+            document.addEventListener("DOMContentLoaded", function() {
+                var dates = {{ data.history_dict.dates | tojson }};
+                var closes = {{ data.history_dict.closes | tojson }};
+                var is_positive = {{ 'true' if data.is_positive else 'false' }};
 
-                hovertemplate: '%{x}<br><b>%{y:,.0f} pontos</b><extra></extra>',
+                var cor = is_positive ? 'var(--alta)' : 'var(--baixa)';
 
-                mode: 'lines',
-                line: {
-                    color: '{{ "#28a745" if data.is_positive else "#dc3545" if data.is_negative else "#6c757d" }}',
-                    width: 2
-                }
-            };
-            const layout = {
-                margin: { t: 10, r: 10, l: 40, b: 30 },
-                xaxis: { showgrid: false },
-                separators: ',.',
-                yaxis: { showgrid: true, gridcolor: '#eee', tickformat: ',.0f' },
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: 'rgba(0,0,0,0)'
-            };
-            Plotly.newPlot('ibov-chart', [trace], layout, {displayModeBar: false});
+                var trace = {
+                    x: dates,
+                    y: closes,
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { color: cor, width: 1.5 },
+                    fill: 'tozeroy',
+                    fillcolor: is_positive ? 'var(--alta-fundo)' : 'var(--baixa-fundo)',
+                    hovertemplate: '%{x|%d/%m/%Y}<br><b>%{y:,.0f}</b><extra></extra>'
+                };
+
+                Painel.grafico('grafico-ibovespa', [trace], {
+                    margin: { t: 16, r: 64, b: 24, l: 8 }
+                });
+            });
         </script>
+        {% endif %}
     {% else %}
-        <p>Dados não disponíveis no momento.</p>
+        {{ estado('indisponivel') }}
     {% endif %}
-</div>
+{% endcall %}
 
-<!-- Termômetro de Dispersão -->
-<div class="card" style="margin-top: 20px;">
-    <h2>Termômetro de Dispersão</h2>
+<div class="span-4 pilha">
+{% call painel("Tendência (Ibovespa)", 12, "Médias móveis de curto (21) e longo prazo (200) dias.", data.fonte if data else "", data.time if data else "") %}
+    {% if data and data.mm21 and data.mm200 %}
+        <div class="duas">
+            <div>
+                <p class="sub">Curto Prazo (21d)</p>
+                <div class="hero">
+                    <div class="valor num">{{ data.mm21 }}</div>
+                </div>
+                <div class="var {% if data.mm21_signal == 'Alta' %}alta{% elif data.mm21_signal == 'Baixa' %}baixa{% else %}neutra{% endif %}">
+                    {% if data.mm21_signal == 'Alta' %}▲{% elif data.mm21_signal == 'Baixa' %}▼{% else %}■{% endif %} {{ data.mm21_signal }}
+                </div>
+            </div>
+            <div>
+                <p class="sub">Longo Prazo (200d)</p>
+                <div class="hero">
+                    <div class="valor num">{{ data.mm200 }}</div>
+                </div>
+                <div class="var {% if data.mm200_signal == 'Alta' %}alta{% elif data.mm200_signal == 'Baixa' %}baixa{% else %}neutra{% endif %}">
+                    {% if data.mm200_signal == 'Alta' %}▲{% elif data.mm200_signal == 'Baixa' %}▼{% else %}■{% endif %} {{ data.mm200_signal }}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Dispersão", 12, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "") %}
     {% if highlights and highlights.dispersion_pct is not none %}
-        <div style="font-size: 1.5em; font-weight: bold; margin-top: 10px;">
-            {% if highlights.dispersion_pct > 60 %}
-                <span class="positive">{{ "%.0f"|format(highlights.dispersion_pct) }}% em alta - Euforia</span>
-            {% elif highlights.dispersion_pct < 40 %}
-                <span class="negative">{{ "%.0f"|format(highlights.dispersion_pct) }}% em alta - Pessimismo</span>
-            {% else %}
-                <span class="neutral">{{ "%.0f"|format(highlights.dispersion_pct) }}% em alta - Neutro</span>
-            {% endif %}
-        </div>
-        <div style="font-size: 1.1em; margin-top: 5px;">
-            {{ highlights.up_count }} subiram vs {{ highlights.down_count }} caíram (amostra de {{ highlights.total_count }} ações de alta liquidez)
-        </div>
-        <div class="text-small" style="margin-top: 15px;">
-            Última atualização: {{ highlights.time }} | Fonte: {{ highlights.fonte }}
+        {{ medidor(highlights.dispersion_pct|int, "em alta") }}
+        <div class="legenda num">
+            <span>{{ highlights.up_count }} subiram</span>
+            <span>{{ highlights.down_count }} caíram</span>
         </div>
     {% else %}
-        <p>Dados insuficientes</p>
+        {{ estado('indisponivel') }}
     {% endif %}
+{% endcall %}
 </div>
 
-<!-- Radar de Volume Anormal -->
-<div class="card" style="margin-top: 20px;">
-    <h2>Radar de Volume Anormal</h2>
+<!-- Linha 2 -->
+{% call painel("Maiores altas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "") %}
+    {% if highlights and highlights.highs %}
+        {% set linhas = [] %}
+        {% for a in highlights.highs %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': a.price_formatted},
+                {'num': True, 'barra': True, 'valor_barra': a.change_percent, 'conteudo': variacao(a.change_percent_formatted, a.change_percent)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}], 'a') }}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Maiores baixas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "") %}
+    {% if highlights and highlights.lows %}
+        {% set linhas = [] %}
+        {% for a in highlights.lows %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': a.price_formatted},
+                {'num': True, 'barra': True, 'valor_barra': (a.change_percent * -1) if a.change_percent < 0 else a.change_percent, 'conteudo': variacao(a.change_percent_formatted, a.change_percent)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}], 'b') }}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Radar de volume", 4, "Volume do dia dividido pela média dos últimos 21 pregões. Aparecem as razões acima de 1,5×.", volume_alerts.fonte if volume_alerts else "", volume_alerts.time if volume_alerts else "") %}
     {% if volume_alerts %}
         {% if volume_alerts.alerts %}
-        <div style="margin-top: 10px;">
-            <p>Ações com volume diário atípico comparado à média móvel de 21 dias:</p>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                <tr style="border-bottom: 1px solid #eee; text-align: left;">
-                    <th style="padding: 8px 0;">Ticker</th>
-                    <th style="padding: 8px 0; text-align: right;">Preço</th>
-                    <th style="padding: 8px 0; text-align: right;">Anomalia</th>
-                </tr>
-                {% for alert in volume_alerts.alerts %}
-                <tr style="border-bottom: 1px solid #f9f9f9;">
-                    <td style="padding: 8px 0; font-weight: bold;">{{ alert.ticker }}</td>
-                    <td style="padding: 8px 0; text-align: right;">{{ alert.price_formatted }}</td>
-                    <td style="padding: 8px 0; text-align: right;" class="positive">{{ alert.ratio_formatted }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
+            {% set linhas = [] %}
+            {% for a in volume_alerts.alerts %}
+                {% set celulas = [
+                    {'tk': True, 'conteudo': a.ticker},
+                    {'num': True, 'conteudo': a.price_formatted},
+                    {'num': True, 'barra': True, 'valor_barra': a.ratio, 'conteudo': '<span>' ~ a.ratio_formatted ~ '</span>'}
+                ] %}
+                {% set _ = linhas.append(celulas) %}
+            {% endfor %}
+            {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': '× média 21d', 'num': True}], 'l') }}
         {% else %}
-        <p>Nenhuma ação apresentando volume anormal no momento.</p>
+            <div class="vazio">Nenhuma ação apresentando volume anormal no momento.</div>
         {% endif %}
-        <div class="text-small" style="margin-top: 15px;">
-            Última atualização: {{ volume_alerts.time }} | Fonte: {{ volume_alerts.fonte }}
-        </div>
     {% else %}
-        <p>Dados insuficientes no momento.</p>
+        {{ estado('indisponivel') }}
     {% endif %}
-</div>
+{% endcall %}
 
-<!-- Card Tendência (Ibovespa) -->
-<div class="card" style="margin-top: 20px;">
-    <h2>Tendência (Ibovespa)</h2>
-    {% if data %}
-        <div style="display: flex; gap: 40px; margin-top: 10px;">
-            <!-- Curto Prazo MM21 -->
-            <div>
-                <h3>Curto Prazo (21 dias)</h3>
-                {% if data.mm21 %}
-                    <div style="font-size: 1.5em; font-weight: bold;">
-                        {{ data.mm21 }}
-                    </div>
-                    <div style="font-size: 1.1em; margin-top: 5px;"
-                         class="{% if data.mm21_signal == 'Alta' %}positive{% elif data.mm21_signal == 'Baixa' %}negative{% else %}neutral{% endif %}">
-                        Sinal: {{ data.mm21_signal }}
-                    </div>
-                {% else %}
-                    <p>Dados insuficientes</p>
-                {% endif %}
-            </div>
-
-            <!-- Longo Prazo MM200 -->
-            <div>
-                <h3>Longo Prazo (200 dias)</h3>
-                {% if data.mm200 %}
-                    <div style="font-size: 1.5em; font-weight: bold;">
-                        {{ data.mm200 }}
-                    </div>
-                    <div style="font-size: 1.1em; margin-top: 5px;"
-                         class="{% if data.mm200_signal == 'Alta' %}positive{% elif data.mm200_signal == 'Baixa' %}negative{% else %}neutral{% endif %}">
-                        Sinal: {{ data.mm200_signal }}
-                    </div>
-                {% else %}
-                    <p>Dados insuficientes</p>
-                {% endif %}
-            </div>
-        </div>
-        <div class="text-small" style="margin-top: 15px;">
-            Última atualização: {{ data.time }} | Fonte: {{ data.fonte }}
-        </div>
-    {% else %}
-        <p>Tendência indisponível</p>
-    {% endif %}
-</div>
-
-<div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
-    <!-- Maiores Altas -->
-    <div class="card" style="flex: 1; min-width: 300px; margin-bottom: 0;">
-        <h3 style="margin-top: 0;">Maiores Altas</h3>
-        {% if highlights and highlights.highs %}
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr style="border-bottom: 1px solid #eee; text-align: left;">
-                    <th style="padding: 8px 0;">Ativo</th>
-                    <th style="padding: 8px 0; text-align: right;">Preço</th>
-                    <th style="padding: 8px 0; text-align: right;">Var</th>
-                </tr>
-                {% for asset in highlights.highs %}
-                <tr style="border-bottom: 1px solid #f9f9f9;">
-                    <td style="padding: 8px 0; font-weight: bold;">{{ asset.ticker }}</td>
-                    <td style="padding: 8px 0; text-align: right;">{{ asset.price_formatted }}</td>
-                    <td style="padding: 8px 0; text-align: right;" class="{% if asset.is_positive %}positive{% elif asset.is_negative %}negative{% else %}neutral{% endif %}">{{ asset.change_percent_formatted }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-            <div class="text-small" style="margin-top: 10px;">
-                Última atualização: {{ highlights.time }} | Fonte: {{ highlights.fonte }}
-            </div>
-        {% else %}
-            <p>Dados não disponíveis no momento.</p>
-        {% endif %}
-    </div>
-
-    <!-- Maiores Baixas -->
-    <div class="card" style="flex: 1; min-width: 300px; margin-bottom: 0;">
-        <h3 style="margin-top: 0;">Maiores Baixas</h3>
-        {% if highlights and highlights.lows %}
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr style="border-bottom: 1px solid #eee; text-align: left;">
-                    <th style="padding: 8px 0;">Ativo</th>
-                    <th style="padding: 8px 0; text-align: right;">Preço</th>
-                    <th style="padding: 8px 0; text-align: right;">Var</th>
-                </tr>
-                {% for asset in highlights.lows %}
-                <tr style="border-bottom: 1px solid #f9f9f9;">
-                    <td style="padding: 8px 0; font-weight: bold;">{{ asset.ticker }}</td>
-                    <td style="padding: 8px 0; text-align: right;">{{ asset.price_formatted }}</td>
-                    <td style="padding: 8px 0; text-align: right;" class="{% if asset.is_positive %}positive{% elif asset.is_negative %}negative{% else %}neutral{% endif %}">{{ asset.change_percent_formatted }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-            <div class="text-small" style="margin-top: 10px;">
-                Última atualização: {{ highlights.time }} | Fonte: {{ highlights.fonte }}
-            </div>
-        {% else %}
-            <p>Dados não disponíveis no momento.</p>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Sensibilidade ao Dólar -->
-<div class="card" style="margin-top: 20px;">
-    <h2>Sensibilidade ao Dólar</h2>
-    <p>Correlação com a variação do dólar (BRL=X) nos últimos 30 dias.</p>
+<!-- Linha 3 -->
+{% call painel("Sensibilidade ao dólar", 6, "Correlação de Pearson entre retornos diários da ação e do BRL=X nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "") %}
     {% if dolar_correlation %}
-        <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;">
-            <div style="flex: 1; min-width: 200px;">
-                <h3 style="margin-top: 0; font-size: 1.1em;">Correlação Positiva (Beneficiadas)</h3>
+        <div class="duas">
+            <div>
+                <p class="sub">Andam com o dólar</p>
                 {% if dolar_correlation.positivas %}
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr style="border-bottom: 1px solid #eee; text-align: left;">
-                            <th style="padding: 8px 0;">Ativo</th>
-                            <th style="padding: 8px 0; text-align: right;">Correlação</th>
-                        </tr>
-                        {% for asset in dolar_correlation.positivas %}
-                        <tr style="border-bottom: 1px solid #f9f9f9;">
-                            <td style="padding: 8px 0; font-weight: bold;">{{ asset.ticker }}</td>
-                            <td style="padding: 8px 0; text-align: right;" class="positive">+{{ asset.correlation_formatted }}</td>
-                        </tr>
-                        {% endfor %}
-                    </table>
+                    {% set linhas = [] %}
+                    {% for a in dolar_correlation.positivas %}
+                        {% set celulas = [
+                            {'tk': True, 'conteudo': a.ticker},
+                            {'num': True, 'barra': True, 'valor_barra': a.correlation, 'conteudo': '<span>+' ~ a.correlation_formatted ~ '</span>'}
+                        ] %}
+                        {% set _ = linhas.append(celulas) %}
+                    {% endfor %}
+                    {{ tabela_ativos(linhas, [], 'a') }}
                 {% else %}
-                    <p>Sem correlações positivas relevantes.</p>
+                    <div class="vazio">Sem correlações positivas relevantes.</div>
                 {% endif %}
             </div>
-
-            <div style="flex: 1; min-width: 200px;">
-                <h3 style="margin-top: 0; font-size: 1.1em;">Correlação Negativa (Prejudicadas)</h3>
+            <div>
+                <p class="sub">Andam contra o dólar</p>
                 {% if dolar_correlation.negativas %}
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr style="border-bottom: 1px solid #eee; text-align: left;">
-                            <th style="padding: 8px 0;">Ativo</th>
-                            <th style="padding: 8px 0; text-align: right;">Correlação</th>
-                        </tr>
-                        {% for asset in dolar_correlation.negativas %}
-                        <tr style="border-bottom: 1px solid #f9f9f9;">
-                            <td style="padding: 8px 0; font-weight: bold;">{{ asset.ticker }}</td>
-                            <td style="padding: 8px 0; text-align: right;" class="negative">{{ asset.correlation_formatted }}</td>
-                        </tr>
-                        {% endfor %}
-                    </table>
+                    {% set linhas = [] %}
+                    {% for a in dolar_correlation.negativas %}
+                        {% set celulas = [
+                            {'tk': True, 'conteudo': a.ticker},
+                            {'num': True, 'barra': True, 'valor_barra': (a.correlation * -1) if a.correlation < 0 else a.correlation, 'conteudo': '<span>' ~ a.correlation_formatted ~ '</span>'}
+                        ] %}
+                        {% set _ = linhas.append(celulas) %}
+                    {% endfor %}
+                    {{ tabela_ativos(linhas, [], 'b') }}
                 {% else %}
-                    <p>Sem correlações negativas relevantes.</p>
+                    <div class="vazio">Sem correlações negativas relevantes.</div>
                 {% endif %}
             </div>
-        </div>
-        <div class="text-small" style="margin-top: 15px;">
-            Última atualização: {{ dolar_correlation.time }} | Fonte: {{ dolar_correlation.fonte }}
         </div>
     {% else %}
-        <p>Dados não disponíveis no momento.</p>
+        {{ estado('indisponivel') }}
     {% endif %}
-</div>
+{% endcall %}
+
 {% endblock %}

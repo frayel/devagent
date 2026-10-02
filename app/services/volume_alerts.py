@@ -35,6 +35,7 @@ def get_volume_alerts_view_data() -> dict[str, Any] | None:
         alerts_formatted.append(
             {
                 "ticker": alert.get("ticker", ""),
+                "ratio": alert.get("ratio", 0),
                 "ratio_formatted": ratio_formatted,
                 "price_formatted": price_formatted,
             }

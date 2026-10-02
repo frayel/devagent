@@ -1,7 +1,7 @@
 ---
 id: 008
 titulo: Redesign da interface segundo o guia visual
-status: ready
+status: done
 esforco: M
 ---
 

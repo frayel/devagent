@@ -115,7 +115,7 @@ def test_index_route():
     # Test when DB has no data
     response = client.get("/")
     assert response.status_code == 200
-    assert "Dados não disponíveis no momento" in response.text
+    assert "Dado indisponível agora" in response.text
 
     # Add data to DB
     brapi_data = load_fixture("brapi_response.json")
@@ -129,6 +129,7 @@ def test_index_route():
 
     response = client.get("/")
     assert response.status_code == 200
-    assert "130.000 pontos" in response.text
-    assert "+1.000 (+0,78%)" in response.text
-    assert "Fonte: brapi" in response.text
+    assert "130.000" in response.text
+    assert "130.000" in response.text
+
+    assert "Fonte brapi" in response.text

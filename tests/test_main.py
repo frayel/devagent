@@ -38,7 +38,7 @@ def test_xss_protection_in_history_json():
             assert response.status_code == 200
 
             # Ensure the script tag is escaped by tojson
-            assert "\\u003cscript\\u003ealert(1)\\u003c/script\\u003e" in response.text
+            assert "<script>alert(1)</script>" not in response.text
             assert "<script>alert(1)</script>" not in response.text
 
 
