@@ -44,7 +44,7 @@
         <div class="duas">
             <div>
                 <p class="sub">Curto Prazo (21d)</p>
-                <div class="hero">
+                <div class="kpi">
                     <div class="valor num">{{ data.mm21 }}</div>
                 </div>
                 <div class="var {% if data.mm21_signal == 'Alta' %}alta{% elif data.mm21_signal == 'Baixa' %}baixa{% else %}neutra{% endif %}">
@@ -53,7 +53,7 @@
             </div>
             <div>
                 <p class="sub">Longo Prazo (200d)</p>
-                <div class="hero">
+                <div class="kpi">
                     <div class="valor num">{{ data.mm200 }}</div>
                 </div>
                 <div class="var {% if data.mm200_signal == 'Alta' %}alta{% elif data.mm200_signal == 'Baixa' %}baixa{% else %}neutra{% endif %}">
@@ -175,8 +175,8 @@
             {% for a in escudo_quedas.top3 %}
                 {% set celulas = [
                     {'tk': True, 'conteudo': a.ticker},
-                    {'conteudo': '<span>' ~ (a.dias_positivos | e) ~ ' dias</span>' | safe},
-                    {'num': True, 'conteudo': '<span>' ~ ((a.retorno_medio * 100)|round(2) | e) ~ '%</span>' | safe}
+                    {'conteudo': ('<span>' ~ (a.dias_positivos | e) ~ ' dias</span>') | safe},
+                    {'num': True, 'conteudo': ('<span>' ~ ((a.retorno_medio * 100)|round(2) | e) ~ '%</span>') | safe}
                 ] %}
                 {% set _ = linhas.append(celulas) %}
             {% endfor %}
