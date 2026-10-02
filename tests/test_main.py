@@ -60,3 +60,29 @@ def test_security_headers():
     assert "default-src 'self'" in csp
     assert "https://unpkg.com" in csp
     assert "https://cdn.plot.ly" in csp
+
+
+def test_xss_protection_in_tables():
+    with mock.patch("app.main.get_highlights_view_data") as mock_get_high:
+        mock_get_high.return_value = {
+            "fonte": "brapi",
+            "time": "...",
+            "dispersion_pct": 50,
+            "up_count": 1,
+            "down_count": 1,
+            "highs": [
+                {
+                    "ticker": "<script>alert(1)</script>",
+                    "price_formatted": "1",
+                    "change_percent": 1,
+                    "change_percent_formatted": "1",
+                }
+            ],
+            "lows": [],
+        }
+        with mock.patch("app.main.get_ibovespa_view_data") as mock_ibov:
+            mock_ibov.return_value = None
+            response = client.get("/")
+            assert response.status_code == 200
+            assert "<script>alert(1)</script>" not in response.text
+            assert "&lt;script&gt;alert(1)&lt;/script&gt;" in response.text
