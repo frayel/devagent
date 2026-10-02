@@ -13,6 +13,11 @@
   - Coletor buscando volume das ações mais líquidas via `yfinance` e `brapi`.
   - Exibição de ações com maior recuperação no intraday em relação à mínima.
   - Adicionado ao contrato `/api/snapshot`.
+- Spec 007 (Fator Mola):
+  - Banco de dados SQLite (`fator_mola_cache`).
+  - Coletor buscando volume das ações mais líquidas via `yfinance` e `brapi`.
+  - Exibição de ações com maior recuperação no intraday em relação à mínima.
+  - Adicionado ao contrato `/api/snapshot`.
 - Spec 006 (Sensibilidade ao Dólar):
   - Banco de dados SQLite (`dolar_correlation_cache`).
   - Coletor com fonte de dados yfinance para BRL=X e 30 ações de alta liquidez.

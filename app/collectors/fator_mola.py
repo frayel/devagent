@@ -13,6 +13,7 @@ from app.collectors.highlights import TICKERS
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def fetch_yfinance() -> FatorMolaData | None:
     parsed_results = []
 
@@ -41,7 +42,7 @@ def fetch_yfinance() -> FatorMolaData | None:
                         continue
 
                     if price <= low:
-                        continue # Não recuperou ou recuperou menos que 0, não exibe
+                        continue  # Não recuperou ou recuperou menos que 0, não exibe
 
                     mola_percent = ((price - low) / low) * 100
 
@@ -62,9 +63,7 @@ def fetch_yfinance() -> FatorMolaData | None:
     if not parsed_results:
         # Quando collectors funcionam mas os dados estão vazios, devem retornar array/objeto vazios (Fator Mola Data nula mas instanciada)
         return FatorMolaData(
-            timestamp=datetime.now(timezone.utc),
-            top3_json="[]",
-            fonte="yfinance"
+            timestamp=datetime.now(timezone.utc), top3_json="[]", fonte="yfinance"
         )
 
     parsed_results.sort(key=lambda x: x["mola_percent"], reverse=True)
@@ -74,8 +73,9 @@ def fetch_yfinance() -> FatorMolaData | None:
     return FatorMolaData(
         timestamp=datetime.now(timezone.utc),
         top3_json=json.dumps(top3),
-        fonte="yfinance"
+        fonte="yfinance",
     )
+
 
 def fetch_brapi() -> FatorMolaData | None:
     BRAPI_TOKEN = os.environ.get("BRAPI_TOKEN")
@@ -119,9 +119,7 @@ def fetch_brapi() -> FatorMolaData | None:
 
         if not parsed_results:
             return FatorMolaData(
-                timestamp=datetime.now(timezone.utc),
-                top3_json="[]",
-                fonte="brapi"
+                timestamp=datetime.now(timezone.utc), top3_json="[]", fonte="brapi"
             )
 
         parsed_results.sort(key=lambda x: x["mola_percent"], reverse=True)
@@ -131,11 +129,12 @@ def fetch_brapi() -> FatorMolaData | None:
         return FatorMolaData(
             timestamp=datetime.now(timezone.utc),
             top3_json=json.dumps(top3),
-            fonte="brapi"
+            fonte="brapi",
         )
     except httpx.HTTPError as e:
         logger.error(f"Error fetching fator mola from brapi: {e}")
         return None
+
 
 def collect_and_save() -> bool:
     logger.info("Starting fator mola collection...")
@@ -152,6 +151,7 @@ def collect_and_save() -> bool:
     else:
         logger.error("Failed to collect fator mola data from all sources.")
         return False
+
 
 if __name__ == "__main__":
     success = collect_and_save()
