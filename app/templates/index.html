@@ -77,6 +77,15 @@
         {{ estado('indisponivel') }}
     {% endif %}
 {% endcall %}
+
+{% call painel("Índice de Coesão", 12, "Das 10 ações mais pesadas do Ibovespa, quantas estão na mesma direção (alta ou baixa) do índice hoje.", coesao.fonte if coesao else "", coesao.time if coesao else "") %}
+    {% if coesao %}
+        {{ kpi(coesao.proporcao, coesao.estado, variacao("Alta Coesão" if coesao.concordantes >= 7 else "Distorção" if coesao.concordantes <= 3 else "Neutra", 1 if coesao.concordantes >= 7 else -1 if coesao.concordantes <= 3 else 0), False) }}
+        {{ medidor(coesao.concordantes / coesao.total * 100, "") }}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
 </div>
 
 <!-- Linha 2 -->
