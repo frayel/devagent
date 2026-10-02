@@ -20,6 +20,7 @@ def format_asset(asset: dict[str, Any]) -> dict[str, Any]:
     return {
         "ticker": asset.get("ticker", ""),
         "price_formatted": price_formatted,
+        "change_percent": change_percent,
         "change_percent_formatted": change_formatted,
         "is_positive": change_percent > 0,
         "is_negative": change_percent < 0,

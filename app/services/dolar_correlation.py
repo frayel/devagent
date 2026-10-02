@@ -21,6 +21,7 @@ def get_dolar_correlation_view_data() -> dict[str, Any] | None:
     pos_formatted = [
         {
             "ticker": item["ticker"],
+            "correlation": item["correlation"],
             "correlation_formatted": format_corr(item["correlation"]),
         }
         for item in positivas
@@ -28,6 +29,7 @@ def get_dolar_correlation_view_data() -> dict[str, Any] | None:
     neg_formatted = [
         {
             "ticker": item["ticker"],
+            "correlation": item["correlation"],
             "correlation_formatted": format_corr(item["correlation"]),
         }
         for item in negativas

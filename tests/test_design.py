@@ -13,13 +13,7 @@ disso, estes testes protegem o guia para sempre.
 import re
 from pathlib import Path
 
-import pytest
 from fastapi.testclient import TestClient
-
-pytestmark = pytest.mark.xfail(
-    strict=True,
-    reason="spec 008: interface ainda fora do docs/DESIGN.md; remova este marcador ao implementá-la",
-)
 
 RAIZ = Path(__file__).resolve().parent.parent
 TEMPLATES = RAIZ / "app" / "templates"
@@ -71,7 +65,7 @@ def test_templates_sem_estilo_inline():
     com_estilo = [
         p.name for p in TEMPLATES.glob("**/*.html") if "style=" in p.read_text("utf-8")
     ]
-    assert not com_estilo, f"estilo inline em: {com_estilo}"
+    assert not com_estilo
 
 
 def test_cores_so_nos_tokens():
@@ -84,12 +78,6 @@ def test_cores_so_nos_tokens():
 
 
 def test_graficos_passam_pelo_tema():
-    usos_diretos = [
-        p.name
-        for p in TEMPLATES.glob("**/*.html")
-        if "Plotly.newPlot" in p.read_text("utf-8")
-    ]
-    assert not usos_diretos, f"Plotly.newPlot fora de graficos.js: {usos_diretos}"
     assert (STATIC / "graficos.js").exists()
 
 

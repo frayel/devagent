@@ -3,26 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard B3</title>
+    <title>Painel B3</title>
+    <link rel="stylesheet" href="/static/tema.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; color: #333; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .positive { color: #28a745; }
-        .negative { color: #dc3545; }
-        .neutral { color: #6c757d; }
-        .text-small { font-size: 0.8em; color: #6c757d; }
-        footer { margin-top: 40px; text-align: center; font-size: 0.8em; color: #666; }
-    </style>
+    <script src="/static/graficos.js"></script>
 </head>
 <body>
-    <div class="container">
+    <header>
+        <div class="marca">Painel <span>B3</span></div>
+        <div class="pregao">Pregão</div>
+        <div class="hora">{{ data.time if data else '' }}</div>
+    </header>
+
+    <main class="grade">
         {% block content %}{% endblock %}
-    </div>
+    </main>
+
     <footer>
         Conteúdo informativo gerado automaticamente. Não constitui recomendação de investimento.
     </footer>
+
+    <script>
+      // Barras proporcionais nas tabelas
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('tbody[data-rank]').forEach(tb => {
+          const is = [...tb.querySelectorAll('i[data-v]')];
+          if (!is.length) return;
+          const max = Math.max(...is.map(i => parseFloat(i.dataset.v)));
+          if (max === 0) return;
+          is.forEach(i => i.style.width = (18 + 70 * (parseFloat(i.dataset.v) / max)) + '%');
+        });
+      });
+    </script>
 </body>
 </html>

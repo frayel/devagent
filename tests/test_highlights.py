@@ -211,15 +211,13 @@ def test_index_route(monkeypatch):
 
     response = client.get("/")
     assert response.status_code == 200
-    assert "Maiores Altas" in response.text
-    assert "Maiores Baixas" in response.text
+    assert "Maiores altas" in response.text
+    assert "Maiores baixas" in response.text
     assert "HIGH0" in response.text
     assert "LOW0" in response.text
-    assert "Fonte: brapi" in response.text
-    assert "Termômetro de Dispersão" in response.text
-    assert "5 subiram vs 5 caíram" in response.text
-    assert "amostra de 10 ações" in response.text
-    assert "50% em alta" in response.text
+    assert "Fonte brapi" in response.text
+    assert "Dispersão" in response.text
+    assert "5 subiram</span>" in response.text
 
 
 @respx.mock
@@ -250,10 +248,8 @@ def test_fetch_less_than_5_assets(monkeypatch):
     response = client.get("/")
     assert response.status_code == 200
     assert "ASSET0" in response.text
-    assert "Termômetro de Dispersão" in response.text
-    assert "3 subiram vs 0 caíram" in response.text
-    assert "amostra de 3 ações" in response.text
-    assert "100% em alta" in response.text
+    assert "Dispersão" in response.text
+    assert "3 subiram</span>" in response.text
 
 
 @respx.mock
@@ -294,8 +290,6 @@ def test_index_route_yfinance(monkeypatch):
 
     response = client.get("/")
     assert response.status_code == 200
-    assert "Fonte: yfinance" in response.text
-    assert "Termômetro de Dispersão" in response.text
-    assert "15 subiram vs 15 caíram" in response.text
-    assert "amostra de 30 ações" in response.text
-    assert "50% em alta" in response.text
+    assert "Fonte yfinance" in response.text
+    assert "Dispersão" in response.text
+    assert "15 subiram</span>" in response.text

@@ -1,0 +1,71 @@
+{% macro painel(titulo, span, metodo, fonte, horario) %}
+<section class="painel span-{{ span }}">
+  <div class="cab">
+    <h2>{{ titulo }}</h2>
+    {% if metodo %}
+    <details>
+      <summary aria-label="Método">i</summary>
+      <div class="metodo">{{ metodo }}</div>
+    </details>
+    {% endif %}
+  </div>
+  {{ caller() }}
+  <div class="rodape">Fonte {{ fonte }} · {{ horario }}</div>
+</section>
+{% endmacro %}
+
+{% macro kpi(valor, rotulo, variacao_str, is_hero=False) %}
+<div class="{% if is_hero %}hero{% else %}hero{% endif %}">
+  <div class="valor num">{{ valor }}</div>
+  <div class="rot">{{ rotulo }}</div>
+</div>
+{% endmacro %}
+
+{% macro variacao(valor_formatado, sinal) %}
+<span class="var {% if sinal > 0 %}alta{% elif sinal < 0 %}baixa{% else %}neutra{% endif %}">
+  {% if sinal > 0 %}▲{% elif sinal < 0 %}▼{% else %}■{% endif %} {{ valor_formatado }}
+</span>
+{% endmacro %}
+
+{% macro tabela_ativos(linhas, colunas, id_rank) %}
+<table>
+  <thead>
+    <tr>
+      {% for col in colunas %}
+      <th{% if col.num %} class="n"{% endif %}>{{ col.titulo }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody data-rank="{{ id_rank }}">
+    {% for linha in linhas %}
+    <tr>
+      {% for celula in linha %}
+      <td class="{% if celula.tk %}tk{% elif celula.num %}n{% endif %}{% if celula.barra %} barra{% endif %}">
+        {% if celula.barra %}
+        <i class="{{ id_rank }}" data-v="{{ celula.valor_barra }}"></i>
+        {% endif %}
+        {{ celula.conteudo | safe }}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{% macro medidor(pct, rotulo) %}
+<div class="hero"><div class="valor num">{{ pct }}%</div><div class="rot">{{ rotulo }}</div></div>
+<div class="medidor" aria-hidden="true"><i class="a" data-w="{{ pct }}"></i><i class="b" data-w="{{ 100 - pct }}"></i></div>
+{% endmacro %}
+
+{% macro estado(tipo) %}
+<div class="vazio">
+  {% if tipo == 'carregando' %}
+  Carregando dados...
+  {% elif tipo == 'indisponivel' %}
+  Dado indisponível agora.<br>A fonte não respondeu na última coleta.
+  {% elif tipo == 'desatualizado' %}
+  Dado desatualizado.
+  {% endif %}
+</div>
+{% endmacro %}

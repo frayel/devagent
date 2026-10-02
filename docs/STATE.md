@@ -4,7 +4,7 @@
 
 ## Experiência
 
-- Última revisão de experiência: nenhuma ainda. O redesign da spec 008 conta como a primeira e zera o contador.
+- Última revisão de experiência: 02/10/2026 (Redesign 008)
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado

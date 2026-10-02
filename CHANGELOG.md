@@ -28,3 +28,5 @@
 - Banco de dados SQLite local.
 - Coletor de dados da brapi.dev e Yahoo Finance.
 - Integração com Plotly.js para gráficos.
+
+- Correção: implementado redesign da interface segundo o guia visual (spec 008).
