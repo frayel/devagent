@@ -13,3 +13,9 @@
 - **O que fiz:** Retardei os imports de `app.collectors` no módulo `app.agendador` (lazy loading) para que o `httpx` e dependências pesadas não sejam importados durante o startup.
 - **O que aprendi:** O import do módulo principal `app.main` puxava todo o ecossistema de coleta (`httpx`, etc) devido ao `app.agendador`, acrescentando cerca de 10% (0.05-0.10s) de latência (Cold Start) na inicialização da aplicação do Render, onde o tempo de partida a frio importa.
 - **O que evitar:** Evitar imports em nível de módulo de bibliotecas pesadas (como clientes HTTP para web scraping) em módulos que são críticos para a inicialização e que só usam esses imports em tarefas em *background* rodadas após a inicialização.
+
+## 2026-10-02
+
+- **O que fiz:** Substituí importações explícitas no módulo `app/agendador.py` pelo uso do `importlib.import_module`, permitindo carregar os módulos da camada collectors de forma preguiçosa.
+- **O que aprendi:** A importação agrupada (`from app.collectors import (highlights, ibovespa, ...)`) no topo da função `_coletar` acabava sendo avaliada e carregava todas essas dependências, como a biblioteca `httpx`, antes do necessário (no escopo da closure ou parsing da função durante a inicialização, ou apenas atrasando mas não otimizando perfeitamente a partida). Usando `importlib.import_module` de forma dinâmica no loop, o código evita trazer o pacote `httpx` inteiro e suas ramificações no cold start do Render. A melhoria no tempo local de importação do `app.main` saltou de ~0.72s para ~0.50s (apenas com o overhead do FastAPI).
+- **O que evitar:** Manter chamadas explícitas de import que puxam subdependências pesadas em arquivos lidos logo na partida, perdendo as vantagens do lazy loading.
