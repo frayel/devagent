@@ -30,7 +30,8 @@ Toda recomendação exibida precisa mostrar: a fonte, a data da coleta, o métod
 |---|---|---|
 | Linguagem | Python 3.12 | ecossistema de dados e scraping |
 | Web | FastAPI + Jinja2 + HTMX | servidor único, sem build de frontend |
-| Gráficos | Plotly.js via CDN | gráficos interativos com JSON gerado no backend |
+| Gráficos | Plotly.js via CDN, com tema único em `app/static/graficos.js` | gráficos interativos com JSON gerado no backend |
+| Interface | tema escuro, tokens em `app/static/tema.css`, macros em `app/templates/componentes.html` | guia em `docs/DESIGN.md` |
 | Dados de mercado | brapi.dev (API), yfinance (tickers `.SA`) | fontes estruturadas primeiro |
 | Scraping | httpx + selectolax; Playwright só se inevitável | leve por padrão |
 | Armazenamento | SQLite em disco persistente do Render, ou Postgres do Render quando necessário | começar simples |
@@ -101,11 +102,14 @@ Soma-se ao checklist de `devagent/CICLO.md`:
 - Falha de uma fonte degrada só o seu painel, sem derrubar a página?
 - O painel novo aparece no `/api/snapshot` conforme o contrato em `auditoria/README.md`?
 - Qualquer biblioteca usada em produção está em `requirements.txt`, e não só em `requirements-dev.txt`?
+- Se o PR acrescenta painel, seção ou tela: incrementou o contador da cadência de experiência no `docs/STATE.md` e reavaliou a distribuição da grade (seção 3 do `docs/DESIGN.md`) em vez de só empilhar o painel no fim?
+- Se o PR muda a interface: rodou `make telas`, **abriu as duas imagens de `telas/`** e respondeu o checklist visual da seção 8 do `docs/DESIGN.md` no corpo do PR e no relatório? Algum "não" significa que o PR não está pronto.
 
 ## 7. Convenções
 
 - Números no padrão brasileiro: `183.476,86`; percentuais `+0,78%`; datas `dd/mm/aaaa`; fuso horário explícito (BRT).
-- Cores coerentes para alta e baixa em todos os painéis.
+- Toda a interface segue `docs/DESIGN.md`: tema escuro, tokens, grade, componentes e gráficos. Painel novo é montado com as macros de `app/templates/componentes.html` e uma classe `span-N`.
+- Cores coerentes para alta e baixa em todos os painéis, sempre com seta além da cor.
 - A página funciona em 390 px sem rolagem horizontal.
 
 ## 8. Onde procurar ideias
@@ -117,6 +121,10 @@ Complementa `devagent/skills/descobrir-ideias.md` com o território deste domín
 - Fora da B3, quando fizer sentido: câmbio, juros, commodities e bolsas estrangeiras explicam boa parte do que acontece aqui.
 - Concorrentes para testar originalidade: Status Invest, Investing, TradingView, sites de corretoras.
 - Cotação, gráfico e tabela de maiores altas todo painel já tem.
+
+### Revisão de experiência neste produto
+
+Para `devagent/skills/rever-experiencia.md`: as capturas saem de `make telas` (pasta `telas/`), a referência é `docs/design/referencia.html` e o guia é `docs/DESIGN.md`. O usuário que percorre a página é o investidor às 10h05, antes de decidir: em 1440×900, sem rolar, ele precisa saber como o mercado está e o que se destaca hoje.
 
 ## 9. Auditoria: o que é verdade neste domínio
 
@@ -151,6 +159,8 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 
 | Arquivo | Para que serve | Leia quando |
 |---|---|---|
+| `docs/DESIGN.md` | guia visual: tokens, grade, componentes, gráficos, checklist visual (PROTEGIDO) | antes de qualquer mudança de interface |
+| `docs/design/referencia.html` | referência navegável do guia, com dados fictícios (PROTEGIDO) | antes de qualquer mudança de interface |
 | `docs/context/arquitetura.md` | componentes, fluxo de dados, decisões vigentes | antes de mexer em estrutura |
 | `docs/context/dominio-b3.md` | conceitos do mercado, pregão, horários, armadilhas | antes de spec ou cálculo financeiro |
 | `docs/context/fontes-de-dados.md` | cada fonte: URL, limites, termos, confiabilidade | antes de criar ou alterar coletor |
@@ -161,4 +171,4 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 
 Ao criar um arquivo novo em `docs/context/` ou `docs/skills/`, acrescente-o a esta tabela no mesmo PR.
 
-Itens deste arquivo que só podem ser mantidos ou reforçados, nunca enfraquecidos: a **transparência** da seção 1 (aviso legal e fonte, data, método e confiança) e as **regras de coleta** da seção 5.
+Itens deste arquivo que só podem ser mantidos ou reforçados, nunca enfraquecidos: a **transparência** da seção 1 (aviso legal e fonte, data, método e confiança), as **regras de coleta** da seção 5 e a obediência ao **guia visual** (`docs/DESIGN.md`). O guia e a referência estão em `devagent/protegidos.txt`: o agente pode propor mudanças neles num PR `agent:` só para isso, que espera revisão humana, e nunca no mesmo PR que altera a interface. O teste `tests/test_design.py` não pode ser afrouxado.

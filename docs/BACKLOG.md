@@ -2,6 +2,8 @@
 
 ## Correções (prioridade sobre qualquer feature)
 
+- **Interface fora do guia visual.** Implementar a spec `docs/specs/008-redesign-interface.md` seguindo `docs/DESIGN.md` (pedido do dono do produto em 01/10/2026). Nenhuma feature nova entra antes. Ao concluir, marque a spec como `done`, remova esta entrada e registre no `CHANGELOG.md`.
+
 ## Features
 
 | Feature | Valor | Fonte de dados | Esforço (P/M/G) | Risco |

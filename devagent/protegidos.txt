@@ -15,3 +15,7 @@
 #
 # Projeto: as checagens do auditor sobre este produto.
 ^auditoria/
+#
+# Projeto: o guia visual definido pelo dono do produto.
+^docs/DESIGN\.md$
+^docs/design/

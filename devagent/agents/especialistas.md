@@ -40,7 +40,7 @@ Procure uma melhoria que o usuário perceba:
 - estados: carregando, dado indisponível, dado desatualizado, cada um claro e distinto;
 - toques de cuidado: cores coerentes para alta e baixa, tooltips úteis nos gráficos, fonte e horário visíveis sem poluir.
 
-Antes de mudar, capture a página (Playwright, desktop e 390 px) e descreva o problema no PR com a captura. O teste verifica o que é verificável (formato, presença de rótulos, classes de estado).
+Se o `PRODUTO.md` indicar um guia visual, ele manda: a melhoria aproxima a tela do guia, nunca inventa um estilo paralelo, e não altera o guia. Antes de mudar, capture a página (Playwright, desktop e 390 px; use o alvo de capturas do projeto se existir) e descreva o problema no PR com a captura. O teste verifica o que é verificável (formato, presença de rótulos, classes de estado).
 
 ## ⚡ Bolt · performance
 

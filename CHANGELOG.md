@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 ### Changed
+- agent: Guia visual em `docs/DESIGN.md` (tema escuro, tokens, grade de 12 colunas, componentes, tema único de gráficos e checklist visual) com referência navegável em `docs/design/referencia.html`, ambos protegidos. `make telas` captura a interface em 1440 e 390 px com dados de demonstração; o workflow `telas.yml` anexa as capturas aos PRs que mexem em `app/templates` ou `app/static`. `tests/test_design.py` guarda o guia (xfail estrito até a spec 008). Spec 008 de redesign entra na seção Correções do backlog.
+- agent: Revisão de experiência (ADR 006): nova skill `devagent/skills/rever-experiencia.md`; toda rodada do Passo 7 gera ao menos uma ideia de experiência a partir das capturas, e a cada três painéis novos o Passo 7 faz uma revisão obrigatória da página inteira. A grade passa a ser revista a cada painel novo.
 - feat: Implementa Sensibilidade ao Dólar (Spec 006) calculando correlação de Pearson dos retornos do BRL=X com ativos da B3.
 - feat: Documenta e marca como concluída a Spec 004 (Termômetro de Dispersão), cuja implementação já havia sido entregue em PRs anteriores.
 - feat: Implementa Alertas de Volume Anormal (Spec 005) consultando variações atípicas em ações da B3 via Yahoo Finance (análise das últimas 3 semanas para identificação de descolamento de >50%).
