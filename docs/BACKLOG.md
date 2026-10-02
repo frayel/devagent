@@ -53,3 +53,11 @@
 | Agrupamento de Força Setorial | Mede a dispersão dentro de um mesmo setor para achar anomalias | brapi | M | Baixo |
 | Variação vs IBOV (Força Relativa Diária) | Exibir o alfa diário gerado em relação ao benchmark | yfinance | P | Baixo |
 | Ações "Esquecidas" (Volume sumiu) | Oportunidades em ativos que secaram de liquidez recentemente | yfinance | P | Baixo |
+
+## Ideias (Passo 7 - 2026-10-02)
+
+| Filtro Macro vs Micro (Experiência) | Permite ocultar painéis específicos para focar no cenário amplo ou micro. | N/A | P | Baixo |
+| Índice de Coesão do Mercado | Mede a proporção das top 10 ações do IBOV movendo-se na mesma direção do índice (unanimidade vs distorção). | yfinance | P | Baixo |
+| Radar de Absorção (Defesa de Fundo) | Ações com queda semanal > 5%, mas hoje com volume anormal e repique da mínima. | yfinance | M | Baixo |
+| Efeito Sexta-Feira | Probabilidade de queda na sexta para papéis que subiram forte de seg a qui. | yfinance | M | Baixo |
+| Sombra do Exterior na Abertura | Descolamento do IBOV vs S&P500 Futuro nos primeiros 30 min de pregão. | yfinance | M | Médio |
