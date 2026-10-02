@@ -47,3 +47,9 @@
 | Volume em Leilão | Exibir papéis com atividade anormal nos leilões de abertura e fechamento | brapi | M | Alto (dificuldade na coleta do volume exato de leilão) |
 | Correlação com S&P 500 Futuro | Identificar as ações locais mais sensíveis aos solavancos do índice futuro americano antes da abertura | yfinance | M | Baixo |
 | Sentimento Setorial Cruzado | Agrupar os setores com maior disparidade interna (metade caindo, metade subindo) | brapi | P | Baixo |
+
+| Experiência: Seção "Radar Intraday" | Reorganiza a página separando painéis de pulso atual dos analíticos | N/A | P | Baixo |
+| Radar de Faca Caindo (Quedas Consecutivas) | Quais papéis estão derretendo há vários dias sem repique? | yfinance | P | Baixo |
+| Agrupamento de Força Setorial | Mede a dispersão dentro de um mesmo setor para achar anomalias | brapi | M | Baixo |
+| Variação vs IBOV (Força Relativa Diária) | Exibir o alfa diário gerado em relação ao benchmark | yfinance | P | Baixo |
+| Ações "Esquecidas" (Volume sumiu) | Oportunidades em ativos que secaram de liquidez recentemente | yfinance | P | Baixo |
