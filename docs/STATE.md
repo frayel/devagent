@@ -5,7 +5,7 @@
 ## Experiência
 
 - Última revisão de experiência: 02/10/2026 (Redesign 008)
-- Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
 - Spec 013 (Filtro Macro vs Micro):
