@@ -56,7 +56,6 @@
 
 ## Ideias (Passo 7 - 2026-10-02)
 
-| Filtro Macro vs Micro (Experiência) | Permite ocultar painéis específicos para focar no cenário amplo ou micro. | N/A | P | Baixo |
 
 | Radar de Absorção (Defesa de Fundo) | Ações com queda semanal > 5%, mas hoje com volume anormal e repique da mínima. | yfinance | M | Baixo |
 | Efeito Sexta-Feira | Probabilidade de queda na sexta para papéis que subiram forte de seg a qui. | yfinance | M | Baixo |
