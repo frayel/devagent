@@ -59,6 +59,14 @@ class ForcaRelativaData:
 
 
 @dataclass
+class CoesaoData:
+    timestamp: datetime
+    concordantes: int
+    total: int
+    fonte: str = "yfinance"
+
+
+@dataclass
 class VolumeAlertsData:
     timestamp: datetime
     alerts_json: str
@@ -208,6 +216,19 @@ def init_db() -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_forca_relativa_cache_timestamp
         ON forca_relativa_cache(timestamp DESC)
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS coesao_cache (
+            timestamp TEXT PRIMARY KEY,
+            concordantes INTEGER NOT NULL,
+            total INTEGER NOT NULL,
+            fonte TEXT NOT NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_coesao_cache_timestamp
+        ON coesao_cache(timestamp DESC)
     """)
 
     conn.commit()
@@ -490,6 +511,48 @@ def get_latest_escudo_quedas_data() -> EscudoQuedasData | None:
         return EscudoQuedasData(
             timestamp=datetime.fromisoformat(row["timestamp"]),
             top3_json=row["top3_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+def save_coesao_data(data: CoesaoData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO coesao_cache (timestamp, concordantes, total, fonte)
+            VALUES (?, ?, ?, ?)
+            """,
+            (data.timestamp.isoformat(), data.concordantes, data.total, data.fonte),
+        )
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
+    conn.close()
+
+
+def get_latest_coesao_data() -> CoesaoData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    row = None
+    try:
+        cursor.execute("""
+            SELECT timestamp, concordantes, total, fonte
+            FROM coesao_cache
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        pass
+    conn.close()
+    if row:
+        return CoesaoData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            concordantes=row["concordantes"],
+            total=row["total"],
             fonte=row["fonte"],
         )
     return None
