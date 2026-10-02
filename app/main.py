@@ -14,12 +14,14 @@ from app.services.highlights import get_highlights_view_data
 from app.services.volume_alerts import get_volume_alerts_view_data
 from app.services.dolar_correlation import get_dolar_correlation_view_data
 from app.services.forca_relativa import get_forca_relativa_view_data
+from app.services.escudo_quedas import get_escudo_quedas_view_data
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_highlights_data,
     get_latest_volume_alerts_data,
     get_latest_dolar_correlation_data,
     get_latest_forca_relativa_data,
+    get_latest_escudo_quedas_data,
 )
 from app import agendador
 
@@ -183,6 +185,21 @@ def snapshot():
     else:
         resp["paineis"]["forca_relativa"] = {}
 
+    escudo_quedas_data = get_latest_escudo_quedas_data()
+    if escudo_quedas_data:
+        try:
+            parsed = json.loads(escudo_quedas_data.top3_json)
+            resp["paineis"]["escudo_quedas"] = {
+                "coletado_em": escudo_quedas_data.timestamp.isoformat(),
+                "fonte": getattr(escudo_quedas_data, "fonte", "yfinance"),
+                "qtd_quedas_ibov": parsed.get("qtd_quedas_ibov", 0),
+                "top3": parsed.get("top3", []),
+            }
+        except Exception:
+            resp["paineis"]["escudo_quedas"] = {}
+    else:
+        resp["paineis"]["escudo_quedas"] = {}
+
     return resp
 
 
@@ -193,6 +210,7 @@ async def index(request: Request):
     volume_alerts = get_volume_alerts_view_data()
     dolar_correlation = get_dolar_correlation_view_data()
     forca_relativa = get_forca_relativa_view_data()
+    escudo_quedas = get_escudo_quedas_view_data()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -202,5 +220,6 @@ async def index(request: Request):
             "volume_alerts": volume_alerts,
             "dolar_correlation": dolar_correlation,
             "forca_relativa": forca_relativa,
+            "escudo_quedas": escudo_quedas,
         },
     )
