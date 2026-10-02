@@ -2,5 +2,5 @@
 
 Memória entre execuções do auditor LLM. No máximo 20 linhas: condense em vez de acumular.
 
-- 2026-10-01 · Auditoria não encontrou regressões. O painel de Radar de Volume Anormal (Spec 005) foi validado em produção: a interface e a API estão consistentes. `make audit` retornou 0 falhas.
-- Pendente de verificar para a próxima execução: auditar os dados brutos da "Dispersão" (Spec 004) comparando o percentual de altas com o balanço de todo o mercado (e.g., via Investing ou B3) para validar a eficácia da amostragem reduzida.
+- 2026-10-02 · Auditoria determinística e exploratória concluída sem novos crashs. Descobriu-se que o painel de dispersão viola a especificação matemática de proporção da Spec 004. As formatações de data falham na adoção do BRT exigido no PRODUTO.md.
+- Pendente de verificar para a próxima execução: avaliar profundamente dados de mercado no decorrer do pregão (intraday) para identificar desvios de latência.
