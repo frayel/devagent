@@ -2,6 +2,11 @@
 
 > **Coleta em produção (2026-09-27):** até esta data nenhuma coleta rodava em produção; o painel exibia "Dados não disponíveis". A coleta agora roda no próprio web service (`app/agendador.py`, ADR 004). Diagnóstico: `GET /api/coleta`.
 
+## Experiência
+
+- Última revisão de experiência: nenhuma ainda. O redesign da spec 008 conta como a primeira e zera o contador.
+- Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+
 ## Implementado
 - Spec 006 (Sensibilidade ao Dólar):
   - Banco de dados SQLite (`dolar_correlation_cache`).

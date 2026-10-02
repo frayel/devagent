@@ -102,6 +102,7 @@ Soma-se ao checklist de `devagent/CICLO.md`:
 - Falha de uma fonte degrada só o seu painel, sem derrubar a página?
 - O painel novo aparece no `/api/snapshot` conforme o contrato em `auditoria/README.md`?
 - Qualquer biblioteca usada em produção está em `requirements.txt`, e não só em `requirements-dev.txt`?
+- Se o PR acrescenta painel, seção ou tela: incrementou o contador da cadência de experiência no `docs/STATE.md` e reavaliou a distribuição da grade (seção 3 do `docs/DESIGN.md`) em vez de só empilhar o painel no fim?
 - Se o PR muda a interface: rodou `make telas`, **abriu as duas imagens de `telas/`** e respondeu o checklist visual da seção 8 do `docs/DESIGN.md` no corpo do PR e no relatório? Algum "não" significa que o PR não está pronto.
 
 ## 7. Convenções
@@ -120,6 +121,10 @@ Complementa `devagent/skills/descobrir-ideias.md` com o território deste domín
 - Fora da B3, quando fizer sentido: câmbio, juros, commodities e bolsas estrangeiras explicam boa parte do que acontece aqui.
 - Concorrentes para testar originalidade: Status Invest, Investing, TradingView, sites de corretoras.
 - Cotação, gráfico e tabela de maiores altas todo painel já tem.
+
+### Revisão de experiência neste produto
+
+Para `devagent/skills/rever-experiencia.md`: as capturas saem de `make telas` (pasta `telas/`), a referência é `docs/design/referencia.html` e o guia é `docs/DESIGN.md`. O usuário que percorre a página é o investidor às 10h05, antes de decidir: em 1440×900, sem rolar, ele precisa saber como o mercado está e o que se destaca hoje.
 
 ## 9. Auditoria: o que é verdade neste domínio
 

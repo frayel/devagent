@@ -65,7 +65,7 @@ O `:root` declara `color-scheme: dark`. Todo texto sobre `--superficie` atinge c
 | 2 | Maiores altas (4) · Maiores baixas (4) · Radar de volume (4) |
 | 3 | Sensibilidade ao dólar (6) · próximos painéis (3 ou 6) |
 
-Painel novo entra na primeira posição livre que respeite o tamanho do seu conteúdo. Ranking de até 5 itens é `span-3` ou `span-4`; painel com gráfico é `span-6` ou maior.
+A tabela é o ponto de partida, não uma regra fixa. **A grade é revista a cada painel novo:** o PR que acrescenta um painel decide onde ele entra pela importância da pergunta que responde, não pela ordem de chegada, e pode reorganizar, encolher ou fundir os vizinhos para isso. O que não muda é o princípio: acima da dobra, em 1440×900, fica o que diz como o mercado está e o que se destaca hoje. Ranking de até 5 itens é `span-3` ou `span-4`; painel com gráfico é `span-6` ou maior. A cada três painéis novos, o agente faz uma revisão de experiência da página inteira (`devagent/skills/rever-experiencia.md`).
 
 ## 4. Componentes
 
@@ -118,6 +118,7 @@ Rode `make telas`, **abra as duas imagens geradas em `telas/`** e responda no re
 - [ ] Todo número está alinhado e com algarismos tabulares?
 - [ ] O gráfico usa o tema de `graficos.js` e tem resumo em `aria-label`?
 - [ ] O painel novo usa as macros de `componentes.html` e uma classe `span-N`?
+- [ ] Com o painel novo, a hierarquia ainda faz sentido? Algum painel deveria subir, descer, encolher ou se fundir com outro?
 - [ ] Comparada com `docs/design/referencia.html`, a tela parece parte do mesmo sistema?
 
 Se alguma resposta for "não", o PR não está pronto.

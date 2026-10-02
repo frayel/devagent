@@ -9,6 +9,7 @@ Use no Passo 7. O objetivo é sair do óbvio: o que todo produto do mesmo tipo j
 - **O próprio histórico do sistema.** O produto acumula dados e execuções. O que dá para aprender com o passado dele mesmo (acertos, erros, padrões que se repetem)?
 - **Incerteza como produto.** Mostrar o quanto as fontes discordam, a faixa provável em vez de um número, o tamanho da amostra de uma estatística.
 - **Formas novas de interação.** Perguntar em linguagem natural, simular um cenário, comparar "hoje" com o dia mais parecido do passado, alertas.
+- **A experiência que já existe.** Novos painéis são só metade do produto; a outra metade é como eles convivem. Siga `rever-experiencia.md`: olhe as capturas, ache o que ficou fora de lugar, redundante ou difícil de achar. Pelo menos uma ideia de cada rodada vem daqui.
 - **Os territórios do domínio** listados na seção *Onde procurar ideias* do `PRODUTO.md`.
 
 ## Como testar se uma ideia é original
