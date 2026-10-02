@@ -44,7 +44,7 @@
         {% if celula.barra %}
         <i class="{{ id_rank }}" data-v="{{ celula.valor_barra }}"></i>
         {% endif %}
-        {{ celula.conteudo | safe }}
+        {{ celula.conteudo }}
       </td>
       {% endfor %}
     </tr>
