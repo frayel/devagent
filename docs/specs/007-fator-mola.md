@@ -1,7 +1,7 @@
 ---
 id: 007
 titulo: Fator Mola (Resiliência Intraday)
-status: ready
+status: done
 esforco: P
 ---
 

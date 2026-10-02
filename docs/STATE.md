@@ -5,9 +5,14 @@
 ## Experiência
 
 - Última revisão de experiência: 02/10/2026 (Redesign 008)
-- Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 007 (Fator Mola):
+  - Banco de dados SQLite (`fator_mola_cache`).
+  - Coletor buscando volume das ações mais líquidas via `yfinance` e `brapi`.
+  - Exibição de ações com maior recuperação no intraday em relação à mínima.
+  - Adicionado ao contrato `/api/snapshot`.
 - Spec 006 (Sensibilidade ao Dólar):
   - Banco de dados SQLite (`dolar_correlation_cache`).
   - Coletor com fonte de dados yfinance para BRL=X e 30 ações de alta liquidez.

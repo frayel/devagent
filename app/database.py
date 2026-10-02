@@ -37,6 +37,13 @@ class DolarCorrelationData:
 
 
 @dataclass
+class FatorMolaData:
+    timestamp: datetime
+    top3_json: str
+    fonte: str = "yfinance"
+
+
+@dataclass
 class VolumeAlertsData:
     timestamp: datetime
     alerts_json: str
@@ -148,6 +155,21 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_dolar_correlation_cache_timestamp
         ON dolar_correlation_cache(timestamp DESC)
     """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS fator_mola_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME NOT NULL,
+            top3_json TEXT NOT NULL,
+            fonte TEXT NOT NULL DEFAULT 'yfinance'
+        )
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_fator_mola_cache_timestamp
+        ON fator_mola_cache(timestamp DESC)
+    """)
+
     conn.commit()
     conn.close()
 
@@ -321,6 +343,45 @@ def get_latest_dolar_correlation_data() -> DolarCorrelationData | None:
             timestamp=datetime.fromisoformat(row["timestamp"]),
             positivas_json=row["positivas_json"],
             negativas_json=row["negativas_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+def save_fator_mola_data(data: FatorMolaData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO fator_mola_cache (timestamp, top3_json, fonte)
+        VALUES (?, ?, ?)
+    """,
+        (
+            data.timestamp.isoformat(),
+            data.top3_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_fator_mola_data() -> FatorMolaData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT timestamp, top3_json, fonte
+        FROM fator_mola_cache
+        ORDER BY timestamp DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return FatorMolaData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            top3_json=row["top3_json"],
             fonte=row["fonte"],
         )
     return None
