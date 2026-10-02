@@ -1,7 +1,7 @@
 ---
 id: 012
 titulo: Índice de Coesão do Mercado
-status: ready
+status: done
 esforco: P
 ---
 
