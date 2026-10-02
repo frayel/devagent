@@ -1,7 +1,7 @@
 ---
 id: 009
 titulo: Força Relativa contra o Ibovespa
-status: ready
+status: done
 esforco: P
 ---
 

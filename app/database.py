@@ -44,6 +44,14 @@ class FatorMolaData:
 
 
 @dataclass
+class ForcaRelativaData:
+    timestamp: datetime
+    maior_json: str
+    menor_json: str
+    fonte: str = "yfinance"
+
+
+@dataclass
 class VolumeAlertsData:
     timestamp: datetime
     alerts_json: str
@@ -168,6 +176,19 @@ def init_db() -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_fator_mola_cache_timestamp
         ON fator_mola_cache(timestamp DESC)
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS forca_relativa_cache (
+            timestamp TEXT PRIMARY KEY,
+            maior_json TEXT NOT NULL,
+            menor_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_forca_relativa_cache_timestamp
+        ON forca_relativa_cache(timestamp DESC)
     """)
 
     conn.commit()
@@ -388,3 +409,36 @@ def get_latest_fator_mola_data() -> FatorMolaData | None:
 
 
 init_db()
+
+
+def save_forca_relativa_data(data: ForcaRelativaData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO forca_relativa_cache (timestamp, maior_json, menor_json, fonte)
+        VALUES (?, ?, ?, ?)
+        """,
+        (data.timestamp.isoformat(), data.maior_json, data.menor_json, data.fonte),
+    )
+    conn.commit()
+
+
+def get_latest_forca_relativa_data() -> ForcaRelativaData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT timestamp, maior_json, menor_json, fonte
+        FROM forca_relativa_cache
+        ORDER BY timestamp DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+    if row:
+        return ForcaRelativaData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            maior_json=row["maior_json"],
+            menor_json=row["menor_json"],
+            fonte=row["fonte"],
+        )
+    return None

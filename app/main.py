@@ -13,11 +13,13 @@ from app.services.ibovespa import get_ibovespa_view_data
 from app.services.highlights import get_highlights_view_data
 from app.services.volume_alerts import get_volume_alerts_view_data
 from app.services.dolar_correlation import get_dolar_correlation_view_data
+from app.services.forca_relativa import get_forca_relativa_view_data
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_highlights_data,
     get_latest_volume_alerts_data,
     get_latest_dolar_correlation_data,
+    get_latest_forca_relativa_data,
 )
 from app import agendador
 
@@ -165,6 +167,22 @@ def snapshot():
     else:
         resp["paineis"]["sensibilidade_dolar"] = {}
 
+    forca_relativa_data = get_latest_forca_relativa_data()
+    if forca_relativa_data:
+        try:
+            maior = json.loads(forca_relativa_data.maior_json)
+            menor = json.loads(forca_relativa_data.menor_json)
+            resp["paineis"]["forca_relativa"] = {
+                "coletado_em": forca_relativa_data.timestamp.isoformat(),
+                "fonte": getattr(forca_relativa_data, "fonte", "yfinance"),
+                "maior": maior,
+                "menor": menor,
+            }
+        except json.JSONDecodeError:
+            resp["paineis"]["forca_relativa"] = {}
+    else:
+        resp["paineis"]["forca_relativa"] = {}
+
     return resp
 
 
@@ -174,6 +192,7 @@ async def index(request: Request):
     highlights = get_highlights_view_data()
     volume_alerts = get_volume_alerts_view_data()
     dolar_correlation = get_dolar_correlation_view_data()
+    forca_relativa = get_forca_relativa_view_data()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -182,5 +201,6 @@ async def index(request: Request):
             "highlights": highlights,
             "volume_alerts": volume_alerts,
             "dolar_correlation": dolar_correlation,
+            "forca_relativa": forca_relativa,
         },
     )
