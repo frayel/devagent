@@ -44,6 +44,13 @@ class FatorMolaData:
 
 
 @dataclass
+class EscudoQuedasData:
+    timestamp: datetime
+    top3_json: str
+    fonte: str = "yfinance"
+
+
+@dataclass
 class ForcaRelativaData:
     timestamp: datetime
     maior_json: str
@@ -176,6 +183,18 @@ def init_db() -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_fator_mola_cache_timestamp
         ON fator_mola_cache(timestamp DESC)
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS escudo_quedas_cache (
+            timestamp TEXT PRIMARY KEY,
+            top3_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_escudo_quedas_cache_timestamp
+        ON escudo_quedas_cache(timestamp DESC)
     """)
 
     cursor.execute("""
@@ -439,6 +458,38 @@ def get_latest_forca_relativa_data() -> ForcaRelativaData | None:
             timestamp=datetime.fromisoformat(row["timestamp"]),
             maior_json=row["maior_json"],
             menor_json=row["menor_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+def save_escudo_quedas_data(data: EscudoQuedasData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO escudo_quedas_cache (timestamp, top3_json, fonte)
+        VALUES (?, ?, ?)
+        """,
+        (data.timestamp.isoformat(), data.top3_json, data.fonte),
+    )
+    conn.commit()
+
+
+def get_latest_escudo_quedas_data() -> EscudoQuedasData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT timestamp, top3_json, fonte
+        FROM escudo_quedas_cache
+        ORDER BY timestamp DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+    if row:
+        return EscudoQuedasData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            top3_json=row["top3_json"],
             fonte=row["fonte"],
         )
     return None

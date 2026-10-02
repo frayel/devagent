@@ -83,6 +83,7 @@ def _coletar() -> None:
         "volume_alerts",
         "dolar_correlation",
         "forca_relativa",
+        "escudo_quedas",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
         try:
