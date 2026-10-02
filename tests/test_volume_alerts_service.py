@@ -25,7 +25,7 @@ def test_get_volume_alerts_view_data_formatting(setup_db):
     view_data = get_volume_alerts_view_data()
     assert view_data is not None
     assert view_data["fonte"] == "yfinance"
-    assert view_data["time"] == "30/09/2026 10:00:00 UTC"
+    assert view_data["time"] == "30/09/2026 07:00:00 BRT"
 
     formatted = view_data["alerts"]
     assert len(formatted) == 2

@@ -2,7 +2,7 @@
 id: 2026-10-02-dispersao-calculo-incorreto
 severidade: media
 painel: dispersao
-status: aberto
+status: resolvido
 visto_em: 2026-10-02T01:05-03:00
 ---
 
@@ -29,3 +29,6 @@ Acessar `https://devagent-vb52.onrender.com/` ou consultar `/api/snapshot` e com
 
 ## Invariante proposta
 Verificar no auditor determinístico se `proporcao_alta_pct == em_alta / (em_alta + em_baixa) * 100` (respeitada uma pequena tolerância).
+
+## Resolução
+Feito. Corrigido cálculo de dispersão excluindo ações neutras e com validação de tipagem do mypy.

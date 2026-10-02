@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from datetime import timezone, timedelta
 from app.database import get_latest_dolar_correlation_data
 
 
@@ -35,6 +36,8 @@ def get_dolar_correlation_view_data() -> dict[str, Any] | None:
     return {
         "positivas": pos_formatted,
         "negativas": neg_formatted,
-        "time": data.timestamp.strftime("%d/%m/%Y %H:%M:%S UTC"),
+        "time": data.timestamp.astimezone(timezone(timedelta(hours=-3))).strftime(
+            "%d/%m/%Y %H:%M:%S BRT"
+        ),
         "fonte": getattr(data, "fonte", "yfinance"),
     }

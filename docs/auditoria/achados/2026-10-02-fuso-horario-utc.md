@@ -2,7 +2,7 @@
 id: 2026-10-02-fuso-horario-utc
 severidade: media
 painel: global
-status: aberto
+status: resolvido
 visto_em: 2026-10-02T01:05-03:00
 ---
 
@@ -27,3 +27,6 @@ Acessar a URL de produção e checar os rodapés (text-small) dos painéis.
 
 ## Invariante proposta
 Verificar em todo o HTML se o texto de última atualização acompanha a string "BRT".
+
+## Resolução
+Feito. Corrigido para BRT.
