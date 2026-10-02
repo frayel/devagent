@@ -8,6 +8,9 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 013 (Filtro Macro vs Micro):
+  - Adicionado filtro de botões (Todos, Macro, Micro) na página inicial.
+  - Oculta ou exibe painéis via JavaScript e CSS (display: none).
 - Spec 012 (Índice de Coesão):
   - Banco de dados SQLite (`coesao_cache`).
   - Coletor com `yfinance` para as 10 principais ações e o Ibovespa, calculando convergência de direção.

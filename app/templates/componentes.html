@@ -1,5 +1,5 @@
-{% macro painel(titulo, span, metodo, fonte, horario) %}
-<section class="painel span-{{ span }}">
+{% macro painel(titulo, span, metodo, fonte, horario, extra_class="") %}
+<section class="painel span-{{ span }} {{ extra_class }}">
   <div class="cab">
     <h2>{{ titulo }}</h2>
     {% if metodo %}

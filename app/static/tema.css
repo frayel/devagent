@@ -192,3 +192,30 @@ footer { margin-top: 40px; text-align: center; font-size: var(--fs-meta); color:
 @media (max-width: 767px) {
   .duas { grid-template-columns: 1fr; }
 }
+
+/* Filtro Macro/Micro */
+#filtro-macro-micro {
+    display: flex;
+    gap: var(--espaco);
+    margin-bottom: var(--espaco-grade);
+    padding: var(--espaco) var(--espaco-grade);
+    background: var(--painel);
+    border-radius: var(--raio);
+    border: 1px solid var(--borda);
+}
+#filtro-macro-micro span {
+    font-weight: bold;
+    align-self: center;
+}
+.filtro-btn {
+    cursor: pointer;
+    background: transparent;
+    color: var(--texto-secundario);
+    border: none;
+    border-radius: var(--raio);
+    padding: calc(var(--espaco) / 2) var(--espaco);
+}
+.filtro-btn.ativo {
+    background: var(--borda);
+    color: var(--texto);
+}
