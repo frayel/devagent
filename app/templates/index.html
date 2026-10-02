@@ -7,7 +7,7 @@
     {% if data %}
         {{ kpi(data.current_price|default("") + " pontos", "", variacao(data.variation ~ " (" ~ data.variation_percent ~ ")", data.variation_raw|default(0)), True) }}
         {% if data.history_dict and data.history_dict.dates %}
-        <div id="grafico-ibovespa" class="grafico" ></div>
+        <div id="grafico-ibovespa" class="grafico js-plotly-plot" ></div>
         <script>
             document.addEventListener("DOMContentLoaded", function() {
                 var dates = {{ data.history_dict.dates | tojson }};
