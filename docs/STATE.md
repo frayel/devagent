@@ -8,6 +8,9 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 011 (Revisão de Experiência Mobile):
+  - Correção de rolagem horizontal em telas de 390px (ajuste `.duas`).
+  - Reorganização lógica dos painéis da página inicial em `index.html`.
 - Spec 009 (Força Relativa):
   - Banco de dados SQLite (`forca_relativa_cache`).
   - Coletor com yfinance buscando variações e comparando com benchmark IBOV.
