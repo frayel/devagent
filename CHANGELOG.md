@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- feat: Adicionado Filtro Macro vs Micro (Spec 013) permitindo ocultar e exibir painéis específicos na página inicial.
 - Implementada a funcionalidade "Força Relativa" (Spec 009):
   - Novo card de Força Relativa para as top ações x IBOV nos últimos 30 dias.
   - Adição da chave `forca_relativa` ao payload do `/api/snapshot`.

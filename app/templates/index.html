@@ -3,7 +3,47 @@
 
 {% block content %}
 <!-- Linha 1 -->
-{% call painel("Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "") %}
+
+
+<div class="span-12" id="filtro-macro-micro">
+    <span>Filtro:</span>
+    <button class="filtro-btn ativo" data-filtro="todos">Todos</button>
+    <button class="filtro-btn" data-filtro="macro">Macro</button>
+    <button class="filtro-btn" data-filtro="micro">Micro</button>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const botoes = document.querySelectorAll('.filtro-btn');
+    const paineisMacro = document.querySelectorAll('.visao-macro');
+    const paineisMicro = document.querySelectorAll('.visao-micro');
+
+    botoes.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const filtro = btn.getAttribute('data-filtro');
+
+            botoes.forEach(b => {
+                b.classList.remove('ativo');
+            });
+            btn.classList.add('ativo');
+
+            if (filtro === 'todos') {
+                paineisMacro.forEach(p => p.style.display = '');
+                paineisMicro.forEach(p => p.style.display = '');
+            } else if (filtro === 'macro') {
+                paineisMacro.forEach(p => p.style.display = '');
+                paineisMicro.forEach(p => p.style.display = 'none');
+            } else if (filtro === 'micro') {
+                paineisMacro.forEach(p => p.style.display = 'none');
+                paineisMicro.forEach(p => p.style.display = '');
+            }
+        });
+    });
+});
+</script>
+
+
+{% call painel("Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "", "visao-macro") %}
     {% if data %}
         {{ kpi(data.current_price|default("") + " pontos", "", variacao(data.variation ~ " (" ~ data.variation_percent ~ ")", data.variation_raw|default(0)), True) }}
         {% if data.history_dict and data.history_dict.dates %}
@@ -39,7 +79,7 @@
 {% endcall %}
 
 <div class="span-4 pilha">
-{% call painel("Tendência (Ibovespa)", 12, "Médias móveis de curto (21) e longo prazo (200) dias.", data.fonte if data else "", data.time if data else "") %}
+{% call painel("Tendência (Ibovespa)", 12, "Médias móveis de curto (21) e longo prazo (200) dias.", data.fonte if data else "", data.time if data else "", "visao-macro") %}
     {% if data and data.mm21 and data.mm200 %}
         <div class="duas">
             <div>
@@ -66,7 +106,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Dispersão", 12, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "") %}
+{% call painel("Dispersão", 12, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro") %}
     {% if highlights and highlights.dispersion_pct is not none %}
         {{ medidor(highlights.dispersion_pct|int, "em alta") }}
         <div class="legenda num">
@@ -78,7 +118,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Índice de Coesão", 12, "Das 10 ações mais pesadas do Ibovespa, quantas estão na mesma direção (alta ou baixa) do índice hoje.", coesao.fonte if coesao else "", coesao.time if coesao else "") %}
+{% call painel("Índice de Coesão", 12, "Das 10 ações mais pesadas do Ibovespa, quantas estão na mesma direção (alta ou baixa) do índice hoje.", coesao.fonte if coesao else "", coesao.time if coesao else "", "visao-macro") %}
     {% if coesao %}
         {{ kpi(coesao.proporcao, coesao.estado, variacao("Alta Coesão" if coesao.concordantes >= 7 else "Distorção" if coesao.concordantes <= 3 else "Neutra", 1 if coesao.concordantes >= 7 else -1 if coesao.concordantes <= 3 else 0), False) }}
         {{ medidor(coesao.concordantes / coesao.total * 100, "") }}
@@ -89,7 +129,7 @@
 </div>
 
 <!-- Linha 2 -->
-{% call painel("Maiores altas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "") %}
+{% call painel("Maiores altas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro") %}
     {% if highlights and highlights.highs %}
         {% set linhas = [] %}
         {% for a in highlights.highs %}
@@ -106,7 +146,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Maiores baixas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "") %}
+{% call painel("Maiores baixas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro") %}
     {% if highlights and highlights.lows %}
         {% set linhas = [] %}
         {% for a in highlights.lows %}
@@ -124,7 +164,7 @@
 {% endcall %}
 
 <!-- Linha Força Relativa -->
-{% call painel("Força Relativa (30 dias)", 4, "Comparação da rentabilidade acumulada de 30 ações de alta liquidez frente ao Ibovespa em 30 pregões.", forca_relativa.fonte if forca_relativa else "", forca_relativa.timestamp.strftime('%H:%M') if forca_relativa else "") %}
+{% call painel("Força Relativa (30 dias)", 4, "Comparação da rentabilidade acumulada de 30 ações de alta liquidez frente ao Ibovespa em 30 pregões.", forca_relativa.fonte if forca_relativa else "", forca_relativa.timestamp.strftime('%H:%M') if forca_relativa else "", "visao-micro") %}
     {% if forca_relativa %}
         <div class="linha-kpis">
             <div class="kpi-secundario">
@@ -143,7 +183,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Radar de volume", 4, "Volume do dia dividido pela média dos últimos 21 pregões. Aparecem as razões acima de 1,5×.", volume_alerts.fonte if volume_alerts else "", volume_alerts.time if volume_alerts else "") %}
+{% call painel("Radar de volume", 4, "Volume do dia dividido pela média dos últimos 21 pregões. Aparecem as razões acima de 1,5×.", volume_alerts.fonte if volume_alerts else "", volume_alerts.time if volume_alerts else "", "visao-micro") %}
     {% if volume_alerts %}
         {% if volume_alerts.alerts %}
             {% set linhas = [] %}
@@ -167,7 +207,7 @@
 <!-- Linha 3 -->
 
 <!-- Escudo contra Quedas -->
-{% call painel("Escudo contra Quedas", 4, "Ações que mais fecharam no positivo nos últimos pregões de queda do Ibovespa.", escudo_quedas.fonte if escudo_quedas else "", escudo_quedas.time if escudo_quedas else "") %}
+{% call painel("Escudo contra Quedas", 4, "Ações que mais fecharam no positivo nos últimos pregões de queda do Ibovespa.", escudo_quedas.fonte if escudo_quedas else "", escudo_quedas.time if escudo_quedas else "", "visao-micro") %}
     {% if escudo_quedas %}
         <p class="sub">Pregões de queda: {{ escudo_quedas.qtd_quedas_ibov }} (últimos 30)</p>
         {% if escudo_quedas.top3 %}
@@ -190,7 +230,7 @@
 {% endcall %}
 
 
-{% call painel("Sensibilidade ao dólar", 8, "Correlação de Pearson entre retornos diários da ação e do BRL=X nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "") %}
+{% call painel("Sensibilidade ao dólar", 8, "Correlação de Pearson entre retornos diários da ação e do BRL=X nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "", "visao-macro") %}
     {% if dolar_correlation %}
         <div class="duas">
             <div>

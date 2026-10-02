@@ -1,7 +1,7 @@
 ---
 id: 013
 titulo: Experiência: Filtro Macro vs Micro
-status: ready
+status: done
 esforco: P
 ---
 
