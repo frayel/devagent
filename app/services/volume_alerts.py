@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from datetime import timezone, timedelta
 
 from app.database import get_latest_volume_alerts_data
 
@@ -39,7 +40,9 @@ def get_volume_alerts_view_data() -> dict[str, Any] | None:
             }
         )
 
-    time_formatted = data.timestamp.strftime("%d/%m/%Y %H:%M:%S UTC")
+    time_formatted = data.timestamp.astimezone(timezone(timedelta(hours=-3))).strftime(
+        "%d/%m/%Y %H:%M:%S BRT"
+    )
 
     return {
         "alerts": alerts_formatted,

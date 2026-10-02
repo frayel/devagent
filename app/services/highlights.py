@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from datetime import timezone, timedelta
 
 from app.database import get_latest_highlights_data
 
@@ -39,11 +40,22 @@ def get_highlights_view_data() -> dict[str, Any] | None:
     highs_formatted = [format_asset(h) for h in highs]
     lows_formatted = [format_asset(low) for low in lows]
 
-    time_formatted = data.timestamp.strftime("%d/%m/%Y %H:%M:%S UTC")
+    time_formatted = data.timestamp.astimezone(timezone(timedelta(hours=-3))).strftime(
+        "%d/%m/%Y %H:%M:%S BRT"
+    )
 
     dispersion_pct = None
-    if data.total_count and data.up_count is not None and data.total_count > 0:
-        dispersion_pct = (data.up_count / data.total_count) * 100
+    if (
+        data.total_count
+        and data.up_count is not None
+        and data.down_count is not None
+        and data.total_count > 0
+    ):
+        dispersion_pct = (
+            (data.up_count / (data.up_count + data.down_count)) * 100
+            if (data.up_count + data.down_count) > 0
+            else 0
+        )
 
     return {
         "highs": highs_formatted,

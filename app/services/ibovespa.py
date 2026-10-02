@@ -1,4 +1,5 @@
 from typing import Any
+from datetime import timezone, timedelta
 import json
 
 from app.database import get_latest_ibovespa_data
@@ -50,7 +51,9 @@ def get_ibovespa_view_data() -> dict[str, Any] | None:
             mm200_signal = "Neutra"
 
     # convert timestamp to local display
-    time_formatted = data.timestamp.strftime("%d/%m/%Y %H:%M:%S UTC")
+    time_formatted = data.timestamp.astimezone(timezone(timedelta(hours=-3))).strftime(
+        "%d/%m/%Y %H:%M:%S BRT"
+    )
 
     history_dict = {}
     if data.history_json:

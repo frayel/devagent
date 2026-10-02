@@ -20,7 +20,7 @@ def test_xss_protection_in_history_json():
             "variation_percent": "+0,78%",
             "is_positive": True,
             "is_negative": False,
-            "time": "01/01/2026 12:00:00 UTC",
+            "time": "01/01/2026 12:00:00 BRT",
             "history_dict": {
                 "dates": ["<script>alert(1)</script>"],
                 "closes": [130000],
