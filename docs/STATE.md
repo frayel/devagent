@@ -5,7 +5,7 @@
 ## Experiência
 
 - Última revisão de experiência: 02/10/2026 (Redesign 008)
-- Painéis, seções ou telas acrescentados desde a última revisão: 2 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
 - Spec 009 (Força Relativa):
@@ -57,3 +57,9 @@
   - Coletor buscando volume das 30 ações mais líquidas via `yfinance` (spark endpoint).
   - Cálculo de anomalia (volume atual > 50% da média das últimas 3 semanas).
   - Exibição de tabela de alertas na home e via contrato `/api/snapshot`.
+
+- Spec 010 (Escudo contra Quedas):
+  - Banco de dados SQLite (`escudo_quedas_cache`).
+  - Coletor buscando histórico do Ibovespa e ativos via `yfinance`.
+  - Exibição do top 3 ativos que mais tiveram retornos positivos nos pregões de queda do Ibovespa nos últimos 30 pregões.
+  - Adicionado ao contrato `/api/snapshot`.

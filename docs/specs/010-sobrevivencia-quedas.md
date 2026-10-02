@@ -1,7 +1,7 @@
 ---
 id: 010
 titulo: Sobrevivência a Quedas (Escudo)
-status: ready
+status: done
 esforco: M
 ---
 
