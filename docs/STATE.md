@@ -5,9 +5,15 @@
 ## Experiência
 
 - Última revisão de experiência: 02/10/2026 (Redesign 008)
-- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 2 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 009 (Força Relativa):
+  - Banco de dados SQLite (`forca_relativa_cache`).
+  - Coletor com yfinance buscando variações e comparando com benchmark IBOV.
+  - Exibição das ações com maior e menor força relativa em 30 pregões.
+  - Adicionado ao contrato `/api/snapshot`.
+
 - Spec 007 (Fator Mola):
   - Banco de dados SQLite (`fator_mola_cache`).
   - Coletor buscando volume das ações mais líquidas via `yfinance` e `brapi`.

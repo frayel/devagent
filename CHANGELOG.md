@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+- Implementada a funcionalidade "Força Relativa" (Spec 009):
+  - Novo card de Força Relativa para as top ações x IBOV nos últimos 30 dias.
+  - Adição da chave `forca_relativa` ao payload do `/api/snapshot`.
+
 
 ### Added
 - Painel 'Resiliência (Fator Mola)' para mostrar a recuperação das ações frente à mínima diária.

@@ -136,7 +136,28 @@
 {% endcall %}
 
 <!-- Linha 3 -->
-{% call painel("Sensibilidade ao dólar", 6, "Correlação de Pearson entre retornos diários da ação e do BRL=X nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "") %}
+
+<!-- Linha Força Relativa -->
+{% call painel("Força Relativa (30 dias)", 4, "Comparação da rentabilidade acumulada de 30 ações de alta liquidez frente ao Ibovespa em 30 pregões.", forca_relativa.fonte if forca_relativa else "", forca_relativa.timestamp.strftime('%H:%M') if forca_relativa else "") %}
+    {% if forca_relativa %}
+        <div class="linha-kpis">
+            <div class="kpi-secundario">
+                <span class="rotulo">Maior Força</span>
+                <strong>{{ forca_relativa.maior.ticker }}</strong>
+                {{ variacao((forca_relativa.maior.forca_relativa * 100)|round(2) ~ "% vs IBOV", forca_relativa.maior.forca_relativa) }}
+            </div>
+            <div class="kpi-secundario">
+                <span class="rotulo">Menor Força</span>
+                <strong>{{ forca_relativa.menor.ticker }}</strong>
+                {{ variacao((forca_relativa.menor.forca_relativa * 100)|round(2) ~ "% vs IBOV", forca_relativa.menor.forca_relativa) }}
+            </div>
+        </div>
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Sensibilidade ao dólar", 8, "Correlação de Pearson entre retornos diários da ação e do BRL=X nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "") %}
     {% if dolar_correlation %}
         <div class="duas">
             <div>
