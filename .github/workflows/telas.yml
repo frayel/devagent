@@ -1,0 +1,43 @@
+name: Telas
+
+# Capturas da interface (1440 e 390 px) para revisão visual de PRs que mexem
+# na interface. Fica fora do workflow CI de propósito: não atrasa nem bloqueia
+# o auto-merge. As imagens ficam nos artefatos da execução ("telas").
+# O agente roda o mesmo alvo localmente (make telas) e revisa as imagens antes
+# de abrir o PR (docs/DESIGN.md, seção 8).
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "app/templates/**"
+      - "app/static/**"
+      - "docs/DESIGN.md"
+      - "docs/design/**"
+
+permissions:
+  contents: read
+
+jobs:
+  telas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - name: Instalar dependências
+      run: make install
+    - name: Capturar a aplicação
+      run: |
+        python -m playwright install --with-deps chromium
+        python scripts/telas.py --saida telas
+    - name: Capturar a referência do guia
+      if: always()
+      run: python scripts/telas.py --pagina docs/design/referencia.html --saida telas/referencia
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: telas
+        path: telas/
+        retention-days: 14

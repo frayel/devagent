@@ -6,3 +6,5 @@ ruff==0.15.22
 mypy
 httpx
 respx
+# Capturas da interface (make telas). Só desenvolvimento.
+playwright

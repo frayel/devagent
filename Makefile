@@ -4,7 +4,7 @@
 
 PY ?= python
 
-.PHONY: install install-prod verify smoke audit
+.PHONY: install install-prod verify smoke audit telas
 
 ## Dependências de desenvolvimento (lint, tipos, testes).
 install:
@@ -32,3 +32,9 @@ smoke:
 ## Audita produção. Ex.: make audit ARGS="--navegador --saida relatorio"
 audit:
 	$(PY) -m auditoria.auditar $(ARGS)
+
+## Capturas da interface (1440 e 390 px) em telas/, com dados de demonstração.
+## Obrigatório em PR que muda a interface (docs/DESIGN.md, seção 8).
+telas:
+	$(PY) -m playwright install chromium
+	$(PY) scripts/telas.py --saida telas
