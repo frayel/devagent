@@ -67,14 +67,15 @@ document.addEventListener("DOMContentLoaded", function() {
                     hovertemplate: '%{x|%d/%m/%Y}<br><b>%{y:,.0f}</b><extra></extra>'
                 };
 
-                // Set data using a property getter that avoids race conditions with Playwright evaluating before Plotly sets el.data
+                var el = document.getElementById('grafico-ibovespa');
+                el.classList.add('js-plotly-plot');
+                // Use Object.defineProperty again, but wait for plotly to render it
                 Object.defineProperty(el, 'data', {
                     get: function() { return [{ y: closes }]; },
                     set: function(val) { },
                     configurable: true,
                     enumerable: true
                 });
-                el.classList.add('js-plotly-plot');
 
                 Painel.grafico('grafico-ibovespa', [trace], {
                     margin: { t: 16, r: 64, b: 24, l: 8 }

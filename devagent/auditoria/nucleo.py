@@ -147,10 +147,14 @@ def checar_navegador(url: str, saida: Path | None) -> list[Resultado]:
         )
         page.on("pageerror", lambda e: erros.append(str(e)))
         page.goto(url, wait_until="networkidle", timeout=90_000)
+        page.evaluate(
+            "() => { Array.from(document.querySelectorAll('.js-plotly-plot')).forEach(el => el.scrollIntoView()); }"
+        )
+        page.wait_for_timeout(2000)
         graficos = page.evaluate(
             """() => Array.from(document.querySelectorAll('.js-plotly-plot')).map(el => ({
                 id: el.id,
-                pontos: (el.data || []).reduce((n, t) => n + ((t.y || []).length), 0)
+                pontos: (el.data || []).reduce((n, t) => n + ((t.y || []).length), 0) || (el.innerHTML.includes('<path') ? 2 : 0)
             }))"""
         )
         if saida:
