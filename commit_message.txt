@@ -1,0 +1,3 @@
+fix: resolve el is not defined and improve plotly chart auditor
+
+Closes #96

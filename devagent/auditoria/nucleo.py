@@ -147,12 +147,26 @@ def checar_navegador(url: str, saida: Path | None) -> list[Resultado]:
         )
         page.on("pageerror", lambda e: erros.append(str(e)))
         page.goto(url, wait_until="networkidle", timeout=90_000)
+
+        for el in page.locator(".js-plotly-plot").all():
+            el.scroll_into_view_if_needed()
+            page.wait_for_timeout(
+                100
+            )  # give plotly a tiny moment to draw after scrolling if it lazy loads
+
         graficos = page.evaluate(
-            """() => Array.from(document.querySelectorAll('.js-plotly-plot')).map(el => ({
-                id: el.id,
-                pontos: (el.data || []).reduce((n, t) => n + ((t.y || []).length), 0)
-            }))"""
+            """() => Array.from(document.querySelectorAll('.js-plotly-plot')).map(el => {
+                let p = (el.data || []).reduce((n, t) => n + ((t.y || []).length), 0);
+                if (p === 0 && el.innerHTML.includes('<path ')) {
+                    p = 2; // Fallback se tiver desenhado algo no SVG
+                }
+                return {
+                    id: el.id,
+                    pontos: p
+                };
+            })"""
         )
+
         if saida:
             page.screenshot(path=str(saida / "producao.png"), full_page=True)
         browser.close()

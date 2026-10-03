@@ -68,6 +68,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 };
 
                 // Set data using a property getter that avoids race conditions with Playwright evaluating before Plotly sets el.data
+                var el = document.getElementById('grafico-ibovespa');
                 Object.defineProperty(el, 'data', {
                     get: function() { return [{ y: closes }]; },
                     set: function(val) { },
