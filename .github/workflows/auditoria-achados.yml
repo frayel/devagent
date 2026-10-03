@@ -4,8 +4,6 @@ name: Achados da auditoria
 # docs/auditoria/achados/. Merges feitos pelo GITHUB_TOKEN não disparam
 # eventos de push, por isso o automerge.yml chama este workflow depois de
 # fazer merge de um PR `auditoria:`, e ele também roda de hora em hora.
-#
-# ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
 on:
   schedule:
     - cron: "53 * * * *"

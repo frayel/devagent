@@ -56,8 +56,7 @@ def _horas(iso: str) -> float:
 
 
 def eh_do_agente(pr: dict[str, Any]) -> bool:
-    labels = {lbl["name"] for lbl in pr.get("labels", [])}
-    return not pr["title"].startswith("auditoria:") and "revisao-humana" not in labels
+    return not pr["title"].startswith("auditoria:")
 
 
 def status_ci(repo: str, sha: str) -> str:

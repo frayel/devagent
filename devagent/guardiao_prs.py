@@ -60,12 +60,7 @@ def data(iso: str) -> datetime:
 def prs_do_agente() -> list[dict[str, Any]]:
     campos = "number,title,headRefName,headRefOid,body,labels,createdAt,url"
     prs = gh_json("pr", "list", "--state", "open", "--json", campos, "--limit", "50")
-    return [
-        p
-        for p in prs
-        if not p["title"].startswith("auditoria:")
-        and "revisao-humana" not in {lbl["name"] for lbl in p["labels"]}
-    ]
+    return [p for p in prs if not p["title"].startswith("auditoria:")]
 
 
 def comentarios(numero: int) -> list[dict[str, Any]]:

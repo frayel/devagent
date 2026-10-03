@@ -48,7 +48,7 @@ FIXTURES = RAIZ / "tests" / "fixtures"
 AVISO_LEGAL = "Não constitui recomendação de investimento"
 USER_AGENT = "PainelB3-Auditor/1.0 (+https://github.com/frayel/devagent)"
 
-# Limites. Mudar qualquer um destes números exige revisão humana (veja README).
+# Limites. Mudar um destes números exige PR próprio com evidência (veja README).
 TOLERANCIA_PRECO = 0.015  # 1,5% entre o valor exibido e a fonte independente
 TOLERANCIA_FECHAMENTO = 0.005  # 0,5% nos fechamentos de pregões encerrados
 IDADE_MAXIMA_NO_PREGAO = timedelta(minutes=45)

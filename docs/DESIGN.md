@@ -1,6 +1,6 @@
 # DESIGN.md · Guia visual do Painel B3
 
-> **Documento protegido** (`devagent/protegidos.txt`). O agente segue este guia em toda mudança de interface e pode propor alterações, mas só num PR `agent:` dedicado a ele, que espera revisão humana. Nunca altere este arquivo no mesmo PR que muda a interface.
+> O agente segue este guia em toda mudança de interface e pode alterá-lo, mas só num PR `agent:` dedicado a ele. Nunca altere este arquivo no mesmo PR que muda a interface.
 >
 > A referência visual navegável está em `docs/design/referencia.html`. Abra-a no navegador antes de mexer em qualquer tela: ela mostra os tokens, os componentes e a grade montados com dados fictícios.
 

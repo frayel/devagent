@@ -19,7 +19,7 @@ Com o escopo aberto (ADR 003), o agente gerou e entregou ideias novas, mas o pro
 
 ## O que não muda
 
-O guia visual do projeto continua protegido: a revisão aplica o guia, não o substitui, e mudanças no guia vão em PR próprio, com revisão humana. Ciclos curtos, specs de até ~400 linhas e as demais regras do `CICLO.md` continuam valendo.
+O guia visual do projeto continua protegido: a revisão aplica o guia, não o substitui, e mudanças no guia vão em PR próprio (sem revisão humana desde o ADR 007). Ciclos curtos, specs de até ~400 linhas e as demais regras do `CICLO.md` continuam valendo.
 
 ## Consequências
 

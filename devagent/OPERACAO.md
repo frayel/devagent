@@ -24,7 +24,7 @@ Todos ficam em `.github/workflows/` porque o GitHub exige. São do núcleo; o pr
 | Arquivo | Dispara | Faz |
 |---|---|---|
 | `ci.yml` | PR e push na `main` | `make install` e `make verify`; job `smoke` com `make install-prod` e `make smoke` |
-| `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch; fecha as issues citadas com `Closes/Fixes/Resolves #N` no título, corpo ou commits do PR (exceto `deploy-falhou` e `producao-incorreta`); PRs que tocam `devagent/protegidos.txt` recebem `revisao-humana` |
+| `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch; fecha as issues citadas com `Closes/Fixes/Resolves #N` no título, corpo ou commits do PR (exceto `deploy-falhou` e `producao-incorreta`) |
 | `deploy-check.yml` | após o auto-merge, a cada 6 h, manual | consulta a plataforma (`devagent/adaptadores/render_status.py`); abre ou fecha issues `deploy-falhou`; dispara a auditoria quando o deploy fica live |
 | `auditoria-producao.yml` | horários do projeto, após deploy | `make audit` contra produção; abre ou fecha issues `producao-incorreta` |
 | `jules.yml` | job `vigia` contínuo (laço de ~5h40 que dispara o próximo ao terminar); crons a cada 3 h só ressuscitam a corrente; manual | cria sessões pela API do Jules (`devagent/adaptadores/jules.py vigiar`), sem exigir aprovação de plano: a cada hora nova, a persona da hora (pula se uma sessão que altera código estiver ativa ou se a cota de `JULES_LIMITE_DIARIO` chegar à reserva de 4); Sentinel 03h, Bolt 09h e Palette 15h (BRT), desenvolvedor nas outras 21 horas; a cada 5 min aprova planos pendentes e responde perguntas paradas há 5 min confirmando a decisão que o agente já tomou. O cron do GitHub não serve de relógio: descarta a maior parte dos disparos |
@@ -32,7 +32,7 @@ Todos ficam em `.github/workflows/` porque o GitHub exige. São do núcleo; o pr
 | `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | `devagent/guardiao_prs.py`: cobra `@jules` (até 3x), fecha PR sem reação em 3 h, com conflito grande (> 3 arquivos ou > 40 linhas) ou substituído (`Substitui #N`); abre issue `tentativa-falhou`; fecha issues citadas com `Closes #N` em PRs mergeados nos últimos 7 dias; apaga branches órfãs com mais de 24 h |
 | `auditoria-achados.yml` | de hora em hora e após merge de PR `auditoria:` | `devagent/auditoria/achados_para_issues.py`: abre issues para os achados do auditor LLM em `docs/auditoria/achados/` |
 
-O `automerge.yml` lê a lista de caminhos protegidos de `devagent/protegidos.txt` **na `main`**, nunca no PR. Um PR que mexe na lista também é protegido, porque ela está na própria lista.
+O `automerge.yml` não tem caminhos protegidos: todo PR com CI verde entra (ADR 007).
 
 Merges feitos pelo `GITHUB_TOKEN` não fecham issues pelas palavras-chave `Closes #N` (o GitHub não processa); por isso o `automerge.yml` as fecha explicitamente, e precisa da permissão `issues: write`. Esses merges também não disparam o `ci.yml` na `main`; por isso a verificação pós-merge fica no `deploy-check.yml`.
 

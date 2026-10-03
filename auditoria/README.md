@@ -11,13 +11,10 @@ Ele tem duas camadas:
 
 ## Separação de poderes
 
-Quem é auditado não altera o auditor. O `automerge.yml` recusa merge automático de PRs que mexam nos caminhos de `devagent/protegidos.txt`, entre eles:
+Não há revisão humana: o agente pode alterar a auditoria e o `automerge.yml` faz merge com o CI verde (ADR 007 do núcleo). Duas regras substituem a trava:
 
-- `auditoria/` e `devagent/auditoria/`
-- `devagent/agents/auditor.md`
-- `.github/workflows/automerge.yml` e `.github/workflows/auditoria-*.yml`
-
-Esses PRs recebem o label `revisao-humana` e esperam aprovação manual. Isso vale também para o auditor LLM quando ele propõe checagens novas.
+- uma checagem nunca é afrouxada no mesmo PR que corrige a falha que ela aponta; se ela estiver errada, a correção vai num PR próprio, com evidência;
+- a aplicação nunca imita o que a auditoria procura (classes, propriedades ou elementos que só existem para a checagem enxergar).
 
 ## O que a camada determinística verifica
 
@@ -65,4 +62,4 @@ Hoje o auditor extrai os números do HTML, o que quebra se o template mudar. A a
 
 ## Painel novo, checagem nova
 
-Toda spec tem a seção **Invariantes de produção**. Ao publicar um painel, o desenvolvedor acrescenta o painel ao `/api/snapshot`. Um humano, ou o auditor LLM num PR com revisão humana, transforma as invariantes em funções `checar_*` em `auditar.py`, com teste em `auditoria/tests/`. Checagens que valem para qualquer site (saúde, página, navegador, vazamento de fixtures) ficam no harness do núcleo.
+Toda spec tem a seção **Invariantes de produção**. Ao publicar um painel, o desenvolvedor acrescenta o painel ao `/api/snapshot`. O auditor LLM ou o desenvolvedor transforma as invariantes em funções `checar_*` em `auditar.py`, com teste em `auditoria/tests/`. Checagens que valem para qualquer site (saúde, página, navegador, vazamento de fixtures) ficam no harness do núcleo.
