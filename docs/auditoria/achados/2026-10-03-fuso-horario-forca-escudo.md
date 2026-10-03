@@ -2,7 +2,7 @@
 id: 2026-10-03-fuso-horario-forca-escudo
 severidade: media
 painel: global
-status: aberto
+status: resolvido
 visto_em: 2026-10-03T01:00-03:00
 ---
 
@@ -25,3 +25,6 @@ Acessar a URL de produção e checar os rodapés dos painéis "Força Relativa (
 
 ## Invariante proposta
 Verificar no auditor determinístico se todas as strings de última atualização contêm o sufixo "BRT" e seguem o padrão completo de data e hora.
+
+## Resolução
+As visualizações de Força Relativa e Escudo contra Quedas agora formatam o `time` corretamente, utilizando `astimezone` para BRT e incluindo a data.

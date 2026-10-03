@@ -1,4 +1,5 @@
 import json
+from datetime import timezone, timedelta
 from app.database import get_latest_forca_relativa_data
 
 
@@ -16,6 +17,9 @@ def get_forca_relativa_view_data() -> dict | None:
     return {
         "maior": maior,
         "menor": menor,
+        "time": data.timestamp.astimezone(timezone(timedelta(hours=-3))).strftime(
+            "%d/%m/%Y %H:%M:%S BRT"
+        ),
         "timestamp": data.timestamp,
         "fonte": data.fonte,
     }
