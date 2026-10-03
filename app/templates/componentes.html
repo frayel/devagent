@@ -20,7 +20,7 @@
   <div class="{% if is_hero %}hero{% else %}kpi{% endif %}">
     <div class="valor num">{{ valor }}</div>
   </div>
-  {% if variacao_str %}{{ variacao_str | safe }}{% endif %}
+  {% if variacao_str %}{{ variacao_str }}{% endif %}
 </div>
 {% endmacro %}
 
