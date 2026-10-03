@@ -26,3 +26,8 @@
 **Vulnerability:** Cross-Site Scripting (XSS) due to `| safe` in dynamic table cells.
 **Learning:** The application was injecting formatted string combinations into table cells using Jinja's `| safe` filter in `app/templates/componentes.html`. Specifically, ticker symbols and formatted values were passed as raw strings and rendered using `{{ celula.conteudo | safe }}`. This could allow XSS if any displayed value contained malicious payloads (e.g. `ticker="<script>alert(1)</script>"`). To prevent this while still rendering safe HTML macros, I removed the `| safe` filter from `componentes.html` entirely and explicitly escaped and wrapped the dynamically formatted strings containing HTML (like `<span>`) in `| safe` before they were passed to the template inside `app/templates/index.html`.
 **Prevention:** Never apply `| safe` globally to a variable that can contain arbitrary text. Instead, only apply `| safe` to specific sub-parts that construct static HTML elements after escaping the dynamic portions of the strings explicitly using Jinja's `| e` (escape) filter.
+
+## 2026-10-03 - Remove `| safe` from kpi to prevent XSS
+**Vulnerability:** Cross-Site Scripting (XSS) due to `| safe` in KPI variation string.
+**Learning:** The application was using Jinja's `| safe` filter inside the `kpi` macro in `app/templates/componentes.html` to render the `variacao_str`. If any data within this string is attacker-controlled and unescaped, it can lead to XSS. I removed `| safe` from the macro and instead applied it explicitly in `app/templates/index.html` after passing the data. This follows the same pattern used previously to secure table components.
+**Prevention:** Avoid applying `| safe` inside macros on variables that might contain dynamic unescaped text.
