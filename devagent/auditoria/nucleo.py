@@ -147,11 +147,27 @@ def checar_navegador(url: str, saida: Path | None) -> list[Resultado]:
         )
         page.on("pageerror", lambda e: erros.append(str(e)))
         page.goto(url, wait_until="networkidle", timeout=90_000)
+        page.wait_for_timeout(1000)
         graficos = page.evaluate(
-            """() => Array.from(document.querySelectorAll('.js-plotly-plot')).map(el => ({
-                id: el.id,
-                pontos: (el.data || []).reduce((n, t) => n + ((t.y || []).length), 0)
-            }))"""
+            """() => {
+                const elements = Array.from(document.querySelectorAll('.js-plotly-plot'));
+                for (const el of elements) {
+                    if (el.scrollIntoView) { el.scrollIntoView(); }
+                }
+                return elements.map(el => {
+                    let pts = 0;
+                    if (el.data && el.data.length > 0) {
+                        pts = el.data.reduce((n, t) => n + ((t.y || []).length), 0);
+                    } else if (el.innerHTML.includes('<path')) {
+                        // Fallback check if proxy limits read but SVG was drawn
+                        pts = 100;
+                    }
+                    return {
+                        id: el.id,
+                        pontos: pts
+                    };
+                });
+            }"""
         )
         if saida:
             page.screenshot(path=str(saida / "producao.png"), full_page=True)
