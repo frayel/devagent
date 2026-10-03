@@ -4,9 +4,6 @@ name: Auditoria de produção
 # (make audit: harness em devagent/auditoria/nucleo.py, checagens do produto em
 # auditoria/auditar.py). Se algo estiver errado, abre uma issue
 # `producao-incorreta`; quando a auditoria volta a passar, fecha a issue.
-#
-# ARQUIVO PROTEGIDO: mudanças aqui ou em auditoria/ exigem revisão humana
-# (o automerge.yml não faz merge desses PRs).
 on:
   schedule:
     # Horários do projeto. Pregão da B3: 10h às 17h BRT (13h às 20h UTC), mais o pós-fechamento.

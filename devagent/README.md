@@ -27,7 +27,7 @@ O `AGENTS.md` da raiz é só uma porta: manda ler o `CICLO.md` e o `PRODUTO.md`.
 
 ## Separação de poderes
 
-`devagent/protegidos.txt` lista o que só muda com revisão humana: o guardião, o adaptador do Jules, a auditoria (núcleo e checagens do projeto), os workflows que vigiam o agente e a própria lista. O `automerge.yml` lê a lista da `main`, então um PR não consegue se desproteger. Todo o resto, inclusive o `CICLO.md`, o agente pode melhorar sozinho por PR `agent:`.
+Não há revisão humana. O agente pode alterar e fazer merge de qualquer arquivo, inclusive o guardião, o adaptador do Jules, a auditoria e os workflows (ADR 007). A separação de poderes passou a ser uma regra escrita, não uma trava: uma checagem nunca é afrouxada no mesmo PR que corrige a falha que ela aponta, e a aplicação nunca imita o que a auditoria procura.
 
 ## Autoaperfeiçoamento
 

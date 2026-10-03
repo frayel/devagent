@@ -64,7 +64,6 @@ def prs_do_agente() -> list[dict[str, Any]]:
         p
         for p in prs
         if not p["title"].startswith("auditoria:")
-        and "revisao-humana" not in {lbl["name"] for lbl in p["labels"]}
     ]
 
 

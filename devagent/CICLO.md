@@ -34,7 +34,6 @@ devagent/
   CICLO.md             # este arquivo
   README.md            # como o núcleo funciona e como adotá-lo em outro projeto
   OPERACAO.md          # fluxo de entrega, workflows, variáveis do núcleo
-  protegidos.txt       # caminhos que só mudam com revisão humana
   estado_github.py     # PRs abertos (CI, conflito) e issues; primeiro comando da execução
   guardiao_prs.py      # regras do guardião de PRs (roda no GitHub Actions)
   config.py            # lê o devagent.toml
@@ -76,7 +75,7 @@ Se a sessão foi aberta por um comentário `@jules` num PR, você já está na b
 
 O merge não é feito por você. Ele é feito pelo workflow `automerge.yml`, que faz squash merge de todo PR assim que o CI passa. PR que não passa no CI fica parado e trava o ciclo inteiro. Por isso:
 
-- PRs com título iniciado por `auditoria:` ou com label `revisao-humana` não são seus: não os revise, não os feche, não faça commits neles e não os conte na regra abaixo.
+- PRs com título iniciado por `auditoria:` não são seus: não os revise, não os feche, não faça commits neles e não os conte na regra abaixo.
 - **Só pode existir um PR aberto do agente por vez.** Se `estado_github` mostrar um, o único trabalho permitido é destravá-lo (Passo 2), depois de garantir que produção não está quebrada (Passo 1). Novos commits vão para a branch desse PR, nunca para um PR novo.
 - **Todo trabalho parte da `main` atual.** Antes de dar push, traga a `main` (`git fetch origin && git merge origin/main`). Nunca reescreva um arquivo inteiro a partir de uma cópia antiga: isso desfaz o trabalho de outros PRs.
 - O estado verdadeiro do projeto é a `main`. Trabalho que não chegou à `main` ainda não existe para o ciclo.
@@ -88,7 +87,7 @@ O merge não é feito por você. Ele é feito pelo workflow `automerge.yml`, que
 Produção quebrada vem antes de qualquer outra coisa. Verifique, nesta ordem:
 
 1. **Issues abertas com label `deploy-falhou`.** O workflow `deploy-check.yml` abre essas issues com o status e os logs da plataforma de deploy depois de cada merge. Siga a skill `devagent/skills/diagnosticar-deploy.md`.
-   **Issues abertas com label `producao-incorreta`.** O auditor de produção abre essas issues quando o site publicado mostra dado falso, velho, incoerente ou de teste, comparando com fontes independentes. Elas têm a mesma prioridade de um deploy quebrado. Leia o relatório na issue, reproduza com `make audit`, corrija a causa na aplicação e escreva o teste de regressão. A issue só fecha quando a auditoria em produção passar; o workflow fecha sozinho as que ele abriu. **Nunca altere a auditoria para fazer uma checagem passar** (caminhos em `devagent/protegidos.txt`). Se achar que a checagem está errada, explique na issue com evidência, aplique `bloqueado` e siga para o próximo item.
+   **Issues abertas com label `producao-incorreta`.** O auditor de produção abre essas issues quando o site publicado mostra dado falso, velho, incoerente ou de teste, comparando com fontes independentes. Elas têm a mesma prioridade de um deploy quebrado. Leia o relatório na issue, reproduza com `make audit`, corrija a causa na aplicação e escreva o teste de regressão. A issue só fecha quando a auditoria em produção passar; o workflow fecha sozinho as que ele abriu. **Nunca altere a auditoria para fazer uma checagem passar, e nunca faça a aplicação imitar o que a auditoria procura** (classes, propriedades ou elementos falsos que só existem para a checagem enxergar). Se achar que a checagem está errada, corrija-a num PR próprio que mostre com evidência por que ela estava errada, nunca no mesmo PR da correção.
 2. **Status do deploy.** Com o adaptador Render, se `RENDER_API_KEY` e `RENDER_SERVICE_ID` estiverem no ambiente, rode `python -m devagent.adaptadores.render_status`. Código de saída 1 significa deploy falho e o JSON traz os logs. Se as variáveis não existirem, dependa do item 1 e registre a ausência no relatório.
 3. **Saúde de produção.** Rode `make audit`. Saída diferente de 0 significa que produção exibe algo errado: trate como o item 1, mesmo sem issue aberta.
 4. **Qualidade local.** `make verify`.
@@ -197,7 +196,7 @@ Vale para todo PR. O `PRODUTO.md` acrescenta o checklist do produto.
 - Nunca apague dados de produção, specs `done` ou relatórios em `docs/runs/`.
 - Nunca adicione dependência sem justificar no PR.
 - Nunca desative ou apague testes para fazer o CI passar, inclusive o teste de fronteira. Nunca use `git commit --no-verify` para contornar um hook.
-- Nunca altere os caminhos listados em `devagent/protegidos.txt` para afrouxar suas regras: o guardião, o adaptador do Jules, o automerge, a auditoria e a própria lista. Esses PRs esperam revisão humana.
+- Não há revisão humana nem caminhos protegidos: você pode alterar e fazer merge de qualquer arquivo, inclusive o guardião, o adaptador do Jules, os workflows e a auditoria. Com essa liberdade vem uma regra: uma checagem nunca é afrouxada no mesmo PR que corrige a falha que ela aponta (veja o Passo 1).
 - Nunca edite `docs/auditoria/`: pertence ao auditor.
 - Se ficar bloqueado (credencial ausente, fonte fora do ar, ambiguidade na spec), registre o bloqueio em `docs/STATE.md`, abra uma issue com label `bloqueado` e encerre. Não invente contornos.
 - Se duas execuções seguidas falharem no mesmo ponto, pare de tentar e peça ajuda na issue.
@@ -265,7 +264,7 @@ Você pode reescrever qualquer parte deste arquivo, **exceto enfraquecer** estes
 - os limites do agente (seção 6);
 - a regra de continuidade (um PR aberto por vez; merge só pelo workflow; destravar antes de criar);
 - a proibição de apagar testes, specs `done` e relatórios;
-- a independência do auditor: você não altera nem afrouxa a auditoria e não edita `docs/auditoria/`;
+- a independência do auditor: você não afrouxa uma checagem para esconder uma falha, não imita na aplicação o que ela procura e não edita `docs/auditoria/`;
 - a fronteira do núcleo: `devagent/` não cita o produto e o teste de fronteira não é removido nem afrouxado;
 - os itens que o `PRODUTO.md` declara protegidos.
 

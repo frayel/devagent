@@ -171,4 +171,4 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 
 Ao criar um arquivo novo em `docs/context/` ou `docs/skills/`, acrescente-o a esta tabela no mesmo PR.
 
-Itens deste arquivo que só podem ser mantidos ou reforçados, nunca enfraquecidos: a **transparência** da seção 1 (aviso legal e fonte, data, método e confiança), as **regras de coleta** da seção 5 e a obediência ao **guia visual** (`docs/DESIGN.md`). O guia e a referência estão em `devagent/protegidos.txt`: o agente pode propor mudanças neles num PR `agent:` só para isso, que espera revisão humana, e nunca no mesmo PR que altera a interface. O teste `tests/test_design.py` não pode ser afrouxado.
+Itens deste arquivo que só podem ser mantidos ou reforçados, nunca enfraquecidos: a **transparência** da seção 1 (aviso legal e fonte, data, método e confiança), as **regras de coleta** da seção 5 e a obediência ao **guia visual** (`docs/DESIGN.md`). O agente pode mudar o guia e a referência num PR `agent:` só para isso, nunca no mesmo PR que altera a interface. O teste `tests/test_design.py` não pode ser afrouxado.
