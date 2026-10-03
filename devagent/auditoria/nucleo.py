@@ -147,11 +147,31 @@ def checar_navegador(url: str, saida: Path | None) -> list[Resultado]:
         )
         page.on("pageerror", lambda e: erros.append(str(e)))
         page.goto(url, wait_until="networkidle", timeout=90_000)
+        page.wait_for_timeout(2000)
         graficos = page.evaluate(
-            """() => Array.from(document.querySelectorAll('.js-plotly-plot')).map(el => ({
-                id: el.id,
-                pontos: (el.data || []).reduce((n, t) => n + ((t.y || []).length), 0)
-            }))"""
+            """() => {
+    return Array.from(document.querySelectorAll('.js-plotly-plot')).map(el => {
+        el.scrollIntoView();
+        let pontos = 0;
+        if (el.data && el.data.length > 0 && el.data[0].y && el.data[0].y.length > 0) {
+            pontos = el.data.reduce((n, t) => n + ((t.y || []).length), 0);
+        } else {
+            let paths = Array.from(el.querySelectorAll('path.js-line'));
+            for (let path of paths) {
+                let d = path.getAttribute('d') || '';
+                let l_count = (d.match(/L/g) || []).length;
+                if (l_count > 10) {
+                    pontos = l_count + 1;
+                    break;
+                }
+            }
+        }
+        return {
+            id: el.id,
+            pontos: pontos
+        };
+    });
+}"""
         )
         if saida:
             page.screenshot(path=str(saida / "producao.png"), full_page=True)
