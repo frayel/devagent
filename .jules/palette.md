@@ -10,3 +10,7 @@
 - **O que fiz:** Ajustei a macro de KPI (`kpi()`) em `app/templates/componentes.html` para renderizar as variações (`variacao_str`), que estavam sendo ocultadas na interface, e ajustei as tags `<span>` na passagem de dados de `app/templates/index.html` para a `tabela_ativos` usando a tupla segura do Jinja.
 - **O que aprendi:** Templates podem definir macros com propriedades não utilizadas inadvertidamente, causando falta de dados na interface. Ao aplicar `| safe` no Jinja num dicionário depois de uma concatenação `~`, é preciso envolver a expressão inteira com parênteses, senão o `safe` só se aplica ao último termo (`'</span>'`).
 - **O que evitar:** Evitar recriar strings em dicionários Jinja sem agrupar toda a expressão de HTML antes do filtro `| safe`.
+## 2026-10-03
+- **O que fiz:** Ajustei a estilização do menu de filtros (Macro/Micro) em `app/static/tema.css` para utilizar os tokens de design do sistema (cores de superfície, texto, espaçamentos via variáveis CSS) e alinhar-se à estética do produto sem perder a funcionalidade. Verificado visualmente.
+- **O que aprendi:** Novas seções podem ser adicionadas temporariamente sem seguir 100% dos tokens, e a refatoração visual ajuda a manter a coesão sem quebrar o layout.
+- **O que evitar:** Evitar deixar componentes isolados visualmente do resto da interface.

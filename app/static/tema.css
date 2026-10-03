@@ -196,26 +196,27 @@ footer { margin-top: 40px; text-align: center; font-size: var(--fs-meta); color:
 /* Filtro Macro/Micro */
 #filtro-macro-micro {
     display: flex;
-    gap: var(--espaco);
-    margin-bottom: var(--espaco-grade);
-    padding: var(--espaco) var(--espaco-grade);
-    background: var(--painel);
+    gap: var(--e2);
+    margin-bottom: var(--e4);
+    padding: var(--e2) var(--e3);
+    background: var(--superficie);
     border-radius: var(--raio);
     border: 1px solid var(--borda);
+    align-items: center;
 }
 #filtro-macro-micro span {
-    font-weight: bold;
-    align-self: center;
+    font-weight: 500;
+    color: var(--texto-2);
 }
 .filtro-btn {
     cursor: pointer;
     background: transparent;
-    color: var(--texto-secundario);
+    color: var(--texto-2);
     border: none;
-    border-radius: var(--raio);
-    padding: calc(var(--espaco) / 2) var(--espaco);
+    border-radius: var(--raio-p);
+    padding: var(--e1) var(--e3);
 }
 .filtro-btn.ativo {
-    background: var(--borda);
+    background: var(--superficie-2);
     color: var(--texto);
 }
