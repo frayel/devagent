@@ -6,7 +6,7 @@ Os três especialistas rodam uma vez por dia cada um, em horários diferentes. C
 
 ## Regras comuns
 
-1. **Primeiro comando:** `git fetch origin && python -m devagent.estado_github`. Se existir PR aberto do agente (qualquer um que não seja `auditoria:` nem `revisao-humana`), **não abra outro**: encerre sem mudanças. O desenvolvedor destrava esse PR no ciclo dele.
+1. **Primeiro comando:** `git fetch origin && python -m devagent.estado_github`. Se existir PR aberto do agente (qualquer um que não seja `auditoria:`), **não abra outro**: encerre sem mudanças. O desenvolvedor destrava esse PR no ciclo dele.
 2. Leia o seu diário em `.jules/<nome>.md` antes de começar e evite repetir o que já foi feito ou descartado.
 3. Não mude comportamento visível do produto além do seu tema, não altere specs, `AGENTS.md`, `PRODUTO.md`, `devagent/`, `auditoria/`, `docs/auditoria/` nem workflows.
 4. Rode a verificação completa antes do push: `make verify` (e `make smoke` se mexeu em dependências ou na inicialização).

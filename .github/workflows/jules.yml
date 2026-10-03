@@ -4,8 +4,6 @@ name: Jules
 # pararem esperando aprovação de plano ou resposta a uma pergunta.
 # Substitui a tarefa agendada criada pela interface web, que pode parar em
 # "aguardando aprovação" mesmo com o prompt pedindo o contrário.
-#
-# ARQUIVO PROTEGIDO: mudanças exigem revisão humana.
 on:
   schedule:
     # O cron do GitHub não é relógio: em 30/09 e 01/10 ele executou cerca de

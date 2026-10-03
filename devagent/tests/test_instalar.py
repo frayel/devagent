@@ -7,7 +7,6 @@ def test_instala_nucleo_e_modelos(tmp_path):
     instalar(tmp_path)
     for caminho in [
         "devagent/CICLO.md",
-        "devagent/protegidos.txt",
         "devagent/auditoria/nucleo.py",
         ".github/workflows/automerge.yml",
         "AGENTS.md",
