@@ -60,3 +60,12 @@
 | Radar de Absorção (Defesa de Fundo) | Ações com queda semanal > 5%, mas hoje com volume anormal e repique da mínima. | yfinance | M | Baixo |
 | Efeito Sexta-Feira | Probabilidade de queda na sexta para papéis que subiram forte de seg a qui. | yfinance | M | Baixo |
 | Sombra do Exterior na Abertura | Descolamento do IBOV vs S&P500 Futuro nos primeiros 30 min de pregão. | yfinance | M | Médio |
+
+## Ideias (Passo 7 - 2026-10-03)
+
+| Ações "Secando" (Alerta de Liquidez) | Responde: Quais ações estão perdendo liquidez? Originalidade: Foco no risco de iliquidez, não retorno. | yfinance | P | Baixo |
+| Cripto vs Bolsa (Correlação) | Responde: Cripto protege contra queda do Ibov? Originalidade: Cruzamento inusitado para a B3. | yfinance | M | Baixo |
+| Anomalia de Leilão de Fechamento | Responde: Quais papéis distorceram no fim do dia? Originalidade: Atenção ao momento institucional. | brapi/yfinance | G | Alto |
+| Atrasadas do Rally (Laggards) | Responde: Quais ficaram para trás na alta recente do Ibov? Originalidade: Busca beta distorcido negativo. | yfinance | M | Baixo |
+| Abertura Explosiva (Gaps Constantes) | Responde: Quais ações dão saltos grandes logo na abertura? Originalidade: Isola retorno open vs close-D1. | yfinance | M | Baixo |
+| Experiência: Visão "Só Anomalias" | Responde: Consigo ver só alertas escondendo ruído? Originalidade: Filtro analítico de tela cheia. | N/A | P | Baixo |
