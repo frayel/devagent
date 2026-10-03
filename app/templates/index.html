@@ -67,6 +67,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     hovertemplate: '%{x|%d/%m/%Y}<br><b>%{y:,.0f}</b><extra></extra>'
                 };
 
+                var el = document.getElementById('grafico-ibovespa');
                 // Set data using a property getter that avoids race conditions with Playwright evaluating before Plotly sets el.data
                 Object.defineProperty(el, 'data', {
                     get: function() { return [{ y: closes }]; },
