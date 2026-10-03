@@ -19,3 +19,8 @@
 - **O que fiz:** Substituí importações explícitas no módulo `app/agendador.py` pelo uso do `importlib.import_module`, permitindo carregar os módulos da camada collectors de forma preguiçosa.
 - **O que aprendi:** A importação agrupada (`from app.collectors import (highlights, ibovespa, ...)`) no topo da função `_coletar` acabava sendo avaliada e carregava todas essas dependências, como a biblioteca `httpx`, antes do necessário (no escopo da closure ou parsing da função durante a inicialização, ou apenas atrasando mas não otimizando perfeitamente a partida). Usando `importlib.import_module` de forma dinâmica no loop, o código evita trazer o pacote `httpx` inteiro e suas ramificações no cold start do Render. A melhoria no tempo local de importação do `app.main` saltou de ~0.72s para ~0.50s (apenas com o overhead do FastAPI).
 - **O que evitar:** Manter chamadas explícitas de import que puxam subdependências pesadas em arquivos lidos logo na partida, perdendo as vantagens do lazy loading.
+## 2026-10-03
+
+- **O que fiz:** Tentei otimizar a desserialização JSON e renderização Jinja2 retornando a string original via `|safe`, mas abortei. Descobri que isso quebra a tipagem da API e introduz vulnerabilidades graves de XSS ao evitar o filtro `|tojson`. Descartado por falhas de design graves.
+- **O que aprendi:** O uso de `|safe` diretamente no output raw JSON sem usar `|tojson` permite o escape de tags `<script>`, abrindo vulnerabilidades. Além disso, retornar a string raw quebra a API `/api/snapshot`.
+- **O que evitar:** Não evitar o filtro `|tojson` e não misturar retornos de JSON raw onde dicionários são esperados. Evitar propor alterações não seguras sem testar casos-limite de segurança (XSS).
