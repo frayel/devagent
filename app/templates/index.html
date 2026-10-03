@@ -164,7 +164,7 @@ document.addEventListener("DOMContentLoaded", function() {
 {% endcall %}
 
 <!-- Linha Força Relativa -->
-{% call painel("Força Relativa (30 dias)", 4, "Comparação da rentabilidade acumulada de 30 ações de alta liquidez frente ao Ibovespa em 30 pregões.", forca_relativa.fonte if forca_relativa else "", forca_relativa.timestamp.strftime('%H:%M') if forca_relativa else "", "visao-micro") %}
+{% call painel("Força Relativa (30 dias)", 4, "Comparação da rentabilidade acumulada de 30 ações de alta liquidez frente ao Ibovespa em 30 pregões.", forca_relativa.fonte if forca_relativa else "", forca_relativa.time if forca_relativa else "", "visao-micro") %}
     {% if forca_relativa %}
         <div class="linha-kpis">
             <div class="kpi-secundario">
