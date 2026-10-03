@@ -5,9 +5,14 @@
 ## Experiência
 
 - Última revisão de experiência: 02/10/2026 (Redesign 008)
-- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 2 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 014 (Atrasadas do Rally):
+  - Banco de dados SQLite (`atrasadas_rally_cache`).
+  - Coletor com yfinance para `^BVSP` e 30 ações de alta liquidez.
+  - Retorno de 5 dias calculado.
+  - Adicionado painel 'Atrasadas do Rally' à home page e `/api/snapshot`.
 - Spec 013 (Filtro Macro vs Micro):
   - Adicionado filtro de botões (Todos, Macro, Micro) na página inicial.
   - Oculta ou exibe painéis via JavaScript e CSS (display: none).

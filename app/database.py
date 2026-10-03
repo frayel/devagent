@@ -59,6 +59,14 @@ class ForcaRelativaData:
 
 
 @dataclass
+class AtrasadasRallyData:
+    timestamp: datetime
+    rally_valido: bool
+    top3_json: str
+    fonte: str
+
+
+@dataclass
 class CoesaoData:
     timestamp: datetime
     concordantes: int
@@ -229,6 +237,19 @@ def init_db() -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_coesao_cache_timestamp
         ON coesao_cache(timestamp DESC)
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS atrasadas_rally_cache (
+            timestamp TEXT PRIMARY KEY,
+            rally_valido INTEGER NOT NULL,
+            top3_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_atrasadas_rally_cache_timestamp
+        ON atrasadas_rally_cache(timestamp DESC)
     """)
 
     conn.commit()
@@ -553,6 +574,49 @@ def get_latest_coesao_data() -> CoesaoData | None:
             timestamp=datetime.fromisoformat(row["timestamp"]),
             concordantes=row["concordantes"],
             total=row["total"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+def save_atrasadas_rally_data(data: AtrasadasRallyData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO atrasadas_rally_cache (timestamp, rally_valido, top3_json, fonte)
+        VALUES (?, ?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            1 if data.rally_valido else 0,
+            data.top3_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_atrasadas_rally_data() -> AtrasadasRallyData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT timestamp, rally_valido, top3_json, fonte
+            FROM atrasadas_rally_cache
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        row = None
+    conn.close()
+    if row:
+        return AtrasadasRallyData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            rally_valido=bool(row["rally_valido"]),
+            top3_json=row["top3_json"],
             fonte=row["fonte"],
         )
     return None

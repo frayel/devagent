@@ -232,6 +232,29 @@ document.addEventListener("DOMContentLoaded", function() {
 {% endcall %}
 
 
+
+{% call painel("Atrasadas do Rally", 4, "Ações que ficaram para trás nos últimos 5 pregões em momentos de alta > 2% do Ibovespa.", atrasadas_rally.fonte if atrasadas_rally else "", atrasadas_rally.time if atrasadas_rally else "", "visao-micro") %}
+    {% if atrasadas_rally %}
+        {% if not atrasadas_rally.rally_valido %}
+            <div class="sem-dados">Ibovespa sem rally recente</div>
+        {% elif atrasadas_rally.top3 %}
+            {{ tabela_ativos(atrasadas_rally.top3, [{"titulo": "Ativo"}, {"titulo": "5d (Ativo)", "num": True}], "atrasadas-rally-rank") }}
+            {% for item in atrasadas_rally.top3 %}
+            <tr class="atrasadas-rally-rank">
+                <td class="tk">{{ item.ticker }}</td>
+                <td class="n">{{ variacao(("%0.2f"|format(item.retorno))|replace('.', ',') ~ "%", item.retorno) }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        {% else %}
+            <div class="sem-dados">Nenhuma ação encontrada.</div>
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
 {% call painel("Sensibilidade ao dólar", 8, "Correlação de Pearson entre retornos diários da ação e do BRL=X nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "", "visao-macro") %}
     {% if dolar_correlation %}
         <div class="duas">

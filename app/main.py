@@ -16,6 +16,7 @@ from app.services.dolar_correlation import get_dolar_correlation_view_data
 from app.services.forca_relativa import get_forca_relativa_view_data
 from app.services.escudo_quedas import get_escudo_quedas_view_data
 from app.services.coesao import get_coesao_view_data
+from app.services.atrasadas_rally import get_atrasadas_rally_view_data
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_highlights_data,
@@ -24,6 +25,7 @@ from app.database import (
     get_latest_forca_relativa_data,
     get_latest_escudo_quedas_data,
     get_latest_coesao_data,
+    get_latest_atrasadas_rally_data,
 )
 from app import agendador
 
@@ -213,6 +215,21 @@ def snapshot():
     else:
         resp["paineis"]["coesao"] = {}
 
+    atrasadas_rally_data = get_latest_atrasadas_rally_data()
+    if atrasadas_rally_data:
+        try:
+            top3 = json.loads(atrasadas_rally_data.top3_json)
+            resp["paineis"]["atrasadas_rally"] = {
+                "coletado_em": atrasadas_rally_data.timestamp.isoformat(),
+                "fonte": getattr(atrasadas_rally_data, "fonte", "yfinance"),
+                "rally_valido": atrasadas_rally_data.rally_valido,
+                "top3": top3,
+            }
+        except Exception:
+            resp["paineis"]["atrasadas_rally"] = {}
+    else:
+        resp["paineis"]["atrasadas_rally"] = {}
+
     return resp
 
 
@@ -225,6 +242,7 @@ async def index(request: Request):
     forca_relativa = get_forca_relativa_view_data()
     escudo_quedas = get_escudo_quedas_view_data()
     coesao = get_coesao_view_data()
+    atrasadas_rally = get_atrasadas_rally_view_data()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -236,5 +254,6 @@ async def index(request: Request):
             "forca_relativa": forca_relativa,
             "escudo_quedas": escudo_quedas,
             "coesao": coesao,
+            "atrasadas_rally": atrasadas_rally,
         },
     )

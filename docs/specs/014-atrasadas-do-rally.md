@@ -1,7 +1,7 @@
 ---
 id: 014
 titulo: Atrasadas do Rally (Laggards)
-status: ready
+status: done
 esforco: M
 ---
 
