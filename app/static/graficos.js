@@ -30,7 +30,11 @@ const Painel = {
         };
 
         const config = { displayModeBar: false, responsive: true };
-        Plotly.newPlot(id, traces, Object.assign(layout_padrao, layout_opcoes), config);
-el.classList.add('js-plotly-plot');
+        Plotly.newPlot(id, traces, Object.assign(layout_padrao, layout_opcoes), config).then(() => {
+            if (document.getElementById(id)) {
+                document.getElementById(id).classList.add('js-plotly-plot');
+            }
+        });
+
     }
 };
