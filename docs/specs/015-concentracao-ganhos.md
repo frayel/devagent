@@ -1,7 +1,7 @@
 ---
 id: 015
 titulo: Concentração de Ganhos do Ibovespa
-status: ready
+status: done
 esforco: M
 ---
 
