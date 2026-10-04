@@ -31,3 +31,8 @@
 **Vulnerability:** Cross-Site Scripting (XSS) due to `| safe` in KPI variation string.
 **Learning:** The application was using Jinja's `| safe` filter inside the `kpi` macro in `app/templates/componentes.html` to render the `variacao_str`. If any data within this string is attacker-controlled and unescaped, it can lead to XSS. I removed `| safe` from the macro and instead applied it explicitly in `app/templates/index.html` after passing the data. This follows the same pattern used previously to secure table components.
 **Prevention:** Avoid applying `| safe` inside macros on variables that might contain dynamic unescaped text.
+
+## 2026-10-04 - Remove `unsafe-eval` from Content-Security-Policy
+**Vulnerability:** Cross-Site Scripting (XSS) potential due to `unsafe-eval` in CSP.
+**Learning:** The Content-Security-Policy header in `app/main.py` included `'unsafe-eval'` in the `script-src` directive. This allows the execution of code injected into strings (e.g. via `eval()`, `setTimeout(string)`, etc). Since the application does not rely on `eval` in its JavaScript, removing it reduces the risk of XSS execution. Removed `'unsafe-eval'` from the middleware.
+**Prevention:** Only include `'unsafe-eval'` in CSP if absolutely required by a trusted dependency and there's no alternative. By default, ensure it is absent to provide defense-in-depth against XSS.
