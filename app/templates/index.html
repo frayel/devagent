@@ -130,7 +130,31 @@ document.addEventListener("DOMContentLoaded", function() {
 {% endcall %}
 </div>
 
+
+{% call painel("Concentração de Ganhos", 12, "Mostra quantas ações explicam 50% dos pontos de variação do índice hoje.", concentracao.fonte if concentracao else "", concentracao.time if concentracao else "", "visao-macro") %}
+    {% if concentracao %}
+        {% if concentracao.resumo.estado == 'estavel' %}
+            <div class="vazio">{{ concentracao.resumo.mensagem }}</div>
+        {% else %}
+            <div class="destaque-texto">{{ concentracao.resumo.mensagem }}</div>
+            {% set linhas = [] %}
+            {% for a in concentracao.top3 %}
+                {% set celulas = [
+                    {'tk': True, 'conteudo': a.ticker},
+                    {'num': True, 'conteudo': ("%.0f pts"|format(a.pontos))},
+                    {'num': True, 'conteudo': ("%.0f%%"|format(a.peso * 100))}
+                ] %}
+                {% set _ = linhas.append(celulas) %}
+            {% endfor %}
+            {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Impacto', 'num': True}, {'titulo': 'Peso Est.', 'num': True}], 'a') }}
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
 <!-- Linha 2 -->
+
 {% call painel("Maiores altas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro") %}
     {% if highlights and highlights.highs %}
         {% set linhas = [] %}

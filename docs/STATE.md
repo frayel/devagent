@@ -78,3 +78,8 @@
   - Coletor buscando histórico do Ibovespa e ativos via `yfinance`.
   - Exibição do top 3 ativos que mais tiveram retornos positivos nos pregões de queda do Ibovespa nos últimos 30 pregões.
   - Adicionado ao contrato `/api/snapshot`.
+- Spec 015 (Concentração de Ganhos):
+  - Banco de dados SQLite (`concentracao_cache`).
+  - Coletor com yfinance buscando ^BVSP e top 10 ações por peso para calcular contribuição.
+  - Exibição de texto explicativo e tabela de top 3 ativos no painel `visao-macro`.
+  - Adicionado ao contrato `/api/snapshot`.

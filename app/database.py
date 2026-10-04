@@ -81,6 +81,14 @@ class VolumeAlertsData:
     fonte: str = "yfinance"
 
 
+@dataclass
+class ConcentracaoData:
+    timestamp: datetime
+    resumo_json: str
+    top3_json: str
+    fonte: str = "yfinance"
+
+
 def get_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -118,6 +126,15 @@ def init_db() -> None:
         cursor.execute("ALTER TABLE ibovespa_cache ADD COLUMN mm21 REAL")
         cursor.execute("ALTER TABLE ibovespa_cache ADD COLUMN mm200 REAL")
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS concentracao_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME NOT NULL,
+            resumo_json TEXT NOT NULL,
+            top3_json TEXT NOT NULL,
+            fonte TEXT NOT NULL DEFAULT 'yfinance'
+        )
+    """)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS highlights_cache (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -616,6 +633,47 @@ def get_latest_atrasadas_rally_data() -> AtrasadasRallyData | None:
         return AtrasadasRallyData(
             timestamp=datetime.fromisoformat(row["timestamp"]),
             rally_valido=bool(row["rally_valido"]),
+            top3_json=row["top3_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+def save_concentracao_data(data: ConcentracaoData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO concentracao_cache (timestamp, resumo_json, top3_json, fonte)
+        VALUES (?, ?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            data.resumo_json,
+            data.top3_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_concentracao_data() -> ConcentracaoData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT timestamp, resumo_json, top3_json, fonte
+        FROM concentracao_cache
+        ORDER BY timestamp DESC LIMIT 1
+        """
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return ConcentracaoData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            resumo_json=row["resumo_json"],
             top3_json=row["top3_json"],
             fonte=row["fonte"],
         )
