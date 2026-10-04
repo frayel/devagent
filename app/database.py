@@ -110,6 +110,15 @@ def get_connection() -> sqlite3.Connection:
     return conn
 
 
+@dataclass
+class RotacaoCapitalData:
+    timestamp: datetime
+    estado: str
+    var_bancos: float
+    var_commodities: float
+    fonte: str
+
+
 def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
@@ -152,6 +161,20 @@ def init_db() -> None:
     cursor.execute(
         "CREATE INDEX IF NOT EXISTS idx_variacao_subita_timestamp ON variacao_subita_cache(timestamp DESC)"
     )
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS rotacao_capital_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME NOT NULL,
+            estado TEXT NOT NULL,
+            var_bancos REAL NOT NULL,
+            var_commodities REAL NOT NULL,
+            fonte TEXT NOT NULL
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_rotacao_capital_timestamp ON rotacao_capital_cache(timestamp DESC)"
+    )
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS concentracao_cache (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -800,6 +823,49 @@ def get_latest_apetite_risco_data() -> ApetiteRiscoData | None:
             timestamp=datetime.fromisoformat(row["timestamp"]),
             estado=row["estado"],
             diferenca=row["diferenca"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+def save_rotacao_capital_data(data: RotacaoCapitalData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO rotacao_capital_cache (timestamp, estado, var_bancos, var_commodities, fonte)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            data.estado,
+            data.var_bancos,
+            data.var_commodities,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_rotacao_capital_data() -> RotacaoCapitalData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT timestamp, estado, var_bancos, var_commodities, fonte
+        FROM rotacao_capital_cache
+        ORDER BY timestamp DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return RotacaoCapitalData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            estado=row["estado"],
+            var_bancos=row["var_bancos"],
+            var_commodities=row["var_commodities"],
             fonte=row["fonte"],
         )
     return None
