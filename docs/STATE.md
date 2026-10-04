@@ -5,7 +5,7 @@
 ## Experiência
 
 - Última revisão de experiência: 02/10/2026 (Redesign 008)
-- Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
 - Spec 016 (Apetite a Risco):
@@ -88,3 +88,9 @@
   - Coletor com yfinance buscando ^BVSP e top 10 ações por peso para calcular contribuição.
   - Exibição de texto explicativo e tabela de top 3 ativos no painel `visao-macro`.
   - Adicionado ao contrato `/api/snapshot`.
+
+- Spec 017 (Alerta de Variação Súbita):
+  - Banco de dados SQLite (`variacao_subita_cache`).
+  - Coletor buscando fechamentos intraday recentes para 30 ações de alta liquidez via `yfinance`.
+  - Cálculo de variação percentual na última hora > 1.5%.
+  - Exibição de painel e tabela de alertas via contrato `/api/snapshot`.
