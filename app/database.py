@@ -90,6 +90,13 @@ class ConcentracaoData:
 
 
 @dataclass
+class VariacaoSubitaData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "yfinance"
+
+
+@dataclass
 class ApetiteRiscoData:
     timestamp: datetime
     estado: str
@@ -134,6 +141,17 @@ def init_db() -> None:
         cursor.execute("ALTER TABLE ibovespa_cache ADD COLUMN mm21 REAL")
         cursor.execute("ALTER TABLE ibovespa_cache ADD COLUMN mm200 REAL")
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS variacao_subita_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME NOT NULL,
+            alertas_json TEXT NOT NULL,
+            fonte TEXT NOT NULL DEFAULT 'yfinance'
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_variacao_subita_timestamp ON variacao_subita_cache(timestamp DESC)"
+    )
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS concentracao_cache (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -700,6 +718,45 @@ def get_latest_concentracao_data() -> ConcentracaoData | None:
             timestamp=datetime.fromisoformat(row["timestamp"]),
             resumo_json=row["resumo_json"],
             top3_json=row["top3_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+def save_variacao_subita_data(data: VariacaoSubitaData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO variacao_subita_cache (timestamp, alertas_json, fonte)
+        VALUES (?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            data.alertas_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_variacao_subita_data() -> VariacaoSubitaData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT timestamp, alertas_json, fonte
+        FROM variacao_subita_cache
+        ORDER BY timestamp DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return VariacaoSubitaData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            alertas_json=row["alertas_json"],
             fonte=row["fonte"],
         )
     return None

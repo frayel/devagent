@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- **Variação Súbita:** Adiciona painel que exibe ações com variação expressiva na última hora (Spec 017).
 - feat: Implementa Concentração de Ganhos (Spec 015) com cálculo de contribuição das maiores empresas no fechamento diário.
 - feat: Implementado o Índice de Coesão do Mercado (Spec 012), mostrando quantas das top 10 ações do IBOV estão na mesma direção do índice, incluindo coleta e cache em SQLite.
 - feat: Adicionado Filtro Macro vs Micro (Spec 013) permitindo ocultar e exibir painéis específicos na página inicial.
