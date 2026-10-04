@@ -247,3 +247,56 @@ footer { margin-top: 40px; text-align: center; font-size: var(--fs-meta); color:
 .alinha-centro {
     align-items: center;
 }
+
+/* Modo Só Sinais */
+body.modo-so-sinais .grafico,
+body.modo-so-sinais table,
+body.modo-so-sinais .visao-macro:not(.painel-ibovespa):not(.painel-tendencia):not(.painel-apetite):not(.painel-rotacao) {
+    display: none !important;
+}
+
+body.modo-so-sinais .painel-ibovespa .kpi-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: var(--e5);
+}
+
+body.modo-so-sinais .painel-ibovespa .valor {
+    font-size: calc(var(--fs-hero) * 1.5);
+}
+
+body.modo-so-sinais .painel-ibovespa .var {
+    font-size: calc(var(--fs-base) * 1.5);
+}
+
+body.modo-so-sinais .painel-tendencia .duas {
+    display: flex;
+    flex-direction: column;
+    gap: var(--e4);
+    height: 100%;
+    justify-content: center;
+}
+
+body.modo-so-sinais .painel-tendencia .sub,
+body.modo-so-sinais .painel-tendencia .kpi {
+    display: none !important;
+}
+
+body.modo-so-sinais .painel-tendencia .var {
+    font-size: var(--fs-hero);
+    text-align: center;
+}
+
+body.modo-so-sinais .painel-apetite .kpi-container,
+body.modo-so-sinais .painel-rotacao .duas {
+    display: none !important;
+}
+
+body.modo-so-sinais .painel-apetite .hero,
+body.modo-so-sinais .painel-rotacao .hero {
+    font-size: calc(var(--fs-hero) * 1.5);
+    margin: auto 0;
+}
