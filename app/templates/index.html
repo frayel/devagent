@@ -4,6 +4,25 @@
 {% block content %}
 <!-- Linha 1 -->
 
+{% call painel('Apetite a Risco', 4, 'Se o índice SMLL estiver subindo mais que o IBOV, o mercado está tomando risco.', apetite_risco.fonte if apetite_risco else '', apetite_risco.time if apetite_risco else '', 'visao-macro') %}
+  {% if not apetite_risco %}
+    {{ estado('indisponivel') }}
+  {% else %}
+    <div class="painel-estado-container">
+      <div class="hero num {% if apetite_risco.estado == 'Tomando risco' %}texto-alta{% elif apetite_risco.estado == 'Defensivo' %}texto-baixa{% else %}texto-neutro{% endif %} texto-centro">
+        {{ apetite_risco.estado }}
+      </div>
+      <div class="kpi-container alinha-centro">
+        <div class="rot">SMLL vs IBOV (hoje)</div>
+        <div class="kpi">
+          {{ variacao("%.2f%%" | format(apetite_risco.diferenca | abs), 1 if apetite_risco.diferenca > 0 else -1 if apetite_risco.diferenca < 0 else 0) }}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endcall %}
+
+
 
 <div class="span-12" id="filtro-macro-micro">
     <span>Filtro:</span>

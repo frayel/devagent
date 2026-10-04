@@ -45,10 +45,12 @@ def fetch_yfinance() -> ApetiteRiscoData | None:
                 return None
 
             diferenca = smal_var - ibov_var
-            if diferenca > 0:
+            if diferenca > 0.1:
                 estado = "Tomando risco"
-            else:
+            elif diferenca < -0.1:
                 estado = "Defensivo"
+            else:
+                estado = "Neutro"
 
             return ApetiteRiscoData(
                 timestamp=datetime.now(timezone.utc),

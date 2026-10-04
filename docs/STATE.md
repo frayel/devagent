@@ -8,6 +8,11 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 016 (Apetite a Risco):
+  - Banco de dados SQLite (`apetite_risco_cache`).
+  - Coletor com `yfinance` para SMAL11.SA e ^BVSP, calculando a diferença percentual de desempenho.
+  - Exibe o estado 'Tomando risco', 'Defensivo' ou 'Neutro' e a variação da diferença no componente de frontend (com CSS próprio para cores do texto).
+  - Adicionado ao contrato `/api/snapshot`.
 - Spec 014 (Atrasadas do Rally):
   - Banco de dados SQLite (`atrasadas_rally_cache`).
   - Coletor com yfinance para `^BVSP` e 30 ações de alta liquidez.
