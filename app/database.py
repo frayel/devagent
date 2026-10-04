@@ -89,6 +89,14 @@ class ConcentracaoData:
     fonte: str = "yfinance"
 
 
+@dataclass
+class ApetiteRiscoData:
+    timestamp: datetime
+    estado: str
+    diferenca: float
+    fonte: str = "yfinance"
+
+
 def get_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -267,6 +275,19 @@ def init_db() -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_atrasadas_rally_cache_timestamp
         ON atrasadas_rally_cache(timestamp DESC)
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS apetite_risco_cache (
+            timestamp TEXT PRIMARY KEY,
+            estado TEXT NOT NULL,
+            diferenca REAL NOT NULL,
+            fonte TEXT NOT NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_apetite_risco_cache_timestamp
+        ON apetite_risco_cache(timestamp DESC)
     """)
 
     conn.commit()
@@ -675,6 +696,49 @@ def get_latest_concentracao_data() -> ConcentracaoData | None:
             timestamp=datetime.fromisoformat(row["timestamp"]),
             resumo_json=row["resumo_json"],
             top3_json=row["top3_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+def save_apetite_risco_data(data: ApetiteRiscoData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO apetite_risco_cache (timestamp, estado, diferenca, fonte)
+        VALUES (?, ?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            data.estado,
+            data.diferenca,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_apetite_risco_data() -> ApetiteRiscoData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT timestamp, estado, diferenca, fonte
+            FROM apetite_risco_cache
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        row = None
+    conn.close()
+    if row:
+        return ApetiteRiscoData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            estado=row["estado"],
+            diferenca=row["diferenca"],
             fonte=row["fonte"],
         )
     return None
