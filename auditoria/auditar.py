@@ -222,6 +222,22 @@ def numeros_dos_fixtures(pasta: Path = FIXTURES) -> set[float]:
 # --------------------------------------------------------------------------
 
 
+def checar_apetite_risco(snapshot: dict, pagina_html: str) -> None:
+    """Valida invariantes do painel de Apetite a Risco."""
+    painel = snapshot.get("paineis", {}).get("apetite_risco")
+    assert painel, "Painel de Apetite a Risco não encontrado no snapshot"
+    assert "estado" in painel, "Chave 'estado' faltando em apetite_risco no snapshot"
+    assert "diferenca" in painel, (
+        "Chave 'diferenca' faltando em apetite_risco no snapshot"
+    )
+    assert painel["estado"] in [
+        "Tomando risco",
+        "Defensivo",
+        "Neutro",
+        "indisponível",
+    ], f"Estado '{painel['estado']}' inválido"
+
+
 def checar_coerencia(p: Painel) -> list[Resultado]:
     r: list[Resultado] = []
     if p.valor is None:

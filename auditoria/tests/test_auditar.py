@@ -3,7 +3,9 @@
 from datetime import date, datetime, timedelta, timezone
 
 from auditoria import calendario
+import pytest
 from auditoria.auditar import (
+    checar_apetite_risco,
     FALHA,
     INCONCLUSIVO,
     Painel,
@@ -144,3 +146,22 @@ def test_calendario_b3():
 def test_le_numeros_dos_fixtures(tmp_path):
     (tmp_path / "f.json").write_text('{"a": [{"p": 130000.5, "d": 3}], "t": true}')
     assert numeros_dos_fixtures(tmp_path) == {130000.5}
+
+
+def test_checar_apetite_risco_valido():
+    snapshot = {
+        "paineis": {
+            "apetite_risco": {
+                "estado": "Tomando risco",
+                "diferenca": 1.5,
+                "fonte": "yfinance",
+            }
+        }
+    }
+    checar_apetite_risco(snapshot, "")
+
+
+def test_checar_apetite_risco_falta_estado():
+    snapshot = {"paineis": {"apetite_risco": {"diferenca": 1.5, "fonte": "yfinance"}}}
+    with pytest.raises(AssertionError, match="Chave 'estado' faltando"):
+        checar_apetite_risco(snapshot, "")

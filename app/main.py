@@ -18,6 +18,7 @@ from app.services.escudo_quedas import get_escudo_quedas_view_data
 from app.services.coesao import get_coesao_view_data
 from app.services.atrasadas_rally import get_atrasadas_rally_view_data
 from app.services.concentracao import get_concentracao_view_data
+from app.services.apetite_risco import get_apetite_risco_view_data
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_highlights_data,
@@ -28,6 +29,7 @@ from app.database import (
     get_latest_coesao_data,
     get_latest_atrasadas_rally_data,
     get_latest_concentracao_data,
+    get_latest_apetite_risco_data,
 )
 from app import agendador
 
@@ -247,6 +249,17 @@ def snapshot():
     else:
         resp["paineis"]["concentracao"] = {}
 
+    apetite_risco_data = get_latest_apetite_risco_data()
+    if apetite_risco_data:
+        resp["paineis"]["apetite_risco"] = {
+            "coletado_em": apetite_risco_data.timestamp.isoformat(),
+            "fonte": apetite_risco_data.fonte,
+            "estado": apetite_risco_data.estado,
+            "diferenca": apetite_risco_data.diferenca,
+        }
+    else:
+        resp["paineis"]["apetite_risco"] = {}
+
     return resp
 
 
@@ -261,6 +274,7 @@ async def index(request: Request):
     coesao = get_coesao_view_data()
     atrasadas_rally = get_atrasadas_rally_view_data()
     concentracao = get_concentracao_view_data()
+    apetite_risco = get_apetite_risco_view_data()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -274,5 +288,6 @@ async def index(request: Request):
             "coesao": coesao,
             "atrasadas_rally": atrasadas_rally,
             "concentracao": concentracao,
+            "apetite_risco": apetite_risco,
         },
     )
