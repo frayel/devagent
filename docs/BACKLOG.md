@@ -94,3 +94,11 @@
 | Modo "Só Sinais" (Experiência) | Responde: Como ver rapidamente se o mercado está verde ou vermelho no celular, sem gráficos? Originalidade: Redesign radical focado na tomada de decisão em 5 segundos. | N/A | P | Baixo |
 | Mapa de Correlação Intraday | Responde: Quando o IBOV cai hoje, o que está subindo consistentemente junto? Originalidade: Foco intraday no beta invertido, adaptando-se a cada meia hora. | yfinance | M | Baixo |
 | Resiliência a Notícias | Responde: Quais ativos estão ignorando más notícias hoje? Originalidade: Cruza menções em manchetes com desempenho tick-a-tick. | brapi | G | Alto |
+
+## Ideias (Passo 7 - 2026-10-04 4)
+
+| Índice de Fôlego (Divergência de Volume) | Responde: A alta do Ibovespa está perdendo força e prestes a reverter? Originalidade: Cruza retorno diário com queda de volume, focado em exaustão. | yfinance | P | Baixo |
+| Sobrevivência Intraday (Sempre Verde) | Responde: Quem continuou no verde mesmo com o Ibov despencando intraday? Originalidade: Isolamento de força tick a tick. | yfinance | M | Baixo |
+| Rotação de Capital (Bancos vs Commodities) | Responde: O dinheiro está saindo de commodities e indo para bancos hoje? Originalidade: Compara as duas maiores forças do Ibov (que ditam o rumo) para identificar se é dia de tendência ou rotação. | yfinance | P | Baixo |
+| Experiência: Manchete Dinâmica | Responde: Consigo entender o clima do dia em uma frase sem ver gráficos? Originalidade: Template textual que traduz dados complexos em uma linha legível. | N/A | M | Baixo |
+| Dispersão Extrema de Abertura | Responde: A abertura foi de pânico irracional ou o mercado está seletivo? Originalidade: Mede breadth de mercado isolando apenas os primeiros 30 min. | yfinance | M | Médio |
