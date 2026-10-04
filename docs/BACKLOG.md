@@ -69,3 +69,11 @@
 | Atrasadas do Rally (Laggards) | Responde: Quais ficaram para trás na alta recente do Ibov? Originalidade: Busca beta distorcido negativo. | yfinance | M | Baixo |
 | Abertura Explosiva (Gaps Constantes) | Responde: Quais ações dão saltos grandes logo na abertura? Originalidade: Isola retorno open vs close-D1. | yfinance | M | Baixo |
 | Experiência: Visão "Só Anomalias" | Responde: Consigo ver só alertas escondendo ruído? Originalidade: Filtro analítico de tela cheia. | N/A | P | Baixo |
+
+## Ideias (Passo 7 - 2026-10-04)
+
+| Concentração de Ganhos do Ibovespa | Responde: A alta do Ibov é generalizada ou puxada por 2 ações? Originalidade: Quebra o IBOV em contribuição de pontos, evidenciando fragilidade do movimento. | yfinance / brapi | M | Baixo |
+| Apetite a Risco (Small Caps vs Ibov) | Responde: O investidor está tomando risco ou buscando segurança hoje? Originalidade: Usa a força relativa do índice SMLL vs BVSP intraday. | yfinance | P | Baixo |
+| Anomalia de Correlação Setorial | Responde: Quais ações estão indo contra seu próprio setor agora? Originalidade: Quebra de padrão no intraday cruzado com dados setoriais. | brapi/yfinance | M | Médio (requer mapear setores) |
+| Pressão de Venda a Descoberto | Responde: Quais ações estão sofrendo ataques de short sellers? Originalidade: Uso das taxas de aluguel (BTC) como indicador de sentimento negativo. | B3 (scraping) | G | Alto (difícil extração) |
+| Experiência: Drill-down de Ação (Raio-X) | Responde: Como ver todos os alertas de um único ticker que chamou atenção? Originalidade: Foge da visão macro para micro sob demanda, sem trocar de página (HTMX). | N/A | M | Baixo |
