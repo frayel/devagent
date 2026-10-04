@@ -1,7 +1,7 @@
 ---
 id: 016
 titulo: Apetite a Risco (Small Caps vs Ibov)
-status: ready
+status: done
 esforco: P
 ---
 
@@ -25,11 +25,11 @@ Como o yfinance nem sempre tem um ticker bom para o índice SMLL em tempo real n
 3. Se a diferença for > 0, o estado é "Tomando risco". Se < 0, "Defensivo". Se próximo a 0 (-0.1 a 0.1), "Neutro".
 
 ## Critérios de aceite
-- [ ] Banco de dados contém a tabela `apetite_risco_cache`.
-- [ ] O coletor calcula a variação e determina o estado diário (Tomando risco, Defensivo, Neutro).
-- [ ] O contrato da API `/api/snapshot` inclui a chave `apetite_risco`.
-- [ ] O componente no frontend exibe o estado corretamente com base na variação.
-- [ ] O sistema degrada graciosamente se o yfinance falhar, mostrando estado "indisponível".
+- [x] Banco de dados contém a tabela `apetite_risco_cache`.
+- [x] O coletor calcula a variação e determina o estado diário (Tomando risco, Defensivo, Neutro).
+- [x] O contrato da API `/api/snapshot` inclui a chave `apetite_risco`.
+- [x] O componente no frontend exibe o estado corretamente com base na variação.
+- [x] O sistema degrada graciosamente se o yfinance falhar, mostrando estado "indisponível".
 
 ## Invariantes de produção
 - A propriedade `apetite_risco` em `/api/snapshot` não deve quebrar o contrato.

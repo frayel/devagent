@@ -9,3 +9,10 @@ def test_api_snapshot_radar_volume():
     assert response.status_code == 200
     data = response.json()
     assert "radar_volume" in data["paineis"]
+
+
+def test_api_snapshot_apetite_risco():
+    response = client.get("/api/snapshot")
+    assert response.status_code == 200
+    data = response.json()
+    assert "apetite_risco" in data["paineis"]
