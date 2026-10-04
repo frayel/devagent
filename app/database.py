@@ -144,6 +144,10 @@ def init_db() -> None:
         )
     """)
     cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_concentracao_cache_timestamp
+        ON concentracao_cache(timestamp DESC)
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS highlights_cache (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp DATETIME NOT NULL,
