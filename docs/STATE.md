@@ -8,6 +8,12 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 018 (Rotação de Capital):
+  - Banco de dados SQLite (`rotacao_capital_cache`).
+  - Coletor com `yfinance` para bancos e commodities.
+  - Cálculo de variação e direção do fluxo de capital (Bancos vs Commodities).
+  - Exibição do fluxo direcional no painel de visão macro.
+  - Adicionado ao contrato `/api/snapshot`.
 - Spec 016 (Apetite a Risco):
   - Banco de dados SQLite (`apetite_risco_cache`).
   - Coletor com `yfinance` para SMAL11.SA e ^BVSP, calculando a diferença percentual de desempenho.

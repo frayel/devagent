@@ -1,7 +1,7 @@
 ---
 id: 018
 titulo: Rotação de Capital (Bancos vs Commodities)
-status: ready
+status: done
 esforco: P
 ---
 

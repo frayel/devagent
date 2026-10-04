@@ -20,7 +20,7 @@ from app.services.atrasadas_rally import get_atrasadas_rally_view_data
 from app.services.concentracao import get_concentracao_view_data
 from app.services.apetite_risco import get_apetite_risco_view_data
 from app.services.variacao_subita import get_variacao_subita_view_data
-from app.services.rotacao_capital import get_rotacao_capital_view_data
+from app.services.rotacao_capital import get_rotacao_capital_view
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_highlights_data,
@@ -308,7 +308,7 @@ async def index(request: Request):
     concentracao = get_concentracao_view_data()
     apetite_risco = get_apetite_risco_view_data()
     variacao_subita = get_variacao_subita_view_data()
-    rotacao_capital = get_rotacao_capital_view_data()
+    rotacao_capital = get_rotacao_capital_view()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
