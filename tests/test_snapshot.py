@@ -6,8 +6,10 @@ from fastapi.testclient import TestClient
 from app.database import (
     IbovespaData,
     HighlightsData,
+    ConcentracaoData,
     save_ibovespa_data,
     save_highlights_data,
+    save_concentracao_data,
 )
 from app.main import app
 
@@ -42,6 +44,16 @@ def test_snapshot_with_data():
     )
     save_highlights_data(highlights_data)
 
+    concentracao_data = ConcentracaoData(
+        timestamp=now,
+        resumo_json=json.dumps(
+            {"estado": "concentrado", "mensagem": "Dos 1000 pontos..."}
+        ),
+        top3_json=json.dumps([{"ticker": "VALE3", "pontos": 500, "peso": 0.12}]),
+        fonte="yfinance",
+    )
+    save_concentracao_data(concentracao_data)
+
     response = client.get("/api/snapshot")
     assert response.status_code == 200
 
@@ -74,3 +86,9 @@ def test_snapshot_with_data():
     assert altas_baixas["dispersao"]["em_alta"] == 1
     assert altas_baixas["dispersao"]["em_baixa"] == 1
     assert altas_baixas["dispersao"]["proporcao_alta_pct"] == 50.0
+
+    assert "concentracao" in resp_data["paineis"]
+    assert resp_data["paineis"]["concentracao"]["fonte"] == "yfinance"
+    assert resp_data["paineis"]["concentracao"]["resumo"]["estado"] == "concentrado"
+    assert len(resp_data["paineis"]["concentracao"]["top3"]) == 1
+    assert resp_data["paineis"]["concentracao"]["top3"][0]["ticker"] == "VALE3"
