@@ -44,6 +44,8 @@ def test_xss_protection_in_history_json():
 
 def test_security_headers():
     response = client.get("/healthz")
+    csp = response.headers.get("Content-Security-Policy")
+    assert "'unsafe-eval'" not in csp
     assert response.headers.get("X-Content-Type-Options") == "nosniff"
     assert response.headers.get("X-Frame-Options") == "DENY"
     assert response.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
