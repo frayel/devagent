@@ -17,6 +17,7 @@ from app.services.forca_relativa import get_forca_relativa_view_data
 from app.services.escudo_quedas import get_escudo_quedas_view_data
 from app.services.coesao import get_coesao_view_data
 from app.services.atrasadas_rally import get_atrasadas_rally_view_data
+from app.services.concentracao import get_concentracao_view_data
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_highlights_data,
@@ -26,6 +27,7 @@ from app.database import (
     get_latest_escudo_quedas_data,
     get_latest_coesao_data,
     get_latest_atrasadas_rally_data,
+    get_latest_concentracao_data,
 )
 from app import agendador
 
@@ -218,7 +220,8 @@ def snapshot():
     atrasadas_rally_data = get_latest_atrasadas_rally_data()
     if atrasadas_rally_data:
         try:
-            top3 = json.loads(atrasadas_rally_data.top3_json)
+            parsed = json.loads(atrasadas_rally_data.top3_json)
+            top3 = parsed if isinstance(parsed, list) else []
             resp["paineis"]["atrasadas_rally"] = {
                 "coletado_em": atrasadas_rally_data.timestamp.isoformat(),
                 "fonte": getattr(atrasadas_rally_data, "fonte", "yfinance"),
@@ -229,6 +232,20 @@ def snapshot():
             resp["paineis"]["atrasadas_rally"] = {}
     else:
         resp["paineis"]["atrasadas_rally"] = {}
+
+    concentracao_data = get_latest_concentracao_data()
+    if concentracao_data:
+        try:
+            resp["paineis"]["concentracao"] = {
+                "coletado_em": concentracao_data.timestamp.isoformat(),
+                "fonte": concentracao_data.fonte,
+                "resumo": json.loads(concentracao_data.resumo_json),
+                "top3": json.loads(concentracao_data.top3_json),
+            }
+        except Exception:
+            resp["paineis"]["concentracao"] = {}
+    else:
+        resp["paineis"]["concentracao"] = {}
 
     return resp
 
@@ -243,6 +260,7 @@ async def index(request: Request):
     escudo_quedas = get_escudo_quedas_view_data()
     coesao = get_coesao_view_data()
     atrasadas_rally = get_atrasadas_rally_view_data()
+    concentracao = get_concentracao_view_data()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -255,5 +273,6 @@ async def index(request: Request):
             "escudo_quedas": escudo_quedas,
             "coesao": coesao,
             "atrasadas_rally": atrasadas_rally,
+            "concentracao": concentracao,
         },
     )
