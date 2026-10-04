@@ -8,6 +8,9 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 019 (Modo Só Sinais):
+  - Adicionado botão de filtro "Só Sinais" na interface.
+  - Criado comportamento CSS e JS para ocultar gráficos e tabelas, focando nos indicadores de sentimento.
 - Spec 018 (Rotação de Capital):
   - Banco de dados SQLite (`rotacao_capital_cache`).
   - Coletor com `yfinance` para bancos e commodities.

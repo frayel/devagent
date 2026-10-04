@@ -1,7 +1,7 @@
 ---
 id: 019
 titulo: Modo Só Sinais (Experiência)
-status: ready
+status: done
 esforco: P
 ---
 
