@@ -86,3 +86,11 @@
 | Anatomia do Candle (Pavios Superiores) | Responde: Quais papéis tentaram subir mas tomaram paulada (venda)? | yfinance | P | Baixo |
 | Alerta de Sobrevenda Relativa | Responde: O IBOV subiu a semana toda, quem ficou esquecido? | yfinance | M | Baixo |
 | Experiência: Modo "Leilão" | Como ver os movimentos do leilão de fechamento sem ruído? | N/A | M | Baixo |
+
+## Ideias (Passo 7 - 2026-10-04 3)
+
+| Alerta de Variação Súbita (Flash Movements) | Responde: Algum papel disparou ou derreteu nos últimos 15 minutos? Originalidade: Foca na aceleração intraday e não no retorno do dia. | yfinance | M | Médio |
+| Amplitude de Tendência (Breadth) | Responde: A alta do Ibov é generalizada ou puxada por pesos pesados? Originalidade: Exibe a proporção do mercado acima da MM21 vs IBOV. | yfinance | M | Baixo |
+| Modo "Só Sinais" (Experiência) | Responde: Como ver rapidamente se o mercado está verde ou vermelho no celular, sem gráficos? Originalidade: Redesign radical focado na tomada de decisão em 5 segundos. | N/A | P | Baixo |
+| Mapa de Correlação Intraday | Responde: Quando o IBOV cai hoje, o que está subindo consistentemente junto? Originalidade: Foco intraday no beta invertido, adaptando-se a cada meia hora. | yfinance | M | Baixo |
+| Resiliência a Notícias | Responde: Quais ativos estão ignorando más notícias hoje? Originalidade: Cruza menções em manchetes com desempenho tick-a-tick. | brapi | G | Alto |
