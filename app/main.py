@@ -20,6 +20,7 @@ from app.services.atrasadas_rally import get_atrasadas_rally_view_data
 from app.services.concentracao import get_concentracao_view_data
 from app.services.apetite_risco import get_apetite_risco_view_data
 from app.services.variacao_subita import get_variacao_subita_view_data
+from app.services.rotacao_capital import get_rotacao_capital_view_data
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_highlights_data,
@@ -32,6 +33,7 @@ from app.database import (
     get_latest_concentracao_data,
     get_latest_apetite_risco_data,
     get_latest_variacao_subita_data,
+    get_latest_rotacao_capital_data,
 )
 from app import agendador
 
@@ -276,6 +278,20 @@ def snapshot():
     else:
         resp["paineis"]["variacao_subita"] = {}
 
+    rotacao_capital_data = get_latest_rotacao_capital_data()
+    if rotacao_capital_data:
+        resp["paineis"]["rotacao_capital"] = {
+            "coletado_em": rotacao_capital_data.timestamp.isoformat(),
+            "fonte": rotacao_capital_data.fonte,
+            "estado": rotacao_capital_data.estado,
+            "variacoes": {
+                "bancos": rotacao_capital_data.var_bancos,
+                "commodities": rotacao_capital_data.var_commodities,
+            },
+        }
+    else:
+        resp["paineis"]["rotacao_capital"] = {}
+
     return resp
 
 
@@ -292,6 +308,7 @@ async def index(request: Request):
     concentracao = get_concentracao_view_data()
     apetite_risco = get_apetite_risco_view_data()
     variacao_subita = get_variacao_subita_view_data()
+    rotacao_capital = get_rotacao_capital_view_data()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -307,5 +324,6 @@ async def index(request: Request):
             "concentracao": concentracao,
             "apetite_risco": apetite_risco,
             "variacao_subita": variacao_subita,
+            "rotacao_capital": rotacao_capital,
         },
     )

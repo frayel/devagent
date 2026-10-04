@@ -183,6 +183,8 @@ td.barra i.l { background: var(--destaque); opacity: 0.2; }
 .medidor i.b { background: var(--baixa); }
 
 .duas { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e4); }
+.m-t-2 { margin-top: var(--e2); }
+.d-block { display: block; }
 .sub { margin: 0 0 var(--e2) 0; font-size: var(--fs-meta); color: var(--texto-2); }
 
 .vazio { padding: var(--e5); text-align: center; color: var(--texto-2); font-size: var(--fs-meta); }

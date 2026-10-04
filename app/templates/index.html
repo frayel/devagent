@@ -62,6 +62,33 @@ document.addEventListener("DOMContentLoaded", function() {
 </script>
 
 
+{% call painel('Rotação de Capital', 4, 'Troca de capital entre os dois principais motores da bolsa: Bancos vs Commodities.', rotacao_capital.fonte if rotacao_capital else '', rotacao_capital.time if rotacao_capital else '', 'visao-macro') %}
+  {% if not rotacao_capital %}
+    {{ estado('indisponivel') }}
+  {% else %}
+    <div class='painel-estado-container'>
+      <div class='hero num {% if rotacao_capital.estado == "Para Bancos" or rotacao_capital.estado == "Para Commodities" %}texto-alta{% else %}texto-neutro{% endif %} texto-centro'>
+        {{ rotacao_capital.estado }}
+      </div>
+      <div class='duas m-t-2'>
+        <div>
+          <span class='sub d-block'>Bancos</span>
+          <div class='num {% if rotacao_capital.var_bancos > 0 %}texto-alta{% elif rotacao_capital.var_bancos < 0 %}texto-baixa{% endif %}'>
+            {{ ("%.2f%%" | format(rotacao_capital.var_bancos | abs)) if rotacao_capital.var_bancos else "0.00%" }}
+          </div>
+        </div>
+        <div>
+          <span class='sub d-block'>Commodities</span>
+          <div class='num {% if rotacao_capital.var_commodities > 0 %}texto-alta{% elif rotacao_capital.var_commodities < 0 %}texto-baixa{% endif %}'>
+            {{ ("%.2f%%" | format(rotacao_capital.var_commodities | abs)) if rotacao_capital.var_commodities else "0.00%" }}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endcall %}
+
+
 {% call painel("Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "", "visao-macro") %}
     {% if data %}
         {{ kpi(data.current_price|default("") + " pontos", "", (variacao(data.variation ~ " (" ~ data.variation_percent ~ ")", data.variation_raw|default(0))) | safe, True) }}
