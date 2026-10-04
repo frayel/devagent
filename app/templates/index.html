@@ -249,6 +249,25 @@ document.addEventListener("DOMContentLoaded", function() {
     {% endif %}
 {% endcall %}
 
+{% call painel("Variação Súbita", 4, "Ações que dispararam ou derreteram (> 1.5%) na última hora.", variacao_subita.fonte if variacao_subita else "", variacao_subita.time if variacao_subita else "", "visao-micro") %}
+    {% if not variacao_subita %}
+        {{ estado("indisponivel") }}
+    {% elif not variacao_subita.alertas %}
+        <div class="vazio">Nenhum movimento brusco recente detectado.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in variacao_subita.alertas %}
+            {% set s = 1 if a.change_percent > 0 else -1 if a.change_percent < 0 else 0 %}
+            {% set val = ("%.2f%%" | format(a.change_percent | abs)) %}
+            {% set _ = linhas.append([
+                {'conteudo': a.ticker, 'tk': True},
+                {'conteudo': (variacao(val, s)) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Última hora', 'num': True}], 'rk-subita') }}
+    {% endif %}
+{% endcall %}
+
 <!-- Linha 3 -->
 
 <!-- Escudo contra Quedas -->

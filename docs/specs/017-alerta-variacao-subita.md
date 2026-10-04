@@ -1,7 +1,7 @@
 ---
 id: 017
 titulo: Alerta de Variação Súbita (Flash Movements)
-status: ready
+status: done
 esforco: M
 ---
 

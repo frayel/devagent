@@ -88,6 +88,7 @@ def _coletar() -> None:
         "atrasadas_rally",
         "concentracao",
         "apetite_risco",
+        "variacao_subita",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
         try:

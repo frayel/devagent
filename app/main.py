@@ -19,6 +19,7 @@ from app.services.coesao import get_coesao_view_data
 from app.services.atrasadas_rally import get_atrasadas_rally_view_data
 from app.services.concentracao import get_concentracao_view_data
 from app.services.apetite_risco import get_apetite_risco_view_data
+from app.services.variacao_subita import get_variacao_subita_view_data
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_highlights_data,
@@ -30,6 +31,7 @@ from app.database import (
     get_latest_atrasadas_rally_data,
     get_latest_concentracao_data,
     get_latest_apetite_risco_data,
+    get_latest_variacao_subita_data,
 )
 from app import agendador
 
@@ -260,6 +262,20 @@ def snapshot():
     else:
         resp["paineis"]["apetite_risco"] = {}
 
+    variacao_subita_data = get_latest_variacao_subita_data()
+    if variacao_subita_data:
+        try:
+            alertas = json.loads(variacao_subita_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["variacao_subita"] = {
+            "coletado_em": variacao_subita_data.timestamp.isoformat(),
+            "fonte": variacao_subita_data.fonte,
+            "alertas": alertas,
+        }
+    else:
+        resp["paineis"]["variacao_subita"] = {}
+
     return resp
 
 
@@ -275,6 +291,7 @@ async def index(request: Request):
     atrasadas_rally = get_atrasadas_rally_view_data()
     concentracao = get_concentracao_view_data()
     apetite_risco = get_apetite_risco_view_data()
+    variacao_subita = get_variacao_subita_view_data()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -289,5 +306,6 @@ async def index(request: Request):
             "atrasadas_rally": atrasadas_rally,
             "concentracao": concentracao,
             "apetite_risco": apetite_risco,
+            "variacao_subita": variacao_subita,
         },
     )
