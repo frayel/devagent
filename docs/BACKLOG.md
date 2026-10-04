@@ -77,3 +77,12 @@
 | Anomalia de Correlação Setorial | Responde: Quais ações estão indo contra seu próprio setor agora? Originalidade: Quebra de padrão no intraday cruzado com dados setoriais. | brapi/yfinance | M | Médio (requer mapear setores) |
 | Pressão de Venda a Descoberto | Responde: Quais ações estão sofrendo ataques de short sellers? Originalidade: Uso das taxas de aluguel (BTC) como indicador de sentimento negativo. | B3 (scraping) | G | Alto (difícil extração) |
 | Experiência: Drill-down de Ação (Raio-X) | Responde: Como ver todos os alertas de um único ticker que chamou atenção? Originalidade: Foge da visão macro para micro sob demanda, sem trocar de página (HTMX). | N/A | M | Baixo |
+
+## Ideias (Passo 7 - 2026-10-04 2)
+
+| Fadiga de Tendência (Divergência RSI) | Responde: A alta dessa ação está perdendo força antes de reverter? | yfinance | M | Baixo |
+| Defesa em Dias de Pânico | Responde: Quem está segurando a bronca quando o IBOV derrete hoje? | yfinance | P | Baixo |
+| Resiliência Pós-Abertura | Responde: Quais ações abriram caindo, mas já viraram o jogo? | yfinance | P | Baixo |
+| Anatomia do Candle (Pavios Superiores) | Responde: Quais papéis tentaram subir mas tomaram paulada (venda)? | yfinance | P | Baixo |
+| Alerta de Sobrevenda Relativa | Responde: O IBOV subiu a semana toda, quem ficou esquecido? | yfinance | M | Baixo |
+| Experiência: Modo "Leilão" | Como ver os movimentos do leilão de fechamento sem ruído? | N/A | M | Baixo |
