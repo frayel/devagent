@@ -8,6 +8,11 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 023 (Armadilha de Abertura):
+  - Banco de dados SQLite (`armadilha_abertura_cache`).
+  - Coletor com `yfinance` buscando dados intraday.
+  - Exibição de ações que abriram com gap de alta (>1%) e reverteram abaixo do fechamento de ontem.
+  - Adicionado painel à visão micro e ao contrato `/api/snapshot`.
 - Spec 022 (Manchete Dinâmica):
   - Criação do `app/services/manchete.py` com lógica para resumir indicadores cacheados.
   - Integração no `app/main.py` injetando manchete em `index.html`.

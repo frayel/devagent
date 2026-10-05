@@ -123,6 +123,17 @@ def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS armadilha_abertura_cache (
+            timestamp TEXT,
+            alertas_json TEXT,
+            fonte TEXT
+        )
+        """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_armadilha_abertura_timestamp ON armadilha_abertura_cache (timestamp DESC)
+        """)
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS compradores_fundo_cache (
             timestamp TEXT,
             alertas_json TEXT,
@@ -983,5 +994,55 @@ def get_latest_compradores_fundo_data() -> CompradoresFundoData | None:
             timestamp=datetime.fromisoformat(row["timestamp"]),
             alertas_json=row["alertas_json"],
             fonte=row["fonte"],
+        )
+    return None
+
+
+@dataclass
+class ArmadilhaAberturaData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "yfinance"
+
+
+def save_armadilha_abertura_data(data: ArmadilhaAberturaData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO armadilha_abertura_cache (timestamp, alertas_json, fonte)
+        VALUES (?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            data.alertas_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_armadilha_abertura_data() -> ArmadilhaAberturaData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT timestamp, alertas_json, fonte
+            FROM armadilha_abertura_cache
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        return None
+    finally:
+        conn.close()
+
+    if row:
+        return ArmadilhaAberturaData(
+            timestamp=datetime.fromisoformat(row[0]),
+            alertas_json=row[1],
+            fonte=row[2],
         )
     return None
