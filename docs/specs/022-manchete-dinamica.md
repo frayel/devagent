@@ -1,7 +1,7 @@
 ---
 id: 022
 titulo: Manchete Dinâmica
-status: ready
+status: done
 esforco: M
 ---
 

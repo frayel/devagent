@@ -2,6 +2,11 @@
 {% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado %}
 
 {% block content %}
+<!-- Manchete Dinâmica -->
+<div class="span-12 manchete-container">
+    <p class="manchete-texto texto-centro">{{ manchete }}</p>
+</div>
+
 <!-- Linha 1 -->
 
 {% call painel('Apetite a Risco', 4, 'Se o índice SMLL estiver subindo mais que o IBOV, o mercado está tomando risco.', apetite_risco.fonte if apetite_risco else '', apetite_risco.time if apetite_risco else '', 'visao-macro painel-apetite') %}
