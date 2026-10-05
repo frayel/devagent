@@ -300,3 +300,10 @@ body.modo-so-sinais .painel-rotacao .hero {
     font-size: calc(var(--fs-hero) * 1.5);
     margin: auto 0;
 }
+
+/* Manchete Dinamica */
+.manchete-texto {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+}

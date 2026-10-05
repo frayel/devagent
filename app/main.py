@@ -10,6 +10,8 @@ from fastapi.staticfiles import StaticFiles
 import json
 from datetime import datetime, timezone
 from app.services.ibovespa import get_ibovespa_view_data
+from app.services.manchete import gerar_manchete
+from app.database import get_latest_highlights_data, get_latest_apetite_risco_data
 from app.services.highlights import get_highlights_view_data
 from app.services.volume_alerts import get_volume_alerts_view_data
 from app.services.dolar_correlation import get_dolar_correlation_view_data
@@ -25,7 +27,6 @@ from app.services.faca_caindo import get_faca_caindo_view
 from app.services.compradores_fundo import get_compradores_fundo_view
 from app.database import (
     get_latest_ibovespa_data,
-    get_latest_highlights_data,
     get_latest_volume_alerts_data,
     get_latest_dolar_correlation_data,
     get_latest_forca_relativa_data,
@@ -33,7 +34,6 @@ from app.database import (
     get_latest_coesao_data,
     get_latest_atrasadas_rally_data,
     get_latest_concentracao_data,
-    get_latest_apetite_risco_data,
     get_latest_variacao_subita_data,
     get_latest_rotacao_capital_data,
     get_latest_compradores_fundo_data,
@@ -314,6 +314,26 @@ def snapshot():
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
+    ibovespa_data = get_ibovespa_view_data()
+
+    highlights_data = get_latest_highlights_data()
+    highs_dict = {}
+    if (
+        highlights_data
+        and highlights_data.total_count
+        and highlights_data.up_count is not None
+    ):
+        highs_dict["dispersion_pct"] = (
+            highlights_data.up_count / highlights_data.total_count
+        ) * 100
+
+    apetite_risco_data = get_latest_apetite_risco_data()
+    risco_dict = {}
+    if apetite_risco_data:
+        risco_dict["estado"] = apetite_risco_data.estado
+
+    manchete = gerar_manchete(ibovespa_data, highs_dict, risco_dict)
+
     data = get_ibovespa_view_data()
     highlights = get_highlights_view_data()
     volume_alerts = get_volume_alerts_view_data()
@@ -332,6 +352,7 @@ async def index(request: Request):
         request=request,
         name="index.html",
         context={
+            "manchete": manchete,
             "data": data,
             "highlights": highlights,
             "volume_alerts": volume_alerts,

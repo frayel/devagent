@@ -8,6 +8,10 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 022 (Manchete Dinâmica):
+  - Criação do `app/services/manchete.py` com lógica para resumir indicadores cacheados.
+  - Integração no `app/main.py` injetando manchete em `index.html`.
+  - Exibição condicional de mensagem dinâmica baseada na dispersão, apetite a risco e direção do Ibovespa.
 - Spec 021 (Compradores de Fundo):
   - Banco de dados SQLite (`compradores_fundo_cache`).
   - Coletor com `yfinance` buscando dados de reversão intraday.
