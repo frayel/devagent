@@ -25,6 +25,7 @@ from app.services.variacao_subita import get_variacao_subita_view_data
 from app.services.rotacao_capital import get_rotacao_capital_view
 from app.services.faca_caindo import get_faca_caindo_view
 from app.services.compradores_fundo import get_compradores_fundo_view
+from app.services.armadilha_abertura import get_armadilha_abertura_view
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_volume_alerts_data,
@@ -37,6 +38,7 @@ from app.database import (
     get_latest_variacao_subita_data,
     get_latest_rotacao_capital_data,
     get_latest_compradores_fundo_data,
+    get_latest_armadilha_abertura_data,
 )
 from app import agendador
 
@@ -309,6 +311,20 @@ def snapshot():
     else:
         resp["paineis"]["compradores_fundo"] = {}
 
+    armadilha_abertura_data = get_latest_armadilha_abertura_data()
+    if armadilha_abertura_data:
+        try:
+            alertas = json.loads(armadilha_abertura_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["armadilha_abertura"] = {
+            "coletado_em": armadilha_abertura_data.timestamp.isoformat(),
+            "fonte": armadilha_abertura_data.fonte,
+            "alertas": alertas,
+        }
+    else:
+        resp["paineis"]["armadilha_abertura"] = {}
+
     return resp
 
 
@@ -348,6 +364,7 @@ async def index(request: Request):
     rotacao_capital = get_rotacao_capital_view()
     faca_caindo = get_faca_caindo_view()
     compradores_fundo = get_compradores_fundo_view()
+    armadilha_abertura = get_armadilha_abertura_view()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -367,5 +384,6 @@ async def index(request: Request):
             "rotacao_capital": rotacao_capital,
             "faca_caindo": faca_caindo,
             "compradores_fundo": compradores_fundo,
+            "armadilha_abertura": armadilha_abertura,
         },
     )
