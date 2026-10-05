@@ -118,3 +118,13 @@
 | Modo Contraste Extremo | Responde: Como garantir legibilidade em ambientes externos brilhantes? Originalidade: Foca puramente na acessibilidade visual do dashboard. | N/A | P | Baixo |
 | Radar de Volume Intraday Quebrado | Responde: Quais ativos têm anomalia de volume apenas na última hora? Originalidade: Foco estrito no curto prazo, ignorando a média do dia todo. | yfinance | M | Baixo |
 | Índice de Concentração Setorial | Responde: O capital está fluindo para um único setor hoje? Originalidade: Agregação por setor ao invés de ativo individual. | brapi | M | Baixo |
+
+## Ideias (Passo 7 - 2026-10-06)
+
+| Radar de Liquidez de Abertura | Responde: O capital grande já acordou hoje? Originalidade: Mede a velocidade de volume (R$/min) nos primeiros 15 min vs média histórica. | brapi | M | Baixo |
+| Impacto da Curva de Juros | Responde: Quais ativos da bolsa estão reagindo ao DI futuro hoje? Originalidade: Cruza o retorno diário com as taxas de DI da B3 em tempo real. | B3/yfinance | G | Alto |
+| Armadilha de Abertura (Gap Trap) | Responde: Quais ações abriram em forte alta (gap) mas já perderam tudo e estão no vermelho? Originalidade: Identifica armadilhas para compradores atrasados logo na primeira hora. | yfinance | M | Baixo |
+| Exaustão por Volume Clímax | Responde: Essa queda livre acabou? Originalidade: Procura o maior pico de volume intraday em um dia de forte queda como sinal de capitulação. | brapi/yfinance | M | Médio |
+| Experiência: Toggle Hoje vs Ontem | Responde: Como estava o mercado neste mesmo horário ontem? Originalidade: Permitir com um clique comparar o mapa atual com a foto exata de 24 horas atrás. | N/A | P | Baixo |
+| Anomalia de Peso Relativo | Responde: Quais pesos-pesados estão segurando o Ibov sozinhos? Originalidade: Mede o impacto individual em pontos de índice, em vez do retorno %. | brapi/yfinance | M | Médio |
+| Detecção de Movimento Silencioso | Responde: O que está subindo sem ninguém falar? Originalidade: Filtra ativos com retorno > 2% diário mas sem menções recentes no agregador de notícias. | brapi/Notícias | G | Alto |
