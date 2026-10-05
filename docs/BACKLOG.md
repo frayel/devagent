@@ -110,3 +110,11 @@
 | Ações Imunes ao Ibov | Responde: O que está subindo independentemente da queda forte do Ibov? Originalidade: Isola o beta e foca em ativos com correlação negativa pura no dia. | yfinance | P | Baixo |
 | Histórico de Reação a Decisões do Copom | Responde: Como a bolsa reage em dias de decisão de juros? Originalidade: Cruza calendário econômico com retorno do pregão atual. | Scraping | G | Alto |
 | Experiência: Modo "Foco no Risco" | Responde: Posso analisar o mercado sem o viés emocional das cores verde/vermelho? Originalidade: Redesign onde as cores dependem da volatilidade/volume, e não da direção do preço (verde/vermelho vira tons de cinza). | N/A | P | Baixo |
+
+## Ideias (Passo 7 - 2026-10-05 2)
+
+| Manchete Dinâmica (Clima do Dia) | Responde: Consigo entender o clima do dia em uma frase sem ver gráficos? Originalidade: Template textual que traduz dados complexos em uma linha legível. | N/A | M | Baixo |
+| Navegação por Seções Tabulares | Responde: A página ficou longa demais? Originalidade: Troca o layout longo por abas ou seções, focando na navegação. | N/A | M | Baixo |
+| Modo Contraste Extremo | Responde: Como garantir legibilidade em ambientes externos brilhantes? Originalidade: Foca puramente na acessibilidade visual do dashboard. | N/A | P | Baixo |
+| Radar de Volume Intraday Quebrado | Responde: Quais ativos têm anomalia de volume apenas na última hora? Originalidade: Foco estrito no curto prazo, ignorando a média do dia todo. | yfinance | M | Baixo |
+| Índice de Concentração Setorial | Responde: O capital está fluindo para um único setor hoje? Originalidade: Agregação por setor ao invés de ativo individual. | brapi | M | Baixo |
