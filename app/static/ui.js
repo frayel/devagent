@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+document.addEventListener("DOMContentLoaded", () => {
     // Grafico Ibovespa
     const graficoIbovespa = document.getElementById('grafico-ibovespa');
     if (graficoIbovespa) {
@@ -70,3 +71,4 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+});
