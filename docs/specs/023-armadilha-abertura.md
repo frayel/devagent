@@ -1,7 +1,7 @@
 ---
 id: 023
 titulo: Armadilha de Abertura (Gap Trap)
-status: ready
+status: done
 esforco: M
 ---
 

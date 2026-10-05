@@ -6,6 +6,7 @@ from auditoria import calendario
 import pytest
 from auditoria.auditar import (
     checar_apetite_risco,
+    checar_armadilha_abertura,
     FALHA,
     INCONCLUSIVO,
     Painel,
@@ -165,3 +166,25 @@ def test_checar_apetite_risco_falta_estado():
     snapshot = {"paineis": {"apetite_risco": {"diferenca": 1.5, "fonte": "yfinance"}}}
     with pytest.raises(AssertionError, match="Chave 'estado' faltando"):
         checar_apetite_risco(snapshot, "")
+
+
+def test_checar_armadilha_abertura_valido():
+    snapshot = {
+        "paineis": {
+            "armadilha_abertura": {
+                "alertas": [{"ticker": "PETR4", "preco_atual": 30.5}]
+            }
+        }
+    }
+    checar_armadilha_abertura(snapshot, "")
+
+
+def test_checar_armadilha_abertura_sem_painel():
+    snapshot = {"paineis": {}}
+    import pytest
+
+    with pytest.raises(
+        AssertionError,
+        match="Painel de Armadilha de Abertura não encontrado no snapshot",
+    ):
+        checar_armadilha_abertura(snapshot, "")

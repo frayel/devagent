@@ -238,6 +238,17 @@ def checar_apetite_risco(snapshot: dict, pagina_html: str) -> None:
     ], f"Estado '{painel['estado']}' inválido"
 
 
+def checar_armadilha_abertura(snapshot: dict, pagina_html: str) -> None:
+    """Valida invariantes do painel de Armadilha de Abertura."""
+    painel = snapshot.get("paineis", {}).get("armadilha_abertura")
+    assert painel is not None, (
+        "Painel de Armadilha de Abertura não encontrado no snapshot"
+    )
+    if painel:
+        if "alertas" in painel:
+            assert isinstance(painel["alertas"], list), "'alertas' deve ser uma lista"
+
+
 def checar_coerencia(p: Painel) -> list[Resultado]:
     r: list[Resultado] = []
     if p.valor is None:
@@ -487,9 +498,11 @@ def auditar(
 
     painel = extrair_do_html(html)
     s_status, s_corpo = baixar(f"{url}/api/snapshot", timeout=30)
+    snap_dict = None
     if s_status == 200:
         try:
-            snap = extrair_do_snapshot(json.loads(s_corpo))
+            snap_dict = json.loads(s_corpo)
+            snap = extrair_do_snapshot(snap_dict)
         except (ValueError, KeyError, TypeError) as e:
             snap = None
             r.append(
@@ -507,6 +520,19 @@ def auditar(
                 )
             )
         painel = snap or painel
+
+        if isinstance(snap_dict, dict):
+            try:
+                checar_armadilha_abertura(snap_dict, html)
+            except AssertionError as e:
+                r.append(
+                    Resultado(
+                        "armadilha_abertura.invariante",
+                        FALHA,
+                        "Invariante de Armadilha de Abertura",
+                        str(e),
+                    )
+                )
     else:
         r.append(
             Resultado(
