@@ -103,7 +103,7 @@ def extrair_do_html(html: str) -> Painel | None:
         p.variacao = _numero_br(m.group(1))
         p.variacao_pct = _numero_br(m.group(2))
     m = re.search(
-        r"atualiza[çc][ãa]o:\s*(\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2}(?::\d{2})?)\s*(UTC|BRT)?",
+        r"(?:atualiza[çc][ãa]o:|·|&middot;)\s*(\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2}(?::\d{2})?)\s*(UTC|BRT)?",
         html,
         re.IGNORECASE,
     )
