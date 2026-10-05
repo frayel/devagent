@@ -17,6 +17,7 @@ def test_api_snapshot_apetite_risco():
     data = response.json()
     assert "apetite_risco" in data["paineis"]
 
+
 def test_api_snapshot_compradores_fundo():
     response = client.get("/api/snapshot")
     assert response.status_code == 200
