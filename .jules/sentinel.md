@@ -36,3 +36,8 @@
 **Vulnerability:** Cross-Site Scripting (XSS) potential due to `unsafe-eval` in CSP.
 **Learning:** The Content-Security-Policy header in `app/main.py` included `'unsafe-eval'` in the `script-src` directive. This allows the execution of code injected into strings (e.g. via `eval()`, `setTimeout(string)`, etc). Since the application does not rely on `eval` in its JavaScript, removing it reduces the risk of XSS execution. Removed `'unsafe-eval'` from the middleware.
 **Prevention:** Only include `'unsafe-eval'` in CSP if absolutely required by a trusted dependency and there's no alternative. By default, ensure it is absent to provide defense-in-depth against XSS.
+
+## 2026-10-05 - Remove `unsafe-inline` from script-src in CSP
+**Vulnerability:** Potential for Cross-Site Scripting (XSS) due to `'unsafe-inline'` in Content-Security-Policy (CSP) `script-src` directive.
+**Learning:** The CSP configuration in `app/main.py` included `'unsafe-inline'` for `script-src` to allow inline scripts in `app/templates/base.html` (table bar formatting) and `app/templates/index.html` (filter buttons and plotly graph data generation). While convenient, this weakens XSS protections by permitting any injected script tags to execute. Extracted all inline scripts into a new external file `app/static/ui.js`. For the dynamic plotly graph, refactored it to read the `dates`, `closes`, and `is_positive` properties from `data-*` attributes populated securely via Jinja's `|tojson|e` filter.
+**Prevention:** Avoid writing inline scripts `<script>...</script>`. Separate behavior (JavaScript) from markup (HTML/Jinja) by relying on external static files and passing dynamic data via `data-*` attributes. This enables a stricter CSP.
