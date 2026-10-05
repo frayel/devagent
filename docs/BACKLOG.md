@@ -101,3 +101,12 @@
 | Rotação de Capital (Bancos vs Commodities) | Responde: O dinheiro está saindo de commodities e indo para bancos hoje? Originalidade: Compara as duas maiores forças do Ibov (que ditam o rumo) para identificar se é dia de tendência ou rotação. | yfinance | P | Baixo |
 | Experiência: Manchete Dinâmica | Responde: Consigo entender o clima do dia em uma frase sem ver gráficos? Originalidade: Template textual que traduz dados complexos em uma linha legível. | N/A | M | Baixo |
 | Dispersão Extrema de Abertura | Responde: A abertura foi de pânico irracional ou o mercado está seletivo? Originalidade: Mede breadth de mercado isolando apenas os primeiros 30 min. | yfinance | M | Médio |
+
+## Ideias (Passo 7 - 2026-10-05)
+
+| Compradores de Fundo (Reversão Intraday) | Responde: Quais ações abriram com forte queda e reverteram para alta? Originalidade: Identifica capitulação no intraday, mostrando força compradora oculta. | yfinance | M | Baixo |
+| Mapa de Calor por Liquidez Absoluta | Responde: Onde está o dinheiro real do mercado hoje? Originalidade: Em vez de retorno %, mostra os maiores volumes financeiros transacionados no dia. | brapi / yfinance | M | Médio |
+| Alerta de Vácuo de Livro | Responde: Quais ações estão perigosamente ilíquidas agora? Originalidade: Foca no risco de execução olhando para o spread bid/ask. | brapi | G | Alto |
+| Ações Imunes ao Ibov | Responde: O que está subindo independentemente da queda forte do Ibov? Originalidade: Isola o beta e foca em ativos com correlação negativa pura no dia. | yfinance | P | Baixo |
+| Histórico de Reação a Decisões do Copom | Responde: Como a bolsa reage em dias de decisão de juros? Originalidade: Cruza calendário econômico com retorno do pregão atual. | Scraping | G | Alto |
+| Experiência: Modo "Foco no Risco" | Responde: Posso analisar o mercado sem o viés emocional das cores verde/vermelho? Originalidade: Redesign onde as cores dependem da volatilidade/volume, e não da direção do preço (verde/vermelho vira tons de cinza). | N/A | P | Baixo |
