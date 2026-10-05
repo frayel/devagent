@@ -329,6 +329,27 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
+
+{% call painel("Radar de Faca Caindo", 4, "Ações com mais dias consecutivos de queda, indicando a duração da sequência e a perda acumulada (nos últimos 10 pregões).", faca_caindo.fonte if faca_caindo else "", faca_caindo.time if faca_caindo else "", "visao-micro") %}
+    {% if not faca_caindo %}
+        {{ estado("indisponivel") }}
+    {% elif not faca_caindo.alertas %}
+        <div class="vazio">Nenhuma sequência de quedas detectada.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in faca_caindo.alertas %}
+            {% set val = ("%.2f%%" | format(a.retorno_acumulado | abs)) %}
+            {% set s = -1 if a.retorno_acumulado < 0 else 1 if a.retorno_acumulado > 0 else 0 %}
+            {% set _ = linhas.append([
+                {'conteudo': a.ticker, 'tk': True},
+                {'conteudo': ('<span>' ~ (a.dias_consecutivos | e) ~ ' dias</span>') | safe},
+                {'conteudo': (variacao(val, s)) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Quedas'}, {'titulo': 'Retorno', 'num': True}], 'faca-caindo') }}
+    {% endif %}
+{% endcall %}
+
 {% call painel("Atrasadas do Rally", 4, "Ações que ficaram para trás nos últimos 5 pregões em momentos de alta > 2% do Ibovespa.", atrasadas_rally.fonte if atrasadas_rally else "", atrasadas_rally.time if atrasadas_rally else "", "visao-micro") %}
     {% if atrasadas_rally %}
         {% if not atrasadas_rally.rally_valido %}
