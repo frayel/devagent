@@ -21,19 +21,25 @@ def fetch_yfinance() -> CompradoresFundoData | None:
 
     with httpx.Client(timeout=10.0) as client:
         for batch in batches:
-            for ticker in batch:
-                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}.SA?range=1d&interval=1d"
-                try:
-                    response = fetch_with_retry(url, client=client)
-                    data = response.json()
-                    res_arr = data.get("chart", {}).get("result", [])
-                    if not res_arr:
+            symbols = ",".join([f"{t}.SA" for t in batch])
+            url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
+            try:
+                response = fetch_with_retry(url, client=client)
+                data = response.json()
+
+                for item in data.get("spark", {}).get("result", []):
+                    if not item.get("response"):
                         continue
 
-                    indicators = res_arr[0].get("indicators", {}).get("quote", [{}])[0]
-                    open_price = indicators.get("open", [None])[0]
-                    low_price = indicators.get("low", [None])[0]
-                    close_price = indicators.get("close", [None])[0]
+                    symbol = item.get("symbol", "").replace(".SA", "")
+
+                    try:
+                        indicators = item["response"][0]["indicators"]["quote"][0]
+                        open_price = indicators.get("open", [None])[0]
+                        low_price = indicators.get("low", [None])[0]
+                        close_price = indicators.get("close", [None])[0]
+                    except (KeyError, IndexError):
+                        continue
 
                     if open_price is None or low_price is None or close_price is None:
                         continue
@@ -45,17 +51,15 @@ def fetch_yfinance() -> CompradoresFundoData | None:
                     if drop_percent > 1.5 and close_price >= open_price:
                         parsed_results.append(
                             {
-                                "ticker": ticker,
+                                "ticker": symbol,
                                 "queda_maxima": -drop_percent,
                                 "preco_atual": close_price,
                             }
                         )
-                    successful_fetches += 1
-                except httpx.HTTPError as e:
-                    if hasattr(e, "response") and e.response.status_code == 404:
-                        continue
-                    logger.error(f"Error fetching {ticker} from yfinance: {e}")
-                    continue
+                successful_fetches += 1
+            except httpx.HTTPError as e:
+                logger.error(f"Error fetching batch {symbols} from yfinance: {e}")
+                continue
 
     if successful_fetches == 0:
         return None
