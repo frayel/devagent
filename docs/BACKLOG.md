@@ -128,3 +128,13 @@
 | Experiência: Toggle Hoje vs Ontem | Responde: Como estava o mercado neste mesmo horário ontem? Originalidade: Permitir com um clique comparar o mapa atual com a foto exata de 24 horas atrás. | N/A | P | Baixo |
 | Anomalia de Peso Relativo | Responde: Quais pesos-pesados estão segurando o Ibov sozinhos? Originalidade: Mede o impacto individual em pontos de índice, em vez do retorno %. | brapi/yfinance | M | Médio |
 | Detecção de Movimento Silencioso | Responde: O que está subindo sem ninguém falar? Originalidade: Filtra ativos com retorno > 2% diário mas sem menções recentes no agregador de notícias. | brapi/Notícias | G | Alto |
+
+## Ideias (Passo 7 - 2026-10-05 3)
+
+| Índice de Sobrevivência Semanal (Sempre Verde) | Responde: Quais ativos fecharam todos os últimos 5 pregões no verde, independentemente do IBOV? Originalidade: Isola consistência extrema em vez de retorno total. | yfinance | P | Baixo |
+| Anomalia de Leilão de Abertura (Spoofing Alert) | Responde: Quem está blefando no leilão antes de a bolsa abrir? Originalidade: Compara intenções vs abertura real. | B3/Brapi | G | Alto |
+| Termômetro de Pânico vs Euforia Intraday | Responde: O mercado está em pânico vendedor ou em euforia compradora agora? Originalidade: Volume de bid vs ask. | Brapi/B3 | M | Médio |
+| Top Perdedores do Mês | Responde: Quais ações mais caíram no mês atual? | yfinance | P | Baixo |
+| Distorção de Fechamento (Falso Sinal) | Responde: A alta desta ação foi só por causa de um puxão no leilão de fechamento? Originalidade: Compara 16:50 com 17:00. | yfinance | M | Baixo |
+| Experiência: Agrupamento Automático por Sentimento | Responde: Consigo ver apenas os alertas negativos juntos? Originalidade: Organiza a visão micro dinamicamente entre sinais de força e fraqueza. | N/A | M | Baixo |
+| Experiência: Modo "Histórico de Crises" | Responde: Como estava este painel no dia do Joesley Day? Originalidade: Máquina do tempo global no dashboard. | N/A | G | Alto |
