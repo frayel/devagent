@@ -103,7 +103,7 @@ def extrair_do_html(html: str) -> Painel | None:
         p.variacao = _numero_br(m.group(1))
         p.variacao_pct = _numero_br(m.group(2))
     m = re.search(
-        r"atualiza[çc][ãa]o:\s*(\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2}(?::\d{2})?)\s*(UTC|BRT)?",
+        r"(?:atualiza[çc][ãa]o:|·|&middot;)\s*(\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2}(?::\d{2})?)\s*(UTC|BRT)?",
         html,
         re.IGNORECASE,
     )
@@ -111,14 +111,27 @@ def extrair_do_html(html: str) -> Painel | None:
         fmt = "%d/%m/%Y %H:%M:%S" if m.group(1).count(":") == 2 else "%d/%m/%Y %H:%M"
         tz = timezone.utc if (m.group(2) or "").upper() == "UTC" else calendario.BRT
         p.coletado_em = datetime.strptime(m.group(1), fmt).replace(tzinfo=tz)
-    m = re.search(r"historyData\s*=\s*(\{.*?\})\s*;", html, re.DOTALL)
-    if m:
+    # Tenta extrair do atributo data-dates e data-closes (novo formato)
+    m_dates = re.search(r"data-dates\s*=\s*'(\[.*?\])'", html)
+    m_closes = re.search(r"data-closes\s*=\s*'(\[.*?\])'", html)
+    if m_dates and m_closes:
         try:
-            h = json.loads(m.group(1))
-            p.datas = [str(d)[:10] for d in h.get("dates", [])]
-            p.fechamentos = [float(c) for c in h.get("closes", []) if c is not None]
+            dates = json.loads(m_dates.group(1))
+            closes = json.loads(m_closes.group(1))
+            p.datas = [str(d)[:10] for d in dates]
+            p.fechamentos = [float(c) for c in closes if c is not None]
         except (ValueError, TypeError):
             pass
+    else:
+        # Tenta o formato antigo
+        m = re.search(r"historyData\s*=\s*(\{.*?\})\s*;", html, re.DOTALL)
+        if m:
+            try:
+                h = json.loads(m.group(1))
+                p.datas = [str(d)[:10] for d in h.get("dates", [])]
+                p.fechamentos = [float(c) for c in h.get("closes", []) if c is not None]
+            except (ValueError, TypeError):
+                pass
     if p.valor is not None and p.variacao is not None:
         p.fechamento_anterior = p.valor - p.variacao
     return p
