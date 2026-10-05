@@ -14,3 +14,8 @@
 - **O que fiz:** Ajustei a estilização do menu de filtros (Macro/Micro) em `app/static/tema.css` para utilizar os tokens de design do sistema (cores de superfície, texto, espaçamentos via variáveis CSS) e alinhar-se à estética do produto sem perder a funcionalidade. Verificado visualmente.
 - **O que aprendi:** Novas seções podem ser adicionadas temporariamente sem seguir 100% dos tokens, e a refatoração visual ajuda a manter a coesão sem quebrar o layout.
 - **O que evitar:** Evitar deixar componentes isolados visualmente do resto da interface.
+
+## 2024-11-20
+- **O que fiz:** Corrigi o template `index.html` para o painel "Atrasadas do Rally", utilizando o array `linhas` no macro `tabela_ativos` em vez de tags HTML puras (`<tr>`, `<td>`), o que quebrava o layout.
+- **O que aprendi:** O macro `tabela_ativos` gera sua própria `<table>` e `<tbody>`. Passar tags HTML externas pra dentro dele ou injetar elementos da tabela de forma mista compromete o layout da página.
+- **O que evitar:** Evitar escrever HTML de tabela diretamente em componentes que foram criados para receber dados em arrays dicionários padronizados, pois isso ignora a aplicação global do design system na aplicação.

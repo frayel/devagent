@@ -303,15 +303,16 @@
         {% if not atrasadas_rally.rally_valido %}
             <div class="sem-dados">Ibovespa sem rally recente</div>
         {% elif atrasadas_rally.top3 %}
-            {{ tabela_ativos(atrasadas_rally.top3, [{"titulo": "Ativo"}, {"titulo": "5d (Ativo)", "num": True}], "atrasadas-rally-rank") }}
+            {% set linhas = [] %}
             {% for item in atrasadas_rally.top3 %}
-            <tr class="atrasadas-rally-rank">
-                <td class="tk">{{ item.ticker }}</td>
-                <td class="n">{{ variacao(("%0.2f"|format(item.retorno))|replace('.', ',') ~ "%", item.retorno) }}</td>
-            </tr>
+                {% set val = ("%.2f%%" | format(item.retorno | abs)) | replace('.', ',') %}
+                {% set s = 1 if item.retorno > 0 else -1 if item.retorno < 0 else 0 %}
+                {% set _ = linhas.append([
+                    {'conteudo': item.ticker, 'tk': True},
+                    {'conteudo': (variacao(val, s)) | safe, 'num': True}
+                ]) %}
             {% endfor %}
-            </tbody>
-            </table>
+            {{ tabela_ativos(linhas, [{"titulo": "Ativo"}, {"titulo": "5d (Ativo)", "num": True}], "atrasadas-rally") }}
         {% else %}
             <div class="sem-dados">Nenhuma ação encontrada.</div>
         {% endif %}
