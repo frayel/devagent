@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- feat: Implementado Compradores de Fundo (Reversão Intraday) (Spec 021)
 - feat: Implementada Rotação de Capital (Bancos vs Commodities) avaliando o estado diário (Spec 018)
 - **Variação Súbita:** Adiciona painel que exibe ações com variação expressiva na última hora (Spec 017).
 - feat: Implementa Concentração de Ganhos (Spec 015) com cálculo de contribuição das maiores empresas no fechamento diário.

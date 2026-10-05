@@ -1,7 +1,7 @@
 ---
 id: 021
 titulo: Compradores de Fundo (Reversão Intraday)
-status: ready
+status: done
 esforco: M
 ---
 
