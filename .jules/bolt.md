@@ -29,3 +29,8 @@
 - **O que fiz:** Adicionei um índice (`idx_concentracao_cache_timestamp`) na tabela `concentracao_cache` para a coluna `timestamp DESC`.
 - **O que aprendi:** A tabela `concentracao_cache` sofria do mesmo problema anterior da `highlights_cache`. O método `get_latest_concentracao_data()` utiliza `ORDER BY timestamp DESC LIMIT 1`. Ao adicionarmos o índice, melhoramos a latência em requisições de leitura recorrentes, economizando cerca de 25% do tempo de resposta na API `/api/snapshot` em cenários de banco populado.
 - **O que evitar:** Criar tabelas e métodos `get_latest_*` sem também criar o respectivo índice na coluna `timestamp DESC` para a qualificação limit/order.
+## 2026-10-06
+
+- **O que fiz:** Otimizei a função `fetch_yfinance()` do coletor `compradores_fundo` para utilizar o endpoint em lote `https://query1.finance.yahoo.com/v7/finance/spark` ao invés do individual `chart`.
+- **O que aprendi:** Agrupar as requisições reduziu o tempo de execução deste coletor de ~60 segundos para cerca de ~2 segundos, evitando os gargalos de *rate limit* de 2 segundos por domínio para 30 requisições individuais.
+- **O que evitar:** Usar endpoints individuais (como `/v8/finance/chart/{ticker}`) em loops de coleta sobre muitos ativos quando alternativas de requisições em lote (como `spark`) estão disponíveis e expõem os mesmos dados de preços de OHLCV.
