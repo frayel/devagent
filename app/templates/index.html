@@ -400,4 +400,22 @@
     {% endif %}
 {% endcall %}
 
+
+{% call painel("Sempre Verde", 4, "Ações que fecharam no verde todos os dias nos últimos 5 pregões.", sobrevivencia_semanal.fonte if sobrevivencia_semanal else "", sobrevivencia_semanal.time if sobrevivencia_semanal else "", "visao-micro") %}
+    {% if not sobrevivencia_semanal %}
+        {{ estado("indisponivel") }}
+    {% elif not sobrevivencia_semanal.alertas %}
+        <div class="vazio">Nenhum ativo sobreviveu invicto nos últimos 5 dias.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in sobrevivencia_semanal.alertas %}
+            {% set _ = linhas.append([
+                {'conteudo': a.ticker, 'tk': True},
+                {'conteudo': ('<span>' ~ (a.dias_consecutivos | e) ~ ' dias</span>') | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Altas seguidas', 'num': True}], 'sobrevivencia-semanal') }}
+    {% endif %}
+{% endcall %}
+
 {% endblock %}

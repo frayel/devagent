@@ -1046,3 +1046,53 @@ def get_latest_armadilha_abertura_data() -> ArmadilhaAberturaData | None:
             fonte=row[2],
         )
     return None
+
+
+@dataclass
+class SobrevivenciaSemanalData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "yfinance"
+
+
+def save_sobrevivencia_semanal_data(data: SobrevivenciaSemanalData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO sobrevivencia_semanal_cache (timestamp, alertas_json, fonte)
+        VALUES (?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            data.alertas_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_sobrevivencia_semanal_data() -> SobrevivenciaSemanalData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT timestamp, alertas_json, fonte
+            FROM sobrevivencia_semanal_cache
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        return None
+    finally:
+        conn.close()
+
+    if row:
+        return SobrevivenciaSemanalData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            alertas_json=row["alertas_json"],
+            fonte=row["fonte"],
+        )
+    return None

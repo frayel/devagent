@@ -26,6 +26,7 @@ from app.services.rotacao_capital import get_rotacao_capital_view
 from app.services.faca_caindo import get_faca_caindo_view
 from app.services.compradores_fundo import get_compradores_fundo_view
 from app.services.armadilha_abertura import get_armadilha_abertura_view
+from app.services.sobrevivencia_semanal import get_sobrevivencia_semanal_view
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_volume_alerts_data,
@@ -39,6 +40,7 @@ from app.database import (
     get_latest_rotacao_capital_data,
     get_latest_compradores_fundo_data,
     get_latest_armadilha_abertura_data,
+    get_latest_sobrevivencia_semanal_data,
 )
 from app import agendador
 
@@ -325,6 +327,20 @@ def snapshot():
     else:
         resp["paineis"]["armadilha_abertura"] = {}
 
+    sobrevivencia_semanal_data = get_latest_sobrevivencia_semanal_data()
+    if sobrevivencia_semanal_data:
+        try:
+            alertas = json.loads(sobrevivencia_semanal_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["sobrevivencia_semanal"] = {
+            "coletado_em": sobrevivencia_semanal_data.timestamp.isoformat(),
+            "fonte": sobrevivencia_semanal_data.fonte,
+            "alertas": alertas,
+        }
+    else:
+        resp["paineis"]["sobrevivencia_semanal"] = {}
+
     return resp
 
 
@@ -365,6 +381,7 @@ async def index(request: Request):
     faca_caindo = get_faca_caindo_view()
     compradores_fundo = get_compradores_fundo_view()
     armadilha_abertura = get_armadilha_abertura_view()
+    sobrevivencia_semanal = get_sobrevivencia_semanal_view()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -385,5 +402,6 @@ async def index(request: Request):
             "faca_caindo": faca_caindo,
             "compradores_fundo": compradores_fundo,
             "armadilha_abertura": armadilha_abertura,
+            "sobrevivencia_semanal": sobrevivencia_semanal,
         },
     )

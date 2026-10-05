@@ -8,6 +8,12 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 024 (Sobrevivência Semanal):
+  - Banco de dados SQLite (`sobrevivencia_semanal_cache`).
+  - Coletor com `yfinance` buscando dados diários.
+  - Cálculo de ativos com fechamento positivo consecutivo nos últimos 5 dias.
+  - Exibição de painel via contrato `/api/snapshot`.
+
 - Spec 023 (Armadilha de Abertura):
   - Banco de dados SQLite (`armadilha_abertura_cache`).
   - Coletor com `yfinance` buscando dados intraday.
