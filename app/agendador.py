@@ -91,6 +91,7 @@ def _coletar() -> None:
         "variacao_subita",
         "rotacao_capital",
         "faca_caindo",
+        "compradores_fundo",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
         try:

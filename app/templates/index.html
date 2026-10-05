@@ -413,4 +413,24 @@ document.addEventListener("DOMContentLoaded", function() {
     {% endif %}
 {% endcall %}
 
+
+{% call painel("Compradores de Fundo", 4, "Ações que abriram caindo > 1.5% e já reverteram para positivo.", compradores_fundo.fonte if compradores_fundo else "", compradores_fundo.time if compradores_fundo else "", "visao-micro") %}
+    {% if not compradores_fundo %}
+        {{ estado("indisponivel") }}
+    {% elif not compradores_fundo.alertas %}
+        <div class="vazio">Nenhuma reversão identificada hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in compradores_fundo.alertas %}
+            {% set val = ("%.2f%%" | format(a.queda_maxima | abs)) %}
+            {% set _ = linhas.append([
+                {'conteudo': a.ticker, 'tk': True},
+                {'conteudo': (variacao(val, -1)) | safe, 'num': True},
+                {'conteudo': ('<span>' ~ (("R$ %.2f" | format(a.preco_atual)) | replace('.', ',')) ~ '</span>') | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda Máx.'}, {'titulo': 'Atual', 'num': True}], 'compradores-fundo') }}
+    {% endif %}
+{% endcall %}
+
 {% endblock %}

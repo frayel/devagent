@@ -22,6 +22,7 @@ from app.services.apetite_risco import get_apetite_risco_view_data
 from app.services.variacao_subita import get_variacao_subita_view_data
 from app.services.rotacao_capital import get_rotacao_capital_view
 from app.services.faca_caindo import get_faca_caindo_view
+from app.services.compradores_fundo import get_compradores_fundo_view
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_highlights_data,
@@ -35,6 +36,7 @@ from app.database import (
     get_latest_apetite_risco_data,
     get_latest_variacao_subita_data,
     get_latest_rotacao_capital_data,
+    get_latest_compradores_fundo_data,
 )
 from app import agendador
 
@@ -293,6 +295,20 @@ def snapshot():
     else:
         resp["paineis"]["rotacao_capital"] = {}
 
+    compradores_fundo_data = get_latest_compradores_fundo_data()
+    if compradores_fundo_data:
+        try:
+            alertas = json.loads(compradores_fundo_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["compradores_fundo"] = {
+            "coletado_em": compradores_fundo_data.timestamp.isoformat(),
+            "fonte": compradores_fundo_data.fonte,
+            "alertas": alertas,
+        }
+    else:
+        resp["paineis"]["compradores_fundo"] = {}
+
     return resp
 
 
@@ -311,6 +327,7 @@ async def index(request: Request):
     variacao_subita = get_variacao_subita_view_data()
     rotacao_capital = get_rotacao_capital_view()
     faca_caindo = get_faca_caindo_view()
+    compradores_fundo = get_compradores_fundo_view()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -328,5 +345,6 @@ async def index(request: Request):
             "variacao_subita": variacao_subita,
             "rotacao_capital": rotacao_capital,
             "faca_caindo": faca_caindo,
+            "compradores_fundo": compradores_fundo,
         },
     )
