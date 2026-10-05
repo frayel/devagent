@@ -5,9 +5,15 @@
 ## Experiência
 
 - Última revisão de experiência: 02/10/2026 (Redesign 008)
-- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 2 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 020 (Radar de Faca Caindo):
+  - Banco de dados SQLite (`faca_caindo_cache`).
+  - Coletor com `yfinance` buscando dados diários (spark).
+  - Cálculo de dias consecutivos em queda e retorno acumulado.
+  - Exibição de painel na `visao-micro`.
+  - Adicionado ao contrato `/api/snapshot`.
 - Spec 019 (Modo Só Sinais):
   - Adicionado botão de filtro "Só Sinais" na interface.
   - Criado comportamento CSS e JS para ocultar gráficos e tabelas, focando nos indicadores de sentimento.

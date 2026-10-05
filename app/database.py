@@ -123,6 +123,16 @@ def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS faca_caindo_cache (
+            timestamp TEXT,
+            alertas_json TEXT,
+            fonte TEXT
+        )
+        """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_faca_caindo_timestamp ON faca_caindo_cache (timestamp DESC)
+        """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS ibovespa_cache (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp DATETIME NOT NULL,
@@ -866,6 +876,54 @@ def get_latest_rotacao_capital_data() -> RotacaoCapitalData | None:
             estado=row["estado"],
             var_bancos=row["var_bancos"],
             var_commodities=row["var_commodities"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+@dataclass
+class FacaCaindoData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "yfinance"
+
+
+def save_faca_caindo_data(data: FacaCaindoData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO faca_caindo_cache (timestamp, alertas_json, fonte)
+        VALUES (?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            data.alertas_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_faca_caindo_data() -> FacaCaindoData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT timestamp, alertas_json, fonte
+            FROM faca_caindo_cache
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        row = None
+    conn.close()
+    if row:
+        return FacaCaindoData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            alertas_json=row["alertas_json"],
             fonte=row["fonte"],
         )
     return None

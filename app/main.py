@@ -21,6 +21,7 @@ from app.services.concentracao import get_concentracao_view_data
 from app.services.apetite_risco import get_apetite_risco_view_data
 from app.services.variacao_subita import get_variacao_subita_view_data
 from app.services.rotacao_capital import get_rotacao_capital_view
+from app.services.faca_caindo import get_faca_caindo_view
 from app.database import (
     get_latest_ibovespa_data,
     get_latest_highlights_data,
@@ -309,6 +310,7 @@ async def index(request: Request):
     apetite_risco = get_apetite_risco_view_data()
     variacao_subita = get_variacao_subita_view_data()
     rotacao_capital = get_rotacao_capital_view()
+    faca_caindo = get_faca_caindo_view()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -325,5 +327,6 @@ async def index(request: Request):
             "apetite_risco": apetite_risco,
             "variacao_subita": variacao_subita,
             "rotacao_capital": rotacao_capital,
+            "faca_caindo": faca_caindo,
         },
     )

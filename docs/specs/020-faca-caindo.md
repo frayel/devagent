@@ -1,7 +1,7 @@
 ---
 id: 020
 titulo: Radar de Faca Caindo (Quedas Consecutivas)
-status: ready
+status: done
 esforco: P
 ---
 
@@ -22,9 +22,9 @@ Se nenhuma ação tiver 3 ou mais quedas consecutivas, exibir "Nenhuma ação em
 - Ordenar pelas que têm mais dias e, em caso de empate, pela maior variação negativa acumulada.
 
 ## Critérios de aceite
-- [ ] O banco de dados SQLite armazena o cache deste coletor (`faca_caindo_cache`).
-- [ ] Quando pelo menos um papel tem >= 3 quedas consecutivas, a lista mostra o papel e a quantidade de dias.
-- [ ] Falha da fonte yfinance captura a exceção, o componente exibe estado "indisponível" sem quebrar a página.
+- [x] O banco de dados SQLite armazena o cache deste coletor (`faca_caindo_cache`).
+- [x] Quando pelo menos um papel tem >= 3 quedas consecutivas, a lista mostra o papel e a quantidade de dias.
+- [x] Falha da fonte yfinance captura a exceção, o componente exibe estado "indisponível" sem quebrar a página.
 
 ## Invariantes de produção
 - A chave `faca_caindo` existe dentro de `paineis` no `/api/snapshot`.

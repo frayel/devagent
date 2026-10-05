@@ -21,6 +21,7 @@ def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
     chamados = []
     monkeypatch.setattr("app.collectors.coesao.collect_and_save", lambda: True)
     monkeypatch.setattr("app.collectors.atrasadas_rally.collect_and_save", lambda: True)
+    monkeypatch.setattr("app.collectors.faca_caindo.collect_and_save", lambda: True)
 
     def quebra():
         chamados.append("ibovespa")
