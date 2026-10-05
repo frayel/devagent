@@ -1,7 +1,7 @@
 ---
 id: 024
 titulo: Índice de Sobrevivência Semanal (Sempre Verde)
-status: ready
+status: done
 esforco: P
 ---
 

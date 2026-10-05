@@ -28,6 +28,9 @@ def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
     monkeypatch.setattr(
         "app.collectors.armadilha_abertura.collect_and_save", lambda: True
     )
+    monkeypatch.setattr(
+        "app.collectors.sobrevivencia_semanal.collect_and_save", lambda: True
+    )
 
     def quebra():
         chamados.append("ibovespa")
