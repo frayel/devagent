@@ -123,6 +123,16 @@ def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS compradores_fundo_cache (
+            timestamp TEXT,
+            alertas_json TEXT,
+            fonte TEXT
+        )
+        """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_compradores_fundo_timestamp ON compradores_fundo_cache (timestamp DESC)
+        """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS faca_caindo_cache (
             timestamp TEXT,
             alertas_json TEXT,
@@ -922,6 +932,54 @@ def get_latest_faca_caindo_data() -> FacaCaindoData | None:
     conn.close()
     if row:
         return FacaCaindoData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            alertas_json=row["alertas_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+@dataclass
+class CompradoresFundoData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "yfinance"
+
+
+def save_compradores_fundo_data(data: CompradoresFundoData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO compradores_fundo_cache (timestamp, alertas_json, fonte)
+        VALUES (?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            data.alertas_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_compradores_fundo_data() -> CompradoresFundoData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT timestamp, alertas_json, fonte
+            FROM compradores_fundo_cache
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        row = None
+    conn.close()
+    if row:
+        return CompradoresFundoData(
             timestamp=datetime.fromisoformat(row["timestamp"]),
             alertas_json=row["alertas_json"],
             fonte=row["fonte"],
