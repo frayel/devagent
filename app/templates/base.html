@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script src="/static/graficos.js"></script>
+    <script src="/static/ui.js"></script>
 </head>
 <body>
     <header>
@@ -24,17 +25,5 @@
         Conteúdo informativo gerado automaticamente. Não constitui recomendação de investimento.
     </footer>
 
-    <script>
-      // Barras proporcionais nas tabelas
-      document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('tbody[data-rank]').forEach(tb => {
-          const is = [...tb.querySelectorAll('i[data-v]')];
-          if (!is.length) return;
-          const max = Math.max(...is.map(i => parseFloat(i.dataset.v)));
-          if (max === 0) return;
-          is.forEach(i => i.style.width = (18 + 70 * (parseFloat(i.dataset.v) / max)) + '%');
-        });
-      });
-    </script>
 </body>
 </html>

@@ -32,41 +32,6 @@
     <button class="filtro-btn" data-filtro="sinais">Só Sinais</button>
 </div>
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const botoes = document.querySelectorAll('.filtro-btn');
-    const paineisMacro = document.querySelectorAll('.visao-macro');
-    const paineisMicro = document.querySelectorAll('.visao-micro');
-
-    botoes.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const filtro = btn.getAttribute('data-filtro');
-
-            botoes.forEach(b => {
-                b.classList.remove('ativo');
-            });
-            btn.classList.add('ativo');
-
-            document.body.classList.remove('modo-so-sinais');
-
-            if (filtro === 'todos') {
-                paineisMacro.forEach(p => p.style.display = '');
-                paineisMicro.forEach(p => p.style.display = '');
-            } else if (filtro === 'macro') {
-                paineisMacro.forEach(p => p.style.display = '');
-                paineisMicro.forEach(p => p.style.display = 'none');
-            } else if (filtro === 'micro') {
-                paineisMacro.forEach(p => p.style.display = 'none');
-                paineisMicro.forEach(p => p.style.display = '');
-            } else if (filtro === 'sinais') {
-                document.body.classList.add('modo-so-sinais');
-                paineisMacro.forEach(p => p.style.display = '');
-                paineisMicro.forEach(p => p.style.display = 'none');
-            }
-        });
-    });
-});
-</script>
 
 
 {% call painel('Rotação de Capital', 4, 'Troca de capital entre os dois principais motores da bolsa: Bancos vs Commodities.', rotacao_capital.fonte if rotacao_capital else '', rotacao_capital.time if rotacao_capital else '', 'visao-macro painel-rotacao') %}
@@ -100,33 +65,11 @@ document.addEventListener("DOMContentLoaded", function() {
     {% if data %}
         {{ kpi(data.current_price|default("") + " pontos", "", (variacao(data.variation ~ " (" ~ data.variation_percent ~ ")", data.variation_raw|default(0))) | safe, True) }}
         {% if data.history_dict and data.history_dict.dates %}
-        <div id="grafico-ibovespa" class="grafico"></div>
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                var dates = {{ data.history_dict.dates | tojson }};
-                var closes = {{ data.history_dict.closes | tojson }};
-                var is_positive = {{ 'true' if data.is_positive else 'false' }};
-
-                // O Plotly não entende var(--x): resolve os tokens do tema para cores reais.
-                var css = function(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
-                var cor = css(is_positive ? '--alta' : '--baixa');
-
-                var trace = {
-                    x: dates,
-                    y: closes,
-                    type: 'scatter',
-                    mode: 'lines',
-                    line: { color: cor, width: 1.5 },
-                    fill: 'tozeroy',
-                    fillcolor: css(is_positive ? '--alta-fundo' : '--baixa-fundo'),
-                    hovertemplate: '%{x|%d/%m/%Y}<br><b>%{y:,.0f}</b><extra></extra>'
-                };
-
-                Painel.grafico('grafico-ibovespa', [trace], {
-                    margin: { t: 16, r: 64, b: 24, l: 8 }
-                });
-            });
-        </script>
+        <div id="grafico-ibovespa" class="grafico"
+             data-dates='{{ data.history_dict.dates | tojson | e }}'
+             data-closes='{{ data.history_dict.closes | tojson | e }}'
+             data-is-positive='{{ 'true' if data.is_positive else 'false' }}'>
+        </div>
         {% endif %}
     {% else %}
         {{ estado('indisponivel') }}

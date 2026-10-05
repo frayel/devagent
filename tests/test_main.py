@@ -62,6 +62,7 @@ def test_security_headers():
     assert "default-src 'self'" in csp
     assert "https://unpkg.com" in csp
     assert "https://cdn.plot.ly" in csp
+    assert "'unsafe-inline'" not in csp.split("script-src")[1].split(";")[0]
 
 
 def test_xss_protection_in_tables():
