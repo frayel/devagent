@@ -113,6 +113,20 @@ def _semear(db_path: str) -> None:
             fonte="demonstracao",
         )
     )
+    db.save_atrasadas_rally_data(
+        db.AtrasadasRallyData(
+            timestamp=agora,
+            rally_valido=True,
+            top3_json=json.dumps(
+                [
+                    {"ticker": "VALE3", "retorno": -2.34},
+                    {"ticker": "PETR4", "retorno": -1.50},
+                    {"ticker": "ITUB4", "retorno": 0.80},
+                ]
+            ),
+            fonte="demonstracao",
+        )
+    )
     db.save_dolar_correlation_data(
         db.DolarCorrelationData(
             timestamp=agora,
