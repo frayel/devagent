@@ -104,6 +104,8 @@
 
 ## Ideias (Passo 7 - 2026-10-05)
 
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
 | Compradores de Fundo (Reversão Intraday) | Responde: Quais ações abriram com forte queda e reverteram para alta? Originalidade: Identifica capitulação no intraday, mostrando força compradora oculta. | yfinance | M | Baixo |
 | Mapa de Calor por Liquidez Absoluta | Responde: Onde está o dinheiro real do mercado hoje? Originalidade: Em vez de retorno %, mostra os maiores volumes financeiros transacionados no dia. | brapi / yfinance | M | Médio |
 | Alerta de Vácuo de Livro | Responde: Quais ações estão perigosamente ilíquidas agora? Originalidade: Foca no risco de execução olhando para o spread bid/ask. | brapi | G | Alto |
@@ -138,3 +140,14 @@
 | Distorção de Fechamento (Falso Sinal) | Responde: A alta desta ação foi só por causa de um puxão no leilão de fechamento? Originalidade: Compara 16:50 com 17:00. | yfinance | M | Baixo |
 | Experiência: Agrupamento Automático por Sentimento | Responde: Consigo ver apenas os alertas negativos juntos? Originalidade: Organiza a visão micro dinamicamente entre sinais de força e fraqueza. | N/A | M | Baixo |
 | Experiência: Modo "Histórico de Crises" | Responde: Como estava este painel no dia do Joesley Day? Originalidade: Máquina do tempo global no dashboard. | N/A | G | Alto |
+
+## Ideias (Passo 7 - 2026-10-05)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Termômetro de Liquidez Extrema | Responde: O mercado está travado ou eufórico? Originalidade: Usa o spread médio das 10 principais ações como proxy de estresse financeiro. | brapi | M | Médio |
+| Detector de Pullback Falso | Responde: Essa queda no intraday é chance de compra ou reversão real? Originalidade: Cruza retorno negativo intraday com aumento de volume comprador oculto (VWAP). | yfinance | G | Alto |
+| Alerta de Exaustão de Tendência Setorial | Responde: O rally deste setor acabou? Originalidade: Identifica quando 80% dos ativos de um setor fecham perto da mínima do dia após uma semana de alta. | yfinance | M | Baixo |
+| Mapa de Consenso Dividido | Responde: Onde os analistas mais discordam hoje? Originalidade: Foca na dispersão do preço-alvo em vez da média, revelando incerteza extrema. | brapi | G | Alto |
+| Impacto Cambial Cruzado | Responde: Como o DXY está esmagando ações domésticas hoje? Originalidade: Isola o efeito global (DXY) do efeito local (BRL=X) sobre as Small Caps. | yfinance | M | Médio |
+| Experiência: Modo "Mapa de Calor Setorial Compacto" | Responde: Consigo ver todos os setores em um quadrado de 200px? Originalidade: Treemap ultra denso focado em cores e pesos, sem texto, para visão periférica. | N/A | P | Baixo |
