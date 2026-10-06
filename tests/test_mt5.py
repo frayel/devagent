@@ -248,3 +248,45 @@ def test_ibovespa_sem_mt5_segue_para_brapi(mt5_ligado, monkeypatch):
     monkeypatch.setattr(ibovespa, "fetch_yfinance", lambda: None)
     assert not ibovespa.collect_and_save()
     assert chamado
+
+
+@respx.mock
+def test_simbolo_recusado_nao_pausa_os_outros(mt5_ligado, caplog):
+    """503 da mt5api é falha do símbolo (Mt5RuntimeError), não do servidor."""
+    erro = {
+        "type": "/errors/mt5-error",
+        "title": "MT5 Terminal Error",
+        "status": 503,
+        "detail": "MT5 last status: (-4, 'Terminal: Not found')",
+    }
+
+    def responder(request: httpx.Request) -> httpx.Response:
+        if request.url.params["symbol"] == "ELET3":
+            return httpx.Response(503, json=erro)
+        return httpx.Response(200, json={"data": barras_diarias(30)})
+
+    rota = respx.get(RATES).mock(side_effect=responder)
+    url = (
+        "https://query1.finance.yahoo.com/v7/finance/spark"
+        "?symbols=ELET3.SA,PETR4.SA,VALE3.SA&range=5d&interval=1d"
+    )
+    with caplog.at_level("WARNING"):
+        resultado = fetch_with_retry(url).json()["spark"]["result"]
+    assert [r["symbol"] for r in resultado] == ["PETR4.SA", "VALE3.SA"]
+    assert "Not found" in caplog.text
+
+    # Na rodada seguinte o símbolo recusado não é pedido de novo.
+    mt5._cache.clear()
+    fetch_with_retry(url)
+    pedidos = [c.request.url.params["symbol"] for c in rota.calls]
+    assert pedidos.count("ELET3") == 1
+    assert pedidos.count("PETR4") == 2
+
+
+@respx.mock
+def test_pausa_informa_o_motivo(mt5_ligado):
+    respx.get(RATES).mock(side_effect=httpx.ConnectTimeout("lento"))
+    with pytest.raises(mt5.Mt5Indisponivel):
+        mt5.barras("PETR4", "D1")
+    with pytest.raises(mt5.Mt5Indisponivel, match="ConnectTimeout"):
+        mt5.barras("VALE3", "D1")
