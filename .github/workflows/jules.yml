@@ -20,8 +20,12 @@ on:
       acao:
         description: "O que fazer"
         type: choice
-        options: [vigiar, desenvolvedor, seguranca, design, performance, auditor, destravar, listar]
+        options: [vigiar, desenvolvedor, seguranca, design, performance, auditor, destravar, listar, encerrar]
         default: vigiar
+      sessao:
+        description: "Só para encerrar: id da sessão ou URL da tarefa no Jules"
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -35,12 +39,15 @@ jobs:
     permissions:
       contents: read
       actions: write
+      pull-requests: read
     concurrency:
       group: jules-vigia
       cancel-in-progress: false
     env:
       JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
       JULES_LIMITE_DIARIO: ${{ vars.JULES_LIMITE_DIARIO }}
+      # Lê o estado do PR de cada sessão antes de responder (ADR 009).
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -64,12 +71,16 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.acao != 'vigiar'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
     concurrency:
       group: jules
       cancel-in-progress: false
     env:
       JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
       JULES_LIMITE_DIARIO: ${{ vars.JULES_LIMITE_DIARIO }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -77,6 +88,7 @@ jobs:
       - name: Executar
         env:
           ACAO: ${{ inputs.acao }}
+          SESSAO: ${{ inputs.sessao }}
         run: |
           if [ -z "$JULES_API_KEY" ]; then
             echo "::warning::Crie o secret JULES_API_KEY (https://jules.google.com/settings#api)."
@@ -84,5 +96,6 @@ jobs:
           fi
           case "$ACAO" in
             destravar|listar) python3 -m devagent.adaptadores.jules "$ACAO" ;;
+            encerrar) python3 -m devagent.adaptadores.jules encerrar "$SESSAO" ;;
             *) python3 -m devagent.adaptadores.jules iniciar "$ACAO" && python3 -m devagent.adaptadores.jules destravar ;;
           esac

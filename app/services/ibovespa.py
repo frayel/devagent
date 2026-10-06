@@ -75,4 +75,13 @@ def get_ibovespa_view_data() -> dict[str, Any] | None:
         "mm21_signal": mm21_signal,
         "mm200": mm200_formatted,
         "mm200_signal": mm200_signal,
+        "mm21_dist_pct": distancia_da_media(data.current_price, data.mm21),
+        "mm200_dist_pct": distancia_da_media(data.current_price, data.mm200),
     }
+
+
+def distancia_da_media(preco: float | None, media: float | None) -> float | None:
+    """Quanto o índice está acima (+) ou abaixo (−) da média, em % (spec 026)."""
+    if preco is None or not media:
+        return None
+    return (preco / media - 1) * 100

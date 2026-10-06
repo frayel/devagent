@@ -13,6 +13,8 @@ git checkout -B <branch> origin/<branch>
 
 Trabalhe **sempre nesta branch** e dê push nela. Nunca abra PR novo para o mesmo trabalho.
 
+**Ambiente reiniciado.** Se as suas alterações sumiram, o diretório voltou para a `main` ou você não reconhece o estado do repositório, o trabalho não se perdeu: ele está na branch do PR, no GitHub. Rode os dois comandos acima e continue dali. Não recomece da `main`, não recrie a spec e não pergunte se deve continuar: ninguém vai responder, e a sessão fica parada até o guardião fechar o PR (ADR 009).
+
 ## 2. CI falhando
 
 Reproduza exatamente o que o CI roda:

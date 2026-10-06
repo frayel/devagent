@@ -18,7 +18,7 @@ Use no Passo 7, ao transformar uma issue em spec (Passo 6) e ao dividir uma spec
 ---
 id: NNN
 titulo: ...
-status: draft | ready | in-progress | done
+status: draft | ready | done
 esforco: P | M | G
 ---
 

@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+
+from app import gauge
 from fastapi.staticfiles import StaticFiles
 
 import json
@@ -58,6 +60,9 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(lifespan=lifespan)
 templates = Jinja2Templates(directory="app/templates")
+# Cálculo dos gauges (spec 026): a macro só posiciona o que sai de app/gauge.py.
+templates.env.globals["gauge_dados"] = gauge.dados
+templates.env.filters["gauge_pct"] = gauge.gauge_pct
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 

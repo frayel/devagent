@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado %}
+{% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado, gauge %}
 
 {% block content %}
 <!-- Manchete Dinâmica -->
@@ -17,12 +17,7 @@
       <div class="hero num {% if apetite_risco.estado == 'Tomando risco' %}texto-alta{% elif apetite_risco.estado == 'Defensivo' %}texto-baixa{% else %}texto-neutro{% endif %} texto-centro">
         {{ apetite_risco.estado }}
       </div>
-      <div class="kpi-container alinha-centro">
-        <div class="rot">SMLL vs IBOV (hoje)</div>
-        <div class="kpi">
-          {{ variacao("%.2f%%" | format(apetite_risco.diferenca | abs), 1 if apetite_risco.diferenca > 0 else -1 if apetite_risco.diferenca < 0 else 0) }}
-        </div>
-      </div>
+      {{ gauge(apetite_risco.diferenca, "SMLL − IBOV hoje", -2.0, 2.0, "{:+.2f} p.p.", divergente=True, resumo="Small caps menos Ibovespa hoje") }}
     </div>
   {% endif %}
 {% endcall %}
@@ -69,19 +64,10 @@
       <div class='hero num {% if rotacao_capital.estado == "Para Bancos" or rotacao_capital.estado == "Para Commodities" %}texto-alta{% else %}texto-neutro{% endif %} texto-centro'>
         {{ rotacao_capital.estado }}
       </div>
-      <div class='duas m-t-2'>
-        <div>
-          <span class='sub d-block'>Bancos</span>
-          <div class='num {% if rotacao_capital.var_bancos > 0 %}texto-alta{% elif rotacao_capital.var_bancos < 0 %}texto-baixa{% endif %}'>
-            {{ ("%.2f%%" | format(rotacao_capital.var_bancos | abs)) if rotacao_capital.var_bancos else "0.00%" }}
-          </div>
-        </div>
-        <div>
-          <span class='sub d-block'>Commodities</span>
-          <div class='num {% if rotacao_capital.var_commodities > 0 %}texto-alta{% elif rotacao_capital.var_commodities < 0 %}texto-baixa{% endif %}'>
-            {{ ("%.2f%%" | format(rotacao_capital.var_commodities | abs)) if rotacao_capital.var_commodities else "0.00%" }}
-          </div>
-        </div>
+      {{ gauge(rotacao_capital.diferenca, "bancos − commodities", -3.0, 3.0, "{:+.2f} p.p.", divergente=True, resumo="Variação de bancos menos commodities hoje", escala=["Para Commodities", "Para Bancos"]) }}
+      <div class="legenda num">
+        <span>Bancos {{ variacao("%.2f%%" | format((rotacao_capital.var_bancos or 0) | abs) | replace(".", ","), 1 if (rotacao_capital.var_bancos or 0) > 0 else -1 if (rotacao_capital.var_bancos or 0) < 0 else 0) }}</span>
+        <span>Commodities {{ variacao("%.2f%%" | format((rotacao_capital.var_commodities or 0) | abs) | replace(".", ","), 1 if (rotacao_capital.var_commodities or 0) > 0 else -1 if (rotacao_capital.var_commodities or 0) < 0 else 0) }}</span>
       </div>
     </div>
   {% endif %}
@@ -104,28 +90,13 @@
 {% endcall %}
 
 <div class="span-4 pilha">
-{% call painel("Tendência (Ibovespa)", 12, "Médias móveis de curto (21) e longo prazo (200) dias.", data.fonte if data else "", data.time if data else "", "visao-macro painel-tendencia") %}
-    {% if data and data.mm21 and data.mm200 %}
-        <div class="duas">
-            <div>
-                <p class="sub">Curto Prazo (21d)</p>
-                <div class="kpi">
-                    <div class="valor num">{{ data.mm21 }}</div>
-                </div>
-                <div class="var {% if data.mm21_signal == 'Alta' %}alta{% elif data.mm21_signal == 'Baixa' %}baixa{% else %}neutra{% endif %}">
-                    {% if data.mm21_signal == 'Alta' %}▲{% elif data.mm21_signal == 'Baixa' %}▼{% else %}■{% endif %} {{ data.mm21_signal }}
-                </div>
-            </div>
-            <div>
-                <p class="sub">Longo Prazo (200d)</p>
-                <div class="kpi">
-                    <div class="valor num">{{ data.mm200 }}</div>
-                </div>
-                <div class="var {% if data.mm200_signal == 'Alta' %}alta{% elif data.mm200_signal == 'Baixa' %}baixa{% else %}neutra{% endif %}">
-                    {% if data.mm200_signal == 'Alta' %}▲{% elif data.mm200_signal == 'Baixa' %}▼{% else %}■{% endif %} {{ data.mm200_signal }}
-                </div>
-            </div>
+{% call painel("Tendência (Ibovespa)", 12, "Distância do Ibovespa às médias móveis simples de 21 e 200 pregões, numa escala de -10% a +10%.", data.fonte if data else "", data.time if data else "", "visao-macro painel-tendencia") %}
+    {% if data and (data.mm21 or data.mm200) %}
+        <div class="gauges">
+            <div>{{ gauge(data.mm21_dist_pct, "MM21 " ~ data.mm21 if data.mm21 else "MM21", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 21 pregões", escala=False) }}</div>
+            <div>{{ gauge(data.mm200_dist_pct, "MM200 " ~ data.mm200 if data.mm200 else "MM200", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 200 pregões", escala=False) }}</div>
         </div>
+        <div class="g-escala num"><span>-10%</span><span>+10%</span></div>
     {% else %}
         {{ estado('indisponivel') }}
     {% endif %}
@@ -133,7 +104,8 @@
 
 {% call painel("Dispersão", 12, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro") %}
     {% if highlights and highlights.dispersion_pct is not none %}
-        {{ medidor(highlights.dispersion_pct|int, "em alta") }}
+        {{ gauge(highlights.dispersion_pct, "em alta", 0, 100, "{:.0f}%", resumo="Dispersão, ações em alta") }}
+        {{ medidor(highlights.dispersion_pct|int, "em alta", numero=False) }}
         <div class="legenda num">
             <span>{{ highlights.up_count }} subiram</span>
             <span>{{ highlights.down_count }} caíram</span>
@@ -145,8 +117,8 @@
 
 {% call painel("Índice de Coesão", 12, "Das 10 ações mais pesadas do Ibovespa, quantas estão na mesma direção (alta ou baixa) do índice hoje.", coesao.fonte if coesao else "", coesao.time if coesao else "", "visao-macro") %}
     {% if coesao %}
-        {{ kpi(coesao.proporcao, coesao.estado, (variacao("Alta Coesão" if coesao.concordantes >= 7 else "Distorção" if coesao.concordantes <= 3 else "Neutra", 1 if coesao.concordantes >= 7 else -1 if coesao.concordantes <= 3 else 0)) | safe, False) }}
-        {{ medidor(coesao.concordantes / coesao.total * 100, "") }}
+        {{ gauge(coesao.concordantes, coesao.estado, 0, coesao.total, "{:.0f}", resumo="Índice de Coesão, ações na direção do índice", cor=coesao.cor, escala=["0", coesao.total ~ " ações"]) }}
+        <p class="sub texto-centro">{{ coesao.proporcao }} na mesma direção do Ibovespa</p>
     {% else %}
         {{ estado('indisponivel') }}
     {% endif %}

@@ -48,7 +48,7 @@ devagent/
 docs/
   STATE.md             # estado atual do sistema (fonte da verdade do agente)
   BACKLOG.md           # seção Correções (Passo 1) e ideias de features (Passo 7)
-  specs/NNN-titulo.md  # especificações; status: draft | ready | in-progress | done
+  specs/NNN-titulo.md  # especificações; status: draft | ready | done (`in-progress` nunca é commitado)
   decisions/           # ADRs sobre o produto e o stack
   runs/AAAA-MM-DD-HHMM.md  # relatório de cada execução
   context/             # conhecimento durável do projeto
@@ -124,7 +124,7 @@ Encerre a execução.
 
 ### Passo 4 · Implementar uma especificação
 
-Escolha a spec com `status: ready` de menor número. Antes de começar, procure issues abertas com label `tentativa-falhou` sobre ela: leia o motivo da tentativa anterior, evite repetir o erro e inclua `Closes #N` no PR. Mude para `in-progress`, implemente, escreva os testes, atualize `docs/STATE.md` (inclusive o contador de painéis da cadência de experiência, se a spec acrescenta um painel, seção ou tela) e `CHANGELOG.md`, marque a spec como `done` no mesmo PR e abra o PR com prefixo `feat:`. Antes de abrir, rode `python -m devagent.conferir_pr`: o job `disciplina` do CI reprova PR com spec `in-progress`, script de teste fora de `tests/`, spec `done` sem `CHANGELOG.md` citando o número ou sem `docs/STATE.md`, e spec nova fechada enquanto a seção *Correções* tem entrada pendente.
+Escolha a spec com `status: ready` de menor número. Antes de começar, procure issues abertas com label `tentativa-falhou` sobre ela: leia o motivo da tentativa anterior, evite repetir o erro e inclua `Closes #N` no PR. Implemente, escreva os testes, atualize `docs/STATE.md` (inclusive o contador de painéis da cadência de experiência, se a spec acrescenta um painel, seção ou tela) e `CHANGELOG.md`, marque a spec como `done` no mesmo PR e abra o PR com prefixo `feat:`. O status vai de `ready` direto para `done`: **nunca faça commit com `in-progress`**, nem num primeiro push "para salvar o progresso", porque o PR é aberto no primeiro push e já nasce reprovado. Faça o primeiro commit só quando a spec, os testes, o `CHANGELOG.md` e o `docs/STATE.md` estiverem prontos. Antes de abrir, rode `python -m devagent.conferir_pr`: o job `disciplina` do CI reprova PR com spec `in-progress`, script de teste fora de `tests/`, spec `done` sem `CHANGELOG.md` citando o número ou sem `docs/STATE.md`, e spec nova fechada enquanto a seção *Correções* tem entrada pendente.
 
 Se a spec for grande demais para um PR de até ~400 linhas alteradas (excluindo testes e fixtures), divida-a em specs menores, marque a original como `draft` e encerre. A implementação fica para a próxima execução.
 
@@ -153,7 +153,7 @@ Escolha **uma** issue, a mais antiga. Leia o corpo e todos os comentários. Ent�
 | Duplicada, inválida ou já resolvida | Siga `devagent/skills/fechar-issues-resolvidas.md`: PR `docs:` com o relatório da execução e, no corpo, `Closes #N` e a explicação. |
 | Ambígua | Adote a interpretação mais conservadora, registre-a na issue e siga. Se nem assim for seguro agir, aplique `bloqueado`, pergunte na issue o que falta e encerre. |
 
-Se uma issue já tem spec `ready` ou `in-progress` vinculada, o Passo 4 cuida dela. Encerre a execução.
+Se uma issue já tem spec `ready` vinculada, o Passo 4 cuida dela. Encerre a execução.
 
 **Como issues são fechadas.** Você não tem permissão para comentar em issues nem para fechá-las. Toda issue que você resolve fecha pelo PR: escreva `Closes #N` (uma linha por issue) no corpo do PR. Depois do merge, o `automerge.yml` fecha as issues citadas, e o guardião repete a checagem de hora em hora. Issues `deploy-falhou` e `producao-incorreta` não fecham assim: só fecham quando a verificação que as abriu passar. Não use contornos como commits vazios com "Closes": o squash merge descarta essas mensagens.
 
@@ -245,7 +245,7 @@ O núcleo mora neste mesmo repositório justamente para você poder aprimorá-lo
 | `devagent/skills/escrever-spec.md` | como escrever uma boa spec e o modelo | Passo 7, ao transformar issue em spec e ao dividir specs |
 | `devagent/skills/descobrir-ideias.md` | como gerar ideias originais e escolher a próxima | Passo 7 |
 | `devagent/skills/rever-experiencia.md` | como rever a tela inteira a partir das capturas e transformar problemas em ideias | Passo 7, em toda rodada e obrigatoriamente na cadência de experiência |
-| `devagent/decisoes/` | ADRs do núcleo: `001` guardião e Passo 2, `002` correções no Passo 1, `003` escopo aberto, `005` núcleo separado do projeto, `006` revisão de experiência, `007` sem revisão humana, `008` disciplina conferida no CI | antes de mudar o ciclo de decisão |
+| `devagent/decisoes/` | ADRs do núcleo: `001` guardião e Passo 2, `002` correções no Passo 1, `003` escopo aberto, `005` núcleo separado do projeto, `006` revisão de experiência, `007` sem revisão humana, `008` disciplina conferida no CI, `009` retomada depois de ambiente reiniciado | antes de mudar o ciclo de decisão |
 | `devagent/agents/` | personas do auditor e dos especialistas | quando acionado como uma delas |
 
 O índice do projeto está no `PRODUTO.md`. Ao criar um arquivo novo em `devagent/skills/`, acrescente-o a esta tabela no mesmo PR; em `docs/skills/` ou `docs/context/`, à tabela do `PRODUTO.md`.

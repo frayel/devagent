@@ -24,6 +24,12 @@ def get_coesao_view_data() -> dict[str, Any] | None:
         "total": data.total,
         "proporcao": f"{data.concordantes} de {data.total} ações",
         "estado": estado,
+        # Cor do gauge (spec 026): alta de 7 em diante, baixa até 3.
+        "cor": "alta"
+        if data.concordantes >= 7
+        else "baixa"
+        if data.concordantes <= 3
+        else "neutra",
         "time": time_formatted,
         "fonte": data.fonte,
     }
