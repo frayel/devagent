@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- feat: Alerta de Volatilidade Silenciosa (Doji Extremo) (Spec 028). Novo painel na visão micro que exibe as top 3 ações com maior amplitude intraday e fechamento próximo à abertura (≤ 0.5% de variação), refletindo forte indecisão de mercado. Baseado em dados do Yahoo Finance.
 ### Changed
 - agent: `docs/DESIGN.md` reduz o gráfico do Ibovespa para 200px e proíbe eixo Y de preço começando em zero (vai de 2% abaixo do mínimo do período), a pedido do dono do produto.
 ### Fixed

@@ -171,7 +171,6 @@
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |
 |---|---|---|---|---|
-| Alerta de Volatilidade Silenciosa (Doji Extremo) | Responde: O preço não saiu do lugar, mas teve muita briga ou pouca briga hoje? Originalidade: Foca na amplitude intraday (máxima vs mínima) em dias onde o fechamento quase empatou com a abertura. | brapi/yfinance | M | Baixo |
 | Correlação Intraday com Dólar | Responde: Quem está sendo esmagado ou impulsionado pelo Dólar neste exato momento? Originalidade: Isola o beta contra o IBOV e correlaciona especificamente contra o BRL=X no intraday. | yfinance | M | Médio |
 | Anomalia de Dia da Semana | Responde: As terças-feiras costumam ser vermelhas para o IBOV? Originalidade: Calcula a probabilidade baseada puramente na sazonalidade dos dias úteis. | yfinance | M | Baixo |
 | Detector de Puxada de Leilão de Fechamento | Responde: Quem subiu ou desceu artificialmente no apagar das luzes? Originalidade: Mede o impacto exclusivo dos últimos 5 minutos no preço final e sinaliza distorções de preço provocadas apenas pelo fluxo de leilão. | brapi | G | Alto |

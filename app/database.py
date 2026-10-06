@@ -140,9 +140,69 @@ class RotacaoCapitalData:
     fonte: str
 
 
+@dataclass
+class VolatilidadeSilenciosaData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "yfinance"
+
+
+def save_volatilidade_silenciosa_data(data: VolatilidadeSilenciosaData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO volatilidade_silenciosa_cache (timestamp, alertas_json, fonte)
+        VALUES (?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            data.alertas_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_volatilidade_silenciosa_data() -> VolatilidadeSilenciosaData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT timestamp, alertas_json, fonte
+            FROM volatilidade_silenciosa_cache
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        row = None
+    finally:
+        conn.close()
+    if row:
+        return VolatilidadeSilenciosaData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            alertas_json=row["alertas_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
 def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS volatilidade_silenciosa_cache (
+            timestamp TEXT,
+            alertas_json TEXT,
+            fonte TEXT
+        )
+        """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_volatilidade_silenciosa_timestamp ON volatilidade_silenciosa_cache (timestamp DESC)
+        """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS armadilha_abertura_cache (
             timestamp TEXT,

@@ -29,6 +29,7 @@ from app.services.faca_caindo import get_faca_caindo_view
 from app.services.compradores_fundo import get_compradores_fundo_view
 from app.services.armadilha_abertura import get_armadilha_abertura_view
 from app.services.sobrevivencia_semanal import get_sobrevivencia_semanal_view
+from app.services.volatilidade_silenciosa import get_volatilidade_silenciosa_view
 from app.services import mare as mare_servico
 from app.database import (
     get_latest_concentracao_setorial_data,
@@ -324,6 +325,7 @@ def snapshot():
         resp["paineis"]["rotacao_capital"] = {}
 
     from app.database import get_latest_faca_caindo_data
+    from app.database import get_latest_volatilidade_silenciosa_data
 
     faca_caindo_data = get_latest_faca_caindo_data()
     if faca_caindo_data:
@@ -381,6 +383,20 @@ def snapshot():
     else:
         resp["paineis"]["sobrevivencia_semanal"] = {}
 
+    volatilidade_silenciosa_data = get_latest_volatilidade_silenciosa_data()
+    if volatilidade_silenciosa_data:
+        try:
+            alertas = json.loads(volatilidade_silenciosa_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["volatilidade_silenciosa"] = {
+            "coletado_em": volatilidade_silenciosa_data.timestamp.isoformat(),
+            "fonte": volatilidade_silenciosa_data.fonte,
+            "alertas": alertas,
+        }
+    else:
+        resp["paineis"]["volatilidade_silenciosa"] = {}
+
     return resp
 
 
@@ -433,6 +449,7 @@ async def index(request: Request):
     compradores_fundo = get_compradores_fundo_view()
     armadilha_abertura = get_armadilha_abertura_view()
     sobrevivencia_semanal = get_sobrevivencia_semanal_view()
+    volatilidade_silenciosa = get_volatilidade_silenciosa_view()
     mare = mare_servico.get_mare_view()
     return templates.TemplateResponse(
         request=request,
@@ -456,6 +473,7 @@ async def index(request: Request):
             "compradores_fundo": compradores_fundo,
             "armadilha_abertura": armadilha_abertura,
             "sobrevivencia_semanal": sobrevivencia_semanal,
+            "volatilidade_silenciosa": volatilidade_silenciosa,
             "mare": mare,
         },
     )

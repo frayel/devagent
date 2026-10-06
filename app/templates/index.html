@@ -430,5 +430,30 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Altas seguidas', 'num': True}], 'sobrevivencia-semanal') }}
     {% endif %}
 {% endcall %}
+{% call painel("Volatilidade Silenciosa", 4, "Ações com forte oscilação intraday (alta amplitude) mas que fecharam próximas da abertura (variação ≤ 0.5%).", volatilidade_silenciosa.fonte if volatilidade_silenciosa else "", volatilidade_silenciosa.coletado_em if volatilidade_silenciosa else "", "visao-micro") %}
+  {% if volatilidade_silenciosa and volatilidade_silenciosa.alertas %}
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Ativo</th>
+          <th class="numero">Amplitude</th>
+          <th class="numero">Variação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in volatilidade_silenciosa.alertas %}
+        <tr>
+          <td>{{ a.ticker }}</td>
+          <td class="numero">{{ "%.1f"|format(a.amplitude) }}%</td>
+          <td class="numero">{{ "%+.2f"|format(a.variacao) }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="vazio">Não houve volatilidade silenciosa no pregão atual.</p>
+  {% endif %}
+{% endcall %}
+
 
 {% endblock %}

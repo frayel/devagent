@@ -8,11 +8,17 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 2 (Concentração Setorial, Maré do mercado) (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 028 (Volatilidade Silenciosa):
+  - Banco de dados SQLite (`volatilidade_silenciosa_cache`).
+  - Coletor com `yfinance` buscando dados diários (spark).
+  - Exibição de ações com alta amplitude intraday mas baixa variação entre abertura e fechamento.
+  - Adicionado painel na `visao-micro` e ao contrato `/api/snapshot`.
+
 - Spec 027 (Maré do mercado):
   - Cálculo em `app/services/mare.py` e coletor `app/collectors/mare.py` (cesta `TICKERS` com `spark` 3mo e Ibovespa com `chart` 2y, MT5 preferencial, brapi como reserva do Ibovespa); cache `mare_cache`.
   - Painel `span-4` ao lado do Ibovespa; Tendência, Dispersão e Coesão viram a linha seguinte.
   - Chave `mare` no `/api/snapshot`; `checar_mare` em `auditoria/auditar.py`.
-  - Contador da cadência de experiência: 2.
+  - Contador da cadência de experiência: 3.
 
 - Spec 026 (Gauges para valores únicos):
   - Macro `gauge` em `componentes.html` e cálculo em `app/gauge.py` (filtro `gauge_pct` e global `gauge_dados`).
