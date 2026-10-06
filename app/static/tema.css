@@ -307,3 +307,40 @@ body.modo-so-sinais .painel-rotacao .hero {
     font-weight: bold;
     margin-bottom: 20px;
 }
+
+/* Gauges */
+.gauge {
+    display: block;
+    width: 100%;
+    margin: var(--e3) auto 0 auto;
+}
+
+.gauge .g-trilho {
+    stroke: var(--superficie-2);
+    stroke-width: 10;
+    fill: none;
+    stroke-linecap: butt;
+}
+
+.gauge .g-valor {
+    stroke-width: 10;
+    fill: none;
+    stroke-linecap: butt;
+    transition: stroke-dasharray 0.15s ease, stroke-dashoffset 0.15s ease;
+}
+
+.gauge .g-valor.alta { stroke: var(--alta); }
+.gauge .g-valor.baixa { stroke: var(--baixa); }
+.gauge .g-valor.neutra { stroke: var(--destaque); }
+
+.gauge .g-faixa-1 { stroke: var(--baixa); }
+.gauge .g-faixa-2 { stroke: color-mix(in srgb, var(--baixa) 45%, transparent); }
+.gauge .g-faixa-3 { stroke: var(--texto-3); }
+.gauge .g-faixa-4 { stroke: color-mix(in srgb, var(--alta) 45%, transparent); }
+.gauge .g-faixa-5 { stroke: var(--alta); }
+
+.gauge .g-agulha {
+    stroke: var(--texto);
+    stroke-width: 2;
+    stroke-linecap: round;
+}

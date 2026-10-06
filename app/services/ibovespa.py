@@ -73,6 +73,12 @@ def get_ibovespa_view_data() -> dict[str, Any] | None:
         "fonte": data.fonte,
         "mm21": mm21_formatted,
         "mm21_signal": mm21_signal,
+        "mm21_dist_pct": ((data.current_price / data.mm21 - 1) * 100)
+        if data.mm21
+        else None,
         "mm200": mm200_formatted,
         "mm200_signal": mm200_signal,
+        "mm200_dist_pct": ((data.current_price / data.mm200 - 1) * 100)
+        if data.mm200
+        else None,
     }

@@ -1,7 +1,7 @@
 ---
 id: 026
 titulo: Gauges para valores únicos
-status: ready
+status: in-progress
 esforco: M
 ---
 
