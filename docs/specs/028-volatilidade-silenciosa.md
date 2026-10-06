@@ -1,7 +1,7 @@
 ---
 id: 028
 titulo: Alerta de Volatilidade Silenciosa (Doji Extremo)
-status: ready
+status: done
 esforco: M
 ---
 
