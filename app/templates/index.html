@@ -187,16 +187,12 @@
 <!-- Linha Força Relativa -->
 {% call painel("Força Relativa (30 dias)", 4, "Comparação da rentabilidade acumulada de 30 ações de alta liquidez frente ao Ibovespa em 30 pregões.", forca_relativa.fonte if forca_relativa else "", forca_relativa.time if forca_relativa else "", "visao-micro") %}
     {% if forca_relativa %}
-        <div class="linha-kpis">
-            <div class="kpi-secundario">
-                <span class="rotulo">Maior Força</span>
-                <strong>{{ forca_relativa.maior.ticker }}</strong>
-                {{ variacao((forca_relativa.maior.forca_relativa * 100)|round(2) ~ "% vs IBOV", forca_relativa.maior.forca_relativa) }}
+        <div class="duas">
+            <div>
+                {{ kpi(forca_relativa.maior.ticker, "Maior Força", variacao((("%.2f" | format(forca_relativa.maior.forca_relativa * 100)).replace('.', ',') ~ "% vs IBOV"), forca_relativa.maior.forca_relativa)) }}
             </div>
-            <div class="kpi-secundario">
-                <span class="rotulo">Menor Força</span>
-                <strong>{{ forca_relativa.menor.ticker }}</strong>
-                {{ variacao((forca_relativa.menor.forca_relativa * 100)|round(2) ~ "% vs IBOV", forca_relativa.menor.forca_relativa) }}
+            <div>
+                {{ kpi(forca_relativa.menor.ticker, "Menor Força", variacao((("%.2f" | format(forca_relativa.menor.forca_relativa * 100)).replace('.', ',') ~ "% vs IBOV"), forca_relativa.menor.forca_relativa)) }}
             </div>
         </div>
     {% else %}
@@ -295,7 +291,7 @@
 {% call painel("Atrasadas do Rally", 4, "Ações que ficaram para trás nos últimos 5 pregões em momentos de alta > 2% do Ibovespa.", atrasadas_rally.fonte if atrasadas_rally else "", atrasadas_rally.time if atrasadas_rally else "", "visao-micro") %}
     {% if atrasadas_rally %}
         {% if not atrasadas_rally.rally_valido %}
-            <div class="sem-dados">Ibovespa sem rally recente</div>
+            <div class="vazio">Ibovespa sem rally recente</div>
         {% elif atrasadas_rally.top3 %}
             {% set linhas = [] %}
             {% for item in atrasadas_rally.top3 %}
@@ -308,7 +304,7 @@
             {% endfor %}
             {{ tabela_ativos(linhas, [{"titulo": "Ativo"}, {"titulo": "5d (Ativo)", "num": True}], "atrasadas-rally") }}
         {% else %}
-            <div class="sem-dados">Nenhuma ação encontrada.</div>
+            <div class="vazio">Nenhuma ação encontrada.</div>
         {% endif %}
     {% else %}
         {{ estado('indisponivel') }}
