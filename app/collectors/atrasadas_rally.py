@@ -4,6 +4,7 @@ import sys
 from datetime import datetime, timezone
 import httpx
 from app.database import AtrasadasRallyData, save_atrasadas_rally_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
 
@@ -51,7 +52,7 @@ def fetch_yfinance() -> AtrasadasRallyData | None:
                 timestamp=datetime.now(timezone.utc),
                 rally_valido=False,
                 top3_json="[]",
-                fonte="yfinance",
+                fonte=mt5.fonte_efetiva("yfinance"),
             )
 
         diffs = []
@@ -69,7 +70,7 @@ def fetch_yfinance() -> AtrasadasRallyData | None:
             timestamp=datetime.now(timezone.utc),
             rally_valido=True,
             top3_json=json.dumps(top3),
-            fonte="yfinance",
+            fonte=mt5.fonte_efetiva("yfinance"),
         )
 
     except httpx.HTTPError as e:

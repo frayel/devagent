@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timezone
 import httpx
 from app.database import ApetiteRiscoData, save_apetite_risco_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 
 logger = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ def fetch_yfinance() -> ApetiteRiscoData | None:
                 timestamp=datetime.now(timezone.utc),
                 estado=estado,
                 diferenca=diferenca,
-                fonte="yfinance",
+                fonte=mt5.fonte_efetiva("yfinance"),
             )
     except Exception as e:
         logger.error(f"Error fetching apetite risco: {e}")

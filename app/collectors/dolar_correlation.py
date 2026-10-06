@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import math
 
 from app.database import DolarCorrelationData, save_dolar_correlation_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
 
@@ -62,7 +63,7 @@ def collect_and_save() -> bool:
                 timestamp=datetime.now(timezone.utc),
                 positivas_json="[]",
                 negativas_json="[]",
-                fonte="yfinance",
+                fonte=mt5.fonte_efetiva("yfinance"),
             )
         )
         return False
@@ -84,7 +85,7 @@ def collect_and_save() -> bool:
                 timestamp=datetime.now(timezone.utc),
                 positivas_json="[]",
                 negativas_json="[]",
-                fonte="yfinance",
+                fonte=mt5.fonte_efetiva("yfinance"),
             )
         )
         return False
@@ -138,7 +139,7 @@ def collect_and_save() -> bool:
                 timestamp=datetime.now(timezone.utc),
                 positivas_json="[]",
                 negativas_json="[]",
-                fonte="yfinance",
+                fonte=mt5.fonte_efetiva("yfinance"),
             )
         )
         return False
@@ -154,7 +155,7 @@ def collect_and_save() -> bool:
         timestamp=datetime.now(timezone.utc),
         positivas_json=json.dumps(positivas),
         negativas_json=json.dumps(negativas),
-        fonte="yfinance",
+        fonte=mt5.fonte_efetiva("yfinance"),
     )
     save_dolar_correlation_data(data)
     logger.info("Saved dolar correlation data.")

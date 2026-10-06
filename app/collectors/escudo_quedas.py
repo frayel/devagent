@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timezone
 import httpx
 from app.database import EscudoQuedasData, save_escudo_quedas_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
 
@@ -126,7 +127,7 @@ def fetch_yfinance() -> EscudoQuedasData | None:
     return EscudoQuedasData(
         timestamp=datetime.now(timezone.utc),
         top3_json=json.dumps(final_data),
-        fonte="yfinance",
+        fonte=mt5.fonte_efetiva("yfinance"),
     )
 
 

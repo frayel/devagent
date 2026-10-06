@@ -32,7 +32,7 @@ Toda recomendação exibida precisa mostrar: a fonte, a data da coleta, o métod
 | Web | FastAPI + Jinja2 + HTMX | servidor único, sem build de frontend |
 | Gráficos | Plotly.js via CDN, com tema único em `app/static/graficos.js` | gráficos interativos com JSON gerado no backend |
 | Interface | tema escuro, tokens em `app/static/tema.css`, macros em `app/templates/componentes.html` | guia em `docs/DESIGN.md` |
-| Dados de mercado | brapi.dev (API), yfinance (tickers `.SA`) | fontes estruturadas primeiro |
+| Dados de mercado | MetaTrader 5 via mt5api (preferencial), brapi.dev (API), yfinance (tickers `.SA`) | fontes estruturadas primeiro |
 | Scraping | httpx + selectolax; Playwright só se inevitável | leve por padrão |
 | Armazenamento | SQLite em disco persistente do Render, ou Postgres do Render quando necessário | começar simples |
 | Agendamento de coleta | laço no próprio web service (`app/agendador.py`, ADR 004) | no plano gratuito o disco é efêmero e não é compartilhado com um Cron Job |
@@ -149,6 +149,10 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | Variável | Onde | Uso |
 |---|---|---|
 | `BRAPI_TOKEN` | Render | token da brapi.dev (sem ele, a coleta usa só o Yahoo Finance) |
+| `MT5_API_URL` | Render, secreto | base da mt5api, ex. `http://host:8000/api/v1`; liga o MetaTrader 5 como fonte preferencial |
+| `MT5_API_KEY` | Render, secreto | chave enviada no header `X-API-Key` (igual a `MT5API_SECRET_KEY` no servidor) |
+| `MT5_SIMBOLOS` | Render, opcional | JSON de símbolos Yahoo → MT5; padrão `{"^BVSP": "IBOV"}` |
+| `MT5_FUSO_SERVIDOR` | Render, opcional | fuso do servidor da corretora em horas; padrão `-3` |
 | `COLETA_AUTOMATICA` | Render, opcional | `0` desliga a coleta dentro do web service |
 | `DATABASE_PATH` | opcional | caminho do banco SQLite (padrão `data.db`) |
 | `DATABASE_URL` | Render | quando migrar de SQLite para Postgres |

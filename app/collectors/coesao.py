@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import httpx
 
 from app.database import CoesaoData, save_coesao_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 
 logging.basicConfig(level=logging.INFO)
@@ -96,7 +97,7 @@ def fetch_yfinance() -> CoesaoData | None:
         timestamp=datetime.now(timezone.utc),
         concordantes=concordantes,
         total=total,
-        fonte="yfinance",
+        fonte=mt5.fonte_efetiva("yfinance"),
     )
 
 

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import httpx
 
 from app.database import HighlightsData, save_highlights_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 
 logging.basicConfig(level=logging.INFO)
@@ -232,7 +233,7 @@ def fetch_yfinance() -> HighlightsData | None:
         timestamp=datetime.now(timezone.utc),
         highs_json=json.dumps(highs),
         lows_json=json.dumps(lows),
-        fonte="yfinance",
+        fonte=mt5.fonte_efetiva("yfinance"),
         up_count=up_count,
         down_count=down_count,
         total_count=len(parsed_results),
@@ -241,7 +242,13 @@ def fetch_yfinance() -> HighlightsData | None:
 
 def collect_and_save() -> bool:
     logger.info("Starting highlights collection...")
-    data = fetch_brapi_lista()
+    data = None
+    if mt5.configurado():
+        # MetaTrader 5 é a fonte preferencial; sem ele, segue a ordem antiga.
+        with mt5.exclusivo():
+            data = fetch_yfinance()
+    if not data:
+        data = fetch_brapi_lista()
     if not data:
         logger.info("Falling back highlights to brapi quote by ticker...")
         data = fetch_brapi()

@@ -38,7 +38,17 @@ def fetch_with_retry(
     backoff_factor: float = 1.0,
     **kwargs,
 ) -> httpx.Response:
+    # O MetaTrader 5 é a fonte preferencial das URLs do Yahoo Finance: se ele
+    # responder, o Yahoo nem é chamado (app/collectors/mt5.py).
+    from app.collectors import mt5
+
+    resposta_mt5 = mt5.interceptar(url)
+    if resposta_mt5 is not None:
+        return resposta_mt5
+
     domain = _get_domain(url)
+    if "finance.yahoo.com" in domain:
+        mt5.registrar_fonte(mt5.FONTE_YAHOO)
 
     headers = kwargs.get("headers", {})
     if "User-Agent" not in headers:

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import httpx
 
 from app.database import IbovespaData, save_ibovespa_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 
 logging.basicConfig(level=logging.INFO)
@@ -123,7 +124,7 @@ def fetch_yfinance() -> IbovespaData | None:
             current_price=current_price,
             previous_close=previous_close,
             history_json=history_json,
-            fonte="yfinance",
+            fonte=mt5.fonte_efetiva("yfinance"),
             mm21=mm21,
             mm200=mm200,
         )
@@ -134,7 +135,13 @@ def fetch_yfinance() -> IbovespaData | None:
 
 def collect_and_save() -> bool:
     logger.info("Starting collection...")
-    data = fetch_brapi()
+    data = None
+    if mt5.configurado():
+        # MetaTrader 5 é a fonte preferencial; sem ele, segue a ordem antiga.
+        with mt5.exclusivo():
+            data = fetch_yfinance()
+    if not data:
+        data = fetch_brapi()
     if not data:
         logger.info("Falling back to yfinance...")
         data = fetch_yfinance()
