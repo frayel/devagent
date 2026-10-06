@@ -61,6 +61,28 @@ header .hora{margin-left:auto;font-size:var(--fs-meta);color:var(--texto-3)}
 .medidor{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--superficie-2)}
 .medidor i{display:block}
 .medidor .a{background:var(--alta)}.medidor .b{background:var(--baixa)}
+.gauge{position:relative;width:100%;max-width:220px;margin:0 auto}
+.gauge svg{display:block;width:100%;height:96px}
+.gauge.grande svg{height:140px}
+.gauge path,.gauge line{fill:none;stroke-linecap:butt}
+.g-trilho{stroke:var(--superficie-2);stroke-width:10}
+.g-valor{stroke-width:10}.g-valor.alta{stroke:var(--alta)}.g-valor.baixa{stroke:var(--baixa)}.g-valor.neutra{stroke:var(--destaque)}
+.g-faixa{stroke-width:4}
+.g-cor-1{stroke:var(--baixa)}.g-cor-2{stroke:var(--baixa);opacity:.45}.g-cor-3{stroke:var(--texto-3)}.g-cor-4{stroke:var(--alta);opacity:.45}.g-cor-5{stroke:var(--alta)}
+.g-agulha{stroke:var(--texto);stroke-width:2;stroke-linecap:round}
+.g-centro{position:absolute;left:0;right:0;bottom:2px;text-align:center;line-height:1.1}
+.g-centro .v{font-size:var(--fs-kpi);font-weight:600}
+.gauge.grande .g-centro{bottom:-6px}
+.gauge.grande .g-centro .v{font-size:var(--fs-hero)}
+.g-centro .f{font-size:var(--fs-meta);color:var(--texto-2)}
+.g-escala{display:flex;justify-content:space-between;font-size:var(--fs-meta);color:var(--texto-3);padding:0 2px}
+.gauges{display:grid;grid-template-columns:1fr 1fr;gap:var(--e3)}
+.comp{display:grid;grid-template-columns:96px 1fr 28px;align-items:center;gap:var(--e2);font-size:var(--fs-meta);color:var(--texto-2)}
+.comp .trilho{height:6px;border-radius:3px;background:var(--superficie-2);overflow:hidden}
+.comp .trilho i{display:block;height:100%;background:var(--destaque)}
+.comp .num{color:var(--texto);text-align:right}
+.spark{display:flex;align-items:center;gap:var(--e3);font-size:var(--fs-meta);color:var(--texto-3)}
+.spark svg{flex:1;height:48px;min-width:0}
 .legenda{display:flex;justify-content:space-between;font-size:var(--fs-meta);color:var(--texto-2)}
 table{width:100%;border-collapse:collapse}
 th{font-size:var(--fs-meta);font-weight:500;color:var(--texto-2);text-align:left;padding:6px var(--e2);background:var(--superficie-2)}
@@ -112,23 +134,19 @@ a{color:var(--destaque)}
 
   <div class="span-4 pilha">
     <section class="painel">
-      <div class="cab"><h2>Tendência</h2>
-        <details><summary aria-label="Método">i</summary><div class="metodo">Médias móveis simples de 21 e 200 pregões. Sinal de alta quando o índice está acima da média.</div></details>
+      <div class="cab"><h2>Maré do mercado</h2>
+        <details><summary aria-label="Método">i</summary><div class="metodo">Índice de 0 a 100: 40% fluxo (parcela do volume financeiro em ações que sobem), 35% calma (inverso do percentil da volatilidade de 10 pregões do Ibovespa no último ano) e 25% volume (ritmo do volume contra a média de 21 pregões, no sentido da maioria). Descreve o humor do momento; não é recomendação.</div></details>
       </div>
-      <div class="kpis">
-        <div class="kpi"><div class="rot">Curto prazo · MM21</div><div class="v num">129.870</div><div class="var alta">Acima · +1,24%</div></div>
-        <div class="kpi"><div class="rot">Longo prazo · MM200</div><div class="v num">127.115</div><div class="var alta">Acima · +3,44%</div></div>
+      <div class="gauge grande" role="img" aria-label="Maré do mercado: 68 de 100, Confiança">
+        <svg viewBox="0 0 120 64"><path class="g-faixa g-cor-1" d="M3 60 A57 57 0 0 1 117 60" pathLength="100" stroke-dasharray="19 100" stroke-dashoffset="-0.5"/><path class="g-faixa g-cor-2" d="M3 60 A57 57 0 0 1 117 60" pathLength="100" stroke-dasharray="19 100" stroke-dashoffset="-20.5"/><path class="g-faixa g-cor-3" d="M3 60 A57 57 0 0 1 117 60" pathLength="100" stroke-dasharray="19 100" stroke-dashoffset="-40.5"/><path class="g-faixa g-cor-4" d="M3 60 A57 57 0 0 1 117 60" pathLength="100" stroke-dasharray="19 100" stroke-dashoffset="-60.5"/><path class="g-faixa g-cor-5" d="M3 60 A57 57 0 0 1 117 60" pathLength="100" stroke-dasharray="19 100" stroke-dashoffset="-80.5"/><path class="g-trilho" d="M10 60 A50 50 0 0 1 110 60" pathLength="100"/><path class="g-valor g-cor-4" d="M10 60 A50 50 0 0 1 110 60" pathLength="100" stroke-dasharray="68 100"/><line class="g-agulha" x1="60" y1="16" x2="60" y2="1" transform="rotate(32.4 60 60)"/></svg>
+        <div class="g-centro"><div class="v num">68</div><div class="f">Confiança</div></div>
       </div>
-      <div class="rodape">Fonte yfinance · 01/10/2026 14:37 BRT</div>
-    </section>
-    <section class="painel">
-      <div class="cab"><h2>Dispersão</h2><span class="selo alerta">desatualizado</span>
-        <details><summary aria-label="Método">i</summary><div class="metodo">Proporção de ações em alta numa amostra de 30 papéis de alta liquidez, sem ponderação.</div></details>
-      </div>
-      <div class="hero"><div class="valor num">63%</div><div class="rot">em alta · leitura: euforia</div></div>
-      <div class="medidor" aria-hidden="true"><i class="a" data-w="63"></i><i class="b" data-w="37"></i></div>
-      <div class="legenda num"><span>19 subiram</span><span>11 caíram</span></div>
-      <div class="rodape">Fonte brapi.dev · 01/10/2026 13:58 BRT · amostra 30</div>
+      <div class="g-escala num"><span>0 · Pânico</span><span>Otimismo extremo · 100</span></div>
+      <div class="comp"><span>Fluxo</span><div class="trilho"><i data-w="74"></i></div><span class="num">74</span></div>
+      <div class="comp"><span>Calma</span><div class="trilho"><i data-w="61"></i></div><span class="num">61</span></div>
+      <div class="comp"><span>Volume</span><div class="trilho"><i data-w="67"></i></div><span class="num">67</span></div>
+      <div class="spark"><svg id="s-mare" viewBox="0 0 200 48" preserveAspectRatio="none" role="img" aria-label="Maré nos últimos 21 pregões, de 31 a 68"></svg><span class="num">há 5 pregões: 54 · Neutro</span></div>
+      <div class="rodape">Fonte yfinance · 01/10/2026 14:37 BRT · amostra 30</div>
     </section>
   </div>
 
@@ -212,6 +230,53 @@ a{color:var(--destaque)}
     <div class="rodape">Última tentativa 01/10/2026 14:35 BRT</div>
   </section>
 
+  <!-- Linha 4: gauges divergentes (zero no topo) -->
+  <section class="painel span-4">
+    <div class="cab"><h2>Tendência</h2>
+      <details><summary aria-label="Método">i</summary><div class="metodo">Distância do Ibovespa às médias móveis simples de 21 e 200 pregões, numa escala de −10% a +10%.</div></details>
+    </div>
+    <div class="gauges">
+      <div><div class="gauge" role="img" aria-label="Ibovespa 1,24% acima da média de 21 pregões">
+          <svg viewBox="0 0 120 64"><path class="g-trilho" d="M10 60 A50 50 0 0 1 110 60" pathLength="100"/><path class="g-valor alta" d="M10 60 A50 50 0 0 1 110 60" pathLength="100" stroke-dasharray="6.2 100" stroke-dashoffset="-50"/><line class="g-agulha" x1="60" y1="8" x2="60" y2="14"/></svg>
+          <div class="g-centro"><div class="v num">+1,24%</div><div class="f">MM21 129.870</div></div>
+        </div></div>
+      <div><div class="gauge" role="img" aria-label="Ibovespa 3,44% acima da média de 200 pregões">
+          <svg viewBox="0 0 120 64"><path class="g-trilho" d="M10 60 A50 50 0 0 1 110 60" pathLength="100"/><path class="g-valor alta" d="M10 60 A50 50 0 0 1 110 60" pathLength="100" stroke-dasharray="17.2 100" stroke-dashoffset="-50"/><line class="g-agulha" x1="60" y1="8" x2="60" y2="14"/></svg>
+          <div class="g-centro"><div class="v num">+3,44%</div><div class="f">MM200 127.115</div></div>
+        </div></div>
+    </div>
+    <div class="g-escala num"><span>−10%</span><span>+10%</span></div>
+    <div class="rodape">Fonte yfinance · 01/10/2026 14:37 BRT</div>
+  </section>
+
+  <section class="painel span-4">
+    <div class="cab"><h2>Apetite a risco</h2>
+      <details><summary aria-label="Método">i</summary><div class="metodo">Variação do SMLL menos a do Ibovespa hoje, numa escala de −2 a +2 pontos percentuais.</div></details>
+    </div>
+    <div class="gauges">
+      <div><div class="gauge" role="img" aria-label="Small caps 0,80 ponto percentual abaixo do Ibovespa hoje">
+          <svg viewBox="0 0 120 64"><path class="g-trilho" d="M10 60 A50 50 0 0 1 110 60" pathLength="100"/><path class="g-valor baixa" d="M10 60 A50 50 0 0 1 110 60" pathLength="100" stroke-dasharray="20 100" stroke-dashoffset="-30"/><line class="g-agulha" x1="60" y1="8" x2="60" y2="14"/></svg>
+          <div class="g-centro"><div class="v num">−0,80 p.p.</div><div class="f">Defensivo</div></div>
+        </div></div>
+      <div class="rot">Small caps rendem menos que o índice: o dinheiro procura as ações grandes.</div>
+    </div>
+    <div class="g-escala num"><span>−2,0</span><span>+2,0</span></div>
+    <div class="rodape">Fonte yfinance · 01/10/2026 14:37 BRT</div>
+  </section>
+
+  <section class="painel span-4">
+    <div class="cab"><h2>Dispersão</h2><span class="selo alerta">desatualizado</span>
+      <details><summary aria-label="Método">i</summary><div class="metodo">Proporção de ações em alta numa amostra de 30 papéis de alta liquidez, sem ponderação.</div></details>
+    </div>
+    <div class="gauge" role="img" aria-label="Dispersão: 63% das ações em alta">
+      <svg viewBox="0 0 120 64"><path class="g-trilho" d="M10 60 A50 50 0 0 1 110 60" pathLength="100"/><path class="g-valor alta" d="M10 60 A50 50 0 0 1 110 60" pathLength="100" stroke-dasharray="63 100"/></svg>
+      <div class="g-centro"><div class="v num">63%</div><div class="f">em alta</div></div>
+    </div>
+    <div class="medidor" aria-hidden="true"><i class="a" data-w="63"></i><i class="b" data-w="37"></i></div>
+    <div class="legenda num"><span>19 subiram</span><span>11 caíram</span></div>
+    <div class="rodape">Fonte brapi.dev · 01/10/2026 13:58 BRT · amostra 30</div>
+  </section>
+
   <!-- Documentação dos tokens -->
   <div class="secao">Tokens de cor</div>
   <div class="span-12 tokens" id="tokens"></div>
@@ -251,7 +316,11 @@ a{color:var(--destaque)}
   document.querySelectorAll('tbody[data-rank]').forEach(tb=>{
     const is=[...tb.querySelectorAll('i[data-v]')], m=Math.max(...is.map(i=>+i.dataset.v));
     is.forEach(i=>i.style.width=(18+70*(+i.dataset.v/m))+'%');});
-  document.querySelectorAll('.medidor i').forEach(i=>i.style.width=i.dataset.w+'%');
+  document.querySelectorAll('.medidor i, .comp .trilho i').forEach(i=>i.style.width=i.dataset.w+'%');
+  // Sparkline da Maré (a aplicação usa Plotly com 48px de altura, sem eixos)
+  const mare=[31,35,42,40,47,52,49,55,58,54,51,54,57,60,63,59,62,65,61,64,68];
+  const sx=i=>i*200/(mare.length-1), sy=v=>44-(v-25)*40/50;
+  document.getElementById('s-mare').innerHTML=`<path d="${mare.map((v,i)=>(i?'L':'M')+sx(i).toFixed(1)+' '+sy(v).toFixed(1)).join(' ')}" fill="none" stroke="${css('--destaque')}" stroke-width="1.5" vector-effect="non-scaling-stroke"/><circle cx="200" cy="${sy(68)}" r="2.5" fill="${css('--destaque')}"/>`;
   // Amostras de tokens
   const tk=['--fundo','--superficie','--superficie-2','--borda','--texto','--texto-2','--texto-3','--destaque','--alta','--baixa','--alerta'];
   document.getElementById('tokens').innerHTML=tk.map(n=>`<div class="tok"><b style="background:var(${n})"></b><span>${n}<br>${css(n)}</span></div>`).join('');
