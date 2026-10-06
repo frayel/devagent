@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timezone
 
 from app.collectors.highlights import TICKERS
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 from app.database import ArmadilhaAberturaData, save_armadilha_abertura_data
 
@@ -60,7 +61,7 @@ def collect_and_save() -> bool:
         ArmadilhaAberturaData(
             timestamp=datetime.now(timezone.utc),
             alertas_json=json.dumps(alertas),
-            fonte="yfinance",
+            fonte=mt5.fonte_efetiva("yfinance"),
         )
     )
     return True

@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 import httpx
 
 from app.database import FacaCaindoData, save_faca_caindo_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
 
@@ -75,7 +76,7 @@ def fetch_yfinance() -> FacaCaindoData | None:
     return FacaCaindoData(
         timestamp=datetime.now(timezone.utc),
         alertas_json=json.dumps(top_alerts),
-        fonte="yfinance",
+        fonte=mt5.fonte_efetiva("yfinance"),
     )
 
 

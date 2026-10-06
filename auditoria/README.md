@@ -58,7 +58,7 @@ Hoje o auditor extrai os números do HTML, o que quebra se o template mudar. A a
 }
 ```
 
-`fonte` é o nome do coletor que produziu o dado (`brapi` ou `yahoo`). O auditor usa esse campo para escolher uma referência diferente.
+`fonte` é o nome do coletor que produziu o dado (`mt5`, `brapi` ou `yfinance`; `mt5+yfinance` quando parte veio de cada um). O auditor usa esse campo para escolher uma referência diferente.
 
 ## Painel novo, checagem nova
 

@@ -7,6 +7,7 @@ from app.database import (
     save_sobrevivencia_semanal_data,
     SobrevivenciaSemanalData,
 )
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
 
@@ -72,7 +73,7 @@ def coletar() -> SobrevivenciaSemanalData | None:
         return SobrevivenciaSemanalData(
             timestamp=agora,
             alertas_json=json.dumps(sobreviventes),
-            fonte="yfinance",
+            fonte=mt5.fonte_efetiva("yfinance"),
         )
     except httpx.HTTPError as e:
         logger.error(f"Erro HTTP na coleta de Sobrevivência Semanal via yfinance: {e}")

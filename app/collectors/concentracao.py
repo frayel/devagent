@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from app.database import ConcentracaoData, save_concentracao_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 
 logger = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ def fetch_yfinance() -> ConcentracaoData | None:
                     }
                 ),
                 top3_json="[]",
-                fonte="yfinance",
+                fonte=mt5.fonte_efetiva("yfinance"),
             )
 
         ibov_var_pts = ibov["current"] - ibov["prev"]
@@ -102,7 +103,7 @@ def fetch_yfinance() -> ConcentracaoData | None:
             timestamp=datetime.now(timezone.utc),
             resumo_json=json.dumps({"estado": "concentrado", "mensagem": mensagem}),
             top3_json=json.dumps(contribs[:3]),
-            fonte="yfinance",
+            fonte=mt5.fonte_efetiva("yfinance"),
         )
     except Exception as e:
         logger.error(f"Erro no coletor concentracao: {e}")

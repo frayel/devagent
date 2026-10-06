@@ -15,4 +15,12 @@ def setup_db(monkeypatch, tmp_path):
     # Initialize the test database
     app.database.init_db()
 
+    # O MT5 só entra nos testes que o configuram de propósito.
+    for var in ("MT5_API_URL", "MT5_API_KEY", "MT5_SIMBOLOS", "MT5_FUSO_SERVIDOR"):
+        monkeypatch.delenv(var, raising=False)
+    from app.collectors import mt5
+
+    mt5.limpar_cache()
+    mt5.reiniciar_rastreio()
+
     yield

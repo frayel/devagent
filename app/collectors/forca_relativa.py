@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import httpx
 
 from app.database import ForcaRelativaData, save_forca_relativa_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
 
@@ -90,7 +91,7 @@ def fetch_yfinance() -> ForcaRelativaData | None:
         timestamp=datetime.now(timezone.utc),
         maior_json=maior_json,
         menor_json=menor_json,
-        fonte="yfinance",
+        fonte=mt5.fonte_efetiva("yfinance"),
     )
 
 

@@ -77,6 +77,8 @@ def _coletar() -> None:
 
     import importlib
 
+    from app.collectors import mt5
+
     for nome in (
         "ibovespa",
         "highlights",
@@ -96,6 +98,7 @@ def _coletar() -> None:
         "sobrevivencia_semanal",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
+        mt5.reiniciar_rastreio()
         try:
             ok = coletor.collect_and_save()
             if not ok:

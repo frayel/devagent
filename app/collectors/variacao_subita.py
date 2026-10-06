@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 import httpx
 
 from app.database import VariacaoSubitaData, save_variacao_subita_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
 
@@ -80,7 +81,7 @@ def fetch_yfinance() -> VariacaoSubitaData | None:
     return VariacaoSubitaData(
         timestamp=datetime.now(timezone.utc),
         alertas_json=json.dumps(top_alerts),
-        fonte="yfinance",
+        fonte=mt5.fonte_efetiva("yfinance"),
     )
 
 

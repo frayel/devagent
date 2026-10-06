@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import httpx
 
 from app.database import FatorMolaData, save_fator_mola_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
 
@@ -63,7 +64,9 @@ def fetch_yfinance() -> FatorMolaData | None:
     if not parsed_results:
         # Quando collectors funcionam mas os dados estão vazios, devem retornar array/objeto vazios (Fator Mola Data nula mas instanciada)
         return FatorMolaData(
-            timestamp=datetime.now(timezone.utc), top3_json="[]", fonte="yfinance"
+            timestamp=datetime.now(timezone.utc),
+            top3_json="[]",
+            fonte=mt5.fonte_efetiva("yfinance"),
         )
 
     parsed_results.sort(key=lambda x: x["mola_percent"], reverse=True)
@@ -73,7 +76,7 @@ def fetch_yfinance() -> FatorMolaData | None:
     return FatorMolaData(
         timestamp=datetime.now(timezone.utc),
         top3_json=json.dumps(top3),
-        fonte="yfinance",
+        fonte=mt5.fonte_efetiva("yfinance"),
     )
 
 

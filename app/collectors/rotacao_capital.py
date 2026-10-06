@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import httpx
 
 from app.database import RotacaoCapitalData, save_rotacao_capital_data
+from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 
 logger = logging.getLogger(__name__)
@@ -67,7 +68,7 @@ def fetch_yfinance() -> RotacaoCapitalData | None:
                 estado=estado,
                 var_bancos=avg_bancos,
                 var_commodities=avg_commodities,
-                fonte="yfinance",
+                fonte=mt5.fonte_efetiva("yfinance"),
             )
     except Exception as e:
         logger.error(f"Error fetching rotacao capital: {e}")
