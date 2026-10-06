@@ -56,14 +56,15 @@ O `:root` declara `color-scheme: dark`. Todo texto sobre `--superficie` atinge c
   - 768 a 1199px: 6 colunas;
   - < 768px: 1 coluna, margem lateral `--e3`, sem rolagem horizontal em 390px.
 - Cada painel declara sua largura por classe (`span-3`, `span-4`, `span-6`, `span-8`, `span-12`), nunca por estilo inline. Em 6 colunas, `span-3` e `span-4` viram metade da linha; `span-6` em diante, linha inteira.
-- **Acima da dobra em 1440×900** ficam: o Ibovespa com gráfico (`span-8`), tendência e termômetro de dispersão empilhados ao lado (`span-4`), e o começo da linha de rankings.
+- **Acima da dobra em 1440×900** ficam: o Ibovespa com gráfico (`span-8`), a Maré do mercado ao lado (`span-4`), com alturas parecidas, e o começo da linha de rankings.
 - Distribuição de referência para os painéis atuais:
 
 | Linha | Painéis |
 |---|---|
-| 1 | Ibovespa hoje + gráfico (8) · Tendência e Dispersão empilhados (4) |
+| 1 | Ibovespa hoje + gráfico (8) · Maré do mercado (4) |
 | 2 | Maiores altas (4) · Maiores baixas (4) · Radar de volume (4) |
 | 3 | Sensibilidade ao dólar (6) · próximos painéis (3 ou 6) |
+| 4 | Tendência (4) · Apetite a risco (4) · Dispersão (4), todos com gauge |
 
 A tabela é o ponto de partida, não uma regra fixa. **A grade é revista a cada painel novo:** o PR que acrescenta um painel decide onde ele entra pela importância da pergunta que responde, não pela ordem de chegada, e pode reorganizar, encolher ou fundir os vizinhos para isso. O que não muda é o princípio: acima da dobra, em 1440×900, fica o que diz como o mercado está e o que se destaca hoje. Ranking de até 5 itens é `span-3` ou `span-4`; painel com gráfico é `span-6` ou maior. A cada três painéis novos, o agente faz uma revisão de experiência da página inteira (`devagent/skills/rever-experiencia.md`).
 
@@ -75,7 +76,8 @@ Todos moram como macros Jinja em `app/templates/componentes.html`. Um painel nov
 - **`kpi(valor, rotulo, variacao)`**: número em `--fs-kpi` (ou `--fs-hero` no Ibovespa), rótulo acima em `--texto-2`, variação abaixo com seta.
 - **`variacao(valor_formatado, sinal)`**: texto com `▲` ou `▼` e cor `--alta`/`--baixa`; zero usa `--texto-2` e `■`. A seta é obrigatória: a cor nunca é a única pista.
 - **`tabela_ativos(linhas, colunas)`**: linhas de 32px, cabeçalho em `--superficie-2`, ticker em peso 600, números à direita, sem bordas verticais, hover em `--superficie-2`. Quando a coluna principal for uma magnitude (variação, razão de volume, correlação), a célula leva uma **barra horizontal discreta** proporcional ao valor (fundo `--alta-fundo` ou `--baixa-fundo`), para o olho comparar sem ler.
-- **`medidor(pct, rotulo)`**: barra dividida alta × baixa, usada no termômetro de dispersão.
+- **`gauge(valor, rotulo, minimo, maximo, formato, faixas, divergente, resumo)`**: semicírculo em SVG para todo **valor único que vive numa escala** (seção 5.1). Detalhes na seção 5.2.
+- **`medidor(pct, rotulo)`**: barra dividida, só para **partes de um todo** (ex.: 19 subiram × 11 caíram). Não é usada para um valor único: para isso existe o `gauge`.
 - **`estado(tipo)`**: `carregando`, `indisponivel`, `desatualizado`. Cada um com texto curto e o mesmo tamanho do conteúdo que substitui, para a página não pular. Dado com mais de 30 min durante o pregão ganha selo `desatualizado` em `--alerta`.
 
 ## 5. Gráficos (Plotly)
@@ -90,6 +92,35 @@ O stack usa Plotly (PRODUTO.md seção 2); trocar de biblioteca exige ADR. O tem
 - Tooltip em `--superficie-2`, sem borda colorida, com data `dd/mm/aaaa` e valor no padrão brasileiro.
 - Altura fixa por contexto (280px no Ibovespa, 160px em gráficos secundários, 48px em sparklines) para não haver salto de layout.
 - Todo gráfico tem `aria-label` com um resumo em texto ("Ibovespa nos últimos 30 pregões: de 128.410 a 131.482, alta de 2,4%").
+
+### 5.1 A forma do dado escolhe o gráfico
+
+Um número solto obriga o leitor a lembrar a escala. Sempre que o dado tiver escala, ele vira gráfico:
+
+| O dado é | Forma | Exemplo no painel |
+|---|---|---|
+| um valor numa escala com limites conhecidos (%, 0 a 10, 0 a 100, correlação) | `gauge` | dispersão 63%, coesão 7/10, Maré 68 |
+| um valor com sinal em torno de zero (diferença, desvio, distância de média) | `gauge` divergente, com o zero no topo | SMLL − IBOV, bancos − commodities, distância da MM21 |
+| uma série no tempo | linha Plotly; em espaço curto, sparkline de 48px | Ibovespa 30 pregões, histórico da Maré |
+| comparação entre até 10 itens | barra horizontal na célula da tabela | rankings |
+| partes de um todo (até 5 partes) | `medidor` (barra dividida) | subiram × caíram |
+
+Fica como número sem gráfico só o que não tem escala natural: preço, pontos do índice, volume em reais. Na dúvida, o agente pergunta "contra o quê o leitor compara este número?": se existir resposta, ela vira o eixo do gráfico.
+
+Toda revisão de experiência (`devagent/skills/rever-experiencia.md`) procura números soltos que cabem nesta tabela.
+
+### 5.2 Gauge
+
+- SVG desenhado **no servidor**, dentro da macro, sem JavaScript e sem Plotly: não pisca na carga, não muda de altura e é testável no HTML.
+- `viewBox="0 0 120 68"`, arco de 180° com raio 50 centrado em (60, 60): `M10 60 A50 50 0 0 1 110 60`. Altura de 96px em painel `span-3`/`span-4` e 140px quando é o protagonista do painel.
+- Trilho com `pathLength="100"` e traço de 10 em `--superficie-2`. O valor é o mesmo arco com `stroke-dasharray="{pct} 100"`, na cor do significado: `--alta`, `--baixa` ou `--destaque` (neutro). Pontas retas, sem gradiente.
+- **Divergente:** o preenchimento parte do topo (50) até o valor, com `stroke-dasharray="{|pct−50|} 100"` e `stroke-dashoffset="-{min(pct,50)}"`; cor `--alta` acima de zero e `--baixa` abaixo.
+- **Faixas** (opcional): anel externo de 3px, raio 57, um segmento por faixa, com as classes `.g-cor-1` a `.g-cor-5`: `--baixa`, `--baixa` a 45% de opacidade, `--texto-3`, `--alta` a 45% e `--alta` (da pior para a melhor). Com faixas, o arco do valor usa a cor da faixa atual e uma agulha curta em `--texto` marca a posição só na coroa do arco (`<line>` de (60,16) a (60,1) com `transform="rotate({pct·1,8 − 90} 60 60)"`), para nunca passar por cima do número.
+- O número aparece **sempre** em texto no centro, em `--fs-kpi` (ou `--fs-hero` quando protagonista), com algarismos tabulares, e o rótulo da faixa logo abaixo em `--texto-2`. O gauge nunca substitui o número; ele dá a escala.
+- Mínimo e máximo da escala em `--fs-meta` e `--texto-3` nas pontas do arco.
+- Valor fora da escala é cortado no limite e ganha `+` ou `−` antes do rótulo do limite ("> +2,0 p.p."). Nunca extrapola o arco.
+- `role="img"` e `aria-label` com o resumo em texto ("Maré do mercado: 68 de 100, Confiança").
+- Cores só por classe (`.g-trilho`, `.g-valor.alta`, `.g-faixa-1` …); nenhum `fill` ou `stroke` com cor escrita no SVG.
 
 ## 6. Movimento e interação
 
@@ -116,7 +147,8 @@ Rode `make telas`, **abra as duas imagens geradas em `telas/`** e responda no re
 - [ ] Algum card tem área vazia maior que o próprio conteúdo?
 - [ ] Toda alta e baixa tem seta além da cor?
 - [ ] Todo número está alinhado e com algarismos tabulares?
-- [ ] O gráfico usa o tema de `graficos.js` e tem resumo em `aria-label`?
+- [ ] O gráfico usa o tema de `graficos.js` (ou é um `gauge` da macro) e tem resumo em `aria-label`?
+- [ ] Sobrou algum número solto que tem escala e deveria ser `gauge`, linha ou barra (seção 5.1)?
 - [ ] O painel novo usa as macros de `componentes.html` e uma classe `span-N`?
 - [ ] Com o painel novo, a hierarquia ainda faz sentido? Algum painel deveria subir, descer, encolher ou se fundir com outro?
 - [ ] Comparada com `docs/design/referencia.html`, a tela parece parte do mesmo sistema?

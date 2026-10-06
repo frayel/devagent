@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- agent: `docs/DESIGN.md` ganha a tabela "a forma do dado escolhe o gráfico" (5.1) e o componente `gauge` (5.2); a referência navegável mostra o gauge simples, o divergente e o com faixas, e a nova distribuição da linha 1 (Ibovespa + Maré). Specs 026 (gauges para valores únicos) e 027 (Maré do mercado, índice de otimismo de 0 a 100 por fluxo, volatilidade e volume) entram na seção Correções do backlog, a pedido do dono do produto.
 - feat: Implementado Compradores de Fundo (Reversão Intraday) (Spec 021)
 - feat: Implementada Rotação de Capital (Bancos vs Commodities) avaliando o estado diário (Spec 018)
 - **Variação Súbita:** Adiciona painel que exibe ações com variação expressiva na última hora (Spec 017).

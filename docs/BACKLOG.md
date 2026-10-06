@@ -2,6 +2,9 @@
 
 ## Correções (prioridade sobre qualquer feature)
 
+- **Valores únicos sem escala.** Implementar a spec `docs/specs/026-gauges-valores-unicos.md` seguindo as seções 5.1 e 5.2 do `docs/DESIGN.md` (pedido do dono do produto em 05/10/2026). Ao concluir, marque a spec como `done`, remova esta entrada e registre no `CHANGELOG.md`.
+- **Maré do mercado.** Implementar a spec `docs/specs/027-indice-mare.md` depois da 026, porque usa a macro `gauge` (pedido do dono do produto em 05/10/2026). Ao concluir, marque a spec como `done`, remova esta entrada e registre no `CHANGELOG.md`.
+
 ## Features
 
 | Feature | Valor | Fonte de dados | Esforço (P/M/G) | Risco |
@@ -151,3 +154,11 @@
 | Mapa de Consenso Dividido | Responde: Onde os analistas mais discordam hoje? Originalidade: Foca na dispersão do preço-alvo em vez da média, revelando incerteza extrema. | brapi | G | Alto |
 | Impacto Cambial Cruzado | Responde: Como o DXY está esmagando ações domésticas hoje? Originalidade: Isola o efeito global (DXY) do efeito local (BRL=X) sobre as Small Caps. | yfinance | M | Médio |
 | Experiência: Modo "Mapa de Calor Setorial Compacto" | Responde: Consigo ver todos os setores em um quadrado de 200px? Originalidade: Treemap ultra denso focado em cores e pesos, sem texto, para visão periférica. | N/A | P | Baixo |
+
+## Ideias (pedido do dono do produto - 2026-10-05)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Sparklines nos rankings | Responde: a alta de hoje é ponto fora da curva ou continuação? Originalidade: cada linha de Maiores altas, Maiores baixas e Força Relativa ganha um minigráfico de 10 pregões ao lado da variação (DESIGN.md, seção 5.1). | yfinance | M | Baixo |
+| Maré prevê alguma coisa? | Responde: depois de Pânico ou Otimismo extremo, o Ibovespa costuma andar para onde nos 5 pregões seguintes? Originalidade: backtest do próprio índice com amostra, janela e intervalo de confiança, antes de qualquer leitura preditiva aparecer no painel. | yfinance | G | Médio |
+| Fluxo de ordens real na Maré | Responde: quem está agredindo o livro agora, comprador ou vendedor? Originalidade: troca o volume em alta da Maré por agressão por lado, se surgir fonte estável e gratuita. | a pesquisar | G | Alto |
