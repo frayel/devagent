@@ -33,7 +33,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Maré do mercado", 4, "Índice de 0 a 100. Fluxo (40%): parcela do volume financeiro da cesta de 30 ações que foi para ações em alta, uma aproximação do fluxo de ordens, que não tem fonte gratuita. Calma (35%): 100 menos o percentil da volatilidade de 10 pregões do Ibovespa nos 252 anteriores. Volume (25%): ritmo do volume contra a média de 21 pregões, ajustado pela hora do pregão, no sentido da maioria. A Maré descreve o humor do momento. Não é recomendação de compra ou venda.", mare.fonte if mare else "", mare.time if mare else "", "visao-macro painel-mare") %}
+{% call painel("Maré do mercado", 4, "Índice de 0 a 100. Fluxo (40%): parcela do volume financeiro da cesta de 30 ações que foi para ações em alta, uma aproximação do fluxo de ordens, que não tem fonte gratuita. Calma (35%): 100 menos o percentil da volatilidade de queda de 10 pregões do Ibovespa nos 252 anteriores; só os dias de queda contam, então uma alta forte não reduz a calma. Volume (25%): ritmo do volume contra a média de 21 pregões, ajustado pela hora do pregão, no sentido da maioria. A Maré descreve o humor do momento. Não é recomendação de compra ou venda.", mare.fonte if mare else "", mare.time if mare else "", "visao-macro painel-mare") %}
     {% if mare %}
         {% if mare.parcial %}<span class="selo alerta">parcial · sem {{ mare.ausentes }}</span>{% endif %}
         {{ gauge(mare.valor, "", 0, 100, "{:.0f}", faixas=mare.faixas, resumo="Maré do mercado, de 0 a 100", grande=True, escala=["0", "100"]) }}

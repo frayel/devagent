@@ -73,15 +73,48 @@ def test_calma_sem_historia_suficiente_e_none():
     assert mare.componente_calma(None, [0.1] * 252) is None
 
 
-def test_volatilidade_anualizada_de_dez_retornos():
+def test_volatilidade_de_queda_de_dez_retornos():
     fech = [100.0 * (1.01 if i % 2 else 0.99) ** 1 for i in range(12)]
     sig = mare.volatilidades(fech)
     assert sig[:10] == [None] * 10
     retornos = [math.log(b / a) for a, b in zip(fech, fech[1:])]
-    esperado = (
-        (sum((r - sum(retornos[1:11]) / 10) ** 2 for r in retornos[1:11]) / 9) ** 0.5
-    ) * math.sqrt(252)
+    janela = retornos[1:11]
+    esperado = math.sqrt(sum(min(r, 0) ** 2 for r in janela) / 10) * math.sqrt(252)
     assert sig[11] == pytest.approx(esperado)
+
+
+def test_dez_dias_sem_queda_tem_volatilidade_zero():
+    fech = [100.0 * 1.01**i for i in range(12)]
+    assert mare.volatilidades(fech)[11] == 0
+
+
+def test_alta_forte_nao_derruba_a_calma():
+    """Caso real de 05/10/2026: Ibovespa +7,4% num dia, quedas pequenas na janela."""
+    dias = _dias_uteis(date(2026, 10, 6), 300)
+    fech, v = {}, 100_000.0
+    for i, d in enumerate(dias[:-10]):
+        v *= 1 + (0.012 if i % 2 else -0.012)
+        fech[d] = v
+    for d, r in zip(
+        dias[-10:], [-0.86, -1.0, -0.27, -0.27, 0.46, 1.36, 0.46, 2.59, 7.42, -0.47]
+    ):
+        v *= math.exp(r / 100)
+        fech[d] = v
+    sig = mare.volatilidades([fech[d] for d in dias])
+    calma = mare.calma_no_indice(sig, len(dias) - 1)
+    assert calma is not None and calma > 60
+
+
+def test_queda_forte_zera_a_calma():
+    dias = _dias_uteis(date(2026, 10, 6), 300)
+    fech, v = {}, 100_000.0
+    for i, d in enumerate(dias):
+        v *= 1 + (0.006 if i % 2 else -0.006)
+        if i == len(dias) - 2:
+            v *= 0.93
+        fech[d] = v
+    sig = mare.volatilidades([fech[d] for d in dias])
+    assert mare.calma_no_indice(sig, len(dias) - 1) == 0
 
 
 @pytest.mark.parametrize(

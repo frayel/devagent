@@ -60,14 +60,26 @@ document.addEventListener("DOMContentLoaded", () => {
             type: 'scatter',
             mode: 'lines',
             line: { color: cor, width: 1.5 },
+            // Preenche até a base do eixo, que fica 2% abaixo do mínimo (DESIGN.md, seção 5).
             fill: 'tozeroy',
             fillcolor: css(is_positive ? '--alta-fundo' : '--baixa-fundo'),
             hovertemplate: '%{x|%d/%m/%Y}<br><b>%{y:,.0f}</b><extra></extra>'
         };
 
         if (typeof Painel !== 'undefined' && Painel.grafico) {
+            var validos = closes.filter(function(c) { return c !== null && isFinite(c); });
+            var minimo = Math.min.apply(null, validos);
+            var maximo = Math.max.apply(null, validos);
             Painel.grafico('grafico-ibovespa', [trace], {
-                margin: { t: 16, r: 64, b: 24, l: 8 }
+                margin: { t: 16, r: 64, b: 24, l: 8 },
+                // Eixo Y nunca começa em zero: 2% abaixo do mínimo do período.
+                yaxis: {
+                    showgrid: true,
+                    gridcolor: css('--borda'),
+                    zeroline: false,
+                    side: 'right',
+                    range: [minimo * 0.98, maximo + (maximo - minimo) * 0.05]
+                }
             });
         }
     }
