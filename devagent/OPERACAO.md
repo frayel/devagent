@@ -23,7 +23,7 @@ Todos ficam em `.github/workflows/` porque o GitHub exige. São do núcleo; o pr
 
 | Arquivo | Dispara | Faz |
 |---|---|---|
-| `ci.yml` | PR e push na `main` | `make install` e `make verify`; job `smoke` com `make install-prod` e `make smoke` |
+| `ci.yml` | PR e push na `main` | job `disciplina` com `python -m devagent.conferir_pr` (ADR 008); `make install` e `make verify`; job `smoke` com `make install-prod` e `make smoke` |
 | `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch; fecha as issues citadas com `Closes/Fixes/Resolves #N` no título, corpo ou commits do PR (exceto `deploy-falhou` e `producao-incorreta`) |
 | `deploy-check.yml` | após o auto-merge, a cada 6 h, manual | consulta a plataforma (`devagent/adaptadores/render_status.py`); abre ou fecha issues `deploy-falhou`; dispara a auditoria quando o deploy fica live |
 | `auditoria-producao.yml` | horários do projeto, após deploy | `make audit` contra produção; abre ou fecha issues `producao-incorreta` |

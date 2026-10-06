@@ -155,6 +155,12 @@
 | Impacto Cambial Cruzado | Responde: Como o DXY está esmagando ações domésticas hoje? Originalidade: Isola o efeito global (DXY) do efeito local (BRL=X) sobre as Small Caps. | yfinance | M | Médio |
 | Experiência: Modo "Mapa de Calor Setorial Compacto" | Responde: Consigo ver todos os setores em um quadrado de 200px? Originalidade: Treemap ultra denso focado em cores e pesos, sem texto, para visão periférica. | N/A | P | Baixo |
 
+## Ideias (fechamento da spec 025 - 2026-10-06)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Setor líder por volume financeiro | Responde: para qual setor o dinheiro está indo hoje, em reais, e não em %? Completa a Concentração Setorial (spec 025), que mostra só o líder por variação média. | brapi / yfinance | P | Baixo |
+
 ## Ideias (pedido do dono do produto - 2026-10-05)
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |

@@ -11,38 +11,40 @@ from app.collectors.highlights import TICKERS
 
 logger = logging.getLogger(__name__)
 
-# Mapeamento estático baseado na API da brapi.dev
+# Setor de cada ação da cesta, em português, como o leitor do painel conhece.
+# Ações fora deste mapa ficam de fora do cálculo: um grupo "sem setor" não
+# pode ser apontado como o setor que lidera o dia.
 SETOR_MAP = {
-    "PETR4": "Energy Minerals",
-    "VALE3": "Non-Energy Minerals",
-    "ITUB4": "Finance",
-    "BBDC4": "Finance",
-    "B3SA3": "Finance",
-    "ABEV3": "Consumer Non-Durables",
-    "ELET3": "Utilities",
-    "RENT3": "Finance",
-    "WEGE3": "Producer Manufacturing",
-    "BBAS3": "Finance",
-    "ITSA4": "Finance",
-    "SUZB3": "Process Industries",
-    "BPAC11": "Finance",
-    "RADL3": "Retail Trade",
-    "EQTL3": "Utilities",
-    "CSAN3": "Utilities",
-    "PRIO3": "Energy Minerals",
-    "RDOR3": "Health Services",
-    "RAIL3": "Transportation",
-    "SBSP3": "Utilities",
-    "VIVT3": "Communications",
-    "CMIG4": "Utilities",
-    "LREN3": "Retail Trade",
-    "CPLE6": "Utilities",
-    "UGPA3": "Retail Trade",
-    "ENEV3": "Utilities",
-    "TIMS3": "Communications",
-    "TOTS3": "Technology Services",
-    "EGIE3": "Utilities",
-    "HAPV3": "Health Services",
+    "PETR4": "Petróleo e gás",
+    "PRIO3": "Petróleo e gás",
+    "CSAN3": "Petróleo e gás",
+    "UGPA3": "Petróleo e gás",
+    "VALE3": "Mineração",
+    "ITUB4": "Financeiro",
+    "BBDC4": "Financeiro",
+    "B3SA3": "Financeiro",
+    "BBAS3": "Financeiro",
+    "ITSA4": "Financeiro",
+    "BPAC11": "Financeiro",
+    "ABEV3": "Consumo não cíclico",
+    "ELET3": "Energia elétrica",
+    "EQTL3": "Energia elétrica",
+    "CMIG4": "Energia elétrica",
+    "CPLE6": "Energia elétrica",
+    "ENEV3": "Energia elétrica",
+    "EGIE3": "Energia elétrica",
+    "SBSP3": "Saneamento",
+    "WEGE3": "Bens industriais",
+    "SUZB3": "Papel e celulose",
+    "RADL3": "Varejo",
+    "LREN3": "Varejo",
+    "RDOR3": "Saúde",
+    "HAPV3": "Saúde",
+    "RAIL3": "Transporte e logística",
+    "RENT3": "Transporte e logística",
+    "VIVT3": "Telecomunicações",
+    "TIMS3": "Telecomunicações",
+    "TOTS3": "Tecnologia",
 }
 
 
@@ -133,7 +135,9 @@ def collect_and_save() -> bool:
 
     setores_vars = defaultdict(list)
     for ticker, change in variacoes.items():
-        setor = SETOR_MAP.get(ticker, "Unknown")
+        setor = SETOR_MAP.get(ticker)
+        if setor is None:
+            continue
         setores_vars[setor].append(change)
 
     media_setores = {}
@@ -147,6 +151,8 @@ def collect_and_save() -> bool:
         )
         return False
 
+    # Guarda o setor de melhor média mesmo quando ela é negativa; a tela só o
+    # chama de destaque quando a média é positiva (spec 025, Cálculos).
     melhor_setor = max(media_setores.items(), key=lambda x: x[1])
 
     data = ConcentracaoSetorialData(

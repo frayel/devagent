@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 ### Added
+- feat: Índice de Concentração Setorial (Spec 025): setor da cesta com a maior variação média do dia, com nomes de setor em português; quando nenhum setor tem média positiva, o painel diz "Nenhum setor em alta". A chave `concentracao_setorial` entra no `/api/snapshot`.
+- núcleo: `python -m devagent.conferir_pr` roda no CI e reprova PR com spec `in-progress`, script de teste fora de `tests/`, spec `done` sem CHANGELOG ou estado do sistema, ou spec nova fechada enquanto a seção Correções do backlog tem entrada pendente (ADR 008).
 - agent: `docs/DESIGN.md` ganha a tabela "a forma do dado escolhe o gráfico" (5.1) e o componente `gauge` (5.2); a referência navegável mostra o gauge simples, o divergente e o com faixas, e a nova distribuição da linha 1 (Ibovespa + Maré). Specs 026 (gauges para valores únicos) e 027 (Maré do mercado, índice de otimismo de 0 a 100 por fluxo, volatilidade e volume) entram na seção Correções do backlog, a pedido do dono do produto.
 - feat: Implementado Compradores de Fundo (Reversão Intraday) (Spec 021)
 - feat: Implementada Rotação de Capital (Bancos vs Commodities) avaliando o estado diário (Spec 018)
