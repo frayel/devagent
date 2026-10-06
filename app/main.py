@@ -28,6 +28,7 @@ from app.services.compradores_fundo import get_compradores_fundo_view
 from app.services.armadilha_abertura import get_armadilha_abertura_view
 from app.services.sobrevivencia_semanal import get_sobrevivencia_semanal_view
 from app.database import (
+    get_latest_concentracao_setorial_data,
     get_latest_ibovespa_data,
     get_latest_volume_alerts_data,
     get_latest_dolar_correlation_data,
@@ -391,7 +392,18 @@ async def index(request: Request):
     coesao = get_coesao_view_data()
     atrasadas_rally = get_atrasadas_rally_view_data()
     concentracao = get_concentracao_view_data()
+
     apetite_risco = get_apetite_risco_view_data()
+    concentracao_setorial_data = get_latest_concentracao_setorial_data()
+    concentracao_setorial = None
+    if concentracao_setorial_data:
+        concentracao_setorial = {
+            "setor_destaque": concentracao_setorial_data.setor_destaque,
+            "variacao_media": concentracao_setorial_data.variacao_media,
+            "coletado_em": concentracao_setorial_data.timestamp.isoformat(),
+            "fonte": concentracao_setorial_data.fonte,
+        }
+
     variacao_subita = get_variacao_subita_view_data()
     rotacao_capital = get_rotacao_capital_view()
     faca_caindo = get_faca_caindo_view()
@@ -413,6 +425,7 @@ async def index(request: Request):
             "atrasadas_rally": atrasadas_rally,
             "concentracao": concentracao,
             "apetite_risco": apetite_risco,
+            "concentracao_setorial": concentracao_setorial,
             "variacao_subita": variacao_subita,
             "rotacao_capital": rotacao_capital,
             "faca_caindo": faca_caindo,

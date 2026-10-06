@@ -97,6 +97,14 @@ class VariacaoSubitaData:
 
 
 @dataclass
+class ConcentracaoSetorialData:
+    timestamp: datetime
+    setor_destaque: str
+    variacao_media: float
+    fonte: str = "brapi"
+
+
+@dataclass
 class ApetiteRiscoData:
     timestamp: datetime
     estado: str
@@ -361,6 +369,18 @@ def init_db() -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_atrasadas_rally_cache_timestamp
         ON atrasadas_rally_cache(timestamp DESC)
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS concentracao_setorial_cache (
+            timestamp TEXT PRIMARY KEY,
+            setor_destaque TEXT NOT NULL,
+            variacao_media REAL NOT NULL,
+            fonte TEXT NOT NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_concentracao_setorial_cache_timestamp
+        ON concentracao_setorial_cache(timestamp DESC)
     """)
 
     cursor.execute("""
@@ -821,6 +841,49 @@ def get_latest_variacao_subita_data() -> VariacaoSubitaData | None:
         return VariacaoSubitaData(
             timestamp=datetime.fromisoformat(row["timestamp"]),
             alertas_json=row["alertas_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+def save_concentracao_setorial_data(data: ConcentracaoSetorialData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO concentracao_setorial_cache (timestamp, setor_destaque, variacao_media, fonte)
+        VALUES (?, ?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            data.setor_destaque,
+            data.variacao_media,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_concentracao_setorial_data() -> ConcentracaoSetorialData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT * FROM concentracao_setorial_cache
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        row = None
+    finally:
+        conn.close()
+    if row:
+        return ConcentracaoSetorialData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            setor_destaque=row["setor_destaque"],
+            variacao_media=float(row["variacao_media"]),
             fonte=row["fonte"],
         )
     return None
