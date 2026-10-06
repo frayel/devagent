@@ -218,7 +218,7 @@
                 {% set celulas = [
                     {'tk': True, 'conteudo': a.ticker},
                     {'num': True, 'conteudo': a.price_formatted},
-                    {'num': True, 'barra': True, 'valor_barra': a.ratio, 'conteudo': ('<span>' ~ (a.ratio_formatted | e) ~ '</span>') | safe}
+                    {'num': True, 'barra': True, 'valor_barra': a.ratio, 'conteudo': ('<span>' | safe) ~ a.ratio_formatted ~ ('</span>' | safe)}
                 ] %}
                 {% set _ = linhas.append(celulas) %}
             {% endfor %}
@@ -261,8 +261,8 @@
             {% for a in escudo_quedas.top3 %}
                 {% set celulas = [
                     {'tk': True, 'conteudo': a.ticker},
-                    {'conteudo': ('<span>' ~ (a.dias_positivos | e) ~ ' dias</span>') | safe},
-                    {'num': True, 'conteudo': ('<span>' ~ ((a.retorno_medio * 100)|round(2) | e) ~ '%</span>') | safe}
+                    {'conteudo': ('<span>' | safe) ~ a.dias_positivos ~ (' dias</span>' | safe)},
+                    {'num': True, 'conteudo': ('<span>' | safe) ~ (a.retorno_medio * 100)|round(2) ~ ('%</span>' | safe)}
                 ] %}
                 {% set _ = linhas.append(celulas) %}
             {% endfor %}
@@ -290,7 +290,7 @@
             {% set s = -1 if a.retorno_acumulado < 0 else 1 if a.retorno_acumulado > 0 else 0 %}
             {% set _ = linhas.append([
                 {'conteudo': a.ticker, 'tk': True},
-                {'conteudo': ('<span>' ~ (a.dias_consecutivos | e) ~ ' dias</span>') | safe},
+                {'conteudo': ('<span>' | safe) ~ a.dias_consecutivos ~ (' dias</span>' | safe)},
                 {'conteudo': (variacao(val, s)) | safe, 'num': True}
             ]) %}
         {% endfor %}
@@ -331,7 +331,7 @@
                     {% for a in dolar_correlation.positivas %}
                         {% set celulas = [
                             {'tk': True, 'conteudo': a.ticker},
-                            {'num': True, 'barra': True, 'valor_barra': a.correlation, 'conteudo': ('<span>+' ~ (a.correlation_formatted | e) ~ '</span>') | safe}
+                            {'num': True, 'barra': True, 'valor_barra': a.correlation, 'conteudo': ('<span>+' | safe) ~ a.correlation_formatted ~ ('</span>' | safe)}
                         ] %}
                         {% set _ = linhas.append(celulas) %}
                     {% endfor %}
@@ -347,7 +347,7 @@
                     {% for a in dolar_correlation.negativas %}
                         {% set celulas = [
                             {'tk': True, 'conteudo': a.ticker},
-                            {'num': True, 'barra': True, 'valor_barra': (a.correlation * -1) if a.correlation < 0 else a.correlation, 'conteudo': ('<span>' ~ (a.correlation_formatted | e) ~ '</span>') | safe}
+                            {'num': True, 'barra': True, 'valor_barra': (a.correlation * -1) if a.correlation < 0 else a.correlation, 'conteudo': ('<span>' | safe) ~ a.correlation_formatted ~ ('</span>' | safe)}
                         ] %}
                         {% set _ = linhas.append(celulas) %}
                     {% endfor %}
@@ -412,7 +412,7 @@
         {% for a in sobrevivencia_semanal.alertas %}
             {% set _ = linhas.append([
                 {'conteudo': a.ticker, 'tk': True},
-                {'conteudo': ('<span>' ~ (a.dias_consecutivos | e) ~ ' dias</span>') | safe, 'num': True}
+                {'conteudo': ('<span>' | safe) ~ a.dias_consecutivos ~ (' dias</span>' | safe), 'num': True}
             ]) %}
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Altas seguidas', 'num': True}], 'sobrevivencia-semanal') }}
