@@ -5,8 +5,10 @@ Três componentes, todos de 0 a 100 com 100 no lado otimista:
 - **Fluxo** (40%): parcela do volume financeiro do dia que foi para ações em
   alta. É a aproximação honesta do fluxo de ordens: agressão por lado não
   existe em fonte gratuita e estável.
-- **Calma** (35%): 100 menos o percentil da volatilidade de 10 pregões do
-  Ibovespa dentro dos 252 pregões anteriores.
+- **Calma** (35%): 100 menos o percentil da volatilidade de queda de 10
+  pregões do Ibovespa dentro dos 252 pregões anteriores. Só os retornos
+  negativos contam: uma alta forte não é medo (em 05/10/2026 o Ibovespa subiu
+  7,4% e a volatilidade comum zerava a Calma por dez pregões).
 - **Volume** (25%): ritmo do volume financeiro contra a média de 21 pregões,
   ajustado pela fração do pregão já decorrida, no sentido da maioria.
 
@@ -19,7 +21,6 @@ from __future__ import annotations
 
 import json
 import math
-import statistics
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
@@ -34,7 +35,7 @@ NOMES = {"fluxo": "Fluxo", "calma": "Calma", "volume": "Volume"}
 # 20 é Medo, 80 é Otimismo extremo.
 FAIXAS = ["Pânico", "Medo", "Neutro", "Confiança", "Otimismo extremo"]
 
-# Calma: volatilidade anualizada de 10 retornos diários, comparada com a dos
+# Calma: volatilidade de queda anualizada de 10 retornos diários, comparada com a dos
 # 252 pregões anteriores. Com menos de 120 pregões de história, o percentil
 # não diz nada e o componente fica ausente.
 JANELA_VOLATILIDADE = 10
@@ -95,10 +96,12 @@ def componente_fluxo(acoes: list[tuple[float, float]]) -> float | None:
 
 
 def volatilidades(fechamentos: list[float]) -> list[float | None]:
-    """Volatilidade anualizada de 10 retornos log, alinhada com os fechamentos.
+    """Volatilidade de queda anualizada de 10 retornos log, alinhada com os fechamentos.
 
-    O item i usa os retornos que terminam no fechamento i. Os primeiros 10
-    ficam None.
+    Semidesvio com alvo zero: raiz da média dos quadrados dos retornos
+    negativos (os positivos entram como zero), vezes raiz de 252. Dez dias
+    sem queda dão 0, a menor volatilidade possível. O item i usa os retornos
+    que terminam no fechamento i; os primeiros 10 ficam None.
     """
     retornos: list[float | None] = [None]
     for anterior, atual in zip(fechamentos, fechamentos[1:]):
@@ -112,7 +115,8 @@ def volatilidades(fechamentos: list[float]) -> list[float | None]:
         if i < JANELA_VOLATILIDADE or len(janela) < JANELA_VOLATILIDADE:
             saida.append(None)
             continue
-        saida.append(statistics.stdev(janela) * math.sqrt(252))
+        quedas = [min(r, 0.0) ** 2 for r in janela]
+        saida.append(math.sqrt(sum(quedas) / len(quedas)) * math.sqrt(252))
     return saida
 
 

@@ -52,8 +52,8 @@ Todos os componentes ficam em 0 a 100, onde 100 é o lado otimista.
 `volume financeiro_i = volume_i × preço_i` para cada ação da amostra no dia.
 `Fluxo = Σ volume financeiro das ações com variação > 0 / Σ volume financeiro de todas com variação ≠ 0 × 100`.
 
-**2. Volatilidade, lida como calma (peso 35%)**
-`σ10 = desvio-padrão dos 10 últimos retornos logarítmicos diários do Ibovespa × √252` (o retorno de hoje entra com o preço corrente).
+**2. Volatilidade de queda, lida como calma (peso 35%)**
+`σ10 = √(média de min(r, 0)² nos 10 últimos retornos logarítmicos diários do Ibovespa) × √252` (o retorno de hoje entra com o preço corrente). É o semidesvio com alvo zero: só as quedas contam. Revisto em 06/10/2026 a pedido do dono do produto: com o desvio-padrão comum, a alta de 7,4% de 05/10/2026 zerava a Calma por dez pregões e jogava a Maré para Medo num dia de euforia.
 Calcule o mesmo σ10 em janela móvel para cada um dos 252 pregões anteriores.
 `Calma = 100 − percentil de σ10 de hoje dentro desses 252 valores`. Volatilidade baixa para o histórico recente vira número alto.
 

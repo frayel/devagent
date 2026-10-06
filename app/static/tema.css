@@ -352,3 +352,6 @@ body.modo-so-sinais .painel-rotacao .hero {
 .spark { display: flex; align-items: center; gap: var(--e3); font-size: var(--fs-meta); color: var(--texto-3); }
 .spark svg { flex: 1; min-width: 0; height: 48px; }
 .spark-linha { fill: none; stroke: var(--destaque); stroke-width: 1.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+
+/* Gráfico do Ibovespa: altura fixa (DESIGN.md, seção 5), sem salto de layout. */
+.painel-ibovespa .grafico { width: 100%; height: 200px; }
