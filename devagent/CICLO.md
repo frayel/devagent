@@ -90,7 +90,7 @@ Produção quebrada vem antes de qualquer outra coisa. Verifique, nesta ordem:
    **Issues abertas com label `producao-incorreta`.** O auditor de produção abre essas issues quando o site publicado mostra dado falso, velho, incoerente ou de teste, comparando com fontes independentes. Elas têm a mesma prioridade de um deploy quebrado. Leia o relatório na issue, reproduza com `make audit`, corrija a causa na aplicação e escreva o teste de regressão. A issue só fecha quando a auditoria em produção passar; o workflow fecha sozinho as que ele abriu. **Nunca altere a auditoria para fazer uma checagem passar, e nunca faça a aplicação imitar o que a auditoria procura** (classes, propriedades ou elementos falsos que só existem para a checagem enxergar). Se achar que a checagem está errada, corrija-a num PR próprio que mostre com evidência por que ela estava errada, nunca no mesmo PR da correção.
 2. **Status do deploy.** Com o adaptador Render, se `RENDER_API_KEY` e `RENDER_SERVICE_ID` estiverem no ambiente, rode `python -m devagent.adaptadores.render_status`. Código de saída 1 significa deploy falho e o JSON traz os logs. Se as variáveis não existirem, dependa do item 1 e registre a ausência no relatório.
 3. **Saúde de produção.** Rode `make audit`. Saída diferente de 0 significa que produção exibe algo errado: trate como o item 1, mesmo sem issue aberta.
-4. **Qualidade local.** `make verify`.
+4. **Qualidade local.** `make verify` e `python -m devagent.conferir_pr` (a disciplina do ciclo, ADR 008).
 5. **Ambiente de produção simulado.** Em um virtualenv limpo, `make install-prod` e `make smoke`. É o mesmo teste do job `smoke` do CI.
 6. **Correções prioritárias.** Se as verificações acima passaram, trate **uma** correção pendente, nesta ordem:
    1. a primeira entrada da seção *Correções* de `docs/BACKLOG.md`, que um humano ou o agente registrou como defeito conhecido;
@@ -124,7 +124,7 @@ Encerre a execução.
 
 ### Passo 4 · Implementar uma especificação
 
-Escolha a spec com `status: ready` de menor número. Antes de começar, procure issues abertas com label `tentativa-falhou` sobre ela: leia o motivo da tentativa anterior, evite repetir o erro e inclua `Closes #N` no PR. Mude para `in-progress`, implemente, escreva os testes, atualize `docs/STATE.md` (inclusive o contador de painéis da cadência de experiência, se a spec acrescenta um painel, seção ou tela) e `CHANGELOG.md`, marque a spec como `done` no mesmo PR e abra o PR com prefixo `feat:`.
+Escolha a spec com `status: ready` de menor número. Antes de começar, procure issues abertas com label `tentativa-falhou` sobre ela: leia o motivo da tentativa anterior, evite repetir o erro e inclua `Closes #N` no PR. Mude para `in-progress`, implemente, escreva os testes, atualize `docs/STATE.md` (inclusive o contador de painéis da cadência de experiência, se a spec acrescenta um painel, seção ou tela) e `CHANGELOG.md`, marque a spec como `done` no mesmo PR e abra o PR com prefixo `feat:`. Antes de abrir, rode `python -m devagent.conferir_pr`: o job `disciplina` do CI reprova PR com spec `in-progress`, script de teste fora de `tests/`, spec `done` sem `CHANGELOG.md` citando o número ou sem `docs/STATE.md`, e spec nova fechada enquanto a seção *Correções* tem entrada pendente.
 
 Se a spec for grande demais para um PR de até ~400 linhas alteradas (excluindo testes e fixtures), divida-a em specs menores, marque a original como `draft` e encerre. A implementação fica para a próxima execução.
 
@@ -245,7 +245,7 @@ O núcleo mora neste mesmo repositório justamente para você poder aprimorá-lo
 | `devagent/skills/escrever-spec.md` | como escrever uma boa spec e o modelo | Passo 7, ao transformar issue em spec e ao dividir specs |
 | `devagent/skills/descobrir-ideias.md` | como gerar ideias originais e escolher a próxima | Passo 7 |
 | `devagent/skills/rever-experiencia.md` | como rever a tela inteira a partir das capturas e transformar problemas em ideias | Passo 7, em toda rodada e obrigatoriamente na cadência de experiência |
-| `devagent/decisoes/` | ADRs do núcleo: `001` guardião e Passo 2, `002` correções no Passo 1, `003` escopo aberto, `005` núcleo separado do projeto, `006` revisão de experiência | antes de mudar o ciclo de decisão |
+| `devagent/decisoes/` | ADRs do núcleo: `001` guardião e Passo 2, `002` correções no Passo 1, `003` escopo aberto, `005` núcleo separado do projeto, `006` revisão de experiência, `007` sem revisão humana, `008` disciplina conferida no CI | antes de mudar o ciclo de decisão |
 | `devagent/agents/` | personas do auditor e dos especialistas | quando acionado como uma delas |
 
 O índice do projeto está no `PRODUTO.md`. Ao criar um arquivo novo em `devagent/skills/`, acrescente-o a esta tabela no mesmo PR; em `docs/skills/` ou `docs/context/`, à tabela do `PRODUTO.md`.
@@ -266,6 +266,7 @@ Você pode reescrever qualquer parte deste arquivo, **exceto enfraquecer** estes
 - a proibição de apagar testes, specs `done` e relatórios;
 - a independência do auditor: você não afrouxa uma checagem para esconder uma falha, não imita na aplicação o que ela procura e não edita `docs/auditoria/`;
 - a fronteira do núcleo: `devagent/` não cita o produto e o teste de fronteira não é removido nem afrouxado;
+- a conferência de disciplina (`devagent/conferir_pr.py` e o job `disciplina` do CI) não é removida nem afrouxada;
 - os itens que o `PRODUTO.md` declara protegidos.
 
 Toda mudança em `devagent/`, `AGENTS.md` ou `PRODUTO.md` vai num PR próprio com prefixo `agent:`, explica no corpo o problema observado (com link para o relatório que o revelou) e a mudança feita. Mudanças que alterem o ciclo de decisão ganham um ADR em `devagent/decisoes/`; mudanças de stack, em `docs/decisions/`.

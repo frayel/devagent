@@ -261,6 +261,18 @@ def snapshot():
     else:
         resp["paineis"]["concentracao"] = {}
 
+    concentracao_setorial_data = get_latest_concentracao_setorial_data()
+    if concentracao_setorial_data:
+        resp["paineis"]["concentracao_setorial"] = {
+            "coletado_em": concentracao_setorial_data.timestamp.isoformat(),
+            "fonte": concentracao_setorial_data.fonte,
+            "setor_destaque": concentracao_setorial_data.setor_destaque,
+            "variacao_media": concentracao_setorial_data.variacao_media,
+            "ha_setor_em_alta": concentracao_setorial_data.variacao_media > 0,
+        }
+    else:
+        resp["paineis"]["concentracao_setorial"] = {}
+
     apetite_risco_data = get_latest_apetite_risco_data()
     if apetite_risco_data:
         resp["paineis"]["apetite_risco"] = {

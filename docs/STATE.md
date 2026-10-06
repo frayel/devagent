@@ -5,9 +5,15 @@
 ## Experiência
 
 - Última revisão de experiência: 05/10/2026 (Manchete Dinâmica)
-- Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 1 (Concentração Setorial) (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 025 (Concentração Setorial):
+  - Banco de dados SQLite (`concentracao_setorial_cache`).
+  - Coletor com MT5, brapi e `yfinance`, nessa ordem, agrupando a cesta por setor (nomes em português; ações sem setor mapeado ficam de fora).
+  - Painel na visão macro com o setor de maior variação média; sem setor em alta, mostra "Nenhum setor em alta".
+  - Chave `concentracao_setorial` no `/api/snapshot`, com `ha_setor_em_alta`.
+
 - Spec 024 (Sobrevivência Semanal):
   - Banco de dados SQLite (`sobrevivencia_semanal_cache`).
   - Coletor com `yfinance` buscando dados diários.
