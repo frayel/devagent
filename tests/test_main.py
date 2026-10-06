@@ -120,3 +120,12 @@ def test_xss_protection_in_kpis():
             # Ensure the img tag is escaped
             assert "<img src=x onerror=alert(1)>" not in response.text
             assert "&lt;img src=x onerror=alert(1)&gt;" in response.text
+
+
+def test_csp_no_unsafe_inline_style():
+    response = client.get("/")
+    csp = response.headers.get("content-security-policy", "")
+    style_src = next((part for part in csp.split(";") if "style-src" in part), "")
+    assert "'unsafe-inline'" not in style_src, (
+        "style-src não deve conter 'unsafe-inline'"
+    )
