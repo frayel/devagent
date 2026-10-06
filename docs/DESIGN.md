@@ -87,10 +87,11 @@ O stack usa Plotly (PRODUTO.md seção 2); trocar de biblioteca exige ADR. O tem
 - Fundo transparente, fonte da página em 12px `--texto-2`, `separators: ',.'`, `displayModeBar: false`, `responsive: true`.
 - Grade só no eixo Y, em `--borda`; eixo X sem grade e com no máximo 6 rótulos de data no formato `dd/mm`.
 - Linha de 1,5px; série de preço com preenchimento até o mínimo do período em 10% de opacidade da cor da linha.
+- **Eixo Y de preço nunca começa em zero:** vai de 2% abaixo do mínimo do período até um pouco acima do máximo. Começar em zero achata a série numa faixa estreita no topo do gráfico.
 - Cor da série: `--alta` ou `--baixa` conforme o sinal do período; séries neutras em `--destaque`; médias móveis em `--texto-3` tracejado.
 - Marcador e rótulo no último ponto com o valor atual.
 - Tooltip em `--superficie-2`, sem borda colorida, com data `dd/mm/aaaa` e valor no padrão brasileiro.
-- Altura fixa por contexto (280px no Ibovespa, 160px em gráficos secundários, 48px em sparklines) para não haver salto de layout.
+- Altura fixa por contexto (200px no Ibovespa, 160px em gráficos secundários, 48px em sparklines) para não haver salto de layout.
 - Todo gráfico tem `aria-label` com um resumo em texto ("Ibovespa nos últimos 30 pregões: de 128.410 a 131.482, alta de 2,4%").
 
 ### 5.1 A forma do dado escolhe o gráfico
