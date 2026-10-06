@@ -8,6 +8,12 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 1 (Concentração Setorial) (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 026 (Gauges para valores únicos):
+  - Macro `gauge` em `componentes.html` e cálculo em `app/gauge.py` (filtro `gauge_pct` e global `gauge_dados`).
+  - Gauges em Dispersão, Índice de Coesão, Apetite a Risco, Rotação de Capital e Tendência (MM21 e MM200, `mm21_dist_pct` e `mm200_dist_pct` no serviço do Ibovespa).
+  - `medidor` desenhado em SVG; `scripts/telas.py` semeia coesão, apetite e rotação.
+  - Nenhum painel novo: o contador da cadência de experiência não muda.
+
 - Spec 025 (Concentração Setorial):
   - Banco de dados SQLite (`concentracao_setorial_cache`).
   - Coletor com MT5, brapi e `yfinance`, nessa ordem, agrupando a cesta por setor (nomes em português; ações sem setor mapeado ficam de fora).

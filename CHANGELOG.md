@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 ### Added
+- feat: Gauges para valores únicos (Spec 026). Macro `gauge` em SVG desenhada no servidor, com o cálculo em `app/gauge.py`; Dispersão, Índice de Coesão, Apetite a Risco, Rotação de Capital e Tendência mostram o número dentro da escala. A barra subiram × caíram da Dispersão, que saía vazia desde que a CSP proibiu estilo inline, passa a ser desenhada em SVG.
+- núcleo: retomada depois de ambiente reiniciado (ADR 009). O status `in-progress` deixa de ser commitado; as cobranças do guardião trazem o comando para voltar à branch do PR; o vigia do Jules responde apontando a branch quando o PR está aberto e encerra a sessão quando o PR foi fechado; nova ação `encerrar` no `jules.yml`.
 - feat: Índice de Concentração Setorial (Spec 025): setor da cesta com a maior variação média do dia, com nomes de setor em português; quando nenhum setor tem média positiva, o painel diz "Nenhum setor em alta". A chave `concentracao_setorial` entra no `/api/snapshot`.
 - núcleo: `python -m devagent.conferir_pr` roda no CI e reprova PR com spec `in-progress`, script de teste fora de `tests/`, spec `done` sem CHANGELOG ou estado do sistema, ou spec nova fechada enquanto a seção Correções do backlog tem entrada pendente (ADR 008).
 - agent: `docs/DESIGN.md` ganha a tabela "a forma do dado escolhe o gráfico" (5.1) e o componente `gauge` (5.2); a referência navegável mostra o gauge simples, o divergente e o com faixas, e a nova distribuição da linha 1 (Ibovespa + Maré). Specs 026 (gauges para valores únicos) e 027 (Maré do mercado, índice de otimismo de 0 a 100 por fluxo, volatilidade e volume) entram na seção Correções do backlog, a pedido do dono do produto.

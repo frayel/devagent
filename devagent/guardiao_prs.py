@@ -35,6 +35,23 @@ CONFLITO_MAX_LINHAS = 40
 ORFA_HORAS = 24
 
 MARCA_CI = "<!-- guardiao:ci -->"
+
+
+def retomada(branch: str) -> str:
+    """Instrução de retomada que vai em toda cobrança ao agente.
+
+    O ambiente do agente pode ser reiniciado entre a abertura do PR e a
+    cobrança. Sem esta instrução, ele volta para a `main` limpa, tenta refazer
+    o trabalho do zero e para perguntando se deve continuar (ADR 009).
+    """
+    return (
+        "**Se o seu ambiente foi reiniciado e perdeu as alterações**, não recomece "
+        "da `main` nem recrie a spec: o trabalho já feito está nesta branch. Rode "
+        f"`git fetch origin && git checkout -B {branch} origin/{branch}` e continue "
+        "dali. Não faça perguntas nem peça confirmação: ninguém vai responder."
+    )
+
+
 MARCA_CONFLITO = "<!-- guardiao:conflito -->"
 
 
@@ -139,6 +156,7 @@ def ci_falhou(branch: str, run_id: str) -> None:
         f"{MAX_TENTATIVAS}). Corrija **nesta mesma branch**, sem abrir PR novo. "
         f"Reproduza localmente com `{VERIFICACAO['verify']}` e `{VERIFICACAO['smoke']}` "
         "(veja `devagent/skills/destravar-pr.md`).\n\n"
+        f"{retomada(branch)}\n\n"
         f"Se não houver commit novo em {SEM_REACAO_HORAS} h, este PR será fechado.\n\n"
         f"<details><summary>Log da falha</summary>\n\n```\n{log}\n```\n</details>",
     )
@@ -312,6 +330,7 @@ def varredura() -> None:
                 f"({len(arquivos)} arquivos, {linhas} linhas). Traga a `main` para esta "
                 "branch (`git fetch origin && git merge origin/main`), resolva, rode os "
                 f"testes e dê push **nesta mesma branch**.\n\n{lista}\n\n"
+                f"{retomada(pr['headRefName'])}\n\n"
                 f"Se não houver commit novo em {SEM_REACAO_HORAS} h, este PR será fechado.",
             )
 

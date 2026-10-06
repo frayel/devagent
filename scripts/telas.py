@@ -147,6 +147,24 @@ def _semear(db_path: str) -> None:
             fonte="demonstracao",
         )
     )
+    # Painéis com gauge (spec 026): coesão, apetite a risco e rotação.
+    db.save_coesao_data(
+        db.CoesaoData(timestamp=agora, concordantes=7, total=10, fonte="demonstracao")
+    )
+    db.save_apetite_risco_data(
+        db.ApetiteRiscoData(
+            timestamp=agora, estado="Defensivo", diferenca=-0.8, fonte="demonstracao"
+        )
+    )
+    db.save_rotacao_capital_data(
+        db.RotacaoCapitalData(
+            timestamp=agora,
+            estado="Para Bancos",
+            var_bancos=1.1,
+            var_commodities=-0.4,
+            fonte="demonstracao",
+        )
+    )
 
 
 def _esperar(url: str, segundos: float = 30) -> None:

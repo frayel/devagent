@@ -56,9 +56,10 @@
 </table>
 {% endmacro %}
 
-{% macro medidor(pct, rotulo) %}
-<div class="hero"><div class="valor num">{{ pct }}%</div><div class="rot">{{ rotulo }}</div></div>
-<div class="medidor" aria-hidden="true"><i class="a" data-w="{{ pct }}"></i><i class="b" data-w="{{ 100 - pct }}"></i></div>
+{% macro medidor(pct, rotulo, numero=True) %}
+{% if numero %}<div class="hero"><div class="valor num">{{ pct }}%</div><div class="rot">{{ rotulo }}</div></div>{% endif %}
+{#- Em SVG: a CSP proíbe style inline, e a largura por data-w nunca era aplicada. -#}
+<svg class="medidor" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="a" x="0" y="0" width="{{ [[pct, 0]|max, 100]|min }}" height="6"/><rect class="b" x="{{ [[pct, 0]|max, 100]|min }}" y="0" width="{{ 100 - [[pct, 0]|max, 100]|min }}" height="6"/></svg>
 {% endmacro %}
 
 {% macro estado(tipo) %}
@@ -71,4 +72,34 @@
   Dado desatualizado.
   {% endif %}
 </div>
+{% endmacro %}
+
+{#- Gauge (docs/DESIGN.md, seção 5.2). O cálculo mora em app/gauge.py; aqui só se posiciona.
+    escala: true mostra mínimo e máximo nas pontas; false esconde; [esq, dir] troca os rótulos. -#}
+{% macro gauge(valor, rotulo, minimo=0, maximo=100, formato="{:.0f}", faixas=None, divergente=False, resumo="", cor=None, grande=False, escala=True) %}
+{%- set g = gauge_dados(valor, rotulo, minimo, maximo, formato, faixas, divergente, resumo, cor) -%}
+{%- if g is none -%}
+{{ estado('indisponivel') }}
+{%- else -%}
+<div class="gauge-bloco">
+  <div class="gauge{% if grande %} grande{% endif %}{% if g.fora %} fora{% endif %}" role="img" aria-label="{{ g.aria }}">
+    <svg viewBox="0 0 120 64" aria-hidden="true" focusable="false">
+      {%- for f in g.faixas %}
+      <path class="g-faixa g-faixa-{{ f.indice }} {{ f.cor }}" d="M3 60 A57 57 0 0 1 117 60" pathLength="100" stroke-dasharray="{{ f.dasharray }} 100" stroke-dashoffset="{{ f.dashoffset }}"/>
+      {%- endfor %}
+      <path class="g-trilho" d="M10 60 A50 50 0 0 1 110 60" pathLength="100"/>
+      <path class="g-valor {{ g.cor }}" d="M10 60 A50 50 0 0 1 110 60" pathLength="100" stroke-dasharray="{{ g.dasharray }} 100"{% if g.dashoffset is not none %} stroke-dashoffset="{{ g.dashoffset }}"{% endif %}/>
+      {%- if g.agulha is not none %}
+      <line class="g-agulha" x1="60" y1="16" x2="60" y2="1" transform="rotate({{ g.agulha }} 60 60)"/>
+      {%- elif g.divergente %}
+      <line class="g-agulha g-zero" x1="60" y1="8" x2="60" y2="14"/>
+      {%- endif %}
+    </svg>
+    <div class="g-centro"><div class="v num">{{ g.texto }}</div><div class="f">{{ g.rotulo }}</div></div>
+  </div>
+  {%- if escala %}
+  <div class="g-escala num"><span>{{ escala[0] if escala is not sameas true else g.minimo_texto }}</span><span>{{ escala[1] if escala is not sameas true else g.maximo_texto }}</span></div>
+  {%- endif %}
+</div>
+{%- endif -%}
 {% endmacro %}

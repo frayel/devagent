@@ -1,7 +1,7 @@
 ---
 id: 026
 titulo: Gauges para valores únicos
-status: ready
+status: done
 esforco: M
 ---
 
@@ -41,11 +41,11 @@ Nenhuma nova.
 5. Se passar de ~400 linhas, divida em 026a (macro, CSS, testes, Dispersão e Coesão) e 026b (demais painéis).
 
 ## Critérios de aceite
-- [ ] `tests/test_componentes.py` (ou equivalente) renderiza a macro e verifica: `role="img"`, `aria-label` com o valor, `stroke-dasharray="63` para 63 de 100, e `stroke-dasharray="25` com `stroke-dashoffset="-25"` para −1,0 numa escala divergente de −2 a +2.
-- [ ] Valor 150 numa escala 0 a 100 gera `stroke-dasharray="100` e o texto mostra 150.
-- [ ] Dado o banco de demonstração de `scripts/telas.py`, a página contém pelo menos 6 elementos `class="gauge"`.
-- [ ] Nenhum `fill="#`, `stroke="#` ou `rgb(` nos templates (já coberto por `tests/test_design.py`).
-- [ ] Os testes de conteúdo existentes de cada painel continuam passando.
+- [x] `tests/test_componentes.py` (ou equivalente) renderiza a macro e verifica: `role="img"`, `aria-label` com o valor, `stroke-dasharray="63` para 63 de 100, e `stroke-dasharray="25` com `stroke-dashoffset="-25"` para −1,0 numa escala divergente de −2 a +2.
+- [x] Valor 150 numa escala 0 a 100 gera `stroke-dasharray="100` e o texto mostra 150.
+- [x] Dado o banco de demonstração de `scripts/telas.py`, a página contém pelo menos 6 elementos `class="gauge"`.
+- [x] Nenhum `fill="#`, `stroke="#` ou `rgb(` nos templates (já coberto por `tests/test_design.py`).
+- [x] Os testes de conteúdo existentes de cada painel continuam passando.
 
 ## Invariantes de produção
 - O `/api/snapshot` mantém todas as chaves e valores de antes. Pode ganhar `mm21_dist_pct` e `mm200_dist_pct` no painel do Ibovespa, nunca perder ou renomear chaves.

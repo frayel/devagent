@@ -13,11 +13,14 @@ Uso:
     python -m devagent.adaptadores.jules destravar   # aprova planos e responde perguntas
     python -m devagent.adaptadores.jules vigiar      # relógio próprio: inicia e destrava em laço
     python -m devagent.adaptadores.jules listar
+    python -m devagent.adaptadores.jules encerrar <id da sessão ou URL da tarefa>
     python -m devagent.adaptadores.jules iniciar auditor --dry-run
 
 Variáveis de ambiente:
     JULES_API_KEY   chave criada em https://jules.google.com/settings#api
     JULES_SOURCE    opcional; padrão sources/github/<repositorio do devagent.toml>
+    GH_TOKEN        opcional; lê o estado do PR de cada sessão (sem ele, a API
+                    pública do GitHub, com limite menor)
 
 O nome do produto e o repositório vêm do devagent.toml; os prompts só apontam
 para os arquivos do núcleo (devagent/CICLO.md e devagent/agents/).
@@ -30,6 +33,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -123,6 +127,25 @@ RESPOSTA_PADRAO = (
     "decisão no relatório ou no corpo do PR e continue até abrir o PR."
 )
 
+# Quando a sessão já abriu um PR, o ambiente dela pode ter sido reiniciado e
+# perdido as alterações. "Sim, siga" a fazia recomeçar da main e refazer o
+# trabalho; a resposta aponta a branch do PR, onde o trabalho está (ADR 009).
+RESPOSTA_COM_PR = (
+    "Sim, siga, mas nesta ordem. O trabalho desta sessão já está no PR {url}, "
+    "na branch `{branch}`. Não recomece da `main` e não recrie a spec: rode "
+    "`git fetch origin && git checkout -B {branch} origin/{branch}`, aplique "
+    "nessa branch o que falta para o CI passar (o log está nos comentários do "
+    "PR) e dê push nela. Não há humano acompanhando esta sessão e ninguém vai "
+    "responder: não peça confirmação de novo."
+)
+
+# Sessão cujo PR foi fechado ou mesclado: o trabalho acabou ou foi entregue
+# por outro PR. Responder "siga" a faria abrir um PR duplicado.
+ENCERRAMENTO = (
+    "Encerre esta tarefa agora, sem mais alterações, commits ou PRs. {motivo} "
+    "Não responda, não peça confirmação e não recomece o trabalho."
+)
+
 
 def chamar(metodo: str, caminho: str, corpo: dict[str, Any] | None = None) -> Any:
     chave = os.environ.get("JULES_API_KEY")
@@ -143,6 +166,84 @@ def chamar(metodo: str, caminho: str, corpo: dict[str, Any] | None = None) -> An
         print(f"{metodo} {caminho}: HTTP {e.code} {e.read().decode()}", file=sys.stderr)
         raise
     return json.loads(texto) if texto.strip() else {}
+
+
+def pr_da_sessao(s: dict[str, Any]) -> str | None:
+    for saida in s.get("outputs") or []:
+        url = (saida.get("pullRequest") or {}).get("url")
+        if url:
+            return str(url)
+    return None
+
+
+def estado_do_pr(url: str) -> dict[str, Any] | None:
+    """Estado e branch de um PR do GitHub; None se não der para ler."""
+    m = re.match(r"https://github\.com/([^/]+)/([^/]+)/pull/(\d+)", url)
+    if not m:
+        return None
+    dono, repo, numero = m.groups()
+    cab = {"Accept": "application/vnd.github+json"}
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if token:
+        cab["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(
+        f"https://api.github.com/repos/{dono}/{repo}/pulls/{numero}", headers=cab
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            pr = json.loads(resp.read().decode())
+    except (urllib.error.URLError, ValueError) as erro:
+        print(f"::warning::estado de {url} ilegível: {erro}")
+        return None
+    return {
+        "aberto": pr.get("state") == "open",
+        "mesclado": bool(pr.get("merged")),
+        "branch": (pr.get("head") or {}).get("ref", ""),
+    }
+
+
+def nome_da_sessao(alvo: str) -> str:
+    """Aceita o id, `sessions/<id>` ou a URL da tarefa no site do Jules."""
+    alvo = alvo.strip().rstrip("/")
+    ident = alvo.rsplit("/", 1)[-1]
+    if not ident:
+        raise ValueError(f"sessão inválida: {alvo!r}")
+    return f"sessions/{ident}"
+
+
+def encerrar(alvo: str, motivo: str = "") -> int:
+    nome = nome_da_sessao(alvo)
+    texto = ENCERRAMENTO.format(motivo=motivo or "O dono do produto encerrou a tarefa.")
+    try:
+        chamar("POST", f"{nome}:sendMessage", {"prompt": texto.strip()})
+        print(f"Encerramento enviado: {nome}")
+    except urllib.error.HTTPError as erro:
+        print(f"::warning::mensagem de encerramento falhou em {nome}: HTTP {erro.code}")
+    # Apagar a sessão a tira da fila; nem toda versão da API aceita.
+    try:
+        chamar("DELETE", nome)
+        print(f"Sessão apagada: {nome}")
+    except urllib.error.HTTPError as erro:
+        print(f"Sessão não apagada (HTTP {erro.code}); a mensagem basta para pará-la.")
+    return 0
+
+
+def resposta_para(s: dict[str, Any]) -> tuple[str, str]:
+    """O que dizer a uma sessão parada numa pergunta: ('responder'|'encerrar', texto)."""
+    url = pr_da_sessao(s)
+    if not url:
+        return "responder", RESPOSTA_PADRAO
+    pr = estado_do_pr(url)
+    if pr is None:
+        return "responder", RESPOSTA_PADRAO
+    if not pr["aberto"]:
+        motivo = (
+            f"O PR {url} já foi mesclado."
+            if pr["mesclado"]
+            else f"O PR {url} foi fechado; o trabalho segue por outro PR ou pelo próximo ciclo."
+        )
+        return "encerrar", motivo
+    return "responder", RESPOSTA_COM_PR.format(url=url, branch=pr["branch"])
 
 
 def sessoes_do_repo(paginas: int = 3) -> list[dict[str, Any]]:
@@ -226,8 +327,12 @@ def destravar(espera_minutos: int) -> int:
             # Responde só se a sessão está parada há algum tempo, para não
             # atropelar uma pergunta que acabou de ser feita e já será retomada.
             if agora - _data(s, "updateTime") >= timedelta(minutes=espera_minutos):
-                chamar("POST", f"{nome}:sendMessage", {"prompt": RESPOSTA_PADRAO})
-                print(f"Pergunta respondida: {nome} ({s.get('title', '')})")
+                acao, texto = resposta_para(s)
+                if acao == "encerrar":
+                    encerrar(nome, texto)
+                else:
+                    chamar("POST", f"{nome}:sendMessage", {"prompt": texto})
+                    print(f"Pergunta respondida: {nome} ({s.get('title', '')})")
     return 0
 
 
@@ -301,11 +406,16 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("--intervalo-minutos", type=int, default=5)
     v.add_argument("--espera-minutos", type=int, default=5)
     sub.add_parser("listar")
+    e = sub.add_parser("encerrar")
+    e.add_argument("sessao", help="id da sessão, sessions/<id> ou URL da tarefa")
+    e.add_argument("--motivo", default="")
     args = ap.parse_args(argv)
     if args.cmd == "iniciar":
         return iniciar(args.persona, args.dry_run)
     if args.cmd == "destravar":
         return destravar(args.espera_minutos)
+    if args.cmd == "encerrar":
+        return encerrar(args.sessao, args.motivo)
     if args.cmd == "vigiar":
         return vigiar(args.duracao_minutos, args.intervalo_minutos, args.espera_minutos)
     return listar()
