@@ -1,3 +1,4 @@
+from datetime import timezone, timedelta
 import json
 from app.database import get_latest_sobrevivencia_semanal_data
 
@@ -13,7 +14,9 @@ def get_sobrevivencia_semanal_view() -> dict | None:
         alertas = []
 
     return {
-        "time": data.timestamp.strftime("%d/%m/%Y %H:%M"),
+        "time": data.timestamp.astimezone(timezone(timedelta(hours=-3))).strftime(
+            "%d/%m/%Y %H:%M:%S BRT"
+        ),
         "fonte": data.fonte,
         "alertas": alertas,
     }
