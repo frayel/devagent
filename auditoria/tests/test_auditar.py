@@ -7,6 +7,7 @@ import pytest
 from auditoria.auditar import (
     checar_apetite_risco,
     checar_armadilha_abertura,
+    checar_mare,
     FALHA,
     INCONCLUSIVO,
     Painel,
@@ -188,3 +189,45 @@ def test_checar_armadilha_abertura_sem_painel():
         match="Painel de Armadilha de Abertura não encontrado no snapshot",
     ):
         checar_armadilha_abertura(snapshot, "")
+
+
+def _mare(**mudancas):
+    m = {
+        "coletado_em": "2026-10-06T17:30:00+00:00",
+        "fonte": "yfinance",
+        "valor": 68,
+        "faixa": "Confiança",
+        "componentes": {"fluxo": 74.0, "calma": 61.0, "volume": 67.0},
+        "pesos": {"fluxo": 0.4, "calma": 0.35, "volume": 0.25},
+        "parcial": False,
+        "ausentes": [],
+        "historico": [
+            {"data": "2026-10-02", "valor": 60},
+            {"data": "2026-10-05", "valor": 64},
+        ],
+    }
+    m.update(mudancas)
+    return {"paineis": {"mare": m}}
+
+
+def test_mare_coerente_passa():
+    assert all(x.status != FALHA for x in checar_mare(_mare()))
+
+
+@pytest.mark.parametrize(
+    "mudanca",
+    [
+        {"faixa": "Otimismo extremo"},
+        {"valor": 120},
+        {"valor": 40},
+        {"pesos": {"fluxo": 0.5, "calma": 0.35, "volume": 0.25}},
+        {"historico": [{"data": "2026-10-07", "valor": 60}]},
+    ],
+)
+def test_mare_incoerente_falha(mudanca):
+    assert any(x.status == FALHA for x in checar_mare(_mare(**mudanca)))
+
+
+def test_mare_sem_chave_falha_e_vazia_avisa():
+    assert checar_mare({"paineis": {}})[0].status == FALHA
+    assert checar_mare({"paineis": {"mare": {}}})[0].status != FALHA

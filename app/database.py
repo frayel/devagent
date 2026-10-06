@@ -119,6 +119,19 @@ def get_connection() -> sqlite3.Connection:
 
 
 @dataclass
+class MareData:
+    """Maré do mercado (spec 027). Componente ausente fica None."""
+
+    timestamp: datetime
+    valor: int
+    fluxo: float | None
+    calma: float | None
+    volume: float | None
+    historico_json: str
+    fonte: str
+
+
+@dataclass
 class RotacaoCapitalData:
     timestamp: datetime
     estado: str
@@ -381,6 +394,22 @@ def init_db() -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_concentracao_setorial_cache_timestamp
         ON concentracao_setorial_cache(timestamp DESC)
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS mare_cache (
+            timestamp TEXT PRIMARY KEY,
+            valor INTEGER NOT NULL,
+            fluxo REAL,
+            calma REAL,
+            volume REAL,
+            historico_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_mare_cache_timestamp
+        ON mare_cache(timestamp DESC)
     """)
 
     cursor.execute("""
@@ -1169,3 +1198,55 @@ def get_latest_sobrevivencia_semanal_data() -> SobrevivenciaSemanalData | None:
             fonte=row["fonte"],
         )
     return None
+
+
+def save_mare_data(data: MareData) -> None:
+    conn = get_connection()
+    try:
+        conn.execute(
+            """
+            INSERT INTO mare_cache
+                (timestamp, valor, fluxo, calma, volume, historico_json, fonte)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                data.timestamp.isoformat(),
+                data.valor,
+                data.fluxo,
+                data.calma,
+                data.volume,
+                data.historico_json,
+                data.fonte,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_latest_mare_data() -> MareData | None:
+    conn = get_connection()
+    try:
+        row = conn.execute(
+            """
+            SELECT timestamp, valor, fluxo, calma, volume, historico_json, fonte
+            FROM mare_cache
+            ORDER BY timestamp DESC
+            LIMIT 1
+            """
+        ).fetchone()
+    except sqlite3.OperationalError:
+        row = None
+    finally:
+        conn.close()
+    if not row:
+        return None
+    return MareData(
+        timestamp=datetime.fromisoformat(row["timestamp"]),
+        valor=int(row["valor"]),
+        fluxo=row["fluxo"],
+        calma=row["calma"],
+        volume=row["volume"],
+        historico_json=row["historico_json"],
+        fonte=row["fonte"],
+    )

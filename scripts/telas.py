@@ -147,6 +147,46 @@ def _semear(db_path: str) -> None:
             fonte="demonstracao",
         )
     )
+    # Maré do mercado (spec 027), com 21 pregões de histórico.
+    historico = []
+    for i, v in enumerate(
+        [
+            31,
+            35,
+            42,
+            40,
+            47,
+            52,
+            49,
+            55,
+            58,
+            54,
+            51,
+            54,
+            57,
+            60,
+            63,
+            59,
+            62,
+            65,
+            61,
+            64,
+            66,
+        ]
+    ):
+        dia = (agora - timedelta(days=(21 - i) * 7 // 5 + 1)).date().isoformat()
+        historico.append({"data": dia, "valor": v})
+    db.save_mare_data(
+        db.MareData(
+            timestamp=agora,
+            valor=68,
+            fluxo=74.0,
+            calma=61.0,
+            volume=67.0,
+            historico_json=json.dumps(historico),
+            fonte="demonstracao",
+        )
+    )
     # Painéis com gauge (spec 026): coesão, apetite a risco e rotação.
     db.save_coesao_data(
         db.CoesaoData(timestamp=agora, concordantes=7, total=10, fonte="demonstracao")

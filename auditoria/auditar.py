@@ -262,6 +262,79 @@ def checar_armadilha_abertura(snapshot: dict, pagina_html: str) -> None:
             assert isinstance(painel["alertas"], list), "'alertas' deve ser uma lista"
 
 
+FAIXAS_MARE = ["Pânico", "Medo", "Neutro", "Confiança", "Otimismo extremo"]
+
+
+def checar_mare(snapshot: dict) -> list[Resultado]:
+    """Invariantes da Maré do mercado (spec 027), só com o que o snapshot publica."""
+    m = snapshot.get("paineis", {}).get("mare")
+    if m is None:
+        return [Resultado("mare.chave", FALHA, "Chave `mare` ausente no /api/snapshot")]
+    if not m:
+        return [Resultado("mare.chave", AVISO, "Maré sem coleta válida ainda")]
+    r: list[Resultado] = []
+    valor = m.get("valor")
+    comps = {k: v for k, v in (m.get("componentes") or {}).items() if v is not None}
+    pesos = m.get("pesos") or {}
+    numeros = [valor, *comps.values()]
+    r.append(
+        Resultado(
+            "mare.escala",
+            OK
+            if all(isinstance(x, (int, float)) and 0 <= x <= 100 for x in numeros)
+            else FALHA,
+            "Maré e componentes entre 0 e 100",
+            f"valor {valor}; componentes {comps}",
+        )
+    )
+    if isinstance(valor, (int, float)) and 0 <= valor <= 100:
+        esperada = FAIXAS_MARE[min(int(valor // 20), 4)]
+        r.append(
+            Resultado(
+                "mare.faixa",
+                OK if m.get("faixa") == esperada else FALHA,
+                "Faixa coerente com o valor",
+                f"valor {valor}: esperado {esperada}, publicado {m.get('faixa')}",
+            )
+        )
+    r.append(
+        Resultado(
+            "mare.pesos",
+            OK
+            if abs(sum(pesos.values()) - 1) <= 0.001 and set(pesos) == set(comps)
+            else FALHA,
+            "Pesos dos componentes presentes somam 1",
+            f"pesos {pesos}",
+        )
+    )
+    if comps and set(pesos) == set(comps) and isinstance(valor, (int, float)):
+        ponderada = sum(pesos[k] * comps[k] for k in comps)
+        r.append(
+            Resultado(
+                "mare.media",
+                OK if abs(ponderada - valor) <= 1 else FALHA,
+                "Valor igual à média ponderada dos componentes (tolerância 1)",
+                f"média {ponderada:.2f}; valor {valor}",
+            )
+        )
+    historico = m.get("historico") or []
+    coletado = str(m.get("coletado_em", ""))[:10]
+    datas = [h.get("data", "") for h in historico]
+    r.append(
+        Resultado(
+            "mare.historico",
+            OK
+            if len(historico) <= 21
+            and datas == sorted(datas)
+            and (not datas or datas[-1] <= coletado)
+            else FALHA,
+            "Histórico da Maré com até 21 pregões, em ordem, antes da coleta",
+            f"{len(historico)} pontos; último {datas[-1] if datas else '-'}; coleta {coletado}",
+        )
+    )
+    return r
+
+
 def checar_coerencia(p: Painel) -> list[Resultado]:
     r: list[Resultado] = []
     if p.valor is None:
@@ -535,6 +608,7 @@ def auditar(
         painel = snap or painel
 
         if isinstance(snap_dict, dict):
+            r += checar_mare(snap_dict)
             try:
                 checar_armadilha_abertura(snap_dict, html)
             except AssertionError as e:

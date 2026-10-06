@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- feat: Maré do mercado (Spec 027), índice de otimismo de 0 a 100 ao lado do Ibovespa: Fluxo (40%, volume financeiro em ações que sobem), Calma (35%, percentil da volatilidade de 10 pregões do Ibovespa) e Volume (25%, ritmo contra a média de 21 pregões no sentido da maioria). Gauge com as cinco faixas (Pânico, Medo, Neutro, Confiança, Otimismo extremo), barras dos componentes, linha dos últimos 21 pregões e selo `parcial` quando falta um componente. Chave `mare` no `/api/snapshot` e invariantes no auditor (`checar_mare`). Tendência, Dispersão e Coesão passam para a linha seguinte.
 ### Fixed
 - agent: PR vazio não entra mais. O #171 ("Spec 027a") chegou sem nenhum arquivo, passou no CI e foi mergeado; a Maré do mercado continua sem implementação e a spec 027 segue `ready` na seção Correções. Regra 5 em `devagent/conferir_pr.py` (reprova PR sem alteração em `pull_request` ou com `--exigir-alteracao`) e segunda trava no `automerge.yml`, que fecha o PR vazio sem merge.
 ### Added

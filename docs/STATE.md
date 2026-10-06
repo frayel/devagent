@@ -5,9 +5,15 @@
 ## Experiência
 
 - Última revisão de experiência: 05/10/2026 (Manchete Dinâmica)
-- Painéis, seções ou telas acrescentados desde a última revisão: 1 (Concentração Setorial) (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 2 (Concentração Setorial, Maré do mercado) (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 027 (Maré do mercado):
+  - Cálculo em `app/services/mare.py` e coletor `app/collectors/mare.py` (cesta `TICKERS` com `spark` 3mo e Ibovespa com `chart` 2y, MT5 preferencial, brapi como reserva do Ibovespa); cache `mare_cache`.
+  - Painel `span-4` ao lado do Ibovespa; Tendência, Dispersão e Coesão viram a linha seguinte.
+  - Chave `mare` no `/api/snapshot`; `checar_mare` em `auditoria/auditar.py`.
+  - Contador da cadência de experiência: 2.
+
 - Spec 026 (Gauges para valores únicos):
   - Macro `gauge` em `componentes.html` e cálculo em `app/gauge.py` (filtro `gauge_pct` e global `gauge_dados`).
   - Gauges em Dispersão, Índice de Coesão, Apetite a Risco, Rotação de Capital e Tendência (MM21 e MM200, `mm21_dist_pct` e `mm200_dist_pct` no serviço do Ibovespa).

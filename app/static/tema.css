@@ -338,3 +338,17 @@ body.modo-so-sinais .painel-rotacao .hero {
 .g-centro .f { font-size: var(--fs-meta); color: var(--texto-2); }
 .g-escala { margin-top: var(--e1); display: flex; justify-content: space-between; font-size: var(--fs-meta); color: var(--texto-3); padding: 0 var(--e1); }
 .gauges { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e3); }
+
+/* Maré do mercado (spec 027): componentes e sparkline desenhados no servidor. */
+.painel-mare .selo { align-self: flex-start; }
+.mare-componentes { display: grid; gap: var(--e2); }
+.comp { display: grid; grid-template-columns: 112px 1fr 28px; align-items: center; gap: var(--e2); font-size: var(--fs-meta); color: var(--texto-2); }
+.comp-peso { color: var(--texto-3); }
+.comp-barra { display: block; width: 100%; height: 6px; }
+.comp-trilho { fill: var(--superficie-2); }
+.comp-valor { fill: var(--destaque); }
+.comp-num { color: var(--texto); text-align: right; }
+.comp-ausente { color: var(--alerta); }
+.spark { display: flex; align-items: center; gap: var(--e3); font-size: var(--fs-meta); color: var(--texto-3); }
+.spark svg { flex: 1; min-width: 0; height: 48px; }
+.spark-linha { fill: none; stroke: var(--destaque); stroke-width: 1.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; }

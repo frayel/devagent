@@ -1,7 +1,7 @@
 ---
 id: 027
 titulo: Maré do mercado (índice de otimismo)
-status: ready
+status: done
 esforco: G
 depende_de: 026
 ---
@@ -80,21 +80,21 @@ O mesmo cálculo aplicado a cada um dos 21 pregões anteriores com os dados diá
 ## Implementação
 1. Coletor `app/collectors/mare.py` seguindo `docs/skills/criar-coletor.md`, com cache `mare_cache` no SQLite.
 2. Serviço `app/services/mare.py` com funções puras: `componente_fluxo`, `componente_calma`, `componente_volume`, `indice`, `faixa`, testáveis sem rede.
-3. Painel em `index.html` com as macros `painel`, `gauge`, `estado`; sparkline via `Painel.grafico` (altura 48px, sem eixos).
+3. Painel em `index.html` com as macros `painel`, `gauge`, `estado`. Sparkline de 48px desenhada em SVG no servidor, como as barras dos componentes: sem JavaScript, sem salto de layout e testável no HTML (o Plotly não acrescentaria nada a uma linha sem eixos).
 4. Chave `mare` no `/api/snapshot` e entrada no `auditoria/README.md`.
 5. Atualizar o contador de painéis da cadência de experiência em `docs/STATE.md`.
 6. Se passar de ~400 linhas, divida em 027a (coletor, serviço, testes e chave no snapshot) e 027b (painel, sparkline e telas).
 
 ## Critérios de aceite
-- [ ] Com um fixture em que todo o volume está em ações em alta, `componente_fluxo` = 100; com tudo em queda, 0; meio a meio, 50.
-- [ ] Com σ10 de hoje igual ao menor da janela, `componente_calma` = 100; igual ao maior, 0.
-- [ ] Ritmo 2× com 100% das ações em alta dá Volume = 100; ritmo 2× com 100% em queda dá 0; ritmo 0,5× dá 50 em qualquer direção.
-- [ ] Às 11:00 BRT (fração 1/7), um volume igual a 1/7 da média dá ritmo 1,0.
-- [ ] `faixa(19)` = "Pânico", `faixa(20)` = "Medo", `faixa(59)` = "Neutro", `faixa(60)` = "Confiança", `faixa(80)` = "Otimismo extremo", `faixa(100)` = "Otimismo extremo".
-- [ ] Sem os dados do Ibovespa, o índice sai com pesos 40/(40+25) e 25/(40+25), e o snapshot traz `parcial: true` e `ausentes: ["calma"]`.
-- [ ] Falha total das fontes não quebra a página: o painel mostra o estado `indisponivel` e os outros painéis renderizam.
-- [ ] Testes sem internet, com mock do httpx.
-- [ ] `make telas` mostra a Maré acima da dobra em 1440×900, e o PR traz o checklist visual respondido.
+- [x] Com um fixture em que todo o volume está em ações em alta, `componente_fluxo` = 100; com tudo em queda, 0; meio a meio, 50.
+- [x] Com σ10 de hoje igual ao menor da janela, `componente_calma` = 100; igual ao maior, 0.
+- [x] Ritmo 2× com 100% das ações em alta dá Volume = 100; ritmo 2× com 100% em queda dá 0; ritmo 0,5× dá 50 em qualquer direção.
+- [x] Às 11:00 BRT (fração 1/7), um volume igual a 1/7 da média dá ritmo 1,0.
+- [x] `faixa(19)` = "Pânico", `faixa(20)` = "Medo", `faixa(59)` = "Neutro", `faixa(60)` = "Confiança", `faixa(80)` = "Otimismo extremo", `faixa(100)` = "Otimismo extremo".
+- [x] Sem os dados do Ibovespa, o índice sai com pesos 40/(40+25) e 25/(40+25), e o snapshot traz `parcial: true` e `ausentes: ["calma"]`.
+- [x] Falha total das fontes não quebra a página: o painel mostra o estado `indisponivel` e os outros painéis renderizam.
+- [x] Testes sem internet, com mock do httpx.
+- [x] `make telas` mostra a Maré acima da dobra em 1440×900, e o PR traz o checklist visual respondido.
 
 ## Invariantes de produção
 - `paineis.mare` existe no `/api/snapshot` com `coletado_em`, `fonte`, `valor`, `faixa`, `componentes` (`fluxo`, `calma`, `volume`), `pesos`, `parcial`, `ausentes` e `historico` (até 21 pares data/valor).
@@ -109,3 +109,9 @@ O mesmo cálculo aplicado a cada um dos 21 pregões anteriores com os dados diá
 - Maré por setor ou por ação.
 - Alertas ou notificações quando a faixa muda.
 - Backtest do índice contra retornos futuros (fica como ideia no backlog; sem ele, o painel não sugere que a Maré prevê nada).
+
+## Notas da implementação (06/10/2026)
+- Cálculo em `app/services/mare.py` (funções puras), coleta em `app/collectors/mare.py`, cache `mare_cache`, chave `mare` no `/api/snapshot` e `checar_mare` no auditor.
+- Tendência, Dispersão e Coesão saem da coluna ao lado do Ibovespa e formam a linha seguinte, cada uma com `span-4`.
+- O índice de hoje usa o pregão mais recente da cesta; fora do horário de pregão a fração é 1, então o número da noite é o do pregão fechado.
+- Percentil da Calma: fração dos valores da janela menores que o de hoje, sobre (n − 1). Assim, igual ao menor dá 100 e igual ao maior dá 0, como pedem os critérios.
