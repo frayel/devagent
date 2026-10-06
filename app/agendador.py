@@ -82,6 +82,7 @@ def _coletar() -> None:
     for nome in (
         "ibovespa",
         "highlights",
+        "mare",
         "volume_alerts",
         "dolar_correlation",
         "forca_relativa",

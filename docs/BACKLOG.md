@@ -2,7 +2,6 @@
 
 ## Correções (prioridade sobre qualquer feature)
 
-- **Maré do mercado.** Implementar a spec `docs/specs/027-indice-mare.md`, que usa a macro `gauge` (já disponível desde a 026) (pedido do dono do produto em 05/10/2026). Ao concluir, marque a spec como `done`, remova esta entrada e registre no `CHANGELOG.md`.
 
 ## Features
 

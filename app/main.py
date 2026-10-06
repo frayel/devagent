@@ -29,6 +29,7 @@ from app.services.faca_caindo import get_faca_caindo_view
 from app.services.compradores_fundo import get_compradores_fundo_view
 from app.services.armadilha_abertura import get_armadilha_abertura_view
 from app.services.sobrevivencia_semanal import get_sobrevivencia_semanal_view
+from app.services import mare as mare_servico
 from app.database import (
     get_latest_concentracao_setorial_data,
     get_latest_ibovespa_data,
@@ -44,6 +45,7 @@ from app.database import (
     get_latest_compradores_fundo_data,
     get_latest_armadilha_abertura_data,
     get_latest_sobrevivencia_semanal_data,
+    get_latest_mare_data,
 )
 from app import agendador
 
@@ -278,6 +280,10 @@ def snapshot():
     else:
         resp["paineis"]["concentracao_setorial"] = {}
 
+    # Maré do mercado (spec 027). Sem coleta válida, chave vazia.
+    mare_data = get_latest_mare_data()
+    resp["paineis"]["mare"] = mare_servico.snapshot(mare_data) if mare_data else {}
+
     apetite_risco_data = get_latest_apetite_risco_data()
     if apetite_risco_data:
         resp["paineis"]["apetite_risco"] = {
@@ -427,6 +433,7 @@ async def index(request: Request):
     compradores_fundo = get_compradores_fundo_view()
     armadilha_abertura = get_armadilha_abertura_view()
     sobrevivencia_semanal = get_sobrevivencia_semanal_view()
+    mare = mare_servico.get_mare_view()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -449,5 +456,6 @@ async def index(request: Request):
             "compradores_fundo": compradores_fundo,
             "armadilha_abertura": armadilha_abertura,
             "sobrevivencia_semanal": sobrevivencia_semanal,
+            "mare": mare,
         },
     )

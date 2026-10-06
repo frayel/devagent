@@ -50,6 +50,7 @@ def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
         "app.collectors.concentracao_setorial.collect_and_save", lambda: True
     )
     monkeypatch.setattr("app.collectors.apetite_risco.collect_and_save", lambda: True)
+    monkeypatch.setattr("app.collectors.mare.collect_and_save", lambda: True)
     monkeypatch.setattr("app.collectors.variacao_subita.collect_and_save", lambda: True)
     monkeypatch.setattr("app.collectors.rotacao_capital.collect_and_save", lambda: True)
     monkeypatch.setattr("app.collectors.ibovespa.collect_and_save", quebra)

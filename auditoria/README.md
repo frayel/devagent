@@ -60,6 +60,8 @@ Hoje o auditor extrai os números do HTML, o que quebra se o template mudar. A a
 
 `fonte` é o nome do coletor que produziu o dado (`mt5`, `brapi` ou `yfinance`; `mt5+yfinance` quando parte veio de cada um). O auditor usa esse campo para escolher uma referência diferente.
 
+Painéis com checagem própria: `apetite_risco`, `armadilha_abertura` e `mare` (escala 0 a 100, faixa coerente com o valor, pesos somando 1, valor igual à média ponderada, histórico de até 21 pregões anterior à coleta).
+
 ## Painel novo, checagem nova
 
 Toda spec tem a seção **Invariantes de produção**. Ao publicar um painel, o desenvolvedor acrescenta o painel ao `/api/snapshot`. O auditor LLM ou o desenvolvedor transforma as invariantes em funções `checar_*` em `auditar.py`, com teste em `auditoria/tests/`. Checagens que valem para qualquer site (saúde, página, navegador, vazamento de fixtures) ficam no harness do núcleo.

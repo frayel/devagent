@@ -7,8 +7,96 @@
     <p class="manchete-texto texto-centro">{{ manchete }}</p>
 </div>
 
-<!-- Linha 1 -->
 
+<div class="span-12" id="filtro-macro-micro">
+    <span>Filtro:</span>
+    <button class="filtro-btn ativo" data-filtro="todos">Todos</button>
+    <button class="filtro-btn" data-filtro="macro">Macro</button>
+    <button class="filtro-btn" data-filtro="micro">Micro</button>
+    <button class="filtro-btn" data-filtro="sinais">Só Sinais</button>
+</div>
+
+
+<!-- Linha 1: Ibovespa e Maré do mercado -->
+{% call painel("Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "", "visao-macro painel-ibovespa") %}
+    {% if data %}
+        {{ kpi(data.current_price|default("") + " pontos", "", (variacao(data.variation ~ " (" ~ data.variation_percent ~ ")", data.variation_raw|default(0))) | safe, True) }}
+        {% if data.history_dict and data.history_dict.dates %}
+        <div id="grafico-ibovespa" class="grafico"
+             data-dates='{{ data.history_dict.dates | tojson | e }}'
+             data-closes='{{ data.history_dict.closes | tojson | e }}'
+             data-is-positive='{{ 'true' if data.is_positive else 'false' }}'>
+        </div>
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Maré do mercado", 4, "Índice de 0 a 100. Fluxo (40%): parcela do volume financeiro da cesta de 30 ações que foi para ações em alta, uma aproximação do fluxo de ordens, que não tem fonte gratuita. Calma (35%): 100 menos o percentil da volatilidade de 10 pregões do Ibovespa nos 252 anteriores. Volume (25%): ritmo do volume contra a média de 21 pregões, ajustado pela hora do pregão, no sentido da maioria. A Maré descreve o humor do momento. Não é recomendação de compra ou venda.", mare.fonte if mare else "", mare.time if mare else "", "visao-macro painel-mare") %}
+    {% if mare %}
+        {% if mare.parcial %}<span class="selo alerta">parcial · sem {{ mare.ausentes }}</span>{% endif %}
+        {{ gauge(mare.valor, "", 0, 100, "{:.0f}", faixas=mare.faixas, resumo="Maré do mercado, de 0 a 100", grande=True, escala=["0", "100"]) }}
+        <div class="mare-componentes">
+            {% for c in mare.componentes %}
+            <div class="comp">
+                <span>{{ c.nome }} <span class="comp-peso num">{{ c.peso }}%</span></span>
+                {% if c.valor is none %}
+                <span class="comp-ausente">ausente</span><span></span>
+                {% else %}
+                <svg class="comp-barra" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="comp-trilho" width="100" height="6"/><rect class="comp-valor" width="{{ c.valor }}" height="6"/></svg>
+                <span class="num comp-num">{{ c.valor }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% if mare.sparkline %}
+        <div class="spark">
+            <svg viewBox="0 0 200 48" preserveAspectRatio="none" role="img" aria-label="{{ mare.resumo_serie }}"><polyline class="spark-linha" points="{{ mare.sparkline.pontos }}"/></svg>
+            {% if mare.comparacao %}<span class="num">{{ mare.comparacao }}</span>{% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+<!-- Linha 2: leituras de escala única, com gauge -->
+{% call painel("Tendência (Ibovespa)", 4, "Distância do Ibovespa às médias móveis simples de 21 e 200 pregões, numa escala de -10% a +10%.", data.fonte if data else "", data.time if data else "", "visao-macro painel-tendencia") %}
+    {% if data and (data.mm21 or data.mm200) %}
+        <div class="gauges">
+            <div>{{ gauge(data.mm21_dist_pct, "MM21 " ~ data.mm21 if data.mm21 else "MM21", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 21 pregões", escala=False) }}</div>
+            <div>{{ gauge(data.mm200_dist_pct, "MM200 " ~ data.mm200 if data.mm200 else "MM200", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 200 pregões", escala=False) }}</div>
+        </div>
+        <div class="g-escala num"><span>-10%</span><span>+10%</span></div>
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro") %}
+    {% if highlights and highlights.dispersion_pct is not none %}
+        {{ gauge(highlights.dispersion_pct, "em alta", 0, 100, "{:.0f}%", resumo="Dispersão, ações em alta") }}
+        {{ medidor(highlights.dispersion_pct|int, "em alta", numero=False) }}
+        <div class="legenda num">
+            <span>{{ highlights.up_count }} subiram</span>
+            <span>{{ highlights.down_count }} caíram</span>
+        </div>
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Índice de Coesão", 4, "Das 10 ações mais pesadas do Ibovespa, quantas estão na mesma direção (alta ou baixa) do índice hoje.", coesao.fonte if coesao else "", coesao.time if coesao else "", "visao-macro") %}
+    {% if coesao %}
+        {{ gauge(coesao.concordantes, coesao.estado, 0, coesao.total, "{:.0f}", resumo="Índice de Coesão, ações na direção do índice", cor=coesao.cor, escala=["0", coesao.total ~ " ações"]) }}
+        <p class="sub texto-centro">{{ coesao.proporcao }} na mesma direção do Ibovespa</p>
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+<!-- Linha 3: humor e rotação do dia -->
 {% call painel('Apetite a Risco', 4, 'Se o índice SMLL estiver subindo mais que o IBOV, o mercado está tomando risco.', apetite_risco.fonte if apetite_risco else '', apetite_risco.time if apetite_risco else '', 'visao-macro painel-apetite') %}
   {% if not apetite_risco %}
     {{ estado('indisponivel') }}
@@ -21,18 +109,6 @@
     </div>
   {% endif %}
 {% endcall %}
-
-
-
-<div class="span-12" id="filtro-macro-micro">
-    <span>Filtro:</span>
-    <button class="filtro-btn ativo" data-filtro="todos">Todos</button>
-    <button class="filtro-btn" data-filtro="macro">Macro</button>
-    <button class="filtro-btn" data-filtro="micro">Micro</button>
-    <button class="filtro-btn" data-filtro="sinais">Só Sinais</button>
-</div>
-
-
 
 {% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial') %}
   {% if not concentracao_setorial %}
@@ -72,58 +148,6 @@
     </div>
   {% endif %}
 {% endcall %}
-
-
-{% call painel("Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "", "visao-macro painel-ibovespa") %}
-    {% if data %}
-        {{ kpi(data.current_price|default("") + " pontos", "", (variacao(data.variation ~ " (" ~ data.variation_percent ~ ")", data.variation_raw|default(0))) | safe, True) }}
-        {% if data.history_dict and data.history_dict.dates %}
-        <div id="grafico-ibovespa" class="grafico"
-             data-dates='{{ data.history_dict.dates | tojson | e }}'
-             data-closes='{{ data.history_dict.closes | tojson | e }}'
-             data-is-positive='{{ 'true' if data.is_positive else 'false' }}'>
-        </div>
-        {% endif %}
-    {% else %}
-        {{ estado('indisponivel') }}
-    {% endif %}
-{% endcall %}
-
-<div class="span-4 pilha">
-{% call painel("Tendência (Ibovespa)", 12, "Distância do Ibovespa às médias móveis simples de 21 e 200 pregões, numa escala de -10% a +10%.", data.fonte if data else "", data.time if data else "", "visao-macro painel-tendencia") %}
-    {% if data and (data.mm21 or data.mm200) %}
-        <div class="gauges">
-            <div>{{ gauge(data.mm21_dist_pct, "MM21 " ~ data.mm21 if data.mm21 else "MM21", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 21 pregões", escala=False) }}</div>
-            <div>{{ gauge(data.mm200_dist_pct, "MM200 " ~ data.mm200 if data.mm200 else "MM200", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 200 pregões", escala=False) }}</div>
-        </div>
-        <div class="g-escala num"><span>-10%</span><span>+10%</span></div>
-    {% else %}
-        {{ estado('indisponivel') }}
-    {% endif %}
-{% endcall %}
-
-{% call painel("Dispersão", 12, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro") %}
-    {% if highlights and highlights.dispersion_pct is not none %}
-        {{ gauge(highlights.dispersion_pct, "em alta", 0, 100, "{:.0f}%", resumo="Dispersão, ações em alta") }}
-        {{ medidor(highlights.dispersion_pct|int, "em alta", numero=False) }}
-        <div class="legenda num">
-            <span>{{ highlights.up_count }} subiram</span>
-            <span>{{ highlights.down_count }} caíram</span>
-        </div>
-    {% else %}
-        {{ estado('indisponivel') }}
-    {% endif %}
-{% endcall %}
-
-{% call painel("Índice de Coesão", 12, "Das 10 ações mais pesadas do Ibovespa, quantas estão na mesma direção (alta ou baixa) do índice hoje.", coesao.fonte if coesao else "", coesao.time if coesao else "", "visao-macro") %}
-    {% if coesao %}
-        {{ gauge(coesao.concordantes, coesao.estado, 0, coesao.total, "{:.0f}", resumo="Índice de Coesão, ações na direção do índice", cor=coesao.cor, escala=["0", coesao.total ~ " ações"]) }}
-        <p class="sub texto-centro">{{ coesao.proporcao }} na mesma direção do Ibovespa</p>
-    {% else %}
-        {{ estado('indisponivel') }}
-    {% endif %}
-{% endcall %}
-</div>
 
 
 {% call painel("Concentração de Ganhos", 12, "Mostra quantas ações explicam 50% dos pontos de variação do índice hoje.", concentracao.fonte if concentracao else "", concentracao.time if concentracao else "", "visao-macro") %}
@@ -264,8 +288,6 @@
         {{ estado('indisponivel') }}
     {% endif %}
 {% endcall %}
-
-
 
 
 {% call painel("Radar de Faca Caindo", 4, "Ações com mais dias consecutivos de queda, indicando a duração da sequência e a perda acumulada (nos últimos 10 pregões).", faca_caindo.fonte if faca_caindo else "", faca_caindo.time if faca_caindo else "", "visao-micro") %}
