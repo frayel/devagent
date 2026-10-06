@@ -151,7 +151,7 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `BRAPI_TOKEN` | Render | token da brapi.dev (sem ele, a coleta usa só o Yahoo Finance) |
 | `MT5_API_URL` | Render, secreto | base da mt5api, ex. `http://host:8000/api/v1`; liga o MetaTrader 5 como fonte preferencial |
 | `MT5_API_KEY` | Render, secreto | chave enviada no header `X-API-Key` (igual a `MT5API_SECRET_KEY` no servidor) |
-| `MT5_SIMBOLOS` | Render, opcional | JSON de símbolos Yahoo → MT5; padrão `{"^BVSP": "IBOV"}` |
+| `MT5_SIMBOLOS` | Render, opcional | JSON de símbolos Yahoo → MT5; padrão `{"^BVSP": "IBOV", "BRL=X": "DOL$"}` |
 | `MT5_FUSO_SERVIDOR` | Render, opcional | fuso do servidor da corretora em horas; padrão `-3` |
 | `COLETA_AUTOMATICA` | Render, opcional | `0` desliga a coleta dentro do web service |
 | `DATABASE_PATH` | opcional | caminho do banco SQLite (padrão `data.db`) |

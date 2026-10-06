@@ -321,7 +321,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Sensibilidade ao dólar", 8, "Correlação de Pearson entre retornos diários da ação e do BRL=X nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "", "visao-macro") %}
+{% call painel("Sensibilidade ao dólar", 8, "Correlação de Pearson entre retornos diários da ação e do dólar (DOL$ no MT5, BRL=X no Yahoo) nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "", "visao-macro") %}
     {% if dolar_correlation %}
         <div class="duas">
             <div>
