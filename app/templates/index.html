@@ -39,6 +39,21 @@
 
 
 
+{% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial') %}
+  {% if not concentracao_setorial %}
+    {{ estado('indisponivel') }}
+  {% else %}
+    <div class="kpi-container alinha-centro">
+      <div class="kpi">
+        <div class="valor num">{{ concentracao_setorial.setor_destaque }}</div>
+      </div>
+      <div class="var {% if concentracao_setorial.variacao_media > 0 %}alta{% elif concentracao_setorial.variacao_media < 0 %}baixa{% else %}neutra{% endif %}">
+        {% if concentracao_setorial.variacao_media > 0 %}▲ +{% elif concentracao_setorial.variacao_media < 0 %}▼ {% else %}■ {% endif %}{{ ("%.2f"|format(concentracao_setorial.variacao_media)).replace('.', ',') }}%
+      </div>
+    </div>
+  {% endif %}
+{% endcall %}
+
 {% call painel('Rotação de Capital', 4, 'Troca de capital entre os dois principais motores da bolsa: Bancos vs Commodities.', rotacao_capital.fonte if rotacao_capital else '', rotacao_capital.time if rotacao_capital else '', 'visao-macro painel-rotacao') %}
   {% if not rotacao_capital %}
     {{ estado('indisponivel') }}

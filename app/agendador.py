@@ -91,6 +91,7 @@ def _coletar() -> None:
         "concentracao",
         "apetite_risco",
         "variacao_subita",
+        "concentracao_setorial",
         "rotacao_capital",
         "faca_caindo",
         "compradores_fundo",

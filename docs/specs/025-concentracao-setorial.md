@@ -1,7 +1,7 @@
 ---
 id: 025
 titulo: Índice de Concentração Setorial
-status: ready
+status: in-progress
 esforco: M
 ---
 
