@@ -72,8 +72,8 @@ async def add_security_headers(request: Request, call_next):
     )
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' https://unpkg.com https://cdn.plot.ly; "
-        "style-src 'self'; "
+        "script-src 'self' 'unsafe-eval' https://unpkg.com https://cdn.plot.ly; "
+        "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data:"
     )
     return response
