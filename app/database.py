@@ -132,6 +132,16 @@ def init_db() -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_armadilha_abertura_timestamp ON armadilha_abertura_cache (timestamp DESC)
         """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sobrevivencia_semanal_cache (
+            timestamp TEXT,
+            alertas_json TEXT,
+            fonte TEXT
+        )
+        """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_sobrevivencia_semanal_timestamp ON sobrevivencia_semanal_cache (timestamp DESC)
+        """)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS compradores_fundo_cache (
