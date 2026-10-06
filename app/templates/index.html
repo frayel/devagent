@@ -57,7 +57,7 @@
       <div class='hero num {% if rotacao_capital.estado == "Para Bancos" or rotacao_capital.estado == "Para Commodities" %}texto-alta{% else %}texto-neutro{% endif %} texto-centro'>
         {{ rotacao_capital.estado }}
       </div>
-      {{ gauge((rotacao_capital.var_bancos - rotacao_capital.var_commodities) if rotacao_capital.var_bancos and rotacao_capital.var_commodities else 0, "Bancos vs Commod.", -3.0, 3.0, "{:+.1f} p.p.", None, True) }}
+      {{ gauge((rotacao_capital.var_bancos - rotacao_capital.var_commodities) if (rotacao_capital.var_bancos is not none) and (rotacao_capital.var_commodities is not none) else 0, "Bancos vs Commod.", -3.0, 3.0, "{:+.1f} p.p.", None, True) }}
     </div>
   {% endif %}
 {% endcall %}

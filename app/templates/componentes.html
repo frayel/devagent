@@ -86,7 +86,7 @@
            {% set faixas_num = faixas|length %}
            {% set arc_len = 100 / faixas_num %}
            {% for faixa in faixas %}
-             <path class="g-faixa-{{ loop.index }}" d="M10 60 A50 50 0 0 1 110 60"
+             <path class="g-faixa-{{ loop.index }}" d="M10 60 A50 50 0 0 1 110 60" pathLength="100"
                    stroke-width="3" fill="none"
                    stroke-dasharray="{{ arc_len }} 100"
                    stroke-dashoffset="{{ -(arc_len * (loop.index0)) }}" />
