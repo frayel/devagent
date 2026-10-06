@@ -19,6 +19,10 @@ Regras (mantenha em sincronia com devagent/CICLO.md, Passos 1 e 4):
        dessas entradas (removê-la). Entradas que citam `bloqueado` não contam.
        Fechar uma spec que já estava `in-progress` na base é continuidade e
        não entra nesta regra.
+    5. PR sem alteração nenhuma não entra. O PR #171 ("Spec 027a") chegou
+       vazio, passou no CI e foi mergeado como se tivesse entregue a spec.
+       Vale em `pull_request` no CI ou com `--exigir-alteracao`; num push na
+       main a base é o próprio HEAD e a regra não se aplica.
 
 Uma regra nunca é afrouxada no mesmo PR que corrige o que ela aponta
 (README do núcleo, separação de poderes).
@@ -118,7 +122,11 @@ def resolver_base(raiz: Path, base: str | None) -> str | None:
     return None
 
 
-def conferir(raiz: Path, base: str | None = None) -> Resultado:
+def conferir(
+    raiz: Path, base: str | None = None, exigir_alteracao: bool | None = None
+) -> Resultado:
+    if exigir_alteracao is None:
+        exigir_alteracao = os.environ.get("GITHUB_EVENT_NAME") == "pull_request"
     doc = documentos()
     res = Resultado()
     pasta_specs = raiz / doc["specs"]
@@ -157,6 +165,15 @@ def conferir(raiz: Path, base: str | None = None) -> Resultado:
     alterados = set((git("diff", "--name-only", mb, raiz=raiz) or "").split())
     novos = git("ls-files", "--others", "--exclude-standard", raiz=raiz) or ""
     alterados |= set(novos.split())
+
+    # Regra 5: PR vazio.
+    if exigir_alteracao and not alterados:
+        res.falha(
+            "O PR não altera nenhum arquivo em relação à base. Um PR vazio não "
+            "entrega nada: faça commit do trabalho nesta branch ou feche o PR. "
+            "Se a sessão perdeu as mudanças, devolva a spec para `ready` e "
+            "registre o motivo no relatório."
+        )
 
     fechadas_novas: list[str] = []
     fechadas: list[tuple[str, str]] = []
@@ -222,9 +239,15 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--base", help="ref da base (padrão: origin/main)")
     ap.add_argument("--raiz", default=".", help="raiz do repositório")
+    ap.add_argument(
+        "--exigir-alteracao",
+        action="store_true",
+        default=None,
+        help="reprova se não houver arquivo alterado (padrão: só em pull_request)",
+    )
     args = ap.parse_args(argv)
 
-    res = conferir(Path(args.raiz).resolve(), args.base)
+    res = conferir(Path(args.raiz).resolve(), args.base, args.exigir_alteracao)
     for aviso in res.avisos:
         print(f"aviso: {aviso}")
     if res.falhas:
