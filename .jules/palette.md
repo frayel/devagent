@@ -19,3 +19,7 @@
 - **O que fiz:** Corrigi o template `index.html` para o painel "Atrasadas do Rally", utilizando o array `linhas` no macro `tabela_ativos` em vez de tags HTML puras (`<tr>`, `<td>`), o que quebrava o layout.
 - **O que aprendi:** O macro `tabela_ativos` gera sua própria `<table>` e `<tbody>`. Passar tags HTML externas pra dentro dele ou injetar elementos da tabela de forma mista compromete o layout da página.
 - **O que evitar:** Evitar escrever HTML de tabela diretamente em componentes que foram criados para receber dados em arrays dicionários padronizados, pois isso ignora a aplicação global do design system na aplicação.
+## 2026-10-06
+- **O que fiz:** Padronizei o painel "Força Relativa" para usar a macro `kpi` e corrigi a classe `sem-dados` para `vazio` em "Atrasadas do Rally" de acordo com o Design System.
+- **Por que fiz:** A versão anterior usava classes customizadas não definidas (`linha-kpis`, `kpi-secundario`), violando os tokens de design (Seção 4 de docs/DESIGN.md) e regras de macros (Seção 5).
+- **O que aprendi:** É importante revisar templates para garantir que macros padrão estejam sendo utilizadas no lugar de layouts improvisados.
