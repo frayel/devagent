@@ -10,7 +10,7 @@ Uma entrada por fonte. Atualize ao criar ou alterar coletor (skill `criar-coleto
 - **Como entra**: `app/collectors/mt5.py` atende as URLs do Yahoo Finance (`spark` e `chart`) dentro de `fetch_with_retry`, devolvendo o mesmo JSON montado com as barras do MT5. Se o MT5 falhar, a requisição segue ao Yahoo. Ibovespa e maiores altas/baixas tentam o MT5 antes da brapi.
 - **Rótulo**: o painel mostra `mt5`, `mt5+yfinance` (parte de cada fonte) ou o rótulo antigo, conforme quem respondeu de fato.
 - **Símbolos**: `XXXX4.SA` vira `XXXX4`; `^BVSP` vira `IBOV`. Outros mapeamentos em `MT5_SIMBOLOS` (JSON). Sem mapeamento (ex.: `BRL=X`), o símbolo continua vindo do Yahoo.
-- **Limites**: 1 requisição a cada 2 s, como as demais fontes; barras ficam em cache por 5 min (diárias) e 2 min (intradiárias), então uma rodada faz uma chamada por símbolo. Se o servidor cair ou recusar a chave, a fonte fica em pausa por 5 min.
+- **Limites**: 1 requisição a cada 2 s, como as demais fontes; barras ficam em cache por 5 min (diárias) e 2 min (intradiárias), então uma rodada faz uma chamada por símbolo. Se o servidor cair ou recusar a chave, a fonte inteira fica em pausa por 5 min. Se o terminal recusar um símbolo (a mt5api responde 503 com `MT5 last status: ...`), só aquele símbolo fica em pausa.
 - **Armadilhas**: o horário das barras é o do servidor da corretora (`MT5_FUSO_SERVIDOR`, padrão `-3`). Barras diárias recebem 13:00 UTC, como no Yahoo, para a data não mudar ao converter para BRT. O nome do índice varia entre corretoras; confira em `/symbols?group=*IBOV*`.
 
 ## brapi.dev

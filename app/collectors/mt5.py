@@ -54,6 +54,7 @@ BARRAS_INTRADIA = 80  # um pregão inteiro em M15 tem ~32 barras
 TTL_DIARIO = 300.0
 TTL_INTRADIA = 120.0
 PAUSA_APOS_FALHA = 300.0  # servidor fora do ar: não insiste por 5 minutos
+PAUSA_SIMBOLO = 300.0  # símbolo que o terminal não serviu: não insiste por 5 minutos
 TIMEOUT = 10.0
 
 INTERVALOS = {
@@ -78,6 +79,8 @@ SEGUNDOS_TIMEFRAME = {
 
 _cache: dict[tuple[str, str], tuple[float, list[dict[str, Any]]]] = {}
 _indisponivel_ate = 0.0
+_motivo_pausa = ""
+_simbolos_falhos: dict[tuple[str, str], tuple[float, str]] = {}
 _trava = threading.Lock()
 _local = threading.local()
 
@@ -198,13 +201,38 @@ def _hora_da_barra(valor: Any) -> datetime:
     return datetime.fromisoformat(texto).replace(tzinfo=None)
 
 
+def _pausar_servidor(motivo: str) -> None:
+    """Falha do servidor inteiro (rede, chave): vale para todos os símbolos."""
+    global _indisponivel_ate, _motivo_pausa
+    _indisponivel_ate = time.time() + PAUSA_APOS_FALHA
+    _motivo_pausa = motivo
+
+
+def _detalhe_erro(resposta: httpx.Response) -> str:
+    """Texto do erro no formato RFC 7807 da mt5api, ou o começo do corpo."""
+    try:
+        corpo = resposta.json()
+    except ValueError:
+        return resposta.text[:150]
+    if isinstance(corpo, dict):
+        detalhe = corpo.get("detail")
+        if isinstance(detalhe, dict):
+            detalhe = detalhe.get("detail")
+        if detalhe:
+            return str(detalhe)[:150]
+    return str(corpo)[:150]
+
+
 def _baixar_barras(simbolo: str, timeframe: str, quantidade: int) -> list[dict]:
-    global _indisponivel_ate
     base = url_base()
     if base is None:
         raise Mt5Indisponivel("MT5_API_URL não configurada")
-    if time.time() < _indisponivel_ate:
-        raise Mt5Indisponivel("servidor MT5 em pausa após falha recente")
+    agora = time.time()
+    if agora < _indisponivel_ate:
+        raise Mt5Indisponivel(f"servidor MT5 em pausa: {_motivo_pausa}")
+    falha = _simbolos_falhos.get((simbolo, timeframe))
+    if falha and agora < falha[0]:
+        raise Mt5Indisponivel(falha[1])
 
     from app.collectors.utils import _enforce_rate_limit, _get_domain
 
@@ -224,22 +252,25 @@ def _baixar_barras(simbolo: str, timeframe: str, quantidade: int) -> list[dict]:
     try:
         resposta = httpx.get(url, params=params, headers=headers, timeout=TIMEOUT)
     except httpx.RequestError as e:
-        _indisponivel_ate = time.time() + PAUSA_APOS_FALHA
-        logger.warning("MT5 fora do ar (%s); usando outras fontes", type(e).__name__)
-        raise Mt5Indisponivel(str(e)) from e
+        motivo = f"{type(e).__name__} ao conectar em {base}"
+        _pausar_servidor(motivo)
+        logger.warning("MT5 fora do ar (%s); usando outras fontes", motivo)
+        raise Mt5Indisponivel(motivo) from e
 
     if resposta.status_code in (401, 403):
-        _indisponivel_ate = time.time() + PAUSA_APOS_FALHA
-        logger.error(
-            "MT5 recusou a chave (HTTP %s): confira MT5_API_KEY", resposta.status_code
-        )
-        raise Mt5Indisponivel("chave recusada")
-    if resposta.status_code >= 500:
-        _indisponivel_ate = time.time() + PAUSA_APOS_FALHA
-        logger.warning("MT5 respondeu HTTP %s para %s", resposta.status_code, simbolo)
-        raise Mt5Indisponivel(f"HTTP {resposta.status_code}")
+        motivo = f"chave recusada (HTTP {resposta.status_code})"
+        _pausar_servidor(motivo)
+        logger.error("MT5 recusou a chave: confira MT5_API_KEY")
+        raise Mt5Indisponivel(motivo)
     if resposta.status_code != 200:
-        raise Mt5Indisponivel(f"HTTP {resposta.status_code} para {simbolo}")
+        # A mt5api devolve 503 quando o terminal não serve aquele símbolo
+        # (inexistente, fora da Observação do Mercado, sem histórico). É uma
+        # falha do símbolo, não do servidor: só ele fica em pausa.
+        motivo = f"HTTP {resposta.status_code}: {_detalhe_erro(resposta)}"
+        with _trava:
+            _simbolos_falhos[(simbolo, timeframe)] = (agora + PAUSA_SIMBOLO, motivo)
+        logger.warning("MT5 não serviu %s %s (%s)", simbolo, timeframe, motivo)
+        raise Mt5Indisponivel(motivo)
 
     try:
         dados = resposta.json().get("data")
@@ -288,10 +319,12 @@ def barras(simbolo: str, timeframe: str) -> list[dict]:
 
 
 def limpar_cache() -> None:
-    global _indisponivel_ate
+    global _indisponivel_ate, _motivo_pausa
     with _trava:
         _cache.clear()
+        _simbolos_falhos.clear()
     _indisponivel_ate = 0.0
+    _motivo_pausa = ""
 
 
 # --------------------------------------------------------------------------
@@ -410,18 +443,22 @@ def resposta_para(url: str) -> dict | None:
     if "/finance/spark" in partes.path:
         simbolos = [s for s in _parametro(qs, "symbols", "").split(",") if s.strip()]
         resultado = []
-        faltaram = []
+        faltaram: dict[str, list[str]] = {}
         for s in simbolos:
             try:
                 bloco = bloco_yahoo(s.strip(), intervalo, janela)
             except Mt5Indisponivel as e:
-                faltaram.append(f"{s} ({e})")
+                faltaram.setdefault(str(e), []).append(s.strip())
                 continue
             resultado.append({"symbol": s.strip(), "response": [bloco]})
+        if faltaram:
+            # Agrupado por motivo: uma linha legível mesmo com 30 símbolos.
+            resumo = "; ".join(
+                f"{', '.join(lista)} ({motivo})" for motivo, lista in faltaram.items()
+            )
+            logger.warning("MT5 sem dados para: %s", resumo[:400])
         if not resultado:
             return None
-        if faltaram:
-            logger.warning("MT5 sem dados para: %s", ", ".join(faltaram)[:250])
         return {"spark": {"result": resultado, "error": None}}
 
     if "/finance/chart/" in partes.path:
