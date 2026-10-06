@@ -107,11 +107,12 @@ def volatilidades(fechamentos: list[float]) -> list[float | None]:
         )
     saida: list[float | None] = []
     for i in range(len(fechamentos)):
-        janela = retornos[i - JANELA_VOLATILIDADE + 1 : i + 1] if i >= 1 else []
-        if i < JANELA_VOLATILIDADE or any(r is None for r in janela):
+        trecho = retornos[i - JANELA_VOLATILIDADE + 1 : i + 1] if i >= 1 else []
+        janela = [r for r in trecho if r is not None]
+        if i < JANELA_VOLATILIDADE or len(janela) < JANELA_VOLATILIDADE:
             saida.append(None)
             continue
-        saida.append(statistics.stdev(janela) * math.sqrt(252))  # type: ignore[arg-type]
+        saida.append(statistics.stdev(janela) * math.sqrt(252))
     return saida
 
 
@@ -328,7 +329,7 @@ def _sparkline(valores: list[int]) -> dict[str, Any] | None:
     """Pontos de uma linha em viewBox 0 0 200 48 (desenhada no servidor)."""
     if len(valores) < 2:
         return None
-    menor, maior = min(valores), max(valores)
+    menor, maior = float(min(valores)), float(max(valores))
     if maior - menor < 10:  # linha quase reta não deve parecer volátil
         centro = (maior + menor) / 2
         menor, maior = centro - 5, centro + 5

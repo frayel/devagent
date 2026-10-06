@@ -128,7 +128,7 @@ def coletar(agora: datetime | None = None) -> MareData | None:
         ibov, usou_brapi = buscar_ibov(client)
 
     atual, historico = mare.calcular(cesta, ibov, agora)
-    if atual is None:
+    if atual is None or atual.valor is None:
         logger.error(
             "Maré: menos de dois componentes (%d ações, %d pregões do Ibovespa)",
             len(cesta),
