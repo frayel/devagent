@@ -15,7 +15,7 @@ def get_variacao_subita_view_data() -> dict | None:
         alertas = []
 
     brt = timezone(timedelta(hours=-3))
-    time_str = data.timestamp.astimezone(brt).strftime("%H:%M")
+    time_str = data.timestamp.astimezone(brt).strftime("%d/%m/%Y %H:%M:%S BRT")
 
     return {
         "time": time_str,

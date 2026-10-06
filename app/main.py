@@ -299,6 +299,22 @@ def snapshot():
     else:
         resp["paineis"]["rotacao_capital"] = {}
 
+    from app.database import get_latest_faca_caindo_data
+
+    faca_caindo_data = get_latest_faca_caindo_data()
+    if faca_caindo_data:
+        try:
+            alertas = json.loads(faca_caindo_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["faca_caindo"] = {
+            "coletado_em": faca_caindo_data.timestamp.isoformat(),
+            "fonte": faca_caindo_data.fonte,
+            "alertas": alertas,
+        }
+    else:
+        resp["paineis"]["faca_caindo"] = {}
+
     compradores_fundo_data = get_latest_compradores_fundo_data()
     if compradores_fundo_data:
         try:
