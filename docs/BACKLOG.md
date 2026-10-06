@@ -163,7 +163,6 @@
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |
 |---|---|---|---|---|
-| Sparklines nos rankings | Responde: a alta de hoje é ponto fora da curva ou continuação? Originalidade: cada linha de Maiores altas, Maiores baixas e Força Relativa ganha um minigráfico de 10 pregões ao lado da variação (DESIGN.md, seção 5.1). | yfinance | M | Baixo |
 | Maré prevê alguma coisa? | Responde: depois de Pânico ou Otimismo extremo, o Ibovespa costuma andar para onde nos 5 pregões seguintes? Originalidade: backtest do próprio índice com amostra, janela e intervalo de confiança, antes de qualquer leitura preditiva aparecer no painel. | yfinance | G | Médio |
 | Fluxo de ordens real na Maré | Responde: quem está agredindo o livro agora, comprador ou vendedor? Originalidade: troca o volume em alta da Maré por agressão por lado, se surgir fonte estável e gratuita. | a pesquisar | G | Alto |
 
