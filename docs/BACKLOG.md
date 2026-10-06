@@ -166,3 +166,13 @@
 | Sparklines nos rankings | Responde: a alta de hoje é ponto fora da curva ou continuação? Originalidade: cada linha de Maiores altas, Maiores baixas e Força Relativa ganha um minigráfico de 10 pregões ao lado da variação (DESIGN.md, seção 5.1). | yfinance | M | Baixo |
 | Maré prevê alguma coisa? | Responde: depois de Pânico ou Otimismo extremo, o Ibovespa costuma andar para onde nos 5 pregões seguintes? Originalidade: backtest do próprio índice com amostra, janela e intervalo de confiança, antes de qualquer leitura preditiva aparecer no painel. | yfinance | G | Médio |
 | Fluxo de ordens real na Maré | Responde: quem está agredindo o livro agora, comprador ou vendedor? Originalidade: troca o volume em alta da Maré por agressão por lado, se surgir fonte estável e gratuita. | a pesquisar | G | Alto |
+
+## Ideias (Passo 7 - 2026-10-06 2)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Alerta de Volatilidade Silenciosa (Doji Extremo) | Responde: O preço não saiu do lugar, mas teve muita briga ou pouca briga hoje? Originalidade: Foca na amplitude intraday (máxima vs mínima) em dias onde o fechamento quase empatou com a abertura. | brapi/yfinance | M | Baixo |
+| Correlação Intraday com Dólar | Responde: Quem está sendo esmagado ou impulsionado pelo Dólar neste exato momento? Originalidade: Isola o beta contra o IBOV e correlaciona especificamente contra o BRL=X no intraday. | yfinance | M | Médio |
+| Anomalia de Dia da Semana | Responde: As terças-feiras costumam ser vermelhas para o IBOV? Originalidade: Calcula a probabilidade baseada puramente na sazonalidade dos dias úteis. | yfinance | M | Baixo |
+| Detector de Puxada de Leilão de Fechamento | Responde: Quem subiu ou desceu artificialmente no apagar das luzes? Originalidade: Mede o impacto exclusivo dos últimos 5 minutos no preço final e sinaliza distorções de preço provocadas apenas pelo fluxo de leilão. | brapi | G | Alto |
+| Experiência: Abas de Navegação Contextual | Responde: É possível organizar as seções do dashboard de maneira que não fiquem escondidas por rolagem? Originalidade: Cria um menu lateral ou abas fixas focando na exploração por macrotemas (Cotações, Indicadores, Clima). | N/A | P | Baixo |
