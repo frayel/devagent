@@ -168,3 +168,22 @@ def test_sem_base_so_regras_da_arvore(repo: Path) -> None:
     res = conferir(repo, "ref-que-nao-existe-e-sem-origin")
     assert res.falhas == []
     assert res.avisos
+
+
+def test_pr_vazio_reprova(repo: Path) -> None:
+    falhas = conferir(repo, "base", exigir_alteracao=True).falhas
+    assert any("não altera nenhum arquivo" in f for f in falhas)
+
+
+def test_pr_vazio_so_reprova_quando_exigido(repo: Path, monkeypatch) -> None:
+    monkeypatch.delenv("GITHUB_EVENT_NAME", raising=False)
+    assert conferir(repo, "base").falhas == []
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "push")
+    assert conferir(repo, "base").falhas == []
+    monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request")
+    assert any("não altera" in f for f in conferir(repo, "base").falhas)
+
+
+def test_pr_com_alteracao_passa_mesmo_exigindo(repo: Path) -> None:
+    fechar(repo)
+    assert conferir(repo, "base", exigir_alteracao=True).falhas == []

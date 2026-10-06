@@ -30,6 +30,14 @@ jobs:
           pr=$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number -q '.[0].number')
           if [ -z "$pr" ]; then echo "Nenhum PR aberto para $BRANCH"; exit 0; fi
 
+          # Segunda trava contra PR vazio (a primeira é a regra 5 do
+          # devagent/conferir_pr.py). O PR #171 entrou vazio como "Spec 027a".
+          arquivos=$(gh pr view "$pr" -R "$GITHUB_REPOSITORY" --json files -q '.files | length')
+          if [ "${arquivos:-0}" -eq 0 ]; then
+            gh pr close "$pr" -R "$GITHUB_REPOSITORY" --delete-branch --comment "Fechado sem merge: o PR não altera nenhum arquivo. Um PR vazio não entrega a spec; ela continua pendente."
+            exit 0
+          fi
+
           gh pr merge "$pr" -R "$GITHUB_REPOSITORY" --squash --delete-branch
 
           # O GitHub não fecha de forma confiável as issues citadas com

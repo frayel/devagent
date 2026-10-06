@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+- agent: PR vazio não entra mais. O #171 ("Spec 027a") chegou sem nenhum arquivo, passou no CI e foi mergeado; a Maré do mercado continua sem implementação e a spec 027 segue `ready` na seção Correções. Regra 5 em `devagent/conferir_pr.py` (reprova PR sem alteração em `pull_request` ou com `--exigir-alteracao`) e segunda trava no `automerge.yml`, que fecha o PR vazio sem merge.
 ### Added
 - feat: Gauges para valores únicos (Spec 026). Macro `gauge` em SVG desenhada no servidor, com o cálculo em `app/gauge.py`; Dispersão, Índice de Coesão, Apetite a Risco, Rotação de Capital e Tendência mostram o número dentro da escala. A barra subiram × caíram da Dispersão, que saía vazia desde que a CSP proibiu estilo inline, passa a ser desenhada em SVG.
 - núcleo: retomada depois de ambiente reiniciado (ADR 009). O status `in-progress` deixa de ser commitado; as cobranças do guardião trazem o comando para voltar à branch do PR; o vigia do Jules responde apontando a branch quando o PR está aberto e encerra a sessão quando o PR foi fechado; nova ação `encerrar` no `jules.yml`.
