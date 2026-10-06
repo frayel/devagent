@@ -22,8 +22,8 @@ Configuração (variáveis de ambiente):
   Sem ela, o módulo fica desligado e nada muda.
 - `MT5_API_KEY`: a chave configurada no servidor (`MT5API_SECRET_KEY`).
 - `MT5_SIMBOLOS`: JSON opcional que traduz símbolos do Yahoo para os da
-  corretora. Padrão: `{"^BVSP": "IBOV"}`. Ações `XXXX4.SA` viram `XXXX4`.
-  Símbolos sem tradução (como `BRL=X`) continuam vindo do Yahoo.
+  corretora. Padrão: `{"^BVSP": "IBOV", "BRL=X": "DOL$"}`. Ações `XXXX4.SA`
+  viram `XXXX4`. Símbolos sem tradução continuam vindo do Yahoo.
 - `MT5_FUSO_SERVIDOR`: deslocamento do relógio do servidor da corretora em
   relação a UTC, em horas. Padrão `-3` (Brasília). Só afeta barras
   intradiárias.
@@ -104,7 +104,9 @@ def configurado() -> bool:
 
 
 def _mapa_simbolos() -> dict[str, str]:
-    mapa = {"^BVSP": "IBOV"}
+    # DOL$: dólar futuro cheio contínuo. A correlação usa só retornos diários,
+    # então a escala (pontos por US$ 1.000) não importa.
+    mapa = {"^BVSP": "IBOV", "BRL=X": "DOL$"}
     bruto = os.environ.get("MT5_SIMBOLOS", "").strip()
     if bruto:
         try:

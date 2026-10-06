@@ -67,7 +67,8 @@ def test_sem_configuracao_nao_intercepta():
 def test_traducao_de_simbolos(monkeypatch):
     assert mt5.simbolo_mt5("PETR4.SA") == "PETR4"
     assert mt5.simbolo_mt5("^BVSP") == "IBOV"
-    assert mt5.simbolo_mt5("BRL=X") is None
+    assert mt5.simbolo_mt5("BRL=X") == "DOL$"
+    assert mt5.simbolo_mt5("^GSPC") is None
     monkeypatch.setenv("MT5_SIMBOLOS", '{"^BVSP": "IBOV11", "BRL=X": "USDBRL"}')
     assert mt5.simbolo_mt5("^BVSP") == "IBOV11"
     assert mt5.simbolo_mt5("BRL=X") == "USDBRL"
@@ -186,7 +187,7 @@ def test_simbolo_sem_traducao_vai_ao_yahoo(mt5_ligado):
         return_value=httpx.Response(200, json={"spark": {"result": []}})
     )
     fetch_with_retry(
-        "https://query1.finance.yahoo.com/v7/finance/spark?symbols=BRL=X&range=2mo&interval=1d"
+        "https://query1.finance.yahoo.com/v7/finance/spark?symbols=%5EGSPC&range=2mo&interval=1d"
     )
     assert yahoo.called
     assert not rota.called
