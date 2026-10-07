@@ -24,3 +24,5 @@ Comando executado via selectolax no HTML de produção confirmou ausência da cl
 
 ## Invariante proposta
 O HTML de cada `.painel` renderizado deve possuir um `.rodape` não vazio contendo `Fonte`, `BRT` e data no formato `DD/MM/YYYY`.
+
+**Atualização (06/10/2026):** A invariante proposta foi automatizada em `auditar.py`. Apesar de muitos painéis terem sido corrigidos, `Concentração Setorial` e `Volatilidade Silenciosa` ainda renderizam rodapés fora do formato correto de data (apresentam ISO datetime no lugar de DD/MM/YYYY). A issue permanece aberta.
