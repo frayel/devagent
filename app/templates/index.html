@@ -199,7 +199,8 @@
             {% set celulas = [
                 {'tk': True, 'conteudo': a.ticker},
                 {'num': True, 'conteudo': a.price_formatted},
-                {'num': True, 'barra': True, 'valor_barra': (a.change_percent * -1) if a.change_percent < 0 else a.change_percent, 'conteudo': variacao(a.change_percent_formatted, a.change_percent)}
+                {'num': True, 'barra': True, 'valor_barra': (a.change_percent * -1) if a.change_percent < 0 else a.change_percent, 'conteudo': variacao(a.change_percent_formatted, a.change_percent)},
+                {'conteudo': sparkline(a.sparkline)}
             ] %}
             {% set _ = linhas.append(celulas) %}
         {% endfor %}
