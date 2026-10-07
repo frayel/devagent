@@ -129,3 +129,16 @@ def test_csp_no_unsafe_inline_style():
     assert "'unsafe-inline'" not in style_src, (
         "style-src não deve conter 'unsafe-inline'"
     )
+
+
+def test_payload_too_large():
+    large_payload = "a" * 1_000_001
+    response = client.post("/healthz", data=large_payload)
+    assert response.status_code == 413
+    assert response.text == "Payload Too Large"
+
+
+def test_payload_ok():
+    response = client.post("/healthz", data="ok")
+    # O método POST não é permitido em /healthz, mas não deve cair em 413
+    assert response.status_code == 405

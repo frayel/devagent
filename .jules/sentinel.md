@@ -46,3 +46,8 @@
 **Vulnerability:** Potential for Cross-Site Scripting (XSS) due to `'unsafe-inline'` in Content-Security-Policy (CSP) `style-src` directive.
 **Learning:** The CSP configuration in `app/main.py` included `'unsafe-inline'` for `style-src`. While it might be convenient for development, it allows inline styles, which can be leveraged for CSS injection attacks. I removed `'unsafe-inline'` from the `style-src` directive to strictly enforce that all styles are loaded from the allowed sources (in this case, 'self'). I also added `test_csp_no_unsafe_inline_style` in `tests/test_main.py` to assert its absence.
 **Prevention:** Avoid using `'unsafe-inline'` in `style-src` as part of your CSP. Keep all styles in external CSS files.
+
+## 2026-10-07 - Add request size limit middleware
+**Vulnerability:** Missing request size limit on HTTP endpoints.
+**Learning:** The FastAPI application lacked a mechanism to restrict the size of incoming HTTP request payloads. This exposes the server to Denial of Service (DoS) attacks where malicious actors could send excessively large payloads to consume memory and bandwidth. I added a custom middleware `limit_request_size` to `app/main.py` that intercepts all requests, checks the `Content-Length` header, and rejects payloads larger than 1MB with a `413 Payload Too Large` status code.
+**Prevention:** Always implement size limits for incoming requests (e.g., via middleware or reverse proxy configuration) to mitigate resource exhaustion attacks.

@@ -3,7 +3,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
 
 from app import gauge
@@ -67,6 +67,14 @@ templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["gauge_dados"] = gauge.dados
 templates.env.filters["gauge_pct"] = gauge.gauge_pct
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+
+@app.middleware("http")
+async def limit_request_size(request: Request, call_next):
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > 1_000_000:  # 1MB limit
+        return PlainTextResponse("Payload Too Large", status_code=413)
+    return await call_next(request)
 
 
 @app.middleware("http")
