@@ -13,43 +13,50 @@ logger = logging.getLogger(__name__)
 def collect_and_save() -> bool:
     alertas = []
 
-    tickers_str = ",".join([f"{t}.SA" for t in TICKERS])
-    url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={tickers_str}&range=2d&interval=1d"
+    batch_size = 15
+    batches = [TICKERS[i : i + batch_size] for i in range(0, len(TICKERS), batch_size)]
 
     try:
-        resp = fetch_with_retry(url)
-        data = resp.json()
+        import httpx
 
-        for result in data.get("spark", {}).get("result", []):
-            symbol = result.get("symbol", "").replace(".SA", "")
-            resp_data = result.get("response", [{}])[0]
-            indicators = resp_data.get("indicators", {}).get("quote", [{}])[0]
+        with httpx.Client(timeout=10.0) as client:
+            for batch in batches:
+                tickers_str = ",".join([f"{t}.SA" for t in batch])
+                url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={tickers_str}&range=2d&interval=1d"
 
-            closes = indicators.get("close", [])
-            opens = indicators.get("open", [])
-            highs = indicators.get("high", [])
+                resp = fetch_with_retry(url, client=client)
+                data = resp.json()
 
-            if not closes or not opens or not highs or len(closes) < 2:
-                continue
+                for result in data.get("spark", {}).get("result", []):
+                    symbol = result.get("symbol", "").replace(".SA", "")
+                    resp_data = result.get("response", [{}])[0]
+                    indicators = resp_data.get("indicators", {}).get("quote", [{}])[0]
 
-            high_ontem = highs[-2]
-            close_ontem = closes[-2]
-            open_hoje = opens[-1]
-            close_hoje = closes[-1]
+                    closes = indicators.get("close", [])
+                    opens = indicators.get("open", [])
+                    highs = indicators.get("high", [])
 
-            if (
-                high_ontem is None
-                or close_ontem is None
-                or open_hoje is None
-                or close_hoje is None
-            ):
-                continue
+                    if not closes or not opens or not highs or len(closes) < 2:
+                        continue
 
-            if high_ontem > 0 and (open_hoje - high_ontem) / high_ontem > 0.01:
-                if close_hoje < close_ontem:
-                    alertas.append(
-                        {"ticker": symbol, "preco_atual": round(close_hoje, 2)}
-                    )
+                    high_ontem = highs[-2]
+                    close_ontem = closes[-2]
+                    open_hoje = opens[-1]
+                    close_hoje = closes[-1]
+
+                    if (
+                        high_ontem is None
+                        or close_ontem is None
+                        or open_hoje is None
+                        or close_hoje is None
+                    ):
+                        continue
+
+                    if high_ontem > 0 and (open_hoje - high_ontem) / high_ontem > 0.01:
+                        if close_hoje < close_ontem:
+                            alertas.append(
+                                {"ticker": symbol, "preco_atual": round(close_hoje, 2)}
+                            )
 
         alertas = alertas[:3]
 

@@ -4,6 +4,7 @@ from app.collectors import armadilha_abertura
 
 
 def test_fetch_yfinance(monkeypatch):
+    monkeypatch.setattr("app.collectors.armadilha_abertura.TICKERS", ["VALE3"])
     mock_response = MagicMock()
     mock_response.raise_for_status = MagicMock()
     mock_response.json.return_value = {
