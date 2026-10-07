@@ -3,6 +3,7 @@ from typing import Any
 from datetime import timezone, timedelta
 
 from app.database import get_latest_highlights_data
+from app.services.sparkline import build_sparkline
 
 
 def format_asset(asset: dict[str, Any]) -> dict[str, Any]:
@@ -17,6 +18,8 @@ def format_asset(asset: dict[str, Any]) -> dict[str, Any]:
     if change_percent > 0:
         change_formatted = f"+{change_formatted}"
 
+    sparkline = build_sparkline(asset.get("sparkline", []))
+
     return {
         "ticker": asset.get("ticker", ""),
         "price_formatted": price_formatted,
@@ -24,6 +27,7 @@ def format_asset(asset: dict[str, Any]) -> dict[str, Any]:
         "change_percent_formatted": change_formatted,
         "is_positive": change_percent > 0,
         "is_negative": change_percent < 0,
+        "sparkline": sparkline,
     }
 
 

@@ -1,6 +1,6 @@
-import json
 from datetime import timezone, timedelta
 from app.database import get_latest_forca_relativa_data
+from app.services.sparkline import build_sparkline
 
 
 def get_forca_relativa_view_data() -> dict | None:
@@ -9,8 +9,12 @@ def get_forca_relativa_view_data() -> dict | None:
         return None
 
     try:
+        import json
+
         maior = json.loads(data.maior_json)
         menor = json.loads(data.menor_json)
+        maior["sparkline_svg"] = build_sparkline(maior.get("sparkline", []))
+        menor["sparkline_svg"] = build_sparkline(menor.get("sparkline", []))
     except json.JSONDecodeError:
         return None
 

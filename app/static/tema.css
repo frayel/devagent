@@ -355,3 +355,7 @@ body.modo-so-sinais .painel-rotacao .hero {
 
 /* Gráfico do Ibovespa: altura fixa (DESIGN.md, seção 5), sem salto de layout. */
 .painel-ibovespa .grafico { width: 100%; height: 200px; }
+
+/* Minigrafico de tabela */
+tbody td .spark { min-width: 60px; max-width: 100px; height: 32px; display: block; margin: 0 auto; }
+tbody td .spark svg { width: 100%; height: 100%; }

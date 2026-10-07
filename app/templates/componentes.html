@@ -103,3 +103,14 @@
 </div>
 {%- endif -%}
 {% endmacro %}
+
+
+{% macro sparkline(spark_dict) %}
+{% if spark_dict %}
+<div class="spark" aria-hidden="true">
+  <svg viewBox="0 0 200 48" preserveAspectRatio="none">
+    <path class="spark-linha" d="M {{ spark_dict.pontos }}"/>
+  </svg>
+</div>
+{% endif %}
+{% endmacro %}

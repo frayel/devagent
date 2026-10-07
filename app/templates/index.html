@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado, gauge %}
+{% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado, gauge, sparkline %}
 
 {% block content %}
 <!-- Manchete Dinâmica -->
@@ -181,11 +181,12 @@
             {% set celulas = [
                 {'tk': True, 'conteudo': a.ticker},
                 {'num': True, 'conteudo': a.price_formatted},
-                {'num': True, 'barra': True, 'valor_barra': a.change_percent, 'conteudo': variacao(a.change_percent_formatted, a.change_percent)}
+                {'num': True, 'barra': True, 'valor_barra': a.change_percent, 'conteudo': variacao(a.change_percent_formatted, a.change_percent)},
+                {'conteudo': sparkline(a.sparkline)}
             ] %}
             {% set _ = linhas.append(celulas) %}
         {% endfor %}
-        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}], 'a') }}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}, {'titulo': '10d'}], 'a') }}
     {% else %}
         {{ estado('indisponivel') }}
     {% endif %}
@@ -202,7 +203,7 @@
             ] %}
             {% set _ = linhas.append(celulas) %}
         {% endfor %}
-        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}], 'b') }}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}, {'titulo': '10d'}], 'b') }}
     {% else %}
         {{ estado('indisponivel') }}
     {% endif %}
@@ -211,14 +212,20 @@
 <!-- Linha Força Relativa -->
 {% call painel("Força Relativa (30 dias)", 4, "Comparação da rentabilidade acumulada de 30 ações de alta liquidez frente ao Ibovespa em 30 pregões.", forca_relativa.fonte if forca_relativa else "", forca_relativa.time if forca_relativa else "", "visao-micro") %}
     {% if forca_relativa %}
-        <div class="duas">
-            <div>
-                {{ kpi(forca_relativa.maior.ticker, "Maior Força", variacao((("%.2f" | format(forca_relativa.maior.forca_relativa * 100)).replace('.', ',') ~ "% vs IBOV"), forca_relativa.maior.forca_relativa)) }}
-            </div>
-            <div>
-                {{ kpi(forca_relativa.menor.ticker, "Menor Força", variacao((("%.2f" | format(forca_relativa.menor.forca_relativa * 100)).replace('.', ',') ~ "% vs IBOV"), forca_relativa.menor.forca_relativa)) }}
-            </div>
-        </div>
+        {% set linhas = [] %}
+        {% set linha_maior = [
+            {'tk': True, 'conteudo': forca_relativa.maior.ticker},
+            {'num': True, 'barra': True, 'valor_barra': forca_relativa.maior.forca_relativa * 100, 'conteudo': variacao((("%.2f" | format(forca_relativa.maior.forca_relativa * 100)).replace('.', ',') ~ "%"), forca_relativa.maior.forca_relativa)},
+            {'conteudo': sparkline(forca_relativa.maior.sparkline_svg)}
+        ] %}
+        {% set _ = linhas.append(linha_maior) %}
+        {% set linha_menor = [
+            {'tk': True, 'conteudo': forca_relativa.menor.ticker},
+            {'num': True, 'barra': True, 'valor_barra': forca_relativa.menor.forca_relativa * 100, 'conteudo': variacao((("%.2f" | format(forca_relativa.menor.forca_relativa * 100)).replace('.', ',') ~ "%"), forca_relativa.menor.forca_relativa)},
+            {'conteudo': sparkline(forca_relativa.menor.sparkline_svg)}
+        ] %}
+        {% set _ = linhas.append(linha_menor) %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'vs IBOV', 'num': True}, {'titulo': '10d'}], 'forca-relativa') }}
     {% else %}
         {{ estado('indisponivel') }}
     {% endif %}

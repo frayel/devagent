@@ -114,7 +114,7 @@ def fetch_brapi() -> HighlightsData | None:
         return None
 
     tickers_str = ",".join(TICKERS)
-    url = f"https://brapi.dev/api/quote/{tickers_str}?token={BRAPI_TOKEN}&fundamental=false"
+    url = f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token={BRAPI_TOKEN}&fundamental=false"
 
     try:
         response = fetch_with_retry(url, timeout=15.0)
@@ -136,11 +136,19 @@ def fetch_brapi() -> HighlightsData | None:
 
             change_percent = ((price - prev_close) / prev_close) * 100
 
+            # Extrai os últimos 10 fechamentos do brapi "historicalDataPrice"
+            history = result.get("historicalDataPrice", [])
+            valid_closes = [
+                h.get("close") for h in history if h.get("close") is not None
+            ]
+            sparkline = valid_closes[-10:] if valid_closes else []
+
             parsed_results.append(
                 {
                     "ticker": result.get("symbol", ""),
                     "price": price,
                     "change_percent": change_percent,
+                    "sparkline": sparkline,
                 }
             )
             if change_percent > 0:
@@ -186,7 +194,7 @@ def fetch_yfinance() -> HighlightsData | None:
     with httpx.Client(timeout=10.0) as client:
         for batch in batches:
             symbols = ",".join([f"{t}.SA" for t in batch])
-            url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
+            url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=15d&interval=1d"
             try:
                 response = fetch_with_retry(url, client=client)
                 data = response.json()
@@ -205,11 +213,21 @@ def fetch_yfinance() -> HighlightsData | None:
 
                     change_percent = ((price - prev_close) / prev_close) * 100
 
+                    closes = (
+                        item["response"][0]
+                        .get("indicators", {})
+                        .get("quote", [{}])[0]
+                        .get("close", [])
+                    )
+                    valid_closes = [c for c in closes if c is not None]
+                    sparkline = valid_closes[-10:] if len(valid_closes) > 0 else []
+
                     parsed_results.append(
                         {
                             "ticker": symbol,
                             "price": price,
                             "change_percent": change_percent,
+                            "sparkline": sparkline,
                         }
                     )
                     if change_percent > 0:
