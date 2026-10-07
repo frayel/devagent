@@ -2,7 +2,7 @@
 id: 2026-10-06-api-snapshot-falta-fonte
 severidade: media
 painel: multiplos
-status: aberto
+status: resolvido
 visto_em: 2026-10-06T01:50-03:00
 ---
 
@@ -23,3 +23,5 @@ Comando executado: `curl -s https://devagent-vb52.onrender.com/api/snapshot | jq
 
 ## Invariante proposta
 Verificar se todas as chaves sob `paineis` no JSON de `/api/snapshot` contêm `fonte` e `coletado_em` não nulos.
+
+**Atualização (06/10/2026):** A invariante foi codificada e testada com sucesso na API de produção. Nenhum painel atual deixa de exibir as chaves `fonte` e `coletado_em` no snapshot.
