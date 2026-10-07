@@ -34,3 +34,8 @@
 - **O que fiz:** Otimizei a função `fetch_yfinance()` do coletor `compradores_fundo` para utilizar o endpoint em lote `https://query1.finance.yahoo.com/v7/finance/spark` ao invés do individual `chart`.
 - **O que aprendi:** Agrupar as requisições reduziu o tempo de execução deste coletor de ~60 segundos para cerca de ~2 segundos, evitando os gargalos de *rate limit* de 2 segundos por domínio para 30 requisições individuais.
 - **O que evitar:** Usar endpoints individuais (como `/v8/finance/chart/{ticker}`) em loops de coleta sobre muitos ativos quando alternativas de requisições em lote (como `spark`) estão disponíveis e expõem os mesmos dados de preços de OHLCV.
+## 2026-10-07
+
+- **O que fiz:** Otimizei a função `collect_and_save()` no coletor `armadilha_abertura` para usar chamadas em lote de 15 ativos ao `yfinance` endpoint (`/spark`) em vez de fazer todas em uma única requisição muito longa. Adicionei o limite de timeout e injetei apenas o `"VALE3"` no ticker das test cases para prevenir falhas.
+- **O que aprendi:** Agrupar todos os 30 ativos em uma única requisição resultava em um erro `400 Bad Request` por conta da query string longa. Ao separar os lotes, a chamada ao `spark` continuou performática com tempo de execução ao redor de 2.13 segundos comparado aos 0.22s falhos (onde todos caiam na exceção rapidamente). Isso assegura o correto funcionamento das requisições com os limits do endpoint.
+- **O que evitar:** Evitar tentar enfileirar centenas de símbolos na query string para os endpoints do Yahoo Finance; focar em realizar o _batching_ em pequenos lotes (como 15 ativos) permitindo boa performance e previnindo recusas HTTP (erro 400).
