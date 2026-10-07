@@ -119,6 +119,13 @@ def get_connection() -> sqlite3.Connection:
 
 
 @dataclass
+class ScannerCapitulacaoData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str
+
+
+@dataclass
 class MareData:
     """Maré do mercado (spec 027). Componente ausente fica None."""
 
@@ -192,6 +199,16 @@ def get_latest_volatilidade_silenciosa_data() -> VolatilidadeSilenciosaData | No
 def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS scanner_capitulacao_cache (
+            timestamp TEXT,
+            alertas_json TEXT,
+            fonte TEXT
+        )
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_scanner_capitulacao_cache_timestamp ON scanner_capitulacao_cache (timestamp DESC)"
+    )
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS volatilidade_silenciosa_cache (
             timestamp TEXT,
@@ -703,6 +720,35 @@ def get_latest_fator_mola_data() -> FatorMolaData | None:
 
 
 init_db()
+
+
+def save_scanner_capitulacao_data(data: ScannerCapitulacaoData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO scanner_capitulacao_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
+        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
+    )
+    conn.commit()
+
+
+def get_latest_scanner_capitulacao_data() -> ScannerCapitulacaoData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT * FROM scanner_capitulacao_cache ORDER BY timestamp DESC LIMIT 1"
+        )
+        row = cursor.fetchone()
+        if row:
+            return ScannerCapitulacaoData(
+                timestamp=datetime.fromisoformat(row["timestamp"]),
+                alertas_json=row["alertas_json"],
+                fonte=row["fonte"],
+            )
+    except sqlite3.OperationalError:
+        return None
+    return None
 
 
 def save_forca_relativa_data(data: ForcaRelativaData) -> None:

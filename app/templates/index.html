@@ -306,8 +306,8 @@
     {% else %}
         {% set linhas = [] %}
         {% for a in faca_caindo.alertas %}
-            {% set val = ("%.2f%%" | format(a.retorno_acumulado | abs)) %}
-            {% set s = -1 if a.retorno_acumulado < 0 else 1 if a.retorno_acumulado > 0 else 0 %}
+            {% set val = ("%.2f%%" | format(a.variacao_acumulada | abs)) %}
+            {% set s = -1 if a.variacao_acumulada < 0 else 1 if a.variacao_acumulada > 0 else 0 %}
             {% set _ = linhas.append([
                 {'conteudo': a.ticker, 'tk': True},
                 {'conteudo': ('<span>' | safe) ~ a.dias_consecutivos ~ (' dias</span>' | safe)},
@@ -420,6 +420,25 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda Máx.'}, {'titulo': 'Atual', 'num': True}], 'compradores-fundo') }}
     {% endif %}
 {% endcall %}
+
+{% call painel("Scanner de Capitulação", 4, "Ações caindo >2% mas com pico extremo recente de volume e longa sombra inferior (sinal de absorção).", scanner_capitulacao.fonte if scanner_capitulacao else "", scanner_capitulacao.time if scanner_capitulacao else "", "visao-micro alertas") %}
+    {% if not scanner_capitulacao %}
+        {{ estado("indisponivel") }}
+    {% elif not scanner_capitulacao.alertas %}
+        <div class="vazio">Nenhum clímax de capitulação detectado hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in scanner_capitulacao.alertas %}
+            {% set _ = linhas.append([
+                {'conteudo': a.ticker, 'tk': True},
+                {'conteudo': ('<span>' ~ a.texto ~ '</span>') | safe},
+                {'conteudo': (variacao("%.2f%%" | format(a.queda_pct), -1)) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Sinal'}, {'titulo': 'Queda', 'num': True}], 'scanner-capitulacao') }}
+    {% endif %}
+{% endcall %}
+
 
 
 {% call painel("Sempre Verde", 4, "Ações que fecharam no verde todos os dias nos últimos 5 pregões.", sobrevivencia_semanal.fonte if sobrevivencia_semanal else "", sobrevivencia_semanal.time if sobrevivencia_semanal else "", "visao-micro rankings") %}
