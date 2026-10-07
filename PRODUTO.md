@@ -101,6 +101,7 @@ Soma-se ao checklist de `devagent/CICLO.md`:
 - Coletores têm timeout, retry com backoff e cache?
 - Falha de uma fonte degrada só o seu painel, sem derrubar a página?
 - O painel novo aparece no `/api/snapshot` conforme o contrato em `auditoria/README.md`?
+- O painel novo é alimentado pelo seu coletor de verdade em `tests/test_pagina_ponta_a_ponta.py`? Se o coletor usa rota ou formato que `tests/yahoo_falso.py` ainda não responde, ensine o falso no mesmo PR. Dados escritos à mão no teste não contam: foi assim que o template leu `retorno_acumulado` enquanto o coletor gravava `variacao_acumulada`, e a página caiu em produção (07/10/2026).
 - Qualquer biblioteca usada em produção está em `requirements.txt`, e não só em `requirements-dev.txt`?
 - Se o PR acrescenta painel, seção ou tela: incrementou o contador da cadência de experiência no `docs/STATE.md` e reavaliou a distribuição da grade (seção 3 do `docs/DESIGN.md`) em vez de só empilhar o painel no fim?
 - Se o PR muda a interface: rodou `make telas`, **abriu as duas imagens de `telas/`** e respondeu o checklist visual da seção 8 do `docs/DESIGN.md` no corpo do PR e no relatório? Algum "não" significa que o PR não está pronto.
@@ -175,4 +176,4 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 
 Ao criar um arquivo novo em `docs/context/` ou `docs/skills/`, acrescente-o a esta tabela no mesmo PR.
 
-Itens deste arquivo que só podem ser mantidos ou reforçados, nunca enfraquecidos: a **transparência** da seção 1 (aviso legal e fonte, data, método e confiança), as **regras de coleta** da seção 5 e a obediência ao **guia visual** (`docs/DESIGN.md`). O agente pode mudar o guia e a referência num PR `agent:` só para isso, nunca no mesmo PR que altera a interface. O teste `tests/test_design.py` não pode ser afrouxado.
+Itens deste arquivo que só podem ser mantidos ou reforçados, nunca enfraquecidos: a **transparência** da seção 1 (aviso legal e fonte, data, método e confiança), as **regras de coleta** da seção 5 e a obediência ao **guia visual** (`docs/DESIGN.md`). O agente pode mudar o guia e a referência num PR `agent:` só para isso, nunca no mesmo PR que altera a interface. Os testes `tests/test_design.py` e `tests/test_pagina_ponta_a_ponta.py`, e o indefinido estrito de templates em `tests/conftest.py`, não podem ser afrouxados.
