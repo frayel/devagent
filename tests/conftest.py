@@ -1,4 +1,5 @@
 import pytest
+from jinja2 import StrictUndefined
 
 
 @pytest.fixture(autouse=True)
@@ -24,3 +25,23 @@ def setup_db(monkeypatch, tmp_path):
     mt5.reiniciar_rastreio()
 
     yield
+
+
+class _IndefinidoDeTeste(StrictUndefined):
+    """Atributo inexistente só pode ser testado, nunca usado.
+
+    `{% if x.opcional %}`, `x is defined` e `x | default(...)` continuam
+    funcionando, porque as macros dependem de chaves opcionais. Imprimir,
+    comparar, formatar ou fazer conta com um atributo que não existe falha
+    no teste, em vez de virar texto vazio ou um 500 em produção.
+    """
+
+    def __bool__(self) -> bool:
+        return False
+
+
+@pytest.fixture(autouse=True)
+def _templates_estritos(monkeypatch):
+    from app.main import templates
+
+    monkeypatch.setattr(templates.env, "undefined", _IndefinidoDeTeste)

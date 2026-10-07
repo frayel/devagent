@@ -82,3 +82,27 @@ def test_fetch_yfinance_empty(monkeypatch):
     assert data is not None
     alertas = json.loads(data.alertas_json)
     assert len(alertas) == 0
+
+
+def test_view_le_os_campos_que_o_coletor_grava(monkeypatch):
+    from datetime import datetime, timezone
+    from app.database import FacaCaindoData, save_faca_caindo_data
+    from app.services.faca_caindo import get_faca_caindo_view
+
+    save_faca_caindo_data(
+        FacaCaindoData(
+            timestamp=datetime.now(timezone.utc),
+            alertas_json=json.dumps(
+                [
+                    {"ticker": "PETR4", "dias": 4, "variacao_acumulada": -7.5},
+                    {"ticker": "QUEBRADO3", "dias": 3},  # sem variação: sai
+                ]
+            ),
+            fonte="yfinance",
+        )
+    )
+    view = get_faca_caindo_view()
+    assert view is not None
+    assert [(a.ticker, a.dias, a.variacao_acumulada) for a in view.alertas] == [
+        ("PETR4", 4, -7.5)
+    ]

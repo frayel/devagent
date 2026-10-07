@@ -306,11 +306,11 @@
     {% else %}
         {% set linhas = [] %}
         {% for a in faca_caindo.alertas %}
-            {% set val = ("%.2f%%" | format(a.retorno_acumulado | abs)) %}
-            {% set s = -1 if a.retorno_acumulado < 0 else 1 if a.retorno_acumulado > 0 else 0 %}
+            {% set val = ("%.2f%%" | format(a.variacao_acumulada | abs)) | replace('.', ',') %}
+            {% set s = -1 if a.variacao_acumulada < 0 else 1 if a.variacao_acumulada > 0 else 0 %}
             {% set _ = linhas.append([
                 {'conteudo': a.ticker, 'tk': True},
-                {'conteudo': ('<span>' | safe) ~ a.dias_consecutivos ~ (' dias</span>' | safe)},
+                {'conteudo': ('<span>' | safe) ~ a.dias ~ (' dias</span>' | safe)},
                 {'conteudo': (variacao(val, s)) | safe, 'num': True}
             ]) %}
         {% endfor %}

@@ -110,7 +110,9 @@ def fetch_yfinance() -> ConcentracaoData | None:
         return None
 
 
-def collect_and_save() -> None:
+def collect_and_save() -> bool:
     data = fetch_yfinance()
     if data:
         save_concentracao_data(data)
+        return True
+    return False

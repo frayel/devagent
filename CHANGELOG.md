@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+- fix: o Radar de Faca Caindo derrubava a página inteira com erro 500 (`abs()` sobre atributo indefinido). O coletor grava `dias` e `variacao_acumulada`; o template lia `dias_consecutivos` e `retorno_acumulado`. O serviço agora entrega `AlertaFacaCaindo` tipado e descarta alerta malformado com log, sem derrubar o painel. A variação passa a usar vírgula decimal.
+- fix: `concentracao.collect_and_save()` não retornava nada, e o agendador registrava "nenhuma fonte respondeu" em toda coleta, mesmo com sucesso.
+- fix: teste ponta a ponta (`tests/test_pagina_ponta_a_ponta.py`) roda todos os coletores do agendador contra um Yahoo falso determinístico (`tests/yahoo_falso.py`) e renderiza a página. Nos testes, o template usa um indefinido estrito (`tests/conftest.py`): atributo inexistente pode ser testado com `if` ou `default`, mas imprimir, comparar ou calcular com ele reprova o CI.
 ### Added
 - docs: atualiza estado das specs 029 e 030
 ### Added
