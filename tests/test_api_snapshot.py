@@ -23,3 +23,10 @@ def test_api_snapshot_compradores_fundo():
     assert response.status_code == 200
     data = response.json()
     assert "compradores_fundo" in data["paineis"]
+
+
+def test_api_snapshot_volatilidade_silenciosa():
+    response = client.get("/api/snapshot")
+    assert response.status_code == 200
+    data = response.json()
+    assert "volatilidade_silenciosa" in data["paineis"]
