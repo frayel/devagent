@@ -4,7 +4,7 @@
 
 ## Experiência
 
-- Última revisão de experiência: 05/10/2026 (Manchete Dinâmica)
+- Última revisão de experiência: 07/10/2026 (Abas de Navegação)
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
@@ -18,7 +18,7 @@
   - Cálculo em `app/services/mare.py` e coletor `app/collectors/mare.py` (cesta `TICKERS` com `spark` 3mo e Ibovespa com `chart` 2y, MT5 preferencial, brapi como reserva do Ibovespa); cache `mare_cache`.
   - Painel `span-4` ao lado do Ibovespa; Tendência, Dispersão e Coesão viram a linha seguinte.
   - Chave `mare` no `/api/snapshot`; `checar_mare` em `auditoria/auditar.py`.
-  - Contador da cadência de experiência: 3.
+  - Contador da cadência de experiência: 0.
 
 - Spec 026 (Gauges para valores únicos):
   - Macro `gauge` em `componentes.html` e cálculo em `app/gauge.py` (filtro `gauge_pct` e global `gauge_dados`).
