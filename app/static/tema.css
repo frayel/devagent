@@ -196,32 +196,32 @@ footer { margin-top: 40px; text-align: center; font-size: var(--fs-meta); color:
   .duas { grid-template-columns: 1fr; }
 }
 
-/* Filtro Macro/Micro */
-#filtro-macro-micro {
+/* Abas de Navegação Contextual */
+#abas-navegacao {
     display: flex;
     gap: var(--e2);
     margin-bottom: var(--e4);
-    padding: var(--e2) var(--e3);
-    background: var(--superficie);
-    border-radius: var(--raio);
-    border: 1px solid var(--borda);
+    padding: 0;
     align-items: center;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--borda);
 }
-#filtro-macro-micro span {
-    font-weight: 500;
-    color: var(--texto-2);
-}
-.filtro-btn {
+.aba-btn {
     cursor: pointer;
     background: transparent;
     color: var(--texto-2);
     border: none;
-    border-radius: var(--raio-p);
-    padding: var(--e1) var(--e3);
+    border-bottom: 2px solid transparent;
+    padding: var(--e2) var(--e3);
+    white-space: nowrap;
+    font-weight: 500;
 }
-.filtro-btn.ativo {
-    background: var(--superficie-2);
+.aba-btn.ativo {
     color: var(--texto);
+    border-bottom-color: var(--texto);
+}
+.aba-sinais {
+    margin-left: auto;
 }
 
 /* Utilitários adicionados pelo Apetite a Risco */

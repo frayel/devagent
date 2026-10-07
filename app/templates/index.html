@@ -8,17 +8,17 @@
 </div>
 
 
-<div class="span-12" id="filtro-macro-micro">
-    <span>Filtro:</span>
-    <button class="filtro-btn ativo" data-filtro="todos">Todos</button>
-    <button class="filtro-btn" data-filtro="macro">Macro</button>
-    <button class="filtro-btn" data-filtro="micro">Micro</button>
-    <button class="filtro-btn" data-filtro="sinais">Só Sinais</button>
+<div class="span-12" id="abas-navegacao">
+    <button class="aba-btn ativo" data-aba="visao-geral">Visão Geral</button>
+    <button class="aba-btn" data-aba="sentimento-risco">Sentimento & Risco</button>
+    <button class="aba-btn" data-aba="rankings">Rankings & Destaques</button>
+    <button class="aba-btn" data-aba="alertas">Alertas Intraday</button>
+    <button class="aba-btn aba-sinais" data-aba="sinais">Só Sinais</button>
 </div>
 
 
 <!-- Linha 1: Ibovespa e Maré do mercado -->
-{% call painel("Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "", "visao-macro painel-ibovespa") %}
+{% call painel("Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "", "visao-macro painel-ibovespa visao-geral") %}
     {% if data %}
         {{ kpi(data.current_price|default("") + " pontos", "", (variacao(data.variation ~ " (" ~ data.variation_percent ~ ")", data.variation_raw|default(0))) | safe, True) }}
         {% if data.history_dict and data.history_dict.dates %}
@@ -33,7 +33,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Maré do mercado", 4, "Índice de 0 a 100. Fluxo (40%): parcela do volume financeiro da cesta de 30 ações que foi para ações em alta, uma aproximação do fluxo de ordens, que não tem fonte gratuita. Calma (35%): 100 menos o percentil da volatilidade de queda de 10 pregões do Ibovespa nos 252 anteriores; só os dias de queda contam, então uma alta forte não reduz a calma. Volume (25%): ritmo do volume contra a média de 21 pregões, ajustado pela hora do pregão, no sentido da maioria. A Maré descreve o humor do momento. Não é recomendação de compra ou venda.", mare.fonte if mare else "", mare.time if mare else "", "visao-macro painel-mare") %}
+{% call painel("Maré do mercado", 4, "Índice de 0 a 100. Fluxo (40%): parcela do volume financeiro da cesta de 30 ações que foi para ações em alta, uma aproximação do fluxo de ordens, que não tem fonte gratuita. Calma (35%): 100 menos o percentil da volatilidade de queda de 10 pregões do Ibovespa nos 252 anteriores; só os dias de queda contam, então uma alta forte não reduz a calma. Volume (25%): ritmo do volume contra a média de 21 pregões, ajustado pela hora do pregão, no sentido da maioria. A Maré descreve o humor do momento. Não é recomendação de compra ou venda.", mare.fonte if mare else "", mare.time if mare else "", "visao-macro painel-mare visao-geral") %}
     {% if mare %}
         {% if mare.parcial %}<span class="selo alerta">parcial · sem {{ mare.ausentes }}</span>{% endif %}
         {{ gauge(mare.valor, "", 0, 100, "{:.0f}", faixas=mare.faixas, resumo="Maré do mercado, de 0 a 100", grande=True, escala=["0", "100"]) }}
@@ -62,7 +62,7 @@
 {% endcall %}
 
 <!-- Linha 2: leituras de escala única, com gauge -->
-{% call painel("Tendência (Ibovespa)", 4, "Distância do Ibovespa às médias móveis simples de 21 e 200 pregões, numa escala de -10% a +10%.", data.fonte if data else "", data.time if data else "", "visao-macro painel-tendencia") %}
+{% call painel("Tendência (Ibovespa)", 4, "Distância do Ibovespa às médias móveis simples de 21 e 200 pregões, numa escala de -10% a +10%.", data.fonte if data else "", data.time if data else "", "visao-macro painel-tendencia visao-geral") %}
     {% if data and (data.mm21 or data.mm200) %}
         <div class="gauges">
             <div>{{ gauge(data.mm21_dist_pct, "MM21 " ~ data.mm21 if data.mm21 else "MM21", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 21 pregões", escala=False) }}</div>
@@ -74,7 +74,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro") %}
+{% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro sentimento-risco") %}
     {% if highlights and highlights.dispersion_pct is not none %}
         {{ gauge(highlights.dispersion_pct, "em alta", 0, 100, "{:.0f}%", resumo="Dispersão, ações em alta") }}
         {{ medidor(highlights.dispersion_pct|int, "em alta", numero=False) }}
@@ -87,7 +87,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Índice de Coesão", 4, "Das 10 ações mais pesadas do Ibovespa, quantas estão na mesma direção (alta ou baixa) do índice hoje.", coesao.fonte if coesao else "", coesao.time if coesao else "", "visao-macro") %}
+{% call painel("Índice de Coesão", 4, "Das 10 ações mais pesadas do Ibovespa, quantas estão na mesma direção (alta ou baixa) do índice hoje.", coesao.fonte if coesao else "", coesao.time if coesao else "", "visao-macro sentimento-risco") %}
     {% if coesao %}
         {{ gauge(coesao.concordantes, coesao.estado, 0, coesao.total, "{:.0f}", resumo="Índice de Coesão, ações na direção do índice", cor=coesao.cor, escala=["0", coesao.total ~ " ações"]) }}
         <p class="sub texto-centro">{{ coesao.proporcao }} na mesma direção do Ibovespa</p>
@@ -97,7 +97,7 @@
 {% endcall %}
 
 <!-- Linha 3: humor e rotação do dia -->
-{% call painel('Apetite a Risco', 4, 'Se o índice SMLL estiver subindo mais que o IBOV, o mercado está tomando risco.', apetite_risco.fonte if apetite_risco else '', apetite_risco.time if apetite_risco else '', 'visao-macro painel-apetite') %}
+{% call painel('Apetite a Risco', 4, 'Se o índice SMLL estiver subindo mais que o IBOV, o mercado está tomando risco.', apetite_risco.fonte if apetite_risco else '', apetite_risco.time if apetite_risco else '', 'visao-macro painel-apetite sentimento-risco') %}
   {% if not apetite_risco %}
     {{ estado('indisponivel') }}
   {% else %}
@@ -110,7 +110,7 @@
   {% endif %}
 {% endcall %}
 
-{% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial') %}
+{% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial visao-geral') %}
   {% if not concentracao_setorial %}
     {{ estado('indisponivel') }}
   {% elif concentracao_setorial.variacao_media <= 0 %}
@@ -132,7 +132,7 @@
   {% endif %}
 {% endcall %}
 
-{% call painel('Rotação de Capital', 4, 'Troca de capital entre os dois principais motores da bolsa: Bancos vs Commodities.', rotacao_capital.fonte if rotacao_capital else '', rotacao_capital.time if rotacao_capital else '', 'visao-macro painel-rotacao') %}
+{% call painel('Rotação de Capital', 4, 'Troca de capital entre os dois principais motores da bolsa: Bancos vs Commodities.', rotacao_capital.fonte if rotacao_capital else '', rotacao_capital.time if rotacao_capital else '', 'visao-macro painel-rotacao sentimento-risco') %}
   {% if not rotacao_capital %}
     {{ estado('indisponivel') }}
   {% else %}
@@ -150,7 +150,7 @@
 {% endcall %}
 
 
-{% call painel("Concentração de Ganhos", 12, "Mostra quantas ações explicam 50% dos pontos de variação do índice hoje.", concentracao.fonte if concentracao else "", concentracao.time if concentracao else "", "visao-macro") %}
+{% call painel("Concentração de Ganhos", 12, "Mostra quantas ações explicam 50% dos pontos de variação do índice hoje.", concentracao.fonte if concentracao else "", concentracao.time if concentracao else "", "visao-macro visao-geral") %}
     {% if concentracao %}
         {% if concentracao.resumo.estado == 'estavel' %}
             <div class="vazio">{{ concentracao.resumo.mensagem }}</div>
@@ -174,7 +174,7 @@
 
 <!-- Linha 2 -->
 
-{% call painel("Maiores altas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro") %}
+{% call painel("Maiores altas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro rankings") %}
     {% if highlights and highlights.highs %}
         {% set linhas = [] %}
         {% for a in highlights.highs %}
@@ -192,7 +192,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Maiores baixas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro") %}
+{% call painel("Maiores baixas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro rankings") %}
     {% if highlights and highlights.lows %}
         {% set linhas = [] %}
         {% for a in highlights.lows %}
@@ -211,7 +211,7 @@
 {% endcall %}
 
 <!-- Linha Força Relativa -->
-{% call painel("Força Relativa (30 dias)", 4, "Comparação da rentabilidade acumulada de 30 ações de alta liquidez frente ao Ibovespa em 30 pregões.", forca_relativa.fonte if forca_relativa else "", forca_relativa.time if forca_relativa else "", "visao-micro") %}
+{% call painel("Força Relativa (30 dias)", 4, "Comparação da rentabilidade acumulada de 30 ações de alta liquidez frente ao Ibovespa em 30 pregões.", forca_relativa.fonte if forca_relativa else "", forca_relativa.time if forca_relativa else "", "visao-micro rankings") %}
     {% if forca_relativa %}
         {% set linhas = [] %}
         {% set linha_maior = [
@@ -232,7 +232,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Radar de volume", 4, "Volume do dia dividido pela média dos últimos 21 pregões. Aparecem as razões acima de 1,5×.", volume_alerts.fonte if volume_alerts else "", volume_alerts.time if volume_alerts else "", "visao-micro") %}
+{% call painel("Radar de volume", 4, "Volume do dia dividido pela média dos últimos 21 pregões. Aparecem as razões acima de 1,5×.", volume_alerts.fonte if volume_alerts else "", volume_alerts.time if volume_alerts else "", "visao-micro alertas") %}
     {% if volume_alerts %}
         {% if volume_alerts.alerts %}
             {% set linhas = [] %}
@@ -253,7 +253,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Variação Súbita", 4, "Ações que dispararam ou derreteram (> 1.5%) na última hora.", variacao_subita.fonte if variacao_subita else "", variacao_subita.time if variacao_subita else "", "visao-micro") %}
+{% call painel("Variação Súbita", 4, "Ações que dispararam ou derreteram (> 1.5%) na última hora.", variacao_subita.fonte if variacao_subita else "", variacao_subita.time if variacao_subita else "", "visao-micro alertas") %}
     {% if not variacao_subita %}
         {{ estado("indisponivel") }}
     {% elif not variacao_subita.alertas %}
@@ -275,7 +275,7 @@
 <!-- Linha 3 -->
 
 <!-- Escudo contra Quedas -->
-{% call painel("Escudo contra Quedas", 4, "Ações que mais fecharam no positivo nos últimos pregões de queda do Ibovespa.", escudo_quedas.fonte if escudo_quedas else "", escudo_quedas.time if escudo_quedas else "", "visao-micro") %}
+{% call painel("Escudo contra Quedas", 4, "Ações que mais fecharam no positivo nos últimos pregões de queda do Ibovespa.", escudo_quedas.fonte if escudo_quedas else "", escudo_quedas.time if escudo_quedas else "", "visao-micro sentimento-risco") %}
     {% if escudo_quedas %}
         <p class="sub">Pregões de queda: {{ escudo_quedas.qtd_quedas_ibov }} (últimos 30)</p>
         {% if escudo_quedas.top3 %}
@@ -298,7 +298,7 @@
 {% endcall %}
 
 
-{% call painel("Radar de Faca Caindo", 4, "Ações com mais dias consecutivos de queda, indicando a duração da sequência e a perda acumulada (nos últimos 10 pregões).", faca_caindo.fonte if faca_caindo else "", faca_caindo.time if faca_caindo else "", "visao-micro") %}
+{% call painel("Radar de Faca Caindo", 4, "Ações com mais dias consecutivos de queda, indicando a duração da sequência e a perda acumulada (nos últimos 10 pregões).", faca_caindo.fonte if faca_caindo else "", faca_caindo.time if faca_caindo else "", "visao-micro alertas") %}
     {% if not faca_caindo %}
         {{ estado("indisponivel") }}
     {% elif not faca_caindo.alertas %}
@@ -318,7 +318,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Atrasadas do Rally", 4, "Ações que ficaram para trás nos últimos 5 pregões em momentos de alta > 2% do Ibovespa.", atrasadas_rally.fonte if atrasadas_rally else "", atrasadas_rally.time if atrasadas_rally else "", "visao-micro") %}
+{% call painel("Atrasadas do Rally", 4, "Ações que ficaram para trás nos últimos 5 pregões em momentos de alta > 2% do Ibovespa.", atrasadas_rally.fonte if atrasadas_rally else "", atrasadas_rally.time if atrasadas_rally else "", "visao-micro rankings") %}
     {% if atrasadas_rally %}
         {% if not atrasadas_rally.rally_valido %}
             <div class="vazio">Ibovespa sem rally recente</div>
@@ -341,7 +341,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Sensibilidade ao dólar", 8, "Correlação de Pearson entre retornos diários da ação e do dólar (DOL$ no MT5, BRL=X no Yahoo) nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "", "visao-macro") %}
+{% call painel("Sensibilidade ao dólar", 8, "Correlação de Pearson entre retornos diários da ação e do dólar (DOL$ no MT5, BRL=X no Yahoo) nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "", "visao-macro alertas") %}
     {% if dolar_correlation %}
         <div class="duas">
             <div>
@@ -383,7 +383,7 @@
 {% endcall %}
 
 
-{% call painel('Armadilhas de Abertura', 4, 'Ações que abriram em forte alta (gap) mas perderam força e já operam abaixo do fechamento anterior.', armadilha_abertura.fonte if armadilha_abertura else '', armadilha_abertura.time if armadilha_abertura else '', 'visao-micro') %}
+{% call painel('Armadilhas de Abertura', 4, 'Ações que abriram em forte alta (gap) mas perderam força e já operam abaixo do fechamento anterior.', armadilha_abertura.fonte if armadilha_abertura else '', armadilha_abertura.time if armadilha_abertura else '', 'visao-micro alertas') %}
     {% if not armadilha_abertura %}
         {{ estado('indisponivel') }}
     {% elif not armadilha_abertura.alertas %}
@@ -402,7 +402,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Compradores de Fundo", 4, "Ações que abriram caindo > 1.5% e já reverteram para positivo.", compradores_fundo.fonte if compradores_fundo else "", compradores_fundo.time if compradores_fundo else "", "visao-micro") %}
+{% call painel("Compradores de Fundo", 4, "Ações que abriram caindo > 1.5% e já reverteram para positivo.", compradores_fundo.fonte if compradores_fundo else "", compradores_fundo.time if compradores_fundo else "", "visao-micro alertas") %}
     {% if not compradores_fundo %}
         {{ estado("indisponivel") }}
     {% elif not compradores_fundo.alertas %}
@@ -422,7 +422,7 @@
 {% endcall %}
 
 
-{% call painel("Sempre Verde", 4, "Ações que fecharam no verde todos os dias nos últimos 5 pregões.", sobrevivencia_semanal.fonte if sobrevivencia_semanal else "", sobrevivencia_semanal.time if sobrevivencia_semanal else "", "visao-micro") %}
+{% call painel("Sempre Verde", 4, "Ações que fecharam no verde todos os dias nos últimos 5 pregões.", sobrevivencia_semanal.fonte if sobrevivencia_semanal else "", sobrevivencia_semanal.time if sobrevivencia_semanal else "", "visao-micro rankings") %}
     {% if not sobrevivencia_semanal %}
         {{ estado("indisponivel") }}
     {% elif not sobrevivencia_semanal.alertas %}
@@ -438,7 +438,7 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Altas seguidas', 'num': True}], 'sobrevivencia-semanal') }}
     {% endif %}
 {% endcall %}
-{% call painel("Volatilidade Silenciosa", 4, "Ações com forte oscilação intraday (alta amplitude) mas que fecharam próximas da abertura (variação ≤ 0.5%).", volatilidade_silenciosa.fonte if volatilidade_silenciosa else "", volatilidade_silenciosa.coletado_em if volatilidade_silenciosa else "", "visao-micro") %}
+{% call painel("Volatilidade Silenciosa", 4, "Ações com forte oscilação intraday (alta amplitude) mas que fecharam próximas da abertura (variação ≤ 0.5%).", volatilidade_silenciosa.fonte if volatilidade_silenciosa else "", volatilidade_silenciosa.coletado_em if volatilidade_silenciosa else "", "visao-micro sentimento-risco") %}
   {% if volatilidade_silenciosa and volatilidade_silenciosa.alertas %}
     <table class="tabela">
       <thead>

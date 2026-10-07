@@ -8,37 +8,40 @@ document.addEventListener('DOMContentLoaded', () => {
         is.forEach(i => i.style.width = (18 + 70 * (parseFloat(i.dataset.v) / max)) + '%');
     });
 
-    // Filtros
-    const botoes = document.querySelectorAll('.filtro-btn');
-    const paineisMacro = document.querySelectorAll('.visao-macro');
-    const paineisMicro = document.querySelectorAll('.visao-micro');
+    // Abas de Navegação Contextual
+    const abas = document.querySelectorAll('.aba-btn');
+    const todosPaineis = document.querySelectorAll('.painel');
 
-    botoes.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const filtro = btn.getAttribute('data-filtro');
+    abas.forEach(aba => {
+        aba.addEventListener('click', () => {
+            const categoria = aba.getAttribute('data-aba');
 
-            botoes.forEach(b => {
-                b.classList.remove('ativo');
-            });
-            btn.classList.add('ativo');
+            abas.forEach(a => a.classList.remove('ativo'));
+            aba.classList.add('ativo');
 
             document.body.classList.remove('modo-so-sinais');
 
-            if (filtro === 'todos') {
-                paineisMacro.forEach(p => p.style.display = '');
-                paineisMicro.forEach(p => p.style.display = '');
-            } else if (filtro === 'macro') {
-                paineisMacro.forEach(p => p.style.display = '');
-                paineisMicro.forEach(p => p.style.display = 'none');
-            } else if (filtro === 'micro') {
-                paineisMacro.forEach(p => p.style.display = 'none');
-                paineisMicro.forEach(p => p.style.display = '');
-            } else if (filtro === 'sinais') {
+            if (categoria === 'sinais') {
                 document.body.classList.add('modo-so-sinais');
-                paineisMacro.forEach(p => p.style.display = '');
-                paineisMicro.forEach(p => p.style.display = '');
+                todosPaineis.forEach(p => p.style.display = '');
+            } else {
+                todosPaineis.forEach(p => {
+                    if (p.classList.contains(categoria)) {
+                        p.style.display = '';
+                    } else {
+                        if(p.classList.contains('visao-geral') || p.classList.contains('sentimento-risco') || p.classList.contains('rankings') || p.classList.contains('alertas')) {
+                            p.style.display = 'none';
+                        }
+                    }
+                });
             }
         });
+    });
+
+    todosPaineis.forEach(p => {
+        if (!p.classList.contains('visao-geral') && (p.classList.contains('sentimento-risco') || p.classList.contains('rankings') || p.classList.contains('alertas'))) {
+            p.style.display = 'none';
+        }
     });
 });
 
