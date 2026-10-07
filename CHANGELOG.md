@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 ### Added
+- docs: atualiza estado das specs 029 e 030
+### Added
+- feat: Implementa Abas de Navegação Contextual (Spec 030). Substitui os botões de filtro por abas no topo que organizam a interface em Visão Geral, Sentimento & Risco, Rankings & Destaques e Alertas Intraday, ocultando os painéis via JS sem recarregar a página. O filtro "Só Sinais" foi incorporado nas abas.
+- feat: Adiciona Sparklines nos rankings (Spec 029). Adiciona um minigráfico (SVG) nas tabelas "Maiores altas", "Maiores baixas" e "Força Relativa", ilustrando a performance dos últimos 10 pregões com base em histórico do Yahoo Finance.
+### Added
 - feat: Alerta de Volatilidade Silenciosa (Doji Extremo) (Spec 028). Novo painel na visão micro que exibe as top 3 ações com maior amplitude intraday e fechamento próximo à abertura (≤ 0.5% de variação), refletindo forte indecisão de mercado. Baseado em dados do Yahoo Finance.
 ### Changed
 - agent: `docs/DESIGN.md` reduz o gráfico do Ibovespa para 200px e proíbe eixo Y de preço começando em zero (vai de 2% abaixo do mínimo do período), a pedido do dono do produto.
