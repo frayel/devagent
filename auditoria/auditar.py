@@ -265,6 +265,45 @@ def checar_armadilha_abertura(snapshot: dict, pagina_html: str) -> None:
 FAIXAS_MARE = ["Pânico", "Medo", "Neutro", "Confiança", "Otimismo extremo"]
 
 
+def checar_volatilidade_silenciosa(snapshot: dict) -> list[Resultado]:
+    """Valida invariantes do painel de Volatilidade Silenciosa (spec 028)."""
+    painel = snapshot.get("paineis", {}).get("volatilidade_silenciosa")
+    if painel is None:
+        return [
+            Resultado(
+                "vol_sil.chave",
+                FALHA,
+                "Chave `volatilidade_silenciosa` ausente no /api/snapshot",
+            )
+        ]
+    if not painel:
+        return []
+
+    alertas = painel.get("alertas", [])
+    if not isinstance(alertas, list):
+        return [Resultado("vol_sil.formato", FALHA, "'alertas' deve ser uma lista")]
+
+    falhas = []
+    for a in alertas:
+        if abs(a.get("variacao", 100)) > 0.5:
+            falhas.append(f"{a.get('ticker')}: variacao {a.get('variacao')} > 0.5%")
+
+    if falhas:
+        return [
+            Resultado(
+                "vol_sil.criterio",
+                FALHA,
+                "Ativos com variação fora do limite (<= 0.5%): " + ", ".join(falhas),
+            )
+        ]
+
+    return [
+        Resultado(
+            "vol_sil.invariante", OK, "Volatilidade silenciosa respeita invariantes"
+        )
+    ]
+
+
 def checar_mare(snapshot: dict) -> list[Resultado]:
     """Invariantes da Maré do mercado (spec 027), só com o que o snapshot publica."""
     m = snapshot.get("paineis", {}).get("mare")
@@ -609,6 +648,7 @@ def auditar(
 
         if isinstance(snap_dict, dict):
             r += checar_mare(snap_dict)
+            r += checar_volatilidade_silenciosa(snap_dict)
             try:
                 checar_armadilha_abertura(snap_dict, html)
             except AssertionError as e:
