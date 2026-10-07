@@ -93,7 +93,7 @@ def test_fetch_brapi_success(monkeypatch):
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
         respx.get(
             httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?token=test_token&fundamental=false"
+                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
             )
         ).respond(status_code=200, json=brapi_data)
 
@@ -134,7 +134,7 @@ def test_fetch_yfinance_success(monkeypatch):
             batch, global_offset=batch_idx * batch_size
         )
         respx.get(
-            f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
+            f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=15d&interval=1d"
         ).respond(status_code=200, json=yfinance_data)
 
     data = fetch_yfinance()
@@ -163,7 +163,7 @@ def test_collect_and_save_fallback(monkeypatch):
         # Brapi fails
         respx.get(
             httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?token=test_token&fundamental=false"
+                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
             )
         ).respond(status_code=500)
 
@@ -185,7 +185,7 @@ def test_collect_and_save_fallback(monkeypatch):
                 batch, global_offset=batch_idx * batch_size
             )
             respx.get(
-                f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
+                f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=15d&interval=1d"
             ).respond(status_code=200, json=yfinance_data)
 
         success = collect_and_save()
@@ -204,7 +204,7 @@ def test_index_route(monkeypatch):
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
         respx.get(
             httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?token=test_token&fundamental=false"
+                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
             )
         ).respond(status_code=200, json=brapi_data)
         collect_and_save()
@@ -239,7 +239,7 @@ def test_fetch_less_than_5_assets(monkeypatch):
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
         respx.get(
             httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?token=test_token&fundamental=false"
+                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
             )
         ).respond(status_code=200, json=brapi_data)
 
@@ -261,7 +261,7 @@ def test_index_route_yfinance(monkeypatch):
         tickers_str = ",".join(TICKERS)
         respx.get(
             httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?token=test_token&fundamental=false"
+                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
             )
         ).respond(status_code=500)
 
@@ -283,7 +283,7 @@ def test_index_route_yfinance(monkeypatch):
                 batch, global_offset=batch_idx * batch_size
             )
             respx.get(
-                f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
+                f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=15d&interval=1d"
             ).respond(status_code=200, json=yfinance_data)
 
         collect_and_save()

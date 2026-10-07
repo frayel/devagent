@@ -71,6 +71,7 @@ def fetch_yfinance() -> ForcaRelativaData | None:
                                 "forca_relativa": forca_relativa,
                                 "rentabilidade_acao": stock_return,
                                 "rentabilidade_ibov": ibov_return,
+                                "sparkline": valid_closes[-10:],
                             }
                         )
 

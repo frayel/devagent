@@ -24,6 +24,7 @@ import math
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
+from app.services.sparkline import build_sparkline
 
 BRT = timezone(timedelta(hours=-3))
 
@@ -329,23 +330,6 @@ def snapshot(dado: Any) -> dict[str, Any]:
     }
 
 
-def _sparkline(valores: list[int]) -> dict[str, Any] | None:
-    """Pontos de uma linha em viewBox 0 0 200 48 (desenhada no servidor)."""
-    if len(valores) < 2:
-        return None
-    menor, maior = float(min(valores)), float(max(valores))
-    if maior - menor < 10:  # linha quase reta não deve parecer volátil
-        centro = (maior + menor) / 2
-        menor, maior = centro - 5, centro + 5
-    passo = 200 / (len(valores) - 1)
-
-    def y(v: float) -> float:
-        return round(44 - (v - menor) / (maior - menor) * 40, 1)
-
-    pontos = " ".join(f"{round(i * passo, 1)},{y(v)}" for i, v in enumerate(valores))
-    return {"pontos": pontos, "ultimo_x": 200, "ultimo_y": y(valores[-1])}
-
-
 def view(dado: Any) -> dict[str, Any] | None:
     if dado is None:
         return None
@@ -372,7 +356,7 @@ def view(dado: Any) -> dict[str, Any] | None:
         ],
         "parcial": snap["parcial"],
         "ausentes": ", ".join(NOMES[k] for k in snap["ausentes"]),
-        "sparkline": _sparkline(serie),
+        "sparkline": build_sparkline(serie),
         "resumo_serie": (
             f"Maré nos últimos {len(serie)} pregões, de {min(serie)} a {max(serie)}"
             if len(serie) >= 2
