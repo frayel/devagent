@@ -182,3 +182,13 @@
 | Índice de Sobrevenda Iminente | Responde: Qual ação em queda livre está prestes a repicar? Originalidade: Cruza quedas abruptas intraday (>3%) com picos isolados de volume (capitulação). | yfinance | M | Médio |
 | Correlação com Curva de Juros (DI1) | Responde: Quem está sofrendo com a abertura da curva de juros hoje? Originalidade: Cruza dados de juros futuros da B3 com o retorno intraday das ações. | B3/yfinance | G | Alto |
 | Alerta de Liquidez Seca | Responde: Onde o spread de compra/venda abriu perigosamente? Originalidade: Foca no risco de execução da ordem, não na variação de preço. | brapi | M | Médio |
+
+## Ideias (Passo 7 - 2026-10-07 2)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Radar de Anomalia de Peso Relativo Intraday | Responde: Quais pesos-pesados estão distorcendo o Ibovespa contra o resto do mercado hoje? Originalidade: Isola os poucos ativos que movem o índice sozinhos, medindo impacto em pontos de índice, em vez do retorno %. | brapi/yfinance | M | Médio |
+| Scanner de Capitulação por Clímax de Volume | Responde: Uma queda abrupta achou um piso momentâneo? Originalidade: Procura o maior pico isolado de volume intraday acompanhado de uma longa sombra inferior em dias de forte queda. | yfinance | G | Alto |
+| Experiência: Comparação Ibovespa Dolarizado | Responde: Como a bolsa brasileira está performando para o investidor estrangeiro hoje? Originalidade: Toggle que divide instantaneamente o painel do IBOV pelo câmbio atual. | N/A | P | Baixo |
+| Índice de Força Aberta | Responde: Quem continua subindo mesmo com o mercado devolvendo a alta da manhã? Originalidade: Mede especificamente a distância entre a máxima do dia e o preço atual, penalizando quem devolveu ganhos intraday. | brapi | M | Baixo |
+| Termômetro de Liquidez Extrema (Spread Bid/Ask) | Responde: O mercado está travado ou perigosamente ilíquido? Originalidade: Usa a média de spread percentual das 10 principais ações como proxy de estresse no livro de ofertas. | brapi | M | Médio |
