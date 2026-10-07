@@ -10,7 +10,7 @@ from app import gauge
 from fastapi.staticfiles import StaticFiles
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from app.services.ibovespa import get_ibovespa_view_data
 from app.services.manchete import gerar_manchete
 from app.database import get_latest_highlights_data, get_latest_apetite_risco_data
@@ -272,7 +272,9 @@ def snapshot():
     concentracao_setorial_data = get_latest_concentracao_setorial_data()
     if concentracao_setorial_data:
         resp["paineis"]["concentracao_setorial"] = {
-            "coletado_em": concentracao_setorial_data.timestamp.isoformat(),
+            "coletado_em": concentracao_setorial_data.timestamp.astimezone(
+                timezone(timedelta(hours=-3))
+            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
             "fonte": concentracao_setorial_data.fonte,
             "setor_destaque": concentracao_setorial_data.setor_destaque,
             "variacao_media": concentracao_setorial_data.variacao_media,
@@ -439,7 +441,9 @@ async def index(request: Request):
         concentracao_setorial = {
             "setor_destaque": concentracao_setorial_data.setor_destaque,
             "variacao_media": concentracao_setorial_data.variacao_media,
-            "coletado_em": concentracao_setorial_data.timestamp.isoformat(),
+            "coletado_em": concentracao_setorial_data.timestamp.astimezone(
+                timezone(timedelta(hours=-3))
+            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
             "fonte": concentracao_setorial_data.fonte,
         }
 

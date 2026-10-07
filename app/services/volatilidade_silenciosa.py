@@ -1,4 +1,5 @@
 from app.database import get_latest_volatilidade_silenciosa_data
+from datetime import timezone, timedelta
 import json
 
 
@@ -10,7 +11,9 @@ def get_volatilidade_silenciosa_view() -> dict:
         except Exception:
             alertas = []
         return {
-            "coletado_em": data.timestamp.isoformat(),
+            "coletado_em": data.timestamp.astimezone(
+                timezone(timedelta(hours=-3))
+            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
             "fonte": data.fonte,
             "alertas": alertas,
         }
