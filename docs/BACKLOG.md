@@ -174,3 +174,11 @@
 | Anomalia de Dia da Semana | Responde: As terças-feiras costumam ser vermelhas para o IBOV? Originalidade: Calcula a probabilidade baseada puramente na sazonalidade dos dias úteis. | yfinance | M | Baixo |
 | Detector de Puxada de Leilão de Fechamento | Responde: Quem subiu ou desceu artificialmente no apagar das luzes? Originalidade: Mede o impacto exclusivo dos últimos 5 minutos no preço final e sinaliza distorções de preço provocadas apenas pelo fluxo de leilão. | brapi | G | Alto |
 | Experiência: Abas de Navegação Contextual | Responde: É possível organizar as seções do dashboard de maneira que não fiquem escondidas por rolagem? Originalidade: Cria um menu lateral ou abas fixas focando na exploração por macrotemas (Cotações, Indicadores, Clima). | N/A | P | Baixo |
+
+## Ideias (Passo 7 - 2026-10-07)
+
+| Abas de Navegação Contextual | Responde: A página ficou longa demais e a informação está difícil de achar? Originalidade: Troca os filtros de exibição atuais por abas de navegação reais (Visão Geral, Risco, Rankings, Intraday), reorganizando estruturalmente o dashboard. | N/A | M | Baixo |
+| Layout Híbrido Fixo/Rolagem | Responde: Como manter o contexto macro enquanto analiso detalhes micro? Originalidade: Fixa o Ibovespa e a Maré no topo da tela enquanto o resto rola. | N/A | P | Baixo |
+| Índice de Sobrevenda Iminente | Responde: Qual ação em queda livre está prestes a repicar? Originalidade: Cruza quedas abruptas intraday (>3%) com picos isolados de volume (capitulação). | yfinance | M | Médio |
+| Correlação com Curva de Juros (DI1) | Responde: Quem está sofrendo com a abertura da curva de juros hoje? Originalidade: Cruza dados de juros futuros da B3 com o retorno intraday das ações. | B3/yfinance | G | Alto |
+| Alerta de Liquidez Seca | Responde: Onde o spread de compra/venda abriu perigosamente? Originalidade: Foca no risco de execução da ordem, não na variação de preço. | brapi | M | Médio |
