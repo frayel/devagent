@@ -8,6 +8,17 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 030 (Abas de Navegação Contextual):
+  - Adicionado menu de abas fixas no topo da grade.
+  - Painéis categorizados em "Visão Geral", "Sentimento & Risco", "Rankings & Destaques" e "Alertas Intraday".
+  - Filtro "Só Sinais" movido para o botão de abas.
+  - Nenhuma nova dependência de dados, reorganização via JS/CSS.
+
+- Spec 029 (Sparklines nos rankings):
+  - Adicionados minigráficos (sparklines) nas tabelas "Maiores altas", "Maiores baixas" e "Força Relativa".
+  - O desenho da linha SVGs é gerado e processado do backend a partir do histórico de 10 dias.
+  - Componentes ajustados para acomodar o minigráfico.
+
 - Spec 028 (Volatilidade Silenciosa):
   - Banco de dados SQLite (`volatilidade_silenciosa_cache`).
   - Coletor com `yfinance` buscando dados diários (spark).

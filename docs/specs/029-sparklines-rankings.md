@@ -1,7 +1,7 @@
 ---
 id: 029
 titulo: Sparklines nos rankings
-status: ready
+status: done
 esforco: M
 ---
 

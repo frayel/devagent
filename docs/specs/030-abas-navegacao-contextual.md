@@ -1,7 +1,7 @@
 ---
 id: 030
 titulo: Abas de Navegação Contextual
-status: ready
+status: done
 esforco: M
 ---
 
