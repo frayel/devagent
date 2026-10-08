@@ -318,6 +318,25 @@
     {% endif %}
 {% endcall %}
 
+
+{% call painel("Scanner de Capitulação", 4, "Ações caindo >2% mas com pico extremo recente de volume e longa sombra inferior (sinal de absorção).", scanner_capitulacao.fonte if scanner_capitulacao else "", scanner_capitulacao.time if scanner_capitulacao else "", "visao-micro alertas") %}
+    {% if not scanner_capitulacao %}
+        {{ estado("indisponivel") }}
+    {% elif not scanner_capitulacao.alertas %}
+        <div class="vazio">Nenhum clímax de capitulação detectado hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in scanner_capitulacao.alertas %}
+            {% set _ = linhas.append([
+                {'conteudo': a.ticker, 'tk': True},
+                {'conteudo': ('<span>' ~ a.texto ~ '</span>') | safe},
+                {'conteudo': (variacao("%.2f%%" | format(a.queda_pct), -1)) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Sinal'}, {'titulo': 'Queda', 'num': True}], 'scanner-capitulacao') }}
+    {% endif %}
+{% endcall %}
+
 {% call painel("Atrasadas do Rally", 4, "Ações que ficaram para trás nos últimos 5 pregões em momentos de alta > 2% do Ibovespa.", atrasadas_rally.fonte if atrasadas_rally else "", atrasadas_rally.time if atrasadas_rally else "", "visao-micro rankings") %}
     {% if atrasadas_rally %}
         {% if not atrasadas_rally.rally_valido %}
