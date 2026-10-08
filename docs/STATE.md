@@ -5,9 +5,14 @@
 ## Experiência
 
 - Última revisão de experiência: 07/10/2026 (Abas de Navegação)
-- Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 031 (Scanner de Capitulação):
+  - Adicionado painel em "Alertas Intraday".
+  - Coletor com yfinance buscando dados intraday (15m).
+  - Exibe ações caindo >2% com aumento anormal de volume (>3x média diária) em candles com sombras inferiores longas.
+  - Adicionado em `/api/snapshot`.
 - Spec 030 (Abas de Navegação Contextual):
   - Adicionado menu de abas fixas no topo da grade.
   - Painéis categorizados em "Visão Geral", "Sentimento & Risco", "Rankings & Destaques" e "Alertas Intraday".

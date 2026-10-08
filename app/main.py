@@ -30,7 +30,7 @@ from app.services.compradores_fundo import get_compradores_fundo_view
 from app.services.armadilha_abertura import get_armadilha_abertura_view
 from app.services.sobrevivencia_semanal import get_sobrevivencia_semanal_view
 from app.services.volatilidade_silenciosa import get_volatilidade_silenciosa_view
-from app.services.scanner_capitulacao import get_scanner_capitulacao_view
+from app.services import scanner_capitulacao
 from app.services import mare as mare_servico
 from app.database import (
     get_latest_concentracao_setorial_data,
@@ -463,7 +463,7 @@ async def index(request: Request):
     armadilha_abertura = get_armadilha_abertura_view()
     sobrevivencia_semanal = get_sobrevivencia_semanal_view()
     volatilidade_silenciosa = get_volatilidade_silenciosa_view()
-    scanner_capitulacao = get_scanner_capitulacao_view()
+
     mare = mare_servico.get_mare_view()
     return templates.TemplateResponse(
         request=request,
@@ -488,7 +488,7 @@ async def index(request: Request):
             "armadilha_abertura": armadilha_abertura,
             "sobrevivencia_semanal": sobrevivencia_semanal,
             "volatilidade_silenciosa": volatilidade_silenciosa,
-            "scanner_capitulacao": scanner_capitulacao,
+            "scanner_capitulacao": scanner_capitulacao.view_model(),
             "mare": mare,
         },
     )

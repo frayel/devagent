@@ -1,7 +1,7 @@
 ---
 id: 031
 titulo: Scanner de Capitulação por Clímax de Volume
-status: ready
+status: done
 esforco: G
 ---
 
