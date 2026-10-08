@@ -70,3 +70,5 @@
 - Integração com Plotly.js para gráficos.
 
 - Correção: implementado redesign da interface segundo o guia visual (spec 008).
+
+- (031) Scanner de Capitulação implementado.
