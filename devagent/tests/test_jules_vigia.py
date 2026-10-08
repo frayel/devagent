@@ -93,3 +93,22 @@ def test_erro_numa_volta_nao_encerra_o_laco(monkeypatch, relogio):
         ("destravar", "05:45"),
         ("destravar", "05:50"),
     ]
+
+
+def test_rodada_inicia_persona_da_hora_destrava_e_sai(monkeypatch, relogio):
+    relogio.agora = datetime(2026, 10, 1, 6, 17, tzinfo=timezone.utc)
+    chamadas = _registrar(monkeypatch, relogio, [])
+    assert jules.rodada(espera_minutos=5) == 0
+    assert chamadas == [("iniciar", ("06:17", "seguranca")), ("destravar", "06:17")]
+
+
+def test_rodada_nao_repete_persona_ja_iniciada_na_hora(monkeypatch, relogio):
+    relogio.agora = datetime(2026, 10, 1, 7, 47, tzinfo=timezone.utc)
+    sessao = {
+        "title": jules.PERSONAS["desenvolvedor"]["titulo"],
+        "createTime": "2026-10-01T07:17:05Z",
+        "state": "COMPLETED",
+    }
+    chamadas = _registrar(monkeypatch, relogio, [sessao])
+    assert jules.rodada(espera_minutos=5) == 0
+    assert chamadas == [("destravar", "07:47")]

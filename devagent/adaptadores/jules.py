@@ -11,6 +11,7 @@ Uso:
     python -m devagent.adaptadores.jules iniciar auditor
     python -m devagent.adaptadores.jules iniciar seguranca | design | performance
     python -m devagent.adaptadores.jules destravar   # aprova planos e responde perguntas
+    python -m devagent.adaptadores.jules rodada      # uma volta: persona da hora + destravar, e sai
     python -m devagent.adaptadores.jules vigiar      # relógio próprio: inicia e destrava em laço
     python -m devagent.adaptadores.jules listar
     python -m devagent.adaptadores.jules encerrar <id da sessão ou URL da tarefa>
@@ -341,6 +342,31 @@ def destravar(espera_minutos: int) -> int:
 PERSONA_DA_HORA = {6: "seguranca", 12: "performance", 18: "design"}
 
 
+def ja_iniciada_nesta_hora() -> bool:
+    hora_atual = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    titulos = tuple(PERSONAS[x]["titulo"] for x in CONSTRUTORAS)
+    return any(
+        s.get("title", "").startswith(titulos) and _data(s, "createTime") >= hora_atual
+        for s in sessoes_do_repo()
+    )
+
+
+def rodada(espera_minutos: int) -> int:
+    """Uma volta só: inicia a persona da hora (se ainda não foi iniciada nesta
+    hora) e destrava as sessões paradas. Leva segundos e termina, para o job
+    do Actions não ficar ligado à toa entre uma volta e outra.
+    """
+    persona = PERSONA_DA_HORA.get(datetime.now(timezone.utc).hour, "desenvolvedor")
+    try:
+        if ja_iniciada_nesta_hora():
+            print(f"{persona}: já iniciada nesta hora.")
+        else:
+            iniciar(persona, dry_run=False)
+    except Exception as erro:  # noqa: BLE001
+        print(f"::warning::iniciar {persona} falhou: {erro}")
+    return destravar(espera_minutos)
+
+
 def vigiar(duracao_minutos: int, intervalo_minutos: int, espera_minutos: int) -> int:
     """Laço que substitui o cron do GitHub, que descarta a maioria dos disparos.
 
@@ -405,6 +431,8 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("--duracao-minutos", type=int, default=340)
     v.add_argument("--intervalo-minutos", type=int, default=5)
     v.add_argument("--espera-minutos", type=int, default=5)
+    r = sub.add_parser("rodada")
+    r.add_argument("--espera-minutos", type=int, default=5)
     sub.add_parser("listar")
     e = sub.add_parser("encerrar")
     e.add_argument("sessao", help="id da sessão, sessions/<id> ou URL da tarefa")
@@ -416,6 +444,8 @@ def main(argv: list[str] | None = None) -> int:
         return destravar(args.espera_minutos)
     if args.cmd == "encerrar":
         return encerrar(args.sessao, args.motivo)
+    if args.cmd == "rodada":
+        return rodada(args.espera_minutos)
     if args.cmd == "vigiar":
         return vigiar(args.duracao_minutos, args.intervalo_minutos, args.espera_minutos)
     return listar()
