@@ -1,27 +1,17 @@
 name: Jules
 
-# Dispara o desenvolvedor e os especialistas (Sentinel, Palette, Bolt) pela API do Jules e destrava sessões que
-# pararem esperando aprovação de plano ou resposta a uma pergunta.
-# Substitui a tarefa agendada criada pela interface web, que pode parar em
-# "aguardando aprovação" mesmo com o prompt pedindo o contrário.
+# Dispara o desenvolvedor e os especialistas (Sentinel, Palette, Bolt) pela API do Jules
+# e destrava sessões paradas esperando aprovação de plano ou resposta.
+# Só roda manualmente: o job "vigia" contínuo foi removido para não consumir
+# minutos do GitHub Actions.
 on:
-  schedule:
-    # O cron do GitHub não é relógio: em 30/09 e 01/10 ele executou cerca de
-    # 1 em cada 10 disparos agendados, com buracos de até 3,5 h. Por isso o
-    # trabalho roda no job "vigia", um laço de ~5h40 que inicia a persona de
-    # cada hora, destrava a cada 5 min e, ao terminar, dispara o próximo vigia
-    # por workflow_dispatch (que não é descartado). Estes crons só ressuscitam
-    # a corrente se ela se romper; com um vigia rodando, ficam na fila do
-    # grupo de concorrência e um substitui o outro.
-    - cron: "11 */3 * * *"
-    - cron: "41 1-23/3 * * *"
   workflow_dispatch:
     inputs:
       acao:
         description: "O que fazer"
         type: choice
-        options: [vigiar, desenvolvedor, seguranca, design, performance, auditor, destravar, listar, encerrar]
-        default: vigiar
+        options: [desenvolvedor, seguranca, design, performance, auditor, destravar, listar, encerrar]
+        default: desenvolvedor
       sessao:
         description: "Só para encerrar: id da sessão ou URL da tarefa no Jules"
         type: string
@@ -31,44 +21,7 @@ permissions:
   contents: read
 
 jobs:
-  vigia:
-    if: github.event_name == 'schedule' || inputs.acao == 'vigiar'
-    runs-on: ubuntu-latest
-    # Teto do GitHub para um job: 6 h. O laço dura 340 min.
-    timeout-minutes: 355
-    permissions:
-      contents: read
-      actions: write
-      pull-requests: read
-    concurrency:
-      group: jules-vigia
-      cancel-in-progress: false
-    env:
-      JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
-      JULES_LIMITE_DIARIO: ${{ vars.JULES_LIMITE_DIARIO }}
-      # Lê o estado do PR de cada sessão antes de responder (ADR 009).
-      GH_TOKEN: ${{ github.token }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-      - name: Vigiar
-        run: |
-          if [ -z "$JULES_API_KEY" ]; then
-            echo "::warning::Crie o secret JULES_API_KEY (https://jules.google.com/settings#api)."
-            exit 0
-          fi
-          python3 -u -m devagent.adaptadores.jules vigiar
-      - name: Passar o turno
-        # Roda mesmo se o laço falhar ou estourar o tempo, para a corrente
-        # não morrer. Não roda se alguém cancelar o vigia de propósito.
-        if: ${{ !cancelled() }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run jules.yml --repo "$GITHUB_REPOSITORY" --ref main -f acao=vigiar
-
   avulso:
-    if: github.event_name == 'workflow_dispatch' && inputs.acao != 'vigiar'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
