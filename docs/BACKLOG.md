@@ -192,3 +192,13 @@
 | Experiência: Comparação Ibovespa Dolarizado | Responde: Como a bolsa brasileira está performando para o investidor estrangeiro hoje? Originalidade: Toggle que divide instantaneamente o painel do IBOV pelo câmbio atual. | N/A | P | Baixo |
 | Índice de Força Aberta | Responde: Quem continua subindo mesmo com o mercado devolvendo a alta da manhã? Originalidade: Mede especificamente a distância entre a máxima do dia e o preço atual, penalizando quem devolveu ganhos intraday. | brapi | M | Baixo |
 | Termômetro de Liquidez Extrema (Spread Bid/Ask) | Responde: O mercado está travado ou perigosamente ilíquido? Originalidade: Usa a média de spread percentual das 10 principais ações como proxy de estresse no livro de ofertas. | brapi | M | Médio |
+
+## Ideias (Passo 7 - 2026-10-08)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Filtros de Tempo Dinâmicos | Responde: Consigo ver a mudança de sentimento da última hora vs o dia todo? Originalidade: Troca a visão de "hoje" por snapshots de diferentes momentos do pregão. | N/A | M | Baixo |
+| Radar de Inflexão (Reversão de Tendência) | Responde: Qual ação reverteu uma longa tendência de baixa com força hoje? Originalidade: Foca na quebra de inércia, usando volume e preço cruzando médias curtas. | yfinance | M | Baixo |
+| Alerta de Vácuo de Liquidez | Responde: Onde o spread no book de ofertas está assustadoramente alto agora? Originalidade: Olha a dificuldade de saída/entrada (risco de execução) e não a variação do preço. | brapi | M | Médio |
+| Termômetro de Proteção Institucional (Skew de Opções) | Responde: Os grandes fundos estão pagando caro por proteção contra quedas agressivas? Originalidade: Usa derivativos para prever o medo que ainda não chegou no preço à vista. | B3 | G | Alto |
+| Impacto Relativo do Exterior (BDRs vs IBOV) | Responde: O dia de hoje no Brasil é puramente reflexo lá de fora? Originalidade: Compara um índice de BDRs mais líquidos com as Blue Chips brasileiras em tempo real. | yfinance | M | Médio |
