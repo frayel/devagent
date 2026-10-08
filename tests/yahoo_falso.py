@@ -57,6 +57,8 @@ def _fechamentos(simbolo: str, n: int) -> list[float]:
         return valores
     elif simbolo == "BRL=X":
         base, forma = 5.2, 2
+    elif "TICKER" in simbolo or simbolo == "PETR4.SA":
+        base, forma = 10.0 + s % 50, 0
     else:
         base, forma = 10.0 + s % 50, s % 4
     total = n + 1  # um pregão a mais vira o fechamento anterior
@@ -86,7 +88,7 @@ def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
     tempos = [int((agora - passo * (n - 1 - i)).timestamp()) for i in range(n)]
     s = _semente(simbolo)
     volumes = [1_000_000 + (s % 7) * 100_000 for _ in range(n)]
-    if s % 3 == 0:
+    if s % 3 == 0 or "TICKER" in simbolo or simbolo == "PETR4.SA":
         volumes[-1] *= 4  # pico de volume no último pregão
     ultimo = fechamentos[-1]
     return {
