@@ -1,7 +1,7 @@
 ---
 id: 035
 titulo: Setor Líder por Volume Financeiro
-status: ready
+status: done
 esforco: P
 ---
 

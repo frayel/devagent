@@ -288,6 +288,8 @@ def snapshot():
             "setor_destaque": concentracao_setorial_data.setor_destaque,
             "variacao_media": concentracao_setorial_data.variacao_media,
             "ha_setor_em_alta": concentracao_setorial_data.variacao_media > 0,
+            "setor_lider_volume": concentracao_setorial_data.setor_lider_volume,
+            "volume_lider": concentracao_setorial_data.volume_lider,
         }
     else:
         resp["paineis"]["concentracao_setorial"] = {}
@@ -493,6 +495,8 @@ async def index(request: Request):
                 timezone(timedelta(hours=-3))
             ).strftime("%d/%m/%Y %H:%M:%S BRT"),
             "fonte": concentracao_setorial_data.fonte,
+            "setor_lider_volume": concentracao_setorial_data.setor_lider_volume,
+            "volume_lider": concentracao_setorial_data.volume_lider,
         }
 
     variacao_subita = get_variacao_subita_view_data()

@@ -102,6 +102,8 @@ class ConcentracaoSetorialData:
     setor_destaque: str
     variacao_media: float
     fonte: str = "brapi"
+    setor_lider_volume: str = ""
+    volume_lider: float = 0.0
 
 
 @dataclass
@@ -465,9 +467,23 @@ def init_db() -> None:
             timestamp TEXT PRIMARY KEY,
             setor_destaque TEXT NOT NULL,
             variacao_media REAL NOT NULL,
-            fonte TEXT NOT NULL
+            fonte TEXT NOT NULL,
+            setor_lider_volume TEXT NOT NULL DEFAULT "",
+            volume_lider REAL NOT NULL DEFAULT 0.0
         )
     """)
+    # Migrar a tabela antiga caso exista e não tenha as colunas de volume
+    try:
+        cursor.execute(
+            "SELECT setor_lider_volume FROM concentracao_setorial_cache LIMIT 1"
+        )
+    except sqlite3.OperationalError:
+        cursor.execute(
+            "ALTER TABLE concentracao_setorial_cache ADD COLUMN setor_lider_volume TEXT NOT NULL DEFAULT ''"
+        )
+        cursor.execute(
+            "ALTER TABLE concentracao_setorial_cache ADD COLUMN volume_lider REAL NOT NULL DEFAULT 0.0"
+        )
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_concentracao_setorial_cache_timestamp
         ON concentracao_setorial_cache(timestamp DESC)
@@ -1010,14 +1026,16 @@ def save_concentracao_setorial_data(data: ConcentracaoSetorialData) -> None:
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO concentracao_setorial_cache (timestamp, setor_destaque, variacao_media, fonte)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO concentracao_setorial_cache (timestamp, setor_destaque, variacao_media, fonte, setor_lider_volume, volume_lider)
+        VALUES (?, ?, ?, ?, ?, ?)
         """,
         (
             data.timestamp.isoformat(),
             data.setor_destaque,
             data.variacao_media,
             data.fonte,
+            data.setor_lider_volume,
+            data.volume_lider,
         ),
     )
     conn.commit()
@@ -1044,6 +1062,12 @@ def get_latest_concentracao_setorial_data() -> ConcentracaoSetorialData | None:
             setor_destaque=row["setor_destaque"],
             variacao_media=float(row["variacao_media"]),
             fonte=row["fonte"],
+            setor_lider_volume=row["setor_lider_volume"]
+            if "setor_lider_volume" in row.keys()
+            else "",
+            volume_lider=float(row["volume_lider"])
+            if "volume_lider" in row.keys() and row["volume_lider"] is not None
+            else 0.0,
         )
     return None
 

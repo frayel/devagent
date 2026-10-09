@@ -110,23 +110,46 @@
   {% endif %}
 {% endcall %}
 
-{% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial visao-geral escondido' if not concentracao_setorial else 'visao-macro painel-concentracao-setorial visao-geral') %}
+{% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje, e qual atrai mais volume financeiro.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial visao-geral escondido' if not concentracao_setorial else 'visao-macro painel-concentracao-setorial visao-geral') %}
   {% if not concentracao_setorial %}
     {{ estado('indisponivel') }}
-  {% elif concentracao_setorial.variacao_media <= 0 %}
-    <div class="kpi-container alinha-centro">
-      <div class="kpi">
-        <div class="valor">Nenhum setor em alta</div>
-      </div>
-      <p class="sub">Melhor média: {{ concentracao_setorial.setor_destaque }}, {{ ("%.2f"|format(concentracao_setorial.variacao_media)).replace('.', ',') }}%</p>
-    </div>
   {% else %}
-    <div class="kpi-container alinha-centro">
-      <div class="kpi">
-        <div class="valor">{{ concentracao_setorial.setor_destaque }}</div>
-      </div>
-      <div class="var {% if concentracao_setorial.variacao_media > 0 %}alta{% elif concentracao_setorial.variacao_media < 0 %}baixa{% else %}neutra{% endif %}">
-        {% if concentracao_setorial.variacao_media > 0 %}▲ +{% elif concentracao_setorial.variacao_media < 0 %}▼ {% else %}■ {% endif %}{{ ("%.2f"|format(concentracao_setorial.variacao_media)).replace('.', ',') }}%
+    <div class="duas">
+      {% if concentracao_setorial.variacao_media <= 0 %}
+        <div class="kpi-container alinha-centro">
+          <div class="kpi">
+            <div class="valor rot texto-num">Nenhum setor em alta</div>
+          </div>
+          <p class="sub">Melhor média: {{ concentracao_setorial.setor_destaque }}, {{ ("%.2f"|format(concentracao_setorial.variacao_media)).replace('.', ',') }}%</p>
+        </div>
+      {% else %}
+        <div class="kpi-container alinha-centro">
+          <div class="kpi">
+            <div class="valor rot texto-num">{{ concentracao_setorial.setor_destaque }}</div>
+          </div>
+          <div class="var {% if concentracao_setorial.variacao_media > 0 %}alta{% elif concentracao_setorial.variacao_media < 0 %}baixa{% else %}neutra{% endif %}">
+            {% if concentracao_setorial.variacao_media > 0 %}▲ +{% elif concentracao_setorial.variacao_media < 0 %}▼ {% else %}■ {% endif %}{{ ("%.2f"|format(concentracao_setorial.variacao_media)).replace('.', ',') }}%
+          </div>
+          <p class="sub">Líder em alta</p>
+        </div>
+      {% endif %}
+
+      <div class="kpi-container alinha-centro">
+        <div class="kpi">
+          <div class="valor rot texto-num">{{ concentracao_setorial.get('setor_lider_volume', 'N/A') or 'N/A' }}</div>
+        </div>
+        <div class="var texto-neutro num">
+          {% if concentracao_setorial and concentracao_setorial.get('volume_lider', 0.0) >= 1000000000 %}
+            R$ {{ ("%.2f"|format(concentracao_setorial.get('volume_lider', 0.0) / 1000000000)).replace('.', ',') }} bi
+          {% elif concentracao_setorial and concentracao_setorial.get('volume_lider', 0.0) >= 1000000 %}
+            R$ {{ ("%.2f"|format(concentracao_setorial.get('volume_lider', 0.0) / 1000000)).replace('.', ',') }} mi
+          {% elif concentracao_setorial %}
+            R$ {{ ("%.2f"|format(concentracao_setorial.get('volume_lider', 0.0))).replace('.', ',') }}
+          {% else %}
+            R$ 0,00
+          {% endif %}
+        </div>
+        <p class="sub">Maior volume (R$)</p>
       </div>
     </div>
   {% endif %}
