@@ -129,7 +129,6 @@
 | Armadilha de Abertura (Gap Trap) | Responde: Quais ações abriram em forte alta (gap) mas já perderam tudo e estão no vermelho? Originalidade: Identifica armadilhas para compradores atrasados logo na primeira hora. | yfinance | M | Baixo |
 | Exaustão por Volume Clímax | Responde: Essa queda livre acabou? Originalidade: Procura o maior pico de volume intraday em um dia de forte queda como sinal de capitulação. | brapi/yfinance | M | Médio |
 | Experiência: Toggle Hoje vs Ontem | Responde: Como estava o mercado neste mesmo horário ontem? Originalidade: Permitir com um clique comparar o mapa atual com a foto exata de 24 horas atrás. | N/A | P | Baixo |
-| Anomalia de Peso Relativo | Responde: Quais pesos-pesados estão segurando o Ibov sozinhos? Originalidade: Mede o impacto individual em pontos de índice, em vez do retorno %. | brapi/yfinance | M | Médio |
 | Detecção de Movimento Silencioso | Responde: O que está subindo sem ninguém falar? Originalidade: Filtra ativos com retorno > 2% diário mas sem menções recentes no agregador de notícias. | brapi/Notícias | G | Alto |
 
 ## Ideias (Passo 7 - 2026-10-05 3)
@@ -187,7 +186,6 @@
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |
 |---|---|---|---|---|
-| Radar de Anomalia de Peso Relativo Intraday | Responde: Quais pesos-pesados estão distorcendo o Ibovespa contra o resto do mercado hoje? Originalidade: Isola os poucos ativos que movem o índice sozinhos, medindo impacto em pontos de índice, em vez do retorno %. | brapi/yfinance | M | Médio |
 | Scanner de Capitulação por Clímax de Volume | Responde: Uma queda abrupta achou um piso momentâneo? Originalidade: Procura o maior pico isolado de volume intraday acompanhado de uma longa sombra inferior em dias de forte queda. | yfinance | G | Alto |
 | Experiência: Comparação Ibovespa Dolarizado | Responde: Como a bolsa brasileira está performando para o investidor estrangeiro hoje? Originalidade: Toggle que divide instantaneamente o painel do IBOV pelo câmbio atual. | N/A | P | Baixo |
 | Índice de Força Aberta | Responde: Quem continua subindo mesmo com o mercado devolvendo a alta da manhã? Originalidade: Mede especificamente a distância entre a máxima do dia e o preço atual, penalizando quem devolveu ganhos intraday. | brapi | M | Baixo |
