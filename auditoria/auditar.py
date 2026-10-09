@@ -83,7 +83,14 @@ class Painel:
 
 def _numero_br(txt: str) -> float:
     """'130.000' -> 130000; '-1.234,5' -> -1234.5; '0.78' -> 0.78."""
-    txt = txt.strip().replace("+", "")
+    txt = (
+        txt.strip()
+        .replace("+", "")
+        .replace("■", "")
+        .replace("▼", "")
+        .replace("▲", "")
+        .strip()
+    )
     if "," in txt:
         return float(txt.replace(".", "").replace(",", "."))
     if re.fullmatch(r"-?\d{1,3}(\.\d{3})+", txt):
@@ -98,10 +105,16 @@ def extrair_do_html(html: str) -> Painel | None:
     m = re.search(r"([\d.,]+)\s*pontos", html)
     if m:
         p.valor = _numero_br(m.group(1))
-    m = re.search(r"([+\-]?[\d.,]+)\s*\(\s*([+\-]?[\d.,]+)\s*%\s*\)", html)
+    m = re.search(r"([+\-■▼▲\s]*)([+\-]?[\d.,]+)\s*\(\s*([+\-]?[\d.,]+)\s*%\s*\)", html)
     if m:
-        p.variacao = _numero_br(m.group(1))
-        p.variacao_pct = _numero_br(m.group(2))
+        sinal = m.group(1) or ""
+        val = m.group(2)
+        if "-" in sinal and not val.startswith("-"):
+            val = "-" + val
+        elif "+" in sinal and not val.startswith("+"):
+            val = "+" + val
+        p.variacao = _numero_br(val)
+        p.variacao_pct = _numero_br(m.group(3))
     m = re.search(
         r"(?:atualiza[çc][ãa]o:|·|&middot;)\s*(\d{2}/\d{2}/\d{4}\s+\d{2}:\d{2}(?::\d{2})?)\s*(UTC|BRT)?",
         html,
