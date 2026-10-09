@@ -516,6 +516,16 @@ def init_db() -> None:
         ON apetite_risco_cache(timestamp DESC)
     """)
 
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_anomalia_peso_cache_timestamp
+        ON anomalia_peso_cache(timestamp DESC)
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_radar_inflexao_cache_timestamp
+        ON radar_inflexao_cache(timestamp DESC)
+    """)
+
     conn.commit()
     conn.close()
 
