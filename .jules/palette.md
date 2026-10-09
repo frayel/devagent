@@ -23,3 +23,8 @@
 - **O que fiz:** Padronizei o painel "Força Relativa" para usar a macro `kpi` e corrigi a classe `sem-dados` para `vazio` em "Atrasadas do Rally" de acordo com o Design System.
 - **Por que fiz:** A versão anterior usava classes customizadas não definidas (`linha-kpis`, `kpi-secundario`), violando os tokens de design (Seção 4 de docs/DESIGN.md) e regras de macros (Seção 5).
 - **O que aprendi:** É importante revisar templates para garantir que macros padrão estejam sendo utilizadas no lugar de layouts improvisados.
+## 2026-10-10
+- **O que fiz:** Adicionei atributo `role="img"` e um resumo textual no `aria-label` do gráfico do Ibovespa (em `app/templates/index.html`), gerando a string de resumo com variação percentual na função de serviço `app/services/ibovespa.py`.
+- **Por que fiz:** Docs/DESIGN.md seção 5 manda que 'Todo gráfico tem aria-label com um resumo em texto' e o checklist de design reprovava a ausência desse `aria-label` e resumo.
+- **O que aprendi:** Templates lidam mal quando as chaves de dicionário podem faltar, é melhor usar `.get('key', '')` do que `.key` ao estender objetos já testados.
+- **O que evitar:** Deixar objetos da interface com gráfico sem leitura apropriada pra screen readers.

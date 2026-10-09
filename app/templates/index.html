@@ -25,7 +25,7 @@
         <div id="grafico-ibovespa" class="grafico"
              data-dates='{{ data.history_dict.dates | tojson | e }}'
              data-closes='{{ data.history_dict.closes | tojson | e }}'
-             data-is-positive='{{ 'true' if data.is_positive else 'false' }}'>
+             data-is-positive='{{ 'true' if data.is_positive else 'false' }}' role="img" aria-label="{{ data.get('resumo_serie', '') }}">
         </div>
         {% endif %}
     {% else %}
