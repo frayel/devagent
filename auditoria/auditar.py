@@ -596,6 +596,15 @@ def checar_referencia(
 # --------------------------------------------------------------------------
 
 
+def checar_radar_inflexao(snapshot: dict) -> Resultado | None:
+    dados = snapshot.get("paineis", {}).get("radar_inflexao")
+    if dados is None:
+        return Resultado("radar.chave", AVISO, "Radar de inflexão ausente no snapshot")
+    if dados and "alertas" not in dados:
+        return Resultado("radar.chave", FALHA, "Chave 'alertas' ausente")
+    return None
+
+
 def auditar(
     url: str,
     agora: datetime | None = None,
@@ -649,6 +658,9 @@ def auditar(
         if isinstance(snap_dict, dict):
             r += checar_mare(snap_dict)
             r += checar_volatilidade_silenciosa(snap_dict)
+            f_radar = checar_radar_inflexao(snap_dict)
+            if f_radar:
+                r.append(f_radar)
             try:
                 checar_armadilha_abertura(snap_dict, html)
             except AssertionError as e:

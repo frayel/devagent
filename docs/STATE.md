@@ -5,9 +5,14 @@
 ## Experiência
 
 - Última revisão de experiência: 07/10/2026 (Abas de Navegação)
-- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 2 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 032 (Radar de Inflexão):
+  - Banco de dados SQLite (`radar_inflexao_cache`).
+  - Coletor buscando fechamentos dos últimos 15 dias para ações via `yfinance`.
+  - Cálculo de ações que caíram >5% nos últimos 15 dias, mas hoje revertem com alta >2%.
+  - Exibição de painel "Inflexão de Tendência" na página inicial e via `/api/snapshot`.
 - Spec 031 (Scanner de Capitulação):
   - Adicionado painel em "Alertas Intraday".
   - Coletor com yfinance buscando dados intraday (15m).

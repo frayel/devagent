@@ -232,6 +232,24 @@
     {% endif %}
 {% endcall %}
 
+{% call painel('Inflexão de Tendência', 4, 'Ações que caíram >5% em 15 dias, mas hoje revertem com alta > 2%.', radar_inflexao.fonte if radar_inflexao else '', radar_inflexao.coletado_em if radar_inflexao else '', 'visao-micro rankings') %}
+    {% if not radar_inflexao %}
+        {{ estado('indisponivel') }}
+    {% elif not radar_inflexao.alertas %}
+        <div class="vazio">Nenhuma ação com inflexão no momento.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in radar_inflexao.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': variacao(('+' ~ a.variacao_hoje ~ '%'), a.variacao_hoje)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Variação', 'num': True}], 'radar-inflexao') }}
+    {% endif %}
+{% endcall %}
+
 {% call painel("Radar de volume", 4, "Volume do dia dividido pela média dos últimos 21 pregões. Aparecem as razões acima de 1,5×.", volume_alerts.fonte if volume_alerts else "", volume_alerts.time if volume_alerts else "", "visao-micro alertas") %}
     {% if volume_alerts %}
         {% if volume_alerts.alerts %}
@@ -458,6 +476,24 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Altas seguidas', 'num': True}], 'sobrevivencia-semanal') }}
     {% endif %}
 {% endcall %}
+{% call painel("Radar de Inflexão", 4, "Ações que caíram muito e hoje estão subindo forte, indicando possível quebra de inércia.", radar_inflexao.fonte if radar_inflexao else "", radar_inflexao.coletado_em if radar_inflexao else "", "visao-micro alertas") %}
+    {% if not radar_inflexao %}
+        {{ estado("indisponivel") }}
+    {% elif not radar_inflexao.alertas %}
+        <div class="vazio">Nenhuma inflexão detectada hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in radar_inflexao.alertas %}
+            {% set _ = linhas.append([
+                {'conteudo': a.ticker, 'tk': True},
+                {'conteudo': (variacao("%.2f%%" | format(a.retorno_acumulado), -1)) | safe, 'num': True},
+                {'conteudo': (variacao("%.2f%%" | format(a.variacao_hoje), 1)) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda'}, {'titulo': 'Hoje', 'num': True}], 'radar-inflexao') }}
+    {% endif %}
+{% endcall %}
+
 {% call painel("Volatilidade Silenciosa", 4, "Ações com forte oscilação intraday (alta amplitude) mas que fecharam próximas da abertura (variação ≤ 0.5%).", volatilidade_silenciosa.fonte if volatilidade_silenciosa else "", volatilidade_silenciosa.coletado_em if volatilidade_silenciosa else "", "visao-micro sentimento-risco") %}
   {% if volatilidade_silenciosa and volatilidade_silenciosa.alertas %}
     <table class="tabela">
