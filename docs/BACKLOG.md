@@ -200,3 +200,9 @@
 | Alerta de Vácuo de Liquidez | Responde: Onde o spread no book de ofertas está assustadoramente alto agora? Originalidade: Olha a dificuldade de saída/entrada (risco de execução) e não a variação do preço. | brapi | M | Médio |
 | Termômetro de Proteção Institucional (Skew de Opções) | Responde: Os grandes fundos estão pagando caro por proteção contra quedas agressivas? Originalidade: Usa derivativos para prever o medo que ainda não chegou no preço à vista. | B3 | G | Alto |
 | Impacto Relativo do Exterior (BDRs vs IBOV) | Responde: O dia de hoje no Brasil é puramente reflexo lá de fora? Originalidade: Compara um índice de BDRs mais líquidos com as Blue Chips brasileiras em tempo real. | yfinance | M | Médio |
+
+## Ideias (Revisão de Experiência - Passo 7 - 2026-10-09)
+
+| Minimização de Painéis Indisponíveis | Responde: Consigo achar o que preciso, rápido? Evidência: A captura desktop mostra "Concentração Setorial" e "Concentração de Ganhos" ocupando muito espaço para exibir "Dado indisponível". Mudança: Ocultar painéis não essenciais ou exibi-los de forma compacta quando não há dados, para não ocupar o espaço de indicadores úteis. | N/A | P | Baixo |
+| Destaque Visual para a Maré | Responde: Consigo achar o que preciso, rápido? Evidência: O gauge da Maré disputa atenção com os outros painéis. Mudança: Ajustar estilos para destacá-lo como termômetro primário. | N/A | P | Baixo |
+| Reorganização dos Gauges de Tendência | Responde: Consigo achar o que preciso, rápido? Evidência: "Tendência (Ibovespa)" ocupa um painel próprio grande. Mudança: Movê-los para dentro do card principal do Ibovespa. | N/A | M | Baixo |

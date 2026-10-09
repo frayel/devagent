@@ -4,8 +4,8 @@
 
 ## Experiência
 
-- Última revisão de experiência: 07/10/2026 (Abas de Navegação)
-- Painéis, seções ou telas acrescentados desde a última revisão: 3 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Última revisão de experiência: 09/10/2026 (Minimização de Painéis)
+- Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
 - Spec 033 (Anomalia de Peso):
