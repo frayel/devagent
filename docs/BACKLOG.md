@@ -156,7 +156,6 @@
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |
 |---|---|---|---|---|
-| Setor líder por volume financeiro | Responde: para qual setor o dinheiro está indo hoje, em reais, e não em %? Completa a Concentração Setorial (spec 025), que mostra só o líder por variação média. | brapi / yfinance | P | Baixo |
 
 ## Ideias (pedido do dono do produto - 2026-10-05)
 
