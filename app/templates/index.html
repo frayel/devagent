@@ -110,7 +110,7 @@
   {% endif %}
 {% endcall %}
 
-{% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial visao-geral') %}
+{% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial visao-geral escondido' if not concentracao_setorial else 'visao-macro painel-concentracao-setorial visao-geral') %}
   {% if not concentracao_setorial %}
     {{ estado('indisponivel') }}
   {% elif concentracao_setorial.variacao_media <= 0 %}
@@ -150,7 +150,7 @@
 {% endcall %}
 
 
-{% call painel("Concentração de Ganhos", 12, "Mostra quantas ações explicam 50% dos pontos de variação do índice hoje.", concentracao.fonte if concentracao else "", concentracao.time if concentracao else "", "visao-macro visao-geral") %}
+{% call painel("Concentração de Ganhos", 12, "Mostra quantas ações explicam 50% dos pontos de variação do índice hoje.", concentracao.fonte if concentracao else "", concentracao.time if concentracao else "", "visao-macro visao-geral escondido" if not concentracao else "visao-macro visao-geral") %}
     {% if concentracao %}
         {% if concentracao.resumo.estado == 'estavel' %}
             <div class="vazio">{{ concentracao.resumo.mensagem }}</div>
@@ -250,7 +250,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel('Anomalia de Peso', 4, 'Ações que mais impactam o Ibovespa no dia (estimativa em pontos).', anomalia_peso.fonte if anomalia_peso else '', anomalia_peso.coletado_em if anomalia_peso else '', 'visao-micro rankings') %}
+{% call painel('Anomalia de Peso', 4, 'Ações que mais impactam o Ibovespa no dia (estimativa em pontos).', anomalia_peso.fonte if anomalia_peso else '', anomalia_peso.coletado_em if anomalia_peso else '', 'visao-micro rankings escondido' if not anomalia_peso else 'visao-micro rankings') %}
     {% if not anomalia_peso %}
         {{ estado('indisponivel') }}
     {% elif not anomalia_peso.alertas %}

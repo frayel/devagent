@@ -1,7 +1,7 @@
 ---
 id: 034
 titulo: Minimização de Painéis Indisponíveis (Revisão de Experiência)
-status: ready
+status: done
 esforco: P
 ---
 
