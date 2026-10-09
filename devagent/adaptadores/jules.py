@@ -12,7 +12,8 @@ Uso:
     python -m devagent.adaptadores.jules iniciar seguranca | design | performance
     python -m devagent.adaptadores.jules destravar   # aprova planos e responde perguntas
     python -m devagent.adaptadores.jules rodada      # uma volta: persona da hora + destravar, e sai
-    python -m devagent.adaptadores.jules vigiar      # relógio próprio: inicia e destrava em laço
+                                                     # (chamada a cada 30 min pelo cron-job.org, ADR 010)
+    python -m devagent.adaptadores.jules vigiar      # laço contínuo; sem uso no Actions, cobra minuto parado
     python -m devagent.adaptadores.jules listar
     python -m devagent.adaptadores.jules encerrar <id da sessão ou URL da tarefa>
     python -m devagent.adaptadores.jules iniciar auditor --dry-run

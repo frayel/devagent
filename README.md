@@ -1,6 +1,6 @@
 # devagent · Painel B3
 
-**Projeto experimental.** Este repositório existe para medir até onde um agente de IA consegue desenvolver e manter um software sozinho, sem intervenção humana. O agente (Google Jules) escreve as especificações, implementa, revisa o próprio trabalho, publica em produção e corrige o que quebra. Nenhuma pessoa aprova planos, revisa PRs ou faz merge (ADR 007).
+**Projeto experimental.** Este repositório existe para medir até onde um agente de IA consegue desenvolver e manter um software sozinho, sem intervenção humana. O agente (Google Jules) escreve as especificações, implementa, revisa o próprio trabalho, publica em produção e corrige o que quebra. Nenhuma pessoa aprova planos, revisa PRs ou faz merge (ADR 007). Quando o agente trava, o dono do experimento intervém, e cada intervenção fica registrada para ser contada.
 
 O software construído é um painel de apoio à decisão para investidores da B3. Ele é o objeto do experimento, não o objetivo.
 
@@ -22,15 +22,15 @@ Um painel financeiro foi escolhido de propósito. Ele tem dados reais que mudam 
 
 ## O que pretendemos atingir
 
-1. **Um sistema em produção construído sem mãos humanas no código.** A intervenção humana fica restrita a montar a infraestrutura inicial (contas, chaves, workflows) e a observar.
+1. **Um sistema em produção mantido sem mãos humanas no código.** O ponto de chegada é a intervenção humana restrita a montar a infraestrutura (contas, chaves, relógio) e a observar. Até aqui não foi assim: parte dos commits tem autoria humana, inclusive no código do produto, e cada uma delas aponta um trilho que ainda falta.
 2. **Um núcleo reaproveitável.** O processo do agente vive em [`devagent/`](devagent/README.md), separado das regras do produto (ADR 005), para ser levado a outros projetos com `python -m devagent.instalar <destino>`.
 3. **Evidência, não impressão.** Cada execução deixa um relatório com retrospectiva em [`docs/runs/`](docs/runs/), cada decisão de processo vira um ADR e cada falha de produção vira uma issue. O histórico do repositório é o registro do experimento.
 4. **Um mapa dos limites.** Saber onde a autonomia se sustenta e onde ela quebra é tão útil quanto um painel que funcione. Cada ponto em que foi preciso mudar os trilhos (o guardião de PRs, a retomada depois de ambiente reiniciado, o relógio externo do Jules) registra um limite encontrado.
 
 ### Regras do jogo
 
-- Pessoas não editam o código do produto. Ajustes humanos se limitam à infraestrutura do experimento e são registrados em ADRs ou no `CHANGELOG.md`.
-- Pedidos ao agente entram como issues, do mesmo jeito que um usuário qualquer faria.
+- O agente decide o que construir e escreve o produto. Pedidos entram como issues, do mesmo jeito que um usuário faria.
+- Quando o ciclo trava, o dono do experimento intervém. A intervenção fica visível no histórico (commits e PRs com autoria humana) e, quando muda o processo, vira um ADR em [`devagent/decisoes/`](devagent/decisoes/) ou [`docs/decisions/`](docs/decisions/). O objetivo é que cada intervenção torne a próxima desnecessária.
 - Tudo o que o agente sabe sobre o projeto está no repositório. Não há instruções fora dele.
 
 ## O que existe hoje
@@ -79,4 +79,4 @@ Procedimentos recorrentes ficam em [`devagent/skills/`](devagent/skills/) (proce
 
 ## Entrega
 
-PR do agente → CI → merge automático → deploy no Render → verificação do deploy. Detalhes e variáveis necessárias em [`devagent/OPERACAO.md`](devagent/OPERACAO.md) e na seção 10 do [`PRODUTO.md`](PRODUTO.md).
+PR do agente → CI → merge automático → deploy no Render → verificação do deploy. O agente é acordado a cada 30 min por um relógio externo (cron-job.org chamando o `jules.yml`), porque o agendamento do GitHub Actions descarta a maior parte dos disparos frequentes (ADR 010). Detalhes, variáveis e a configuração do relógio em [`devagent/OPERACAO.md`](devagent/OPERACAO.md) e na seção 10 do [`PRODUTO.md`](PRODUTO.md).

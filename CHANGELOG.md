@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Changed
+- núcleo: o Jules passa a ser acordado por um relógio externo (ADR 010). O job `vigia`, que ficava ligado 24 h por dia no Actions, dá lugar à ação `rodada` (inicia a persona da hora, destrava e sai em segundos); o `jules.yml` perde o `schedule` e é chamado a cada 30 min pelo cron-job.org via `workflow_dispatch`, porque o cron do GitHub descarta a maior parte dos disparos frequentes. Configuração em `devagent/OPERACAO.md`.
 ### Added
 - docs: atualiza estado das specs 029 e 030
 ### Added
