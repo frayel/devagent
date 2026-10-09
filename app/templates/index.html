@@ -250,6 +250,24 @@
     {% endif %}
 {% endcall %}
 
+{% call painel('Anomalia de Peso', 4, 'Ações que mais impactam o Ibovespa no dia (estimativa em pontos).', anomalia_peso.fonte if anomalia_peso else '', anomalia_peso.coletado_em if anomalia_peso else '', 'visao-micro rankings') %}
+    {% if not anomalia_peso %}
+        {{ estado('indisponivel') }}
+    {% elif not anomalia_peso.alertas %}
+        <div class="vazio">Nenhuma anomalia no momento.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in anomalia_peso.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': variacao(('+' if a.impacto > 0 else '') ~ ('%.2f'|format(a.impacto)).replace('.', ',') ~ ' pts', a.impacto)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Impacto', 'num': True}], 'anomalia-peso') }}
+    {% endif %}
+{% endcall %}
+
 {% call painel("Radar de volume", 4, "Volume do dia dividido pela média dos últimos 21 pregões. Aparecem as razões acima de 1,5×.", volume_alerts.fonte if volume_alerts else "", volume_alerts.time if volume_alerts else "", "visao-micro alertas") %}
     {% if volume_alerts %}
         {% if volume_alerts.alerts %}

@@ -380,7 +380,10 @@ def snapshot():
     else:
         resp["paineis"]["armadilha_abertura"] = {}
 
-    from app.database import get_latest_radar_inflexao_data
+    from app.database import (
+        get_latest_radar_inflexao_data,
+        get_latest_anomalia_peso_data,
+    )
 
     radar_inflexao_data = get_latest_radar_inflexao_data()
     if radar_inflexao_data:
@@ -394,7 +397,26 @@ def snapshot():
             "alertas": alertas,
         }
     else:
-        resp["paineis"]["radar_inflexao"] = {}
+        resp["paineis"]["radar_inflexao"] = []
+
+    anomalia_peso_data = get_latest_anomalia_peso_data()
+    if anomalia_peso_data:
+        try:
+            alertas = json.loads(anomalia_peso_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["anomalia_peso"] = alertas
+        resp["paineis"]["anomalia_peso"] = []
+
+    anomalia_peso_data = get_latest_anomalia_peso_data()
+    if anomalia_peso_data:
+        try:
+            alertas = json.loads(anomalia_peso_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["anomalia_peso"] = alertas
+    else:
+        resp["paineis"]["anomalia_peso"] = []
 
     sobrevivencia_semanal_data = get_latest_sobrevivencia_semanal_data()
     if sobrevivencia_semanal_data:
@@ -447,14 +469,15 @@ async def index(request: Request):
     if apetite_risco_data:
         risco_dict["estado"] = apetite_risco_data.estado
 
-    manchete = gerar_manchete(ibovespa_data, highs_dict, risco_dict)
-
     data = get_ibovespa_view_data()
     highlights = get_highlights_view_data()
     volume_alerts = get_volume_alerts_view_data()
     dolar_correlation = get_dolar_correlation_view_data()
     forca_relativa = get_forca_relativa_view_data()
     escudo_quedas = get_escudo_quedas_view_data()
+
+    manchete = gerar_manchete(ibovespa_data, highs_dict, risco_dict)
+
     coesao = get_coesao_view_data()
     atrasadas_rally = get_atrasadas_rally_view_data()
     concentracao = get_concentracao_view_data()
@@ -477,7 +500,10 @@ async def index(request: Request):
     faca_caindo = get_faca_caindo_view()
     compradores_fundo = get_compradores_fundo_view()
     armadilha_abertura = get_armadilha_abertura_view()
-    from app.database import get_latest_radar_inflexao_data
+    from app.database import (
+        get_latest_radar_inflexao_data,
+        get_latest_anomalia_peso_data,
+    )
 
     radar_data = get_latest_radar_inflexao_data()
     radar_inflexao = None
@@ -498,6 +524,22 @@ async def index(request: Request):
     volatilidade_silenciosa = get_volatilidade_silenciosa_view()
 
     mare = mare_servico.get_mare_view()
+
+    anomalia_data = get_latest_anomalia_peso_data()
+    anomalia_peso = None
+    if anomalia_data:
+        try:
+            alertas = json.loads(anomalia_data.alertas_json)
+            anomalia_peso = {
+                "coletado_em": anomalia_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": anomalia_data.fonte,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -523,6 +565,7 @@ async def index(request: Request):
             "sobrevivencia_semanal": sobrevivencia_semanal,
             "volatilidade_silenciosa": volatilidade_silenciosa,
             "scanner_capitulacao": scanner_capitulacao.view_model(),
+            "anomalia_peso": anomalia_peso,
             "mare": mare,
         },
     )

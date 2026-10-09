@@ -5,9 +5,15 @@
 ## Experiência
 
 - Última revisão de experiência: 07/10/2026 (Abas de Navegação)
-- Painéis, seções ou telas acrescentados desde a última revisão: 2 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 3 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 033 (Anomalia de Peso):
+  - Banco de dados SQLite (`anomalia_peso_cache`).
+  - Coletor com `yfinance` buscando dados intraday.
+  - Cálculo de ações com maior impacto no Ibovespa no dia.
+  - Exibição na visão macro e no contrato `/api/snapshot`.
+
 - Spec 032 (Radar de Inflexão):
   - Banco de dados SQLite (`radar_inflexao_cache`).
   - Coletor buscando fechamentos dos últimos 15 dias para ações via `yfinance`.
