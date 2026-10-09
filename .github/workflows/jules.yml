@@ -2,16 +2,12 @@ name: Jules
 
 # Dispara o desenvolvedor e os especialistas (Sentinel, Palette, Bolt) pela API do Jules
 # e destrava sessões paradas esperando aprovação de plano ou resposta.
-# O agendamento faz uma "rodada": inicia a persona da hora (se ainda não
-# começou nesta hora) e destrava sessões paradas, depois encerra. Cada execução
-# leva menos de 1 minuto; nada fica rodando entre uma e outra. O antigo job
-# "vigia", um laço de ~5h40, foi removido porque cobrava minutos parado.
-# Ressalva: o cron do GitHub descarta parte dos disparos agendados; se isso
-# atrasar demais, um relógio externo pode chamar workflow_dispatch com
-# acao=rodada, que não é descartado.
+# Cada execução faz uma "rodada": inicia a persona da hora (se ainda não
+# começou nesta hora), destrava sessões paradas e encerra em menos de 1 minuto.
+# O relógio fica fora do GitHub: o cron-job.org chama a API de
+# workflow_dispatch com acao=rodada a cada 30 min. O cron do próprio GitHub foi
+# desligado porque descartava a maior parte dos disparos agendados.
 on:
-  schedule:
-    - cron: "17,47 * * * *"
   workflow_dispatch:
     inputs:
       acao:

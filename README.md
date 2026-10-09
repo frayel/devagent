@@ -1,8 +1,37 @@
 # devagent · Painel B3
 
-Dashboard de apoio à decisão para investidores da B3, construído e mantido por um agente autônomo (Google Jules) que especifica, implementa, revisa e publica o sistema em ciclos curtos.
+**Projeto experimental.** Este repositório existe para medir até onde um agente de IA consegue desenvolver e manter um software sozinho, sem intervenção humana. O agente (Google Jules) escreve as especificações, implementa, revisa o próprio trabalho, publica em produção e corrige o que quebra. Nenhuma pessoa aprova planos, revisa PRs ou faz merge (ADR 007).
+
+O software construído é um painel de apoio à decisão para investidores da B3. Ele é o objeto do experimento, não o objetivo.
 
 > Conteúdo informativo gerado automaticamente. Não constitui recomendação de investimento.
+
+## Por que este experimento
+
+Agentes de código já resolvem bem tarefas isoladas: corrigir um bug, escrever uma função, abrir um PR a partir de uma issue. Quase sempre há uma pessoa em volta deles, decidindo o que fazer, revisando e consertando quando algo dá errado. O que ainda não se sabe é o que acontece quando essa pessoa sai da sala por semanas.
+
+Algumas perguntas motivam o projeto:
+
+- **Continuidade.** O agente consegue manter um rumo ao longo de centenas de execuções sem memória entre elas, apoiado só no que deixou escrito no repositório (specs, backlog, relatórios, ADRs)?
+- **Autocorreção.** Quando o deploy falha, um teste quebra ou a produção mostra um número errado, ele percebe e conserta sem ninguém apontar?
+- **Julgamento de produto.** Com escopo aberto (ADR 003), ele escolhe funcionalidades que fazem sentido, ou acumula telas sem direção?
+- **Qualidade ao longo do tempo.** O código e a interface melhoram ou se degradam à medida que o sistema cresce?
+- **Infraestrutura em volta.** Quanto do sucesso vem do modelo e quanto vem dos trilhos: CI, guardião de PRs, auditoria de produção, ciclo de decisão?
+
+Um painel financeiro foi escolhido de propósito. Ele tem dados reais que mudam todo dia, fontes externas que falham, números que podem ser conferidos contra fontes independentes e uma interface que alguém de fato usaria. Erros aparecem rápido e são mensuráveis.
+
+## O que pretendemos atingir
+
+1. **Um sistema em produção construído sem mãos humanas no código.** A intervenção humana fica restrita a montar a infraestrutura inicial (contas, chaves, workflows) e a observar.
+2. **Um núcleo reaproveitável.** O processo do agente vive em [`devagent/`](devagent/README.md), separado das regras do produto (ADR 005), para ser levado a outros projetos com `python -m devagent.instalar <destino>`.
+3. **Evidência, não impressão.** Cada execução deixa um relatório com retrospectiva em [`docs/runs/`](docs/runs/), cada decisão de processo vira um ADR e cada falha de produção vira uma issue. O histórico do repositório é o registro do experimento.
+4. **Um mapa dos limites.** Saber onde a autonomia se sustenta e onde ela quebra é tão útil quanto um painel que funcione. Cada ponto em que foi preciso mudar os trilhos (o guardião de PRs, a retomada depois de ambiente reiniciado, o relógio externo do Jules) registra um limite encontrado.
+
+### Regras do jogo
+
+- Pessoas não editam o código do produto. Ajustes humanos se limitam à infraestrutura do experimento e são registrados em ADRs ou no `CHANGELOG.md`.
+- Pedidos ao agente entram como issues, do mesmo jeito que um usuário qualquer faria.
+- Tudo o que o agente sabe sobre o projeto está no repositório. Não há instruções fora dele.
 
 ## O que existe hoje
 
