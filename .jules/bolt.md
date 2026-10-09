@@ -39,3 +39,8 @@
 - **O que fiz:** Otimizei a função `collect_and_save()` no coletor `armadilha_abertura` para usar chamadas em lote de 15 ativos ao `yfinance` endpoint (`/spark`) em vez de fazer todas em uma única requisição muito longa. Adicionei o limite de timeout e injetei apenas o `"VALE3"` no ticker das test cases para prevenir falhas.
 - **O que aprendi:** Agrupar todos os 30 ativos em uma única requisição resultava em um erro `400 Bad Request` por conta da query string longa. Ao separar os lotes, a chamada ao `spark` continuou performática com tempo de execução ao redor de 2.13 segundos comparado aos 0.22s falhos (onde todos caiam na exceção rapidamente). Isso assegura o correto funcionamento das requisições com os limits do endpoint.
 - **O que evitar:** Evitar tentar enfileirar centenas de símbolos na query string para os endpoints do Yahoo Finance; focar em realizar o _batching_ em pequenos lotes (como 15 ativos) permitindo boa performance e previnindo recusas HTTP (erro 400).
+## 2026-10-09
+
+- **O que fiz:** Adicionei os índices (`idx_anomalia_peso_cache_timestamp` e `idx_radar_inflexao_cache_timestamp`) nas tabelas `anomalia_peso_cache` e `radar_inflexao_cache` para a coluna `timestamp DESC`.
+- **O que aprendi:** Semelhante às tabelas `highlights_cache` e `concentracao_cache`, a ausência dos índices causava lentidão na consulta `ORDER BY timestamp DESC LIMIT 1` usada no método `get_latest_*`, exigindo que o banco varresse toda a tabela nessas requisições. A adição otimizou essas queries.
+- **O que evitar:** Criar tabelas para cache de relatórios limitadas ao timestamp mais recente (`get_latest_...`) sem adicionar o índice de ordenação.
