@@ -1,7 +1,7 @@
 ---
 id: 032
 titulo: Radar de Inflexão (Reversão de Tendência)
-status: ready
+status: done
 esforco: M
 ---
 
@@ -25,8 +25,8 @@ Plano B: fallback seguro ignorando ativos em caso de timeout.
 - Ordenar pelas que tiveram maior queda acumulada e agora revertem.
 
 ## Critérios de aceite
-- [ ] verificáveis por teste automatizado simulando retornos simulados.
-- [ ] O painel aparece no snapshot com até 5 ativos e suas variações diárias.
+- [x] verificáveis por teste automatizado simulando retornos simulados.
+- [x] O painel aparece no snapshot com até 5 ativos e suas variações diárias.
 
 ## Invariantes de produção
 A chave `radar_inflexao` em `/api/snapshot` retorna uma lista válida de ações em formato JSON conforme as outras métricas.

@@ -380,6 +380,22 @@ def snapshot():
     else:
         resp["paineis"]["armadilha_abertura"] = {}
 
+    from app.database import get_latest_radar_inflexao_data
+
+    radar_inflexao_data = get_latest_radar_inflexao_data()
+    if radar_inflexao_data:
+        try:
+            alertas = json.loads(radar_inflexao_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["radar_inflexao"] = {
+            "coletado_em": radar_inflexao_data.timestamp.isoformat(),
+            "fonte": radar_inflexao_data.fonte,
+            "alertas": alertas,
+        }
+    else:
+        resp["paineis"]["radar_inflexao"] = {}
+
     sobrevivencia_semanal_data = get_latest_sobrevivencia_semanal_data()
     if sobrevivencia_semanal_data:
         try:
@@ -461,6 +477,23 @@ async def index(request: Request):
     faca_caindo = get_faca_caindo_view()
     compradores_fundo = get_compradores_fundo_view()
     armadilha_abertura = get_armadilha_abertura_view()
+    from app.database import get_latest_radar_inflexao_data
+
+    radar_data = get_latest_radar_inflexao_data()
+    radar_inflexao = None
+    if radar_data:
+        try:
+            alertas = json.loads(radar_data.alertas_json)
+            radar_inflexao = {
+                "coletado_em": radar_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": radar_data.fonte,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+
     sobrevivencia_semanal = get_sobrevivencia_semanal_view()
     volatilidade_silenciosa = get_volatilidade_silenciosa_view()
 
@@ -486,6 +519,7 @@ async def index(request: Request):
             "faca_caindo": faca_caindo,
             "compradores_fundo": compradores_fundo,
             "armadilha_abertura": armadilha_abertura,
+            "radar_inflexao": radar_inflexao,
             "sobrevivencia_semanal": sobrevivencia_semanal,
             "volatilidade_silenciosa": volatilidade_silenciosa,
             "scanner_capitulacao": scanner_capitulacao.view_model(),
