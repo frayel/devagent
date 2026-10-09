@@ -56,9 +56,29 @@ def get_ibovespa_view_data() -> dict[str, Any] | None:
     )
 
     history_dict = {}
+    resumo_serie = ""
     if data.history_json:
         try:
             history_dict = json.loads(data.history_json)
+            if "closes" in history_dict and history_dict["closes"]:
+                closes = history_dict["closes"]
+                primeiro = closes[0]
+                ultimo = closes[-1]
+                qtd = len(closes)
+                var_periodo = (ultimo / primeiro - 1) * 100
+                sinal = (
+                    "alta"
+                    if var_periodo > 0
+                    else "baixa"
+                    if var_periodo < 0
+                    else "estável"
+                )
+
+                primeiro_fmt = f"{int(primeiro):,}".replace(",", ".")
+                ultimo_fmt = f"{int(ultimo):,}".replace(",", ".")
+                var_fmt = f"{abs(var_periodo):.1f}%".replace(".", ",")
+
+                resumo_serie = f"Ibovespa nos últimos {qtd} pregões: de {primeiro_fmt} a {ultimo_fmt}, {sinal} de {var_fmt}"
         except json.JSONDecodeError:
             pass
 
@@ -70,6 +90,7 @@ def get_ibovespa_view_data() -> dict[str, Any] | None:
         "is_negative": is_negative,
         "time": time_formatted,
         "history_dict": history_dict,
+        "resumo_serie": resumo_serie,
         "fonte": data.fonte,
         "mm21": mm21_formatted,
         "mm21_signal": mm21_signal,
