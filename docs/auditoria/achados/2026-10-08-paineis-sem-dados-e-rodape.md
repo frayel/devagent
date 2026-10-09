@@ -2,7 +2,9 @@
 id: 2026-10-08-paineis-sem-dados-e-rodape
 severidade: media
 painel: multiplos
-status: aberto
+status: resolvido
+resolvido_em: 2026-10-09
+evidencia: Template `componentes.html` alterado para renderizar 'Fonte e data não disponíveis' quando as variáveis faltam, e invariante de rodapés vazios criada em `auditar.py`.
 visto_em: 2026-10-08T22:30-03:00
 ---
 
