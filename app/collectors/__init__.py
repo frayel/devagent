@@ -5,6 +5,7 @@ from . import (
     volume_alerts,
     forca_relativa,
     fator_mola,
+    anomalia_peso,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "volume_alerts",
     "forca_relativa",
     "fator_mola",
+    "anomalia_peso",
 ]

@@ -17,6 +17,8 @@ def test_coleta_desligada_nos_testes():
 
 
 def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
+    monkeypatch.setattr("app.collectors.anomalia_peso.collect_and_save", lambda: True)
+    monkeypatch.setattr("app.collectors.radar_inflexao.collect_and_save", lambda: True)
     monkeypatch.setattr("app.collectors.forca_relativa.collect_and_save", lambda: True)
     chamados = []
     monkeypatch.setattr("app.collectors.coesao.collect_and_save", lambda: True)

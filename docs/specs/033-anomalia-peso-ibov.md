@@ -1,7 +1,7 @@
 ---
 id: 033
 titulo: Radar de Anomalia de Peso Relativo Intraday
-status: ready
+status: done
 esforco: M
 ---
 

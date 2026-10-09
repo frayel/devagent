@@ -498,6 +498,13 @@ def init_db() -> None:
         )
     """)
     conn.execute("""
+        CREATE TABLE IF NOT EXISTS anomalia_peso_cache (
+            timestamp TEXT PRIMARY KEY,
+            alertas_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        )
+    """)
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS radar_inflexao_cache (
             timestamp TEXT PRIMARY KEY,
             alertas_json TEXT NOT NULL,
@@ -1363,6 +1370,43 @@ def get_latest_mare_data() -> MareData | None:
         historico_json=row["historico_json"],
         fonte=row["fonte"],
     )
+
+
+@dataclass
+class AnomaliaPesoData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "yfinance"
+
+
+def save_anomalia_peso_data(data: AnomaliaPesoData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """INSERT INTO anomalia_peso_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)""",
+        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_anomalia_peso_data() -> AnomaliaPesoData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """SELECT timestamp, alertas_json, fonte FROM anomalia_peso_cache ORDER BY timestamp DESC LIMIT 1"""
+        )
+        row = cursor.fetchone()
+    finally:
+        conn.close()
+    if row:
+        return AnomaliaPesoData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            alertas_json=row["alertas_json"],
+            fonte=row["fonte"],
+        )
+    return None
 
 
 @dataclass
