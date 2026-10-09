@@ -8,6 +8,9 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 034 (Minimização de Painéis Indisponíveis):
+  - Adicionada classe `.escondido` com `display: none` no CSS.
+  - Painéis "Concentração Setorial", "Concentração de Ganhos" e "Anomalia de Peso" agora são ocultados da UI se estiverem sem dados para economizar espaço de tela, mantendo `/api/snapshot` intacto.
 - Spec 033 (Anomalia de Peso):
   - Banco de dados SQLite (`anomalia_peso_cache`).
   - Coletor com `yfinance` buscando dados intraday.
