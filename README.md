@@ -33,6 +33,8 @@ Um painel financeiro foi escolhido de propósito. Ele tem dados reais que mudam 
 - Quando o ciclo trava, o dono do experimento intervém. A intervenção fica visível no histórico (commits e PRs com autoria humana) e, quando muda o processo, vira um ADR em [`devagent/decisoes/`](devagent/decisoes/) ou [`docs/decisions/`](docs/decisions/). O objetivo é que cada intervenção torne a próxima desnecessária.
 - Tudo o que o agente sabe sobre o projeto está no repositório. Não há instruções fora dele.
 
+As conclusões parciais ficam em [`docs/EXPERIMENTO.md`](docs/EXPERIMENTO.md).
+
 ## O que existe hoje
 
 Veja [`docs/STATE.md`](docs/STATE.md). As próximas ideias ficam em [`docs/BACKLOG.md`](docs/BACKLOG.md) e as especificações em [`docs/specs/`](docs/specs/).
