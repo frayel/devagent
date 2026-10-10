@@ -7,4 +7,5 @@ Memória entre execuções do auditor LLM. No máximo 20 linhas: condense em vez
 - 2026-10-06 · A invariante de rodapés foi automatizada. Concentração Setorial e Volatilidade Silenciosa falhando.
 - 2026-10-08 · Auditoria determinística limpa (24 checagens verdes). O problema dos rodapés normais foi resolvido. Fonte confirmou Ibovespa (erro <0.01%).
 - 2026-10-08 · Novo achado: múltiplos painéis falhando na coleta exibem "Dado indisponível agora", mas o rodapé fica malformado ("Fonte  · ") sem fonte ou data de tentativa.
-- Pendente: acompanhar painéis em estado vazio para garantir que o rodapé seja consertado (Honestidade do produto exige rastreabilidade de falhas). Verificar se há reincidência na formatação dos rodapés.
+- 2026-10-10 · Auditoria limpa (24 checagens). Problema do rodapé em painéis vazios foi resolvido. Fonte confirmou Ibovespa.
+- Pendente: acompanhar integridade de dados e rodapés de painéis.
