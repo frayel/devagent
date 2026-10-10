@@ -205,3 +205,13 @@
 | Minimização de Painéis Indisponíveis | Responde: Consigo achar o que preciso, rápido? Evidência: A captura desktop mostra "Concentração Setorial" e "Concentração de Ganhos" ocupando muito espaço para exibir "Dado indisponível". Mudança: Ocultar painéis não essenciais ou exibi-los de forma compacta quando não há dados, para não ocupar o espaço de indicadores úteis. | N/A | P | Baixo |
 | Destaque Visual para a Maré | Responde: Consigo achar o que preciso, rápido? Evidência: O gauge da Maré disputa atenção com os outros painéis. Mudança: Ajustar estilos para destacá-lo como termômetro primário. | N/A | P | Baixo |
 | Reorganização dos Gauges de Tendência | Responde: Consigo achar o que preciso, rápido? Evidência: "Tendência (Ibovespa)" ocupa um painel próprio grande. Mudança: Movê-los para dentro do card principal do Ibovespa. | N/A | M | Baixo |
+
+## Ideias (Passo 7 - 2026-10-10)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Tracker de Eventos Corporativos | Responde: Por que essa ação pulou 5% do nada? Originalidade: Exibe de forma rápida na visão micro se há dividendos, desdobramentos ou balanços da empresa no dia de hoje. | brapi | M | Médio |
+| Dispersão do Volume (Onde está o dinheiro?) | Responde: O volume total está inflado por uma única ação? Originalidade: Exibe a proporção do volume financeiro total concentrado no top 3 ações do dia. | yfinance | M | Baixo |
+| Radar de Inversão de Sentimento Intraday | Responde: O mercado abriu otimista, mas já reverteu? Originalidade: Conta quantas ações abriram em alta, mas já estão operando no vermelho, sinalizando armadilha bull trap coletiva. | yfinance | M | Médio |
+| Histórico de "Maré" Extrema | Responde: Toda vez que a Maré atingiu este nível extremo de otimismo, o que aconteceu nos dias seguintes? Originalidade: Backtesting automático com os dados próprios cacheados do sistema. | Interna | G | Baixo |
+| Experiência: Comparativo Visual Setorial | Responde: O setor bancário está puxando o Ibovespa sozinho? Originalidade: Um toggle no gráfico principal que exibe uma linha tracejada com um ETF setorial (como BOVA11 vs FIND11) para contexto imediato. | yfinance | M | Baixo |
