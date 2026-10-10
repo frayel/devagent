@@ -28,6 +28,13 @@
              data-is-positive='{{ 'true' if data.is_positive else 'false' }}' role="img" aria-label="{{ data.get('resumo_serie', '') }}">
         </div>
         {% endif %}
+        {% if data.mm21 or data.mm200 %}
+        <div class="gauges espaco-topo">
+            <div>{{ gauge(data.mm21_dist_pct, "MM21 " ~ data.mm21 if data.mm21 else "MM21", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 21 pregões", escala=False) }}</div>
+            <div>{{ gauge(data.mm200_dist_pct, "MM200 " ~ data.mm200 if data.mm200 else "MM200", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 200 pregões", escala=False) }}</div>
+        </div>
+        <div class="g-escala num"><span>-10%</span><span>+10%</span></div>
+        {% endif %}
     {% else %}
         {{ estado('indisponivel') }}
     {% endif %}
@@ -61,18 +68,7 @@
     {% endif %}
 {% endcall %}
 
-<!-- Linha 2: leituras de escala única, com gauge -->
-{% call painel("Tendência (Ibovespa)", 4, "Distância do Ibovespa às médias móveis simples de 21 e 200 pregões, numa escala de -10% a +10%.", data.fonte if data else "", data.time if data else "", "visao-macro painel-tendencia visao-geral") %}
-    {% if data and (data.mm21 or data.mm200) %}
-        <div class="gauges">
-            <div>{{ gauge(data.mm21_dist_pct, "MM21 " ~ data.mm21 if data.mm21 else "MM21", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 21 pregões", escala=False) }}</div>
-            <div>{{ gauge(data.mm200_dist_pct, "MM200 " ~ data.mm200 if data.mm200 else "MM200", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 200 pregões", escala=False) }}</div>
-        </div>
-        <div class="g-escala num"><span>-10%</span><span>+10%</span></div>
-    {% else %}
-        {{ estado('indisponivel') }}
-    {% endif %}
-{% endcall %}
+
 
 {% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro sentimento-risco") %}
     {% if highlights and highlights.dispersion_pct is not none %}
@@ -195,7 +191,6 @@
     {% endif %}
 {% endcall %}
 
-<!-- Linha 2 -->
 
 {% call painel("Maiores altas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro rankings") %}
     {% if highlights and highlights.highs %}
