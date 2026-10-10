@@ -196,6 +196,16 @@ def _semear(db_path: str) -> None:
             timestamp=agora, estado="Defensivo", diferenca=-0.8, fonte="demonstracao"
         )
     )
+    db.save_concentracao_setorial_data(
+        db.ConcentracaoSetorialData(
+            timestamp=agora,
+            setor_destaque="Materiais Básicos",
+            variacao_media=1.2,
+            setor_lider_volume="Financeiro",
+            volume_lider=1500000000.0,
+            fonte="demonstracao",
+        )
+    )
     db.save_rotacao_capital_data(
         db.RotacaoCapitalData(
             timestamp=agora,
