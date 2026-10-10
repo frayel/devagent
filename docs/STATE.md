@@ -29,6 +29,10 @@
   - Coletor buscando fechamentos dos últimos 15 dias para ações via `yfinance`.
   - Cálculo de ações que caíram >5% nos últimos 15 dias, mas hoje revertem com alta >2%.
   - Exibição de painel "Inflexão de Tendência" na página inicial e via `/api/snapshot`.
+- Spec 036 (Radar de Short Squeeze):
+  - Coletor com yfinance (spark).
+  - Exibe ações caindo >=10% nos últimos 10 dias com aumento anormal de volume (>2x média diária) e alta >= 4%.
+  - Adicionado painel em "Alertas Intraday" e no `/api/snapshot`.
 - Spec 031 (Scanner de Capitulação):
   - Adicionado painel em "Alertas Intraday".
   - Coletor com yfinance buscando dados intraday (15m).

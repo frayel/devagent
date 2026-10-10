@@ -1,7 +1,7 @@
 ---
 id: 036
 titulo: Radar de Short Squeeze (Capitulação Vendida)
-status: ready
+status: done
 esforco: M
 ---
 
