@@ -387,10 +387,12 @@ def snapshot():
         get_latest_anomalia_peso_data,
         get_latest_radar_short_squeeze_data,
         get_latest_radar_congestionamento_data,
+        get_latest_detector_acao_orfa_data,
     )
 
     radar_short_squeeze_data = get_latest_radar_short_squeeze_data()
     db_radar_congestionamento = get_latest_radar_congestionamento_data()
+    db_detector_acao_orfa = get_latest_detector_acao_orfa_data()
     if radar_short_squeeze_data:
         try:
             alertas = json.loads(radar_short_squeeze_data.alertas_json)
@@ -403,6 +405,19 @@ def snapshot():
         }
     else:
         resp["paineis"]["short_squeeze"] = []
+
+    resp["paineis"]["detector_acao_orfa"] = (
+        [
+            {
+                "ticker": a.ticker,
+                "minutos_sem_negocios": a.minutos_sem_negocios,
+                "aviso": a.aviso,
+            }
+            for a in db_detector_acao_orfa.alertas
+        ]
+        if db_detector_acao_orfa
+        else []
+    )
 
     resp["paineis"]["radar_congestionamento"] = (
         [
@@ -538,6 +553,7 @@ async def index(request: Request):
         get_latest_radar_inflexao_data,
         get_latest_anomalia_peso_data,
         get_latest_radar_congestionamento_data,
+        get_latest_detector_acao_orfa_data,
     )
 
     radar_data = get_latest_radar_inflexao_data()
@@ -565,6 +581,7 @@ async def index(request: Request):
     short_squeeze = get_radar_short_squeeze_view()
     anomalia_data = get_latest_anomalia_peso_data()
     radar_congestionamento_data = get_latest_radar_congestionamento_data()
+    detector_acao_orfa_data = get_latest_detector_acao_orfa_data()
     anomalia_peso = None
     if anomalia_data:
         try:
@@ -607,6 +624,7 @@ async def index(request: Request):
             "scanner_capitulacao": scanner_capitulacao.view_model(),
             "anomalia_peso": anomalia_peso,
             "radar_congestionamento": radar_congestionamento_data,
+            "detector_acao_orfa": detector_acao_orfa_data,
             "mare": mare,
         },
     )
