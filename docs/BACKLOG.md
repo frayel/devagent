@@ -224,3 +224,13 @@
 | Análise de Assimetria Risco/Retorno | Responde: Qual ativo está mais próximo do seu fundo dos últimos 30 dias do que do seu topo? Originalidade: Substitui análise de tendência pela pura distância percentual entre os extremos recentes. | yfinance | P | Baixo |
 | Correlação Inversa Cripto (BTC vs B3) | Responde: O capital está saindo da bolsa para ativos de risco alternativos hoje? Originalidade: Compara a performance do IBOV e das principais ações brasileiras em relação ao movimento intradiário do Bitcoin (BTC-USD). | yfinance | M | Baixo |
 | Alerta de Distorção da Primeira Hora | Responde: O ímpeto do leilão de abertura já morreu completamente? Originalidade: Identifica quando toda a variação direcional da primeira hora do pregão é completamente desfeita antes do almoço. | yfinance | M | Médio |
+
+## Ideias (Passo 7 - 2026-10-11)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Radar de Congestionamento (Estreitamento de Bandas) | Responde: Qual ação está acumulando energia para um rompimento iminente? Originalidade: Foca na ausência extrema de volatilidade (compressão de preço) em vez de grandes movimentos diários. | yfinance | M | Baixo |
+| Correlação Setorial Atípica | Responde: Qual ação está ignorando completamente o movimento de seus pares do mesmo setor hoje? Originalidade: Compara o ativo contra a média do seu próprio setor no intraday, destacando anomalias micro. | yfinance | M | Médio |
+| Termômetro de Otimismo de Abertura (Taxa de Reversão) | Responde: A euforia da abertura do mercado tem se sustentado ou é sempre devolvida? Originalidade: Mede agregadamente nos últimos 30 dias a porcentagem de gaps de alta que fecharam no vermelho no IBOV. | yfinance | M | Baixo |
+| Impacto de Fatores Externos (Commodities) | Responde: O peso das commodities está segurando o índice ou empurrando-o? Originalidade: Isola os tickers ligados a Minério e Petróleo para criar um sub-índice e contrastá-lo com o resto do IBOV. | yfinance | P | Baixo |
+| Experiência: Modo "Terminal Bloomberg" | Responde: O layout tem muito espaço em branco para usuários hard-core? Originalidade: Um toggle no CSS que remove margens, reduz fontes e transforma os cards em grids densas e compactas. | N/A | P | Baixo |
