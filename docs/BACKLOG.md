@@ -234,3 +234,13 @@
 | Termômetro de Otimismo de Abertura (Taxa de Reversão) | Responde: A euforia da abertura do mercado tem se sustentado ou é sempre devolvida? Originalidade: Mede agregadamente nos últimos 30 dias a porcentagem de gaps de alta que fecharam no vermelho no IBOV. | yfinance | M | Baixo |
 | Impacto de Fatores Externos (Commodities) | Responde: O peso das commodities está segurando o índice ou empurrando-o? Originalidade: Isola os tickers ligados a Minério e Petróleo para criar um sub-índice e contrastá-lo com o resto do IBOV. | yfinance | P | Baixo |
 | Experiência: Modo "Terminal Bloomberg" | Responde: O layout tem muito espaço em branco para usuários hard-core? Originalidade: Um toggle no CSS que remove margens, reduz fontes e transforma os cards em grids densas e compactas. | N/A | P | Baixo |
+
+## Ideias (Passo 7 - 2026-10-10 3)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Densidade Condicional | Responde: Consigo ver mais contexto só quando preciso? Originalidade: Painéis colapsados que se expandem para revelar metadados adicionais apenas sob hover. | N/A | P | Baixo |
+| Detector de Ação Órfã | Responde: Qual papel está largado às moscas? Originalidade: Busca ativos que não registraram nenhum negócio (spread vazio) nos últimos 15 minutos em horário de pico. | brapi | M | Médio |
+| Termômetro de Concentração de Ordens | Responde: O volume é orgânico ou um único tubarão operando? Originalidade: Compara o número de negócios com o volume financeiro total para estimar o ticket médio intraday. | brapi | M | Médio |
+| Radar de Inversão Pós-Notícia | Responde: O mercado "comprou no boato e vendeu no fato"? Originalidade: Destaca ativos que abriram forte com alto volume após anúncio, mas que agora operam perto da mínima do dia. | yfinance | M | Médio |
+| Efeito Halo Setorial | Responde: Uma ação ruim está sendo puxada por um setor forte? Originalidade: Ativos com P/L muito ruim que estão subindo hoje puramente impulsionados por pares de setor. | brapi | M | Médio |
