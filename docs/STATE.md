@@ -5,7 +5,7 @@
 ## Experiência
 
 - Última revisão de experiência: 09/10/2026 (Minimização de Painéis)
-- Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
 - Spec 035 (Reorganização dos Gauges de Tendência):
@@ -29,6 +29,11 @@
   - Coletor buscando fechamentos dos últimos 15 dias para ações via `yfinance`.
   - Cálculo de ações que caíram >5% nos últimos 15 dias, mas hoje revertem com alta >2%.
   - Exibição de painel "Inflexão de Tendência" na página inicial e via `/api/snapshot`.
+- Spec 037 (Radar de Congestionamento):
+  - Banco de dados SQLite (`radar_congestionamento_cache`).
+  - Coletor com `yfinance` buscando histórico de fechamentos diários (spark).
+  - Cálculo de Bandwidth das Bandas de Bollinger e geração de minigráficos.
+  - Exibição de painel na visão de Alertas Intraday e via `/api/snapshot`.
 - Spec 036 (Radar de Short Squeeze):
   - Coletor com yfinance (spark).
   - Exibe ações caindo >=10% nos últimos 10 dias com aumento anormal de volume (>2x média diária) e alta >= 4%.

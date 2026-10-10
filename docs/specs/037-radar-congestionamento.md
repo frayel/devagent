@@ -1,7 +1,7 @@
 ---
 id: 037
 titulo: Radar de Congestionamento (Estreitamento de Bandas)
-status: ready
+status: done
 esforco: M
 ---
 

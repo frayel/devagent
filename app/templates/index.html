@@ -326,6 +326,26 @@
     {% endif %}
 {% endcall %}
 
+
+{% call painel("Radar de Congestionamento", 4, "Ações que estão operando na faixa mais estreita (menor volatilidade) dos últimos 20 dias, indicando possível rompimento.", radar_congestionamento.fonte if radar_congestionamento else "", radar_congestionamento.coletado_em if radar_congestionamento else "", "visao-micro alertas") %}
+    {% if not radar_congestionamento %}
+        {{ estado("indisponivel") }}
+    {% elif not radar_congestionamento.alertas %}
+        <div class="vazio">Nenhuma ação em compressão extrema.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in radar_congestionamento.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': ("%.2f%%" | format(a.bandwidth * 100)).replace('.', ',')},
+                {'conteudo': sparkline({"pontos": a.sparkline_path})}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Banda', 'num': True}, {'titulo': '20d'}], 'radar-congestionamento') }}
+    {% endif %}
+{% endcall %}
+
 <!-- Linha 3 -->
 
 <!-- Escudo contra Quedas -->

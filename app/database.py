@@ -201,6 +201,18 @@ def get_latest_volatilidade_silenciosa_data() -> VolatilidadeSilenciosaData | No
 def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS radar_congestionamento_cache (
+            timestamp TEXT,
+            alertas_json TEXT,
+            fonte TEXT
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_radar_congestionamento_timestamp ON radar_congestionamento_cache (timestamp DESC)
+    """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS scanner_capitulacao_cache (
             timestamp TEXT,
@@ -1505,6 +1517,75 @@ def get_latest_radar_inflexao_data() -> RadarInflexaoData | None:
 
     if row:
         return RadarInflexaoData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            alertas_json=row["alertas_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+@dataclass
+class RadarCongestionamentoAtivo:
+    ticker: str
+    bandwidth: float
+    sparkline_path: str
+
+
+@dataclass
+class RadarCongestionamentoData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str
+
+    @property
+    def alertas(self) -> list[RadarCongestionamentoAtivo]:
+        import json
+
+        try:
+            raw = json.loads(self.alertas_json)
+            return [RadarCongestionamentoAtivo(**a) for a in raw]
+        except (json.JSONDecodeError, TypeError):
+            return []
+
+    @property
+    def coletado_em(self) -> str:
+        from datetime import timezone, timedelta
+
+        BRT = timezone(timedelta(hours=-3))
+        return self.timestamp.astimezone(BRT).strftime("%d/%m/%Y %H:%M:%S")
+
+
+def save_radar_congestionamento_data(alertas: list[dict], fonte: str) -> None:
+    from datetime import timezone
+    import json
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    now = datetime.now(timezone.utc).isoformat()
+    cursor.execute(
+        "INSERT INTO radar_congestionamento_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
+        (now, json.dumps(alertas), fonte),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_radar_congestionamento_data() -> RadarCongestionamentoData | None:
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT timestamp, alertas_json, fonte FROM radar_congestionamento_cache ORDER BY timestamp DESC LIMIT 1"
+        )
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        return None
+    finally:
+        conn.close()
+
+    if row:
+        return RadarCongestionamentoData(
             timestamp=datetime.fromisoformat(row["timestamp"]),
             alertas_json=row["alertas_json"],
             fonte=row["fonte"],
