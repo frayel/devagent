@@ -8,6 +8,9 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 035 (Reorganização dos Gauges de Tendência):
+  - Integrados medidores de MM21 e MM200 ao card "Ibovespa hoje".
+  - Removido o painel autônomo de Tendência (Ibovespa).
 - Spec 035 (Setor Líder por Volume Financeiro):
   - Adicionado setor líder por volume e valor financeiro ao painel "Concentração Setorial" na visão macro.
   - Banco de dados SQLite (`concentracao_setorial_cache`) e `/api/snapshot` atualizados.

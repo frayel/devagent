@@ -1,7 +1,7 @@
 ---
 id: 035
 titulo: Reorganização dos Gauges de Tendência
-status: ready
+status: done
 esforco: M
 ---
 
