@@ -609,6 +609,17 @@ def checar_referencia(
 # --------------------------------------------------------------------------
 
 
+def checar_short_squeeze(snapshot: dict) -> Resultado | None:
+    dados = snapshot.get("paineis", {}).get("short_squeeze")
+    if dados is None:
+        return Resultado(
+            "short_squeeze.chave", AVISO, "Radar de short squeeze ausente no snapshot"
+        )
+    if dados and "alertas" not in dados:
+        return Resultado("short_squeeze.chave", FALHA, "Chave 'alertas' ausente")
+    return None
+
+
 def checar_radar_inflexao(snapshot: dict) -> Resultado | None:
     dados = snapshot.get("paineis", {}).get("radar_inflexao")
     if dados is None:
@@ -672,6 +683,9 @@ def auditar(
             r += checar_mare(snap_dict)
             r += checar_volatilidade_silenciosa(snap_dict)
             f_radar = checar_radar_inflexao(snap_dict)
+            f_ss = checar_short_squeeze(snap_dict)
+            if f_ss:
+                r.append(f_ss)
             if f_radar:
                 r.append(f_radar)
             try:

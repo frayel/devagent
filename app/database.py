@@ -527,6 +527,13 @@ def init_db() -> None:
             fonte TEXT NOT NULL
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS radar_short_squeeze_cache (
+            timestamp TEXT PRIMARY KEY,
+            alertas_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        )
+    """)
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_apetite_risco_cache_timestamp
         ON apetite_risco_cache(timestamp DESC)
@@ -540,6 +547,11 @@ def init_db() -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_radar_inflexao_cache_timestamp
         ON radar_inflexao_cache(timestamp DESC)
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_radar_short_squeeze_cache_timestamp
+        ON radar_short_squeeze_cache(timestamp DESC)
     """)
 
     conn.commit()
@@ -1450,6 +1462,13 @@ class RadarInflexaoData:
     fonte: str = "yfinance"
 
 
+@dataclass
+class RadarShortSqueezeData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str
+
+
 def save_radar_inflexao_data(data: RadarInflexaoData) -> None:
     conn = get_connection()
     cursor = conn.cursor()
@@ -1486,6 +1505,49 @@ def get_latest_radar_inflexao_data() -> RadarInflexaoData | None:
 
     if row:
         return RadarInflexaoData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            alertas_json=row["alertas_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+def save_radar_short_squeeze_data(data: RadarShortSqueezeData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO radar_short_squeeze_cache (timestamp, alertas_json, fonte)
+        VALUES (?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            data.alertas_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_radar_short_squeeze_data() -> RadarShortSqueezeData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT timestamp, alertas_json, fonte
+            FROM radar_short_squeeze_cache
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """)
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        return None
+    finally:
+        conn.close()
+
+    if row:
+        return RadarShortSqueezeData(
             timestamp=datetime.fromisoformat(row["timestamp"]),
             alertas_json=row["alertas_json"],
             fonte=row["fonte"],

@@ -373,6 +373,26 @@
 {% endcall %}
 
 
+
+{% call painel("Radar de Short Squeeze", 4, "Ações que vêm de forte queda recente mas hoje reagem com alta violenta e volume atípico (capitulação vendida).", short_squeeze.fonte if short_squeeze else "", short_squeeze.coletado_em if short_squeeze else "", "visao-micro alertas") %}
+    {% if not short_squeeze %}
+        {{ estado("indisponivel") }}
+    {% elif not short_squeeze.alertas %}
+        <div class="vazio">Nenhum squeeze detectado hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in short_squeeze.alertas %}
+            {% set _ = linhas.append([
+                {'conteudo': a.ticker, 'tk': True},
+                {'conteudo': (variacao("%.2f%%" | format(a.queda_10d), -1)) | safe, 'num': True},
+                {'conteudo': ('<span>' ~ a.mult_vol ~ 'x vol</span>') | safe},
+                {'conteudo': (variacao("%.2f%%" | format(a.alta_hoje), 1)) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda 10d', 'num': True}, {'titulo': 'Volume'}, {'titulo': 'Alta', 'num': True}], 'short-squeeze') }}
+    {% endif %}
+{% endcall %}
+
 {% call painel("Scanner de Capitulação", 4, "Ações caindo >2% mas com pico extremo recente de volume e longa sombra inferior (sinal de absorção).", scanner_capitulacao.fonte if scanner_capitulacao else "", scanner_capitulacao.time if scanner_capitulacao else "", "visao-micro alertas") %}
     {% if not scanner_capitulacao %}
         {{ estado("indisponivel") }}

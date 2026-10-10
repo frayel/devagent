@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- Radar de Short Squeeze (Capitulação Vendida) adicionado aos alertas intraday (Spec 036).
 - feat: Implementa Setor Líder por Volume Financeiro (Spec 035). Adiciona o líder de volume no painel de concentração setorial.
 - feat: Minimização de Painéis Indisponíveis (Spec 034) para ocultar painéis que estão sem dados na UI sem alterar API e melhorar a leitura do usuário.
 - Feature (Spec 033): Radar de Anomalia de Peso Relativo Intraday
