@@ -244,3 +244,13 @@
 | Termômetro de Concentração de Ordens | Responde: O volume é orgânico ou um único tubarão operando? Originalidade: Compara o número de negócios com o volume financeiro total para estimar o ticket médio intraday. | brapi | M | Médio |
 | Radar de Inversão Pós-Notícia | Responde: O mercado "comprou no boato e vendeu no fato"? Originalidade: Destaca ativos que abriram forte com alto volume após anúncio, mas que agora operam perto da mínima do dia. | yfinance | M | Médio |
 | Efeito Halo Setorial | Responde: Uma ação ruim está sendo puxada por um setor forte? Originalidade: Ativos com P/L muito ruim que estão subindo hoje puramente impulsionados por pares de setor. | brapi | M | Médio |
+
+## Ideias (Passo 7 - 2026-10-12)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Densidade Dinâmica da Grade | Responde: A tela parece muito apertada para leitura rápida? Originalidade: Um toggle no topo (Confortável/Compacto) que ajusta margens e paddings via CSS, permitindo leitura focada ou visão panorâmica. | N/A | P | Baixo |
+| Índice de Esforço vs Resultado | Responde: Qual ação teve volume gigantesco hoje, mas o preço não andou? Originalidade: Cruza o aumento explosivo de volume (esforço) com um corpo de candle mínimo (resultado), sinalizando forte absorção de ordens. | yfinance | M | Baixo |
+| Termômetro de Exaustão de Tendência | Responde: O rali de alta de um ativo já chegou ao limite? Originalidade: Procura o último suspiro de um movimento: volume climático acompanhado de pavio longo no topo, após múltiplos dias de alta. | yfinance | M | Médio |
+| Painel de Incorrelação Agressiva | Responde: Que ação pesada no índice está desabando enquanto o mercado voa? Originalidade: Isola papéis do topo do IBOV operando na direção oposta ao benchmark com força (> 2% de diferença direcional). | brapi | M | Baixo |
+| Radar do Leilão de Fechamento | Responde: Onde os institucionais estão montando posição nos minutos finais? Originalidade: Monitora variações extremas e picos de volume exclusivamentes nos últimos 15 minutos do pregão regular. | brapi | G | Alto |
