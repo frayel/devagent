@@ -206,6 +206,27 @@ def _semear(db_path: str) -> None:
             fonte="demonstracao",
         )
     )
+
+    db.save_radar_short_squeeze_data(
+        db.RadarShortSqueezeData(
+            timestamp=agora, alertas_json="[]", fonte="demonstracao"
+        )
+    )
+
+    db.save_volatilidade_silenciosa_data(
+        db.VolatilidadeSilenciosaData(
+            timestamp=agora,
+            alertas_json=json.dumps(
+                [
+                    {"ticker": "MOCK3", "amplitude": 5.4, "variacao": 0.2},
+                    {"ticker": "FAKE4", "amplitude": 4.1, "variacao": -0.1},
+                    {"ticker": "DEMO3", "amplitude": 3.8, "variacao": 0.4},
+                ]
+            ),
+            fonte="demonstracao",
+        )
+    )
+
     db.save_rotacao_capital_data(
         db.RotacaoCapitalData(
             timestamp=agora,

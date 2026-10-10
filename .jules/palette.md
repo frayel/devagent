@@ -28,3 +28,8 @@
 - **Por que fiz:** Docs/DESIGN.md seção 5 manda que 'Todo gráfico tem aria-label com um resumo em texto' e o checklist de design reprovava a ausência desse `aria-label` e resumo.
 - **O que aprendi:** Templates lidam mal quando as chaves de dicionário podem faltar, é melhor usar `.get('key', '')` do que `.key` ao estender objetos já testados.
 - **O que evitar:** Deixar objetos da interface com gráfico sem leitura apropriada pra screen readers.
+## 2026-10-10
+- **O que fiz:** Ajustei o painel "Volatilidade Silenciosa" em `app/templates/index.html` para usar a macro padronizada `tabela_ativos` em vez de uma `<table>` customizada, garantindo alinhamento com o sistema de design (docs/DESIGN.md, Seção 4).
+- **Por que fiz:** Elementos de tabela não padronizados estavam quebrando a consistência visual. A macro fornece o layout oficial com o espaçamento e alinhamento adequados, lidando apropriadamente com o design iterativo do layout da página.
+- **O que aprendi:** Qualquer componente tabular, especialmente aqueles que incluem propriedades financeiras comuns (preço, variação), deve empregar as ferramentas das macros para manter a unidade do estilo da aplicação.
+- **O que evitar:** Evitar escrever tags HTML nativas `<table>` e `<tbody>` diretamente nos templates de painéis para novos alertas ou seções analíticas.
