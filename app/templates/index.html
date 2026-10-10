@@ -327,7 +327,27 @@
 {% endcall %}
 
 
-{% call painel("Radar de Congestionamento", 4, "Ações que estão operando na faixa mais estreita (menor volatilidade) dos últimos 20 dias, indicando possível rompimento.", radar_congestionamento.fonte if radar_congestionamento else "", radar_congestionamento.coletado_em if radar_congestionamento else "", "visao-micro alertas") %}
+{% call painel("Ação Órfã", 4, "Ações que secaram drasticamente de liquidez (zero volume ou queda drástica) nos últimos 15 min.", detector_acao_orfa.fonte if detector_acao_orfa else "", detector_acao_orfa.coletado_em if detector_acao_orfa else "", "visao-micro alertas") %}
+            {% if not detector_acao_orfa %}
+                <div class="painel-vazio">Dado indisponível</div>
+            {% elif not detector_acao_orfa.alertas %}
+                <div class="painel-vazio">Nenhuma ação orfã identificada hoje.</div>
+            {% else %}
+                <div class="lista">
+                    {% for a in detector_acao_orfa.alertas %}
+                        <div class="item-lista">
+                            <span class="ticker">{{ a.ticker }}</span>
+                            <div class="coluna-valor">
+                                <span class="valor neutro">{{ a.minutos_sem_negocios }}m</span>
+                            </div>
+                            <span class="subtexto">{{ a.aviso }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endcall %}
+
+        {% call painel("Radar de Congestionamento", 4, "Ações que estão operando na faixa mais estreita (menor volatilidade) dos últimos 20 dias, indicando possível rompimento.", radar_congestionamento.fonte if radar_congestionamento else "", radar_congestionamento.coletado_em if radar_congestionamento else "", "visao-micro alertas") %}
     {% if not radar_congestionamento %}
         {{ estado("indisponivel") }}
     {% elif not radar_congestionamento.alertas %}

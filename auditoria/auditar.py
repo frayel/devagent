@@ -620,6 +620,17 @@ def checar_short_squeeze(snapshot: dict) -> Resultado | None:
     return None
 
 
+def checar_detector_acao_orfa(snapshot: dict) -> Resultado | None:
+    dados = snapshot.get("paineis", {}).get("detector_acao_orfa")
+    if dados is None:
+        return Resultado(
+            "detector_acao_orfa.chave",
+            AVISO,
+            "Detector de ação órfã ausente no snapshot",
+        )
+    return None
+
+
 def checar_radar_inflexao(snapshot: dict) -> Resultado | None:
     dados = snapshot.get("paineis", {}).get("radar_inflexao")
     if dados is None:
@@ -682,6 +693,10 @@ def auditar(
         if isinstance(snap_dict, dict):
             r += checar_mare(snap_dict)
             r += checar_volatilidade_silenciosa(snap_dict)
+            f_orfa = checar_detector_acao_orfa(snap_dict)
+            if f_orfa:
+                r.append(f_orfa)
+
             f_radar = checar_radar_inflexao(snap_dict)
             f_ss = checar_short_squeeze(snap_dict)
             if f_ss:

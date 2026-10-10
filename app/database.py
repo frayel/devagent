@@ -1,7 +1,8 @@
 import sqlite3
+import json
 from dataclasses import dataclass
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 DB_PATH = os.environ.get("DATABASE_PATH", "data.db")
 
@@ -202,12 +203,19 @@ def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.executescript("""
+        CREATE TABLE IF NOT EXISTS detector_acao_orfa_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            dados JSON NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            fonte TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_detector_acao_orfa_cache_timestamp ON detector_acao_orfa_cache(timestamp DESC);
         CREATE TABLE IF NOT EXISTS radar_congestionamento_cache (
             timestamp TEXT,
             alertas_json TEXT,
             fonte TEXT
-        )
+        );
     """)
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_radar_congestionamento_timestamp ON radar_congestionamento_cache (timestamp DESC)
@@ -1532,6 +1540,20 @@ class RadarCongestionamentoAtivo:
 
 
 @dataclass
+class DetectorAcaoOrfaAtivo:
+    ticker: str
+    minutos_sem_negocios: int
+    aviso: str
+
+
+@dataclass
+class DetectorAcaoOrfaData:
+    alertas: list[DetectorAcaoOrfaAtivo]
+    coletado_em: str
+    fonte: str
+
+
+@dataclass
 class RadarCongestionamentoData:
     timestamp: datetime
     alertas_json: str
@@ -1586,8 +1608,8 @@ def get_latest_radar_congestionamento_data() -> RadarCongestionamentoData | None
 
     if row:
         return RadarCongestionamentoData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
             alertas_json=row["alertas_json"],
+            timestamp=datetime.fromisoformat(row["timestamp"]),
             fonte=row["fonte"],
         )
     return None
@@ -1634,3 +1656,34 @@ def get_latest_radar_short_squeeze_data() -> RadarShortSqueezeData | None:
             fonte=row["fonte"],
         )
     return None
+
+
+def save_detector_acao_orfa_data(alertas: list[dict], fonte: str = "yfinance") -> None:
+    with get_connection() as conn:
+        conn.execute(
+            "INSERT INTO detector_acao_orfa_cache (dados, fonte) VALUES (?, ?)",
+            (json.dumps(alertas), fonte),
+        )
+
+
+def get_latest_detector_acao_orfa_data() -> DetectorAcaoOrfaData | None:
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT dados, timestamp, fonte FROM detector_acao_orfa_cache ORDER BY timestamp DESC LIMIT 1"
+        ).fetchone()
+        if not row:
+            return None
+        dados = json.loads(row[0])
+        alertas = [DetectorAcaoOrfaAtivo(**a) for a in dados]
+
+        coletado_dt = datetime.fromisoformat(row[1])
+        if coletado_dt.tzinfo is None:
+            coletado_dt = coletado_dt.replace(tzinfo=timezone.utc)
+        coletado_dt = coletado_dt.astimezone(timezone(timedelta(hours=-3)))
+        coletado_em = coletado_dt.strftime("%d/%m/%Y %H:%M") + " BRT"
+
+        return DetectorAcaoOrfaData(
+            alertas=alertas,
+            coletado_em=coletado_em,
+            fonte=row[2],
+        )

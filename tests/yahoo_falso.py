@@ -88,7 +88,9 @@ def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
     tempos = [int((agora - passo * (n - 1 - i)).timestamp()) for i in range(n)]
     s = _semente(simbolo)
     volumes = [1_000_000 + (s % 7) * 100_000 for _ in range(n)]
-    if s % 3 == 0 or "TICKER" in simbolo or simbolo == "PETR4.SA":
+    if simbolo == "PETR4.SA" and intervalo == "15m":
+        volumes[-1] = 0  # testacao_orfa: volume 0 (acao orfa)
+    elif s % 3 == 0 or "TICKER" in simbolo or simbolo == "PETR4.SA":
         volumes[-1] *= 4  # pico de volume no último pregão
     ultimo = fechamentos[-1]
     return {

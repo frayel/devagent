@@ -1,7 +1,7 @@
 ---
 id: 038
 titulo: Detector de Ação Órfã
-status: ready
+status: done
 esforco: M
 ---
 
