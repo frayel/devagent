@@ -14,16 +14,19 @@ def mock_brapi_response():
                 "symbol": "PETR4",
                 "regularMarketPrice": 30.5,
                 "regularMarketPreviousClose": 30.0,
+                "regularMarketVolume": 1000,
             },
             {
                 "symbol": "VALE3",
                 "regularMarketPrice": 61.2,
                 "regularMarketPreviousClose": 60.0,
+                "regularMarketVolume": 2000,
             },
             {
                 "symbol": "ITUB4",
                 "regularMarketPrice": 25.0,
                 "regularMarketPreviousClose": 24.5,
+                "regularMarketVolume": 5000,
             },
         ]
     }

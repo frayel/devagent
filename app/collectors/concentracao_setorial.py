@@ -76,7 +76,7 @@ def fetch_brapi() -> tuple[dict[str, float], dict[str, float]] | None:
             if price is not None and vol is not None:
                 volumes[item["symbol"]] = vol * price
 
-        return variacoes, volumes
+        return (variacoes, volumes) if variacoes else None
     except Exception as e:
         logger.error(f"Erro ao buscar variacoes na brapi: {e}")
         return None
