@@ -8,6 +8,10 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 035 (Setor Líder por Volume Financeiro):
+  - Adicionado setor líder por volume e valor financeiro ao painel "Concentração Setorial" na visão macro.
+  - Banco de dados SQLite (`concentracao_setorial_cache`) e `/api/snapshot` atualizados.
+  - O contador de painéis, seções ou telas acrescentados permanece em 0, pois a UI foi integrada num painel existente.
 - Spec 034 (Minimização de Painéis Indisponíveis):
   - Adicionada classe `.escondido` com `display: none` no CSS.
   - Painéis "Concentração Setorial", "Concentração de Ganhos" e "Anomalia de Peso" agora são ocultados da UI se estiverem sem dados para economizar espaço de tela, mantendo `/api/snapshot` intacto.

@@ -48,7 +48,7 @@ SETOR_MAP = {
 }
 
 
-def fetch_brapi() -> dict[str, float] | None:
+def fetch_brapi() -> tuple[dict[str, float], dict[str, float]] | None:
     token = os.environ.get("BRAPI_TOKEN")
     if not token:
         return None
@@ -64,22 +64,27 @@ def fetch_brapi() -> dict[str, float] | None:
             return None
 
         variacoes = {}
+        volumes = {}
         for item in data["results"]:
             price = item.get("regularMarketPrice")
             prev_close = item.get("regularMarketPreviousClose")
+            vol = item.get("regularMarketVolume")
 
             if price is not None and prev_close is not None and prev_close > 0:
                 change = ((price - prev_close) / prev_close) * 100
                 variacoes[item["symbol"]] = change
+            if price is not None and vol is not None:
+                volumes[item["symbol"]] = vol * price
 
-        return variacoes
+        return (variacoes, volumes) if variacoes else None
     except Exception as e:
         logger.error(f"Erro ao buscar variacoes na brapi: {e}")
         return None
 
 
-def fetch_yfinance() -> dict[str, float] | None:
+def fetch_yfinance() -> tuple[dict[str, float], dict[str, float]] | None:
     variacoes = {}
+    volumes = {}
     batch_size = 15
     batches = [TICKERS[i : i + batch_size] for i in range(0, len(TICKERS), batch_size)]
 
@@ -103,35 +108,41 @@ def fetch_yfinance() -> dict[str, float] | None:
                     if price is not None and prev_close is not None and prev_close > 0:
                         change = ((price - prev_close) / prev_close) * 100
                         variacoes[symbol] = change
+
+                    vol = meta.get("regularMarketVolume")
+                    if price is not None and vol is not None:
+                        volumes[symbol] = vol * price
             except Exception as e:
                 logger.error(f"Erro ao buscar lote {symbols} no yfinance: {e}")
                 continue
 
-    return variacoes if variacoes else None
+    return (variacoes, volumes) if variacoes else None
 
 
 def collect_and_save() -> bool:
     logger.info("Starting concentracao_setorial collection...")
 
-    variacoes = None
+    dados = None
     fonte = "brapi"
 
     if mt5.configurado():
         with mt5.exclusivo():
-            variacoes = fetch_yfinance()
-            if variacoes:
+            dados = fetch_yfinance()
+            if dados:
                 fonte = mt5.fonte_efetiva("yfinance")
 
-    if not variacoes:
-        variacoes = fetch_brapi()
+    if not dados:
+        dados = fetch_brapi()
 
-    if not variacoes:
-        variacoes = fetch_yfinance()
+    if not dados:
+        dados = fetch_yfinance()
         fonte = "yfinance"
 
-    if not variacoes:
+    if not dados:
         logger.error("Failed to collect concentracao_setorial data from all sources.")
         return False
+
+    variacoes, volumes = dados
 
     setores_vars = defaultdict(list)
     for ticker, change in variacoes.items():
@@ -155,11 +166,28 @@ def collect_and_save() -> bool:
     # chama de destaque quando a média é positiva (spec 025, Cálculos).
     melhor_setor = max(media_setores.items(), key=lambda x: x[1])
 
+    setores_vols: dict[str, float] = defaultdict(float)
+    for ticker, vol in volumes.items():
+        setor = SETOR_MAP.get(ticker)
+        if setor is None:
+            continue
+        setores_vols[setor] += vol
+
+    if setores_vols:
+        lider_vol = max(setores_vols.items(), key=lambda x: x[1])
+        setor_lider_volume = lider_vol[0]
+        volume_lider = lider_vol[1]
+    else:
+        setor_lider_volume = ""
+        volume_lider = 0.0
+
     data = ConcentracaoSetorialData(
         timestamp=datetime.now(timezone.utc),
         setor_destaque=melhor_setor[0],
         variacao_media=melhor_setor[1],
         fonte=fonte,
+        setor_lider_volume=setor_lider_volume,
+        volume_lider=volume_lider,
     )
 
     save_concentracao_setorial_data(data)

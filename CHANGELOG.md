@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- feat: Implementa Setor Líder por Volume Financeiro (Spec 035). Adiciona o líder de volume no painel de concentração setorial.
 - feat: Minimização de Painéis Indisponíveis (Spec 034) para ocultar painéis que estão sem dados na UI sem alterar API e melhorar a leitura do usuário.
 - Feature (Spec 033): Radar de Anomalia de Peso Relativo Intraday
 - Implementada spec 032: Radar de Inflexão, mostrando ações com queda nos últimos 15 dias mas que estão revertendo para alta no intraday.
