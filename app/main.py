@@ -385,7 +385,22 @@ def snapshot():
     from app.database import (
         get_latest_radar_inflexao_data,
         get_latest_anomalia_peso_data,
+        get_latest_radar_short_squeeze_data,
     )
+
+    radar_short_squeeze_data = get_latest_radar_short_squeeze_data()
+    if radar_short_squeeze_data:
+        try:
+            alertas = json.loads(radar_short_squeeze_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["short_squeeze"] = {
+            "coletado_em": radar_short_squeeze_data.timestamp.isoformat(),
+            "fonte": radar_short_squeeze_data.fonte,
+            "alertas": alertas,
+        }
+    else:
+        resp["paineis"]["short_squeeze"] = []
 
     radar_inflexao_data = get_latest_radar_inflexao_data()
     if radar_inflexao_data:
@@ -529,6 +544,9 @@ async def index(request: Request):
 
     mare = mare_servico.get_mare_view()
 
+    from app.services.radar_short_squeeze import get_radar_short_squeeze_view
+
+    short_squeeze = get_radar_short_squeeze_view()
     anomalia_data = get_latest_anomalia_peso_data()
     anomalia_peso = None
     if anomalia_data:
@@ -566,6 +584,7 @@ async def index(request: Request):
             "compradores_fundo": compradores_fundo,
             "armadilha_abertura": armadilha_abertura,
             "radar_inflexao": radar_inflexao,
+            "short_squeeze": short_squeeze,
             "sobrevivencia_semanal": sobrevivencia_semanal,
             "volatilidade_silenciosa": volatilidade_silenciosa,
             "scanner_capitulacao": scanner_capitulacao.view_model(),
