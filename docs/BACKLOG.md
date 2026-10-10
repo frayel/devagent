@@ -215,3 +215,13 @@
 | Radar de Inversão de Sentimento Intraday | Responde: O mercado abriu otimista, mas já reverteu? Originalidade: Conta quantas ações abriram em alta, mas já estão operando no vermelho, sinalizando armadilha bull trap coletiva. | yfinance | M | Médio |
 | Histórico de "Maré" Extrema | Responde: Toda vez que a Maré atingiu este nível extremo de otimismo, o que aconteceu nos dias seguintes? Originalidade: Backtesting automático com os dados próprios cacheados do sistema. | Interna | G | Baixo |
 | Experiência: Comparativo Visual Setorial | Responde: O setor bancário está puxando o Ibovespa sozinho? Originalidade: Um toggle no gráfico principal que exibe uma linha tracejada com um ETF setorial (como BOVA11 vs FIND11) para contexto imediato. | yfinance | M | Baixo |
+
+## Ideias (Passo 7 - 2026-10-10 2)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Agrupamento Inteligente de Alertas | Responde: Um mesmo ativo disparou múltiplos alertas hoje? Originalidade: Em vez de espalhar ativos por painéis de alerta, consolida os alertas (ex: Faca Caindo e Volume Anormal) por ticker na visão micro. | N/A | M | Baixo |
+| Radar de Short Squeeze (Capitulação Vendida) | Responde: Uma ação muito amassada recentemente explodiu hoje pegando os vendidos de surpresa? Originalidade: Cruza uma performance negativa forte de curto prazo (2 semanas) com um salto repentino de preço e volume no pregão atual. | yfinance | M | Baixo |
+| Análise de Assimetria Risco/Retorno | Responde: Qual ativo está mais próximo do seu fundo dos últimos 30 dias do que do seu topo? Originalidade: Substitui análise de tendência pela pura distância percentual entre os extremos recentes. | yfinance | P | Baixo |
+| Correlação Inversa Cripto (BTC vs B3) | Responde: O capital está saindo da bolsa para ativos de risco alternativos hoje? Originalidade: Compara a performance do IBOV e das principais ações brasileiras em relação ao movimento intradiário do Bitcoin (BTC-USD). | yfinance | M | Baixo |
+| Alerta de Distorção da Primeira Hora | Responde: O ímpeto do leilão de abertura já morreu completamente? Originalidade: Identifica quando toda a variação direcional da primeira hora do pregão é completamente desfeita antes do almoço. | yfinance | M | Médio |
