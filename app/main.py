@@ -386,9 +386,11 @@ def snapshot():
         get_latest_radar_inflexao_data,
         get_latest_anomalia_peso_data,
         get_latest_radar_short_squeeze_data,
+        get_latest_radar_congestionamento_data,
     )
 
     radar_short_squeeze_data = get_latest_radar_short_squeeze_data()
+    db_radar_congestionamento = get_latest_radar_congestionamento_data()
     if radar_short_squeeze_data:
         try:
             alertas = json.loads(radar_short_squeeze_data.alertas_json)
@@ -401,6 +403,19 @@ def snapshot():
         }
     else:
         resp["paineis"]["short_squeeze"] = []
+
+    resp["paineis"]["radar_congestionamento"] = (
+        [
+            {
+                "ticker": a.ticker,
+                "bandwidth": a.bandwidth,
+                "sparkline_path": a.sparkline_path,
+            }
+            for a in db_radar_congestionamento.alertas
+        ]
+        if db_radar_congestionamento
+        else None
+    )
 
     radar_inflexao_data = get_latest_radar_inflexao_data()
     if radar_inflexao_data:
@@ -522,6 +537,7 @@ async def index(request: Request):
     from app.database import (
         get_latest_radar_inflexao_data,
         get_latest_anomalia_peso_data,
+        get_latest_radar_congestionamento_data,
     )
 
     radar_data = get_latest_radar_inflexao_data()
@@ -548,6 +564,7 @@ async def index(request: Request):
 
     short_squeeze = get_radar_short_squeeze_view()
     anomalia_data = get_latest_anomalia_peso_data()
+    radar_congestionamento_data = get_latest_radar_congestionamento_data()
     anomalia_peso = None
     if anomalia_data:
         try:
@@ -589,6 +606,7 @@ async def index(request: Request):
             "volatilidade_silenciosa": volatilidade_silenciosa,
             "scanner_capitulacao": scanner_capitulacao.view_model(),
             "anomalia_peso": anomalia_peso,
+            "radar_congestionamento": radar_congestionamento_data,
             "mare": mare,
         },
     )

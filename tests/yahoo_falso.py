@@ -166,3 +166,21 @@ def instalar(monkeypatch) -> None:
     monkeypatch.setattr(httpx.Client, "send", enviar)
     monkeypatch.setattr(utils, "_enforce_rate_limit", lambda dominio: None)
     monkeypatch.setattr(utils.time, "sleep", lambda s: None)
+
+
+def url_spark(request: httpx.Request) -> httpx.Response:
+    url_str = str(request.url)
+    symbols_part = url_str.split("symbols=")[1].split("&")[0]
+    tickers = symbols_part.split(",")
+    results = []
+    for ticker in tickers:
+        results.append(
+            {
+                "symbol": ticker,
+                "response": [{"indicators": {"quote": [{"close": [10.0] * 25}]}}],
+            }
+        )
+    return httpx.Response(
+        200,
+        json={"spark": {"result": results}},
+    )

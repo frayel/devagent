@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- feat: Radar de Congestionamento (Estreitamento de Bandas) (Spec 037). Novo painel que identifica ações operando em faixas estreitas com base nas Bandas de Bollinger, sinalizando potencial para um movimento forte em breve. Baseado no Yahoo Finance.
 - **Radar de Short Squeeze**: Painel em "Alertas Intraday" para ações em forte queda recente, mas com alta diária violenta acompanhada de volume anormal (Spec 36).
 - Radar de Short Squeeze (Capitulação Vendida) adicionado aos alertas intraday (Spec 036).
 - feat: Implementa Setor Líder por Volume Financeiro (Spec 035). Adiciona o líder de volume no painel de concentração setorial.
