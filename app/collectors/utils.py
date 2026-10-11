@@ -1,5 +1,6 @@
 import logging
 import time
+import re
 from urllib.parse import urlparse
 import httpx
 
@@ -75,8 +76,9 @@ def fetch_with_retry(
             if status_code == 429 or status_code >= 500:
                 if attempt < max_retries - 1:
                     sleep_time = backoff_factor * (2**attempt)
+                    safe_url = re.sub(r"([?&]token=)[^&\s]+", r"\1***", url)
                     logger.warning(
-                        f"HTTP {status_code} on {url}. Retrying in {sleep_time:.2f}s "
+                        f"HTTP {status_code} on {safe_url}. Retrying in {sleep_time:.2f}s "
                         f"(attempt {attempt + 1}/{max_retries})"
                     )
                     time.sleep(sleep_time)
@@ -85,8 +87,9 @@ def fetch_with_retry(
         except httpx.RequestError as e:
             if attempt < max_retries - 1:
                 sleep_time = backoff_factor * (2**attempt)
+                safe_url = re.sub(r"([?&]token=)[^&\s]+", r"\1***", url)
                 logger.warning(
-                    f"Request error {type(e).__name__} on {url}. Retrying in {sleep_time:.2f}s "
+                    f"Request error {type(e).__name__} on {safe_url}. Retrying in {sleep_time:.2f}s "
                     f"(attempt {attempt + 1}/{max_retries})"
                 )
                 time.sleep(sleep_time)
