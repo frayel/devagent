@@ -105,6 +105,7 @@ def _coletar() -> None:
         "radar_short_squeeze",
         "radar_congestionamento",
         "detector_acao_orfa",
+        "esforco_resultado",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
         mt5.reiniciar_rastreio()

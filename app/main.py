@@ -388,6 +388,7 @@ def snapshot():
         get_latest_radar_short_squeeze_data,
         get_latest_radar_congestionamento_data,
         get_latest_detector_acao_orfa_data,
+        get_latest_esforco_resultado_data,
     )
 
     radar_short_squeeze_data = get_latest_radar_short_squeeze_data()
@@ -445,6 +446,15 @@ def snapshot():
         }
     else:
         resp["paineis"]["radar_inflexao"] = []
+    esforco_resultado_data = get_latest_esforco_resultado_data()
+    if esforco_resultado_data:
+        try:
+            alertas = json.loads(esforco_resultado_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["esforco_resultado"] = alertas
+    else:
+        resp["paineis"]["esforco_resultado"] = []
 
     anomalia_peso_data = get_latest_anomalia_peso_data()
     if anomalia_peso_data:
@@ -554,6 +564,7 @@ async def index(request: Request):
         get_latest_anomalia_peso_data,
         get_latest_radar_congestionamento_data,
         get_latest_detector_acao_orfa_data,
+        get_latest_esforco_resultado_data,
     )
 
     radar_data = get_latest_radar_inflexao_data()
@@ -582,6 +593,22 @@ async def index(request: Request):
     anomalia_data = get_latest_anomalia_peso_data()
     radar_congestionamento_data = get_latest_radar_congestionamento_data()
     detector_acao_orfa_data = get_latest_detector_acao_orfa_data()
+
+    esforco_resultado_data = get_latest_esforco_resultado_data()
+    esforco_resultado = None
+    if esforco_resultado_data:
+        try:
+            alertas = json.loads(esforco_resultado_data.alertas_json)
+            esforco_resultado = {
+                "coletado_em": esforco_resultado_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": esforco_resultado_data.fonte,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+
     anomalia_peso = None
     if anomalia_data:
         try:
@@ -625,6 +652,7 @@ async def index(request: Request):
             "anomalia_peso": anomalia_peso,
             "radar_congestionamento": radar_congestionamento_data,
             "detector_acao_orfa": detector_acao_orfa_data,
+            "esforco_resultado": esforco_resultado,
             "mare": mare,
         },
     )

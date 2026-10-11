@@ -199,6 +199,45 @@ def get_latest_volatilidade_silenciosa_data() -> VolatilidadeSilenciosaData | No
     return None
 
 
+@dataclass
+class EsforcoResultadoData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "yfinance"
+
+
+def save_esforco_resultado_data(data: EsforcoResultadoData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO esforco_resultado_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
+        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_esforco_resultado_data() -> EsforcoResultadoData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT timestamp, alertas_json, fonte FROM esforco_resultado_cache ORDER BY timestamp DESC LIMIT 1"
+        )
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        return None
+    finally:
+        conn.close()
+    if row:
+        return EsforcoResultadoData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            alertas_json=row["alertas_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
 def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
@@ -211,6 +250,13 @@ def init_db() -> None:
             fonte TEXT NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_detector_acao_orfa_cache_timestamp ON detector_acao_orfa_cache(timestamp DESC);
+        CREATE TABLE IF NOT EXISTS esforco_resultado_cache (
+            timestamp TEXT,
+            alertas_json TEXT,
+            fonte TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_esforco_resultado_timestamp ON esforco_resultado_cache(timestamp DESC);
+
         CREATE TABLE IF NOT EXISTS radar_congestionamento_cache (
             timestamp TEXT,
             alertas_json TEXT,

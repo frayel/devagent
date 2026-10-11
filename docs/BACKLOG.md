@@ -254,3 +254,13 @@
 | Termômetro de Exaustão de Tendência | Responde: O rali de alta de um ativo já chegou ao limite? Originalidade: Procura o último suspiro de um movimento: volume climático acompanhado de pavio longo no topo, após múltiplos dias de alta. | yfinance | M | Médio |
 | Painel de Incorrelação Agressiva | Responde: Que ação pesada no índice está desabando enquanto o mercado voa? Originalidade: Isola papéis do topo do IBOV operando na direção oposta ao benchmark com força (> 2% de diferença direcional). | brapi | M | Baixo |
 | Radar do Leilão de Fechamento | Responde: Onde os institucionais estão montando posição nos minutos finais? Originalidade: Monitora variações extremas e picos de volume exclusivamentes nos últimos 15 minutos do pregão regular. | brapi | G | Alto |
+
+## Ideias (Passo 7 - 2026-10-12 2)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Heatmap Visual do Índice | Responde: Como está a distribuição do mercado de uma só vez? Originalidade: Troca a exibição tabular por uma grade de blocos proporcionais ao peso no Ibovespa, coloridos pela variação. | brapi / yfinance | M | Baixo |
+| Radar de Divergência Volume/Preço (Exaustão) | Responde: O preço continua subindo mas o volume secou? Originalidade: Detecta topos recentes onde o preço sobe mas o volume diário médio vem caindo nos últimos 5 dias, sinalizando exaustão da compra. | yfinance | M | Baixo |
+| Índice de Rejeição de Fundo | Responde: Onde estão os compradores institucionais defendendo preço? Originalidade: Busca papéis que tocaram mínimas de 30 dias mas fecharam com sombra inferior igual ou maior que 50% do candle total. | yfinance | M | Médio |
+| Termômetro de Correlacionamento do VIX | Responde: O mercado local está blindado do pânico externo hoje? Originalidade: Cruza variações extremas intraday do VIX americano (quando > +5%) com a resiliência momentânea do IBOV. | yfinance | P | Baixo |
+| Alerta de Abertura Descolada | Responde: Quais ativos ignoraram o clima macro logo no leilão? Originalidade: Identifica ativos que abriram na direção oposta do gap do Ibovespa e com intensidade superior a 1%. | brapi | M | Baixo |
