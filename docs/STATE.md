@@ -8,6 +8,11 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 3 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 043 (Radar de Liquidez de Abertura):
+  - Banco de dados SQLite (`liquidez_abertura_cache`).
+  - Coletor buscando alertas de anomalia de volume da primeira hora via `yfinance`.
+  - Exibição de ações com maior proporção volume atual / media no painel Alertas Intraday.
+  - Adicionado ao contrato `/api/snapshot`.
 - Spec 042 (Filtro de Sensibilidade a Juros):
   - Painel de correlação inversa no Sentimento & Risco.
   - Coletor buscando DI1F27.SA e cesta focada em juros.
