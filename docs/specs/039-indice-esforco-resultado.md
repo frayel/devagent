@@ -1,7 +1,7 @@
 ---
 id: 039
 titulo: Índice de Esforço vs Resultado
-status: ready
+status: done
 esforco: M
 ---
 

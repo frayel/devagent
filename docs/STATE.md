@@ -29,6 +29,10 @@
   - Coletor buscando fechamentos dos últimos 15 dias para ações via `yfinance`.
   - Cálculo de ações que caíram >5% nos últimos 15 dias, mas hoje revertem com alta >2%.
   - Exibição de painel "Inflexão de Tendência" na página inicial e via `/api/snapshot`.
+- Spec 039 (Índice de Esforço vs Resultado):
+  - Tabela `esforco_resultado_cache` no banco de dados SQLite.
+  - Coletor com yfinance (chart v8) buscando volume e cotações (close vs open) diários de 1 mês.
+  - Adicionado painel em "Alertas Intraday" e no `/api/snapshot`.
 - Spec 038 (Detector de Ação Órfã):
   - Coletor com yfinance (spark intraday 15m).
   - Exibe ações caindo drásticamente em volume (secando) com risco de spread.
