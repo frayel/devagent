@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 ### Added
+- Spec 043 (Radar de Liquidez de Abertura):
+  - Banco de dados SQLite (`liquidez_abertura_cache`).
+  - Coletor buscando fechamentos intraday para ações de alta liquidez via `yfinance` para detectar picos anormais de volume na abertura comparados à média.
+  - Exibição de painel e tabela de alertas via contrato `/api/snapshot`.
 - Filtro de Sensibilidade a Juros (Spec 042) com as maiores correlações negativas.
 - Painel "Falso Rompimento" na visão micro listando ações que romperam a máxima mas reverteram para baixo com volume (Spec 041).
 - Spec 040: Radar de Divergência Volume/Preço. Painel de alerta intraday para exaustão de topo (alta com queda progressiva no volume médio).

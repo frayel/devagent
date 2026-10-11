@@ -327,6 +327,34 @@
 {% endcall %}
 
 
+
+{% call painel("Radar de Liquidez", 4, "Ações que concentraram volume anormal de negociação logo nos primeiros momentos do pregão.", liquidez_abertura.fonte if liquidez_abertura else "", liquidez_abertura.coletado_em if liquidez_abertura else "", "visao-micro alertas") %}
+    {% if liquidez_abertura and liquidez_abertura.alertas %}
+        <table class="tabela-compacta">
+            <thead>
+                <tr>
+                    <th>Ativo</th>
+                    <th class="direita">Projeção Vol.</th>
+                    <th class="direita">Var. Hoje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alerta in liquidez_abertura.alertas %}
+                <tr>
+                    <td><strong>{{ alerta.ticker }}</strong></td>
+                    <td class="direita">{{ "%.0f"|format(alerta.ratio * 100) }}%</td>
+                    <td class="direita {% if alerta.var_pct > 0 %}alta{% elif alerta.var_pct < 0 %}baixa{% endif %}">
+                        {% if alerta.var_pct > 0 %}▲ {% elif alerta.var_pct < 0 %}▼ {% endif %}{{ "%.2f"|format(alerta.var_pct|abs) }}%
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="dado-vazio">Nenhum pico de liquidez de abertura detectado.</p>
+    {% endif %}
+{% endcall %}
+
 {% call painel("Ação Órfã", 4, "Ações que secaram drasticamente de liquidez (zero volume ou queda drástica) nos últimos 15 min.", detector_acao_orfa.fonte if detector_acao_orfa else "", detector_acao_orfa.coletado_em if detector_acao_orfa else "", "visao-micro alertas") %}
             {% if not detector_acao_orfa %}
                 <div class="painel-vazio">Dado indisponível</div>

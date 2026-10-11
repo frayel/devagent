@@ -1,7 +1,7 @@
 ---
 id: 043
 titulo: Radar de Liquidez de Abertura
-status: ready
+status: done
 esforco: M
 ---
 
