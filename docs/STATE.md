@@ -5,9 +5,13 @@
 ## Experiência
 
 - Última revisão de experiência: 09/10/2026 (Minimização de Painéis)
-- Painéis, seções ou telas acrescentados desde a última revisão: 2 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 3 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 042 (Filtro de Sensibilidade a Juros):
+  - Painel de correlação inversa no Sentimento & Risco.
+  - Coletor buscando DI1F27.SA e cesta focada em juros.
+  - Adicionado ao /api/snapshot.
 - Spec 041 (Alerta de Falso Rompimento):
   - Banco de dados SQLite (`falso_rompimento_cache`).
   - Coletor buscando fechamentos, máximas e volumes para 30 ações de alta liquidez via `yfinance` nos últimos 2 dias.

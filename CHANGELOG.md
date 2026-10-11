@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- Filtro de Sensibilidade a Juros (Spec 042) com as maiores correlações negativas.
 - Painel "Falso Rompimento" na visão micro listando ações que romperam a máxima mas reverteram para baixo com volume (Spec 041).
 - Spec 040: Radar de Divergência Volume/Preço. Painel de alerta intraday para exaustão de topo (alta com queda progressiva no volume médio).
 - Spec 039: Índice de Esforço vs Resultado.

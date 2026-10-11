@@ -17,6 +17,7 @@ from app.database import get_latest_highlights_data, get_latest_apetite_risco_da
 from app.services.highlights import get_highlights_view_data
 from app.services.volume_alerts import get_volume_alerts_view_data
 from app.services.dolar_correlation import get_dolar_correlation_view_data
+from app.services.sensibilidade_juros import get_sensibilidade_juros_view_data
 from app.services.forca_relativa import get_forca_relativa_view_data
 from app.services.escudo_quedas import get_escudo_quedas_view_data
 from app.services.coesao import get_coesao_view_data
@@ -37,6 +38,7 @@ from app.database import (
     get_latest_ibovespa_data,
     get_latest_volume_alerts_data,
     get_latest_dolar_correlation_data,
+    get_latest_sensibilidade_juros_data,
     get_latest_forca_relativa_data,
     get_latest_escudo_quedas_data,
     get_latest_coesao_data,
@@ -205,6 +207,24 @@ def snapshot():
         }
     else:
         resp["paineis"]["sensibilidade_dolar"] = {}
+
+    sensibilidade_juros_data = get_latest_sensibilidade_juros_data()
+    if sensibilidade_juros_data:
+        try:
+            alertas = (
+                json.loads(sensibilidade_juros_data.alertas_json)
+                if sensibilidade_juros_data.alertas_json
+                else []
+            )
+        except Exception:
+            alertas = []
+        resp["paineis"]["sensibilidade_juros"] = {
+            "fonte": sensibilidade_juros_data.fonte,
+            "time": sensibilidade_juros_data.timestamp.isoformat(),
+            "alertas": alertas,
+        }
+    else:
+        resp["paineis"]["sensibilidade_juros"] = {}
 
     forca_relativa_data = get_latest_forca_relativa_data()
     if forca_relativa_data:
@@ -552,6 +572,7 @@ async def index(request: Request):
     highlights = get_highlights_view_data()
     volume_alerts = get_volume_alerts_view_data()
     dolar_correlation = get_dolar_correlation_view_data()
+    sensibilidade_juros = get_sensibilidade_juros_view_data()
     forca_relativa = get_forca_relativa_view_data()
     escudo_quedas = get_escudo_quedas_view_data()
 
@@ -685,6 +706,7 @@ async def index(request: Request):
             "highlights": highlights,
             "volume_alerts": volume_alerts,
             "dolar_correlation": dolar_correlation,
+            "sensibilidade_juros": sensibilidade_juros,
             "forca_relativa": forca_relativa,
             "escudo_quedas": escudo_quedas,
             "coesao": coesao,

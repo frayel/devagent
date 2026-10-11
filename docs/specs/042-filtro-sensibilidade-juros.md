@@ -1,7 +1,7 @@
 ---
 id: 042
 titulo: Filtro de Sensibilidade a Juros
-status: ready
+status: done
 esforco: M
 ---
 

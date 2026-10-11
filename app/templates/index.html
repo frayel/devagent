@@ -557,6 +557,22 @@
     {% endif %}
 {% endcall %}
 
+{% call painel("Sensibilidade a Juros", 4, "Top 3 ativos (Varejo/Construção/Tech) com maior correlação inversa com os juros futuros (DI1F27) nos últimos 30 pregões.", sensibilidade_juros.fonte if sensibilidade_juros else "", sensibilidade_juros.time if sensibilidade_juros else "", "visao-macro alertas") %}
+    {% if sensibilidade_juros and sensibilidade_juros.alertas %}
+        {% set linhas = [] %}
+        {% for a in sensibilidade_juros.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'barra': True, 'valor_barra': (a.correlation * -1) if a.correlation < 0 else a.correlation, 'conteudo': ('<span>' | safe) ~ a.correlation_formatted ~ ('</span>' | safe)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [], 'a') }}
+    {% else %}
+        <div class="vazio">Dado indisponível</div>
+    {% endif %}
+{% endcall %}
+
 {% call painel("Sensibilidade ao dólar", 8, "Correlação de Pearson entre retornos diários da ação e do dólar (DOL$ no MT5, BRL=X no Yahoo) nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "", "visao-macro alertas") %}
     {% if dolar_correlation %}
         <div class="duas">
