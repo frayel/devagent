@@ -46,6 +46,22 @@ def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
         chamados.append("volume_alerts")
         return True
 
+    monkeypatch.setattr(
+        "app.collectors.radar_liquidez_abertura.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.esforco_resultado.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_divergencia_volume.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.falso_rompimento.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.detector_acao_orfa.collect_and_save", lambda: True
+    )
+
     monkeypatch.setattr("app.collectors.escudo_quedas.collect_and_save", lambda: True)
     monkeypatch.setattr("app.collectors.concentracao.collect_and_save", lambda: True)
     monkeypatch.setattr(
@@ -128,6 +144,7 @@ def test_mascara_token_no_estado(monkeypatch):
         "esforco_resultado",
         "radar_divergencia_volume",
         "falso_rompimento",
+        "radar_liquidez_abertura",
     ):
         monkeypatch.setattr(f"app.collectors.{nome}.collect_and_save", lambda: True)
 

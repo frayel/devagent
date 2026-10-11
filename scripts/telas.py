@@ -49,6 +49,19 @@ def _semear(db_path: str) -> None:
     db.init_db()
     agora = datetime.now(timezone.utc)
 
+    db.save_liquidez_abertura_data(
+        db.LiquidezAberturaData(
+            timestamp=agora,
+            alertas_json=json.dumps(
+                [
+                    {"ticker": "VALE3", "ratio": 1.5, "var_pct": 2.5},
+                    {"ticker": "PETR4", "ratio": 0.8, "var_pct": -1.2},
+                ]
+            ),
+            fonte="yfinance (mock)",
+        )
+    )
+
     datas, fechamentos, v = [], [], 96_000.0
     dia = datetime.now(timezone.utc).date() - timedelta(days=45)
     while len(datas) < 30:

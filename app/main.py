@@ -410,6 +410,7 @@ def snapshot():
         get_latest_detector_acao_orfa_data,
         get_latest_esforco_resultado_data,
         get_latest_radar_divergencia_volume_data,
+        get_latest_liquidez_abertura_data,
         get_latest_falso_rompimento_data,
     )
 
@@ -497,6 +498,16 @@ def snapshot():
         resp["paineis"]["falso_rompimento"] = alertas
     else:
         resp["paineis"]["falso_rompimento"] = []
+
+    liquidez_abertura_data = get_latest_liquidez_abertura_data()
+    if liquidez_abertura_data:
+        try:
+            alertas = json.loads(liquidez_abertura_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["liquidez_abertura"] = alertas
+    else:
+        resp["paineis"]["liquidez_abertura"] = []
 
     anomalia_peso_data = get_latest_anomalia_peso_data()
     if anomalia_peso_data:
@@ -609,6 +620,7 @@ async def index(request: Request):
         get_latest_detector_acao_orfa_data,
         get_latest_esforco_resultado_data,
         get_latest_radar_divergencia_volume_data,
+        get_latest_liquidez_abertura_data,
         get_latest_falso_rompimento_data,
     )
 
@@ -664,6 +676,21 @@ async def index(request: Request):
                     timezone(timedelta(hours=-3))
                 ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                 "fonte": falso_rompimento_data.fonte,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+
+    liquidez_abertura_data = get_latest_liquidez_abertura_data()
+    liquidez_abertura = None
+    if liquidez_abertura_data:
+        try:
+            alertas = json.loads(liquidez_abertura_data.alertas_json)
+            liquidez_abertura = {
+                "coletado_em": liquidez_abertura_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": liquidez_abertura_data.fonte,
                 "alertas": alertas,
             }
         except Exception:
@@ -730,6 +757,7 @@ async def index(request: Request):
             "esforco_resultado": esforco_resultado,
             "radar_divergencia_volume": radar_divergencia_volume,
             "falso_rompimento": falso_rompimento,
+            "liquidez_abertura": liquidez_abertura,
             "mare": mare,
         },
     )
