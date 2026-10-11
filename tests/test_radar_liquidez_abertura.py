@@ -29,8 +29,12 @@ def test_save_and_get_liquidez_abertura(setup_db):
 
 
 def test_fetch_yfinance_success(respx_mock, monkeypatch):
-    monkeypatch.setattr("app.collectors.radar_liquidez_abertura.TICKERS", ["VALE3", "PETR4"])
-    respx_mock.get("https://query1.finance.yahoo.com/v8/finance/chart/PETR4.SA?range=1mo&interval=1d").respond(status_code=404)
+    monkeypatch.setattr(
+        "app.collectors.radar_liquidez_abertura.TICKERS", ["VALE3", "PETR4"]
+    )
+    respx_mock.get(
+        "https://query1.finance.yahoo.com/v8/finance/chart/PETR4.SA?range=1mo&interval=1d"
+    ).respond(status_code=404)
 
     chart_data = {
         "chart": {
@@ -72,8 +76,12 @@ def test_fetch_yfinance_success(respx_mock, monkeypatch):
 
 def test_collect_and_save_success(respx_mock, monkeypatch, setup_db):
     init_db()
-    monkeypatch.setattr("app.collectors.radar_liquidez_abertura.TICKERS", ["VALE3", "PETR4"])
-    respx_mock.get("https://query1.finance.yahoo.com/v8/finance/chart/PETR4.SA?range=1mo&interval=1d").respond(status_code=404)
+    monkeypatch.setattr(
+        "app.collectors.radar_liquidez_abertura.TICKERS", ["VALE3", "PETR4"]
+    )
+    respx_mock.get(
+        "https://query1.finance.yahoo.com/v8/finance/chart/PETR4.SA?range=1mo&interval=1d"
+    ).respond(status_code=404)
 
     chart_data = {
         "chart": {
