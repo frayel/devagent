@@ -33,3 +33,7 @@
 - **Por que fiz:** Elementos de tabela não padronizados estavam quebrando a consistência visual. A macro fornece o layout oficial com o espaçamento e alinhamento adequados, lidando apropriadamente com o design iterativo do layout da página.
 - **O que aprendi:** Qualquer componente tabular, especialmente aqueles que incluem propriedades financeiras comuns (preço, variação), deve empregar as ferramentas das macros para manter a unidade do estilo da aplicação.
 - **O que evitar:** Evitar escrever tags HTML nativas `<table>` e `<tbody>` diretamente nos templates de painéis para novos alertas ou seções analíticas.
+## 2026-10-11
+- **O que fiz:** Tentei rodar, mas já havia PR do agente aberto (#240). Encerrei sem mudanças funcionais.
+- **O que aprendi:** Não se deve abrir PR vazio ao abortar execução por restrição de concorrência.
+- **O que evitar:** Abrir PR quando a instrução é 'encerrar sem mudanças'.
