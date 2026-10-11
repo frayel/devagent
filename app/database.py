@@ -243,6 +243,14 @@ def init_db() -> None:
     cursor = conn.cursor()
 
     cursor.executescript("""
+
+        CREATE TABLE IF NOT EXISTS radar_divergencia_volume_cache (
+            timestamp TEXT NOT NULL,
+            alertas_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_radar_divergencia_volume_cache_timestamp ON radar_divergencia_volume_cache(timestamp DESC);
+
         CREATE TABLE IF NOT EXISTS detector_acao_orfa_cache (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             dados JSON NOT NULL,
@@ -1733,3 +1741,42 @@ def get_latest_detector_acao_orfa_data() -> DetectorAcaoOrfaData | None:
             coletado_em=coletado_em,
             fonte=row[2],
         )
+
+
+@dataclass
+class RadarDivergenciaVolumeData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "yfinance"
+
+
+def save_radar_divergencia_volume_data(data: RadarDivergenciaVolumeData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO radar_divergencia_volume_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
+        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_radar_divergencia_volume_data() -> RadarDivergenciaVolumeData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT timestamp, alertas_json, fonte FROM radar_divergencia_volume_cache ORDER BY timestamp DESC LIMIT 1"
+        )
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        return None
+    finally:
+        conn.close()
+    if row:
+        return RadarDivergenciaVolumeData(
+            timestamp=datetime.fromisoformat(row[0]),
+            alertas_json=row[1],
+            fonte=row[2],
+        )
+    return None
