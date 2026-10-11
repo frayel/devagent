@@ -127,6 +127,20 @@ def _semear(db_path: str) -> None:
             fonte="demonstracao",
         )
     )
+    db.save_sensibilidade_juros_data(
+        db.SensibilidadeJurosData(
+            timestamp=agora,
+            alertas_json=json.dumps(
+                [
+                    {"ticker": "LREN3", "correlation": -0.85},
+                    {"ticker": "MGLU3", "correlation": -0.76},
+                    {"ticker": "PETZ3", "correlation": -0.71},
+                ]
+            ),
+            fonte="demonstracao",
+        )
+    )
+
     db.save_dolar_correlation_data(
         db.DolarCorrelationData(
             timestamp=agora,

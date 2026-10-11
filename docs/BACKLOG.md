@@ -267,3 +267,11 @@
 | Revisão de Experiência: Consolidação de Gauges | Responde: Como simplificar a leitura de medidores espalhados? Funde "Apetite a Risco" e "Rotação de Capital" no mesmo painel de Maré do Mercado. | N/A | P | Baixo |
 | Assimetria de Livro de Ofertas | Responde: Qual a pressão real do book em ativos de liquidez média? | brapi.dev | G | Alto (Limites de API) |
 | Radar de Exaustão de Tendência | Responde: Quando um ativo subiu 5 dias seguidos com volume decrescente? | yfinance | M | Baixo |
+
+## Ideias (Passo 7 - 2026-10-11)
+
+| Experiência: Consolidação de Alertas em Menu Dinâmico | Responde: O excesso de alertas isolados polui a tela? Originalidade: Menu suspenso ou agrupado no mobile listando todas anomalias detectadas. | N/A | P | Baixo |
+| Radar de Liquidez de Abertura | Responde: Onde o volume grande institucional acordou nos primeiros 30 min? Originalidade: Velocidade e picos de volume logo de manhã. | yfinance | M | Baixo |
+| Sombra do Exterior na Abertura | Responde: Como o mercado abriu em relação ao SP500 futuro? Originalidade: Distingue variações locais vs arrasto gringo no leilão. | yfinance | M | Baixo |
+| Assimetria de Livro de Ofertas e Pressão de Venda | Responde: Quem está sofrendo despejo forçado sem defesa? Originalidade: Leitura em tempo real de pressão. | brapi | G | Alto |
+| Índice de Esforço vs Resultado | Responde: Muito volume e pouca alta? Absorção? Originalidade: VSA (Volume Spread Analysis) aplicada a ativos do IBOV no dia de hoje. | yfinance | M | Baixo |
