@@ -90,6 +90,7 @@ def _coletar() -> None:
         "mare",
         "volume_alerts",
         "dolar_correlation",
+        "sensibilidade_juros",
         "forca_relativa",
         "escudo_quedas",
         "coesao",
