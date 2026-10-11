@@ -5,9 +5,13 @@
 ## Experiência
 
 - Última revisão de experiência: 09/10/2026 (Minimização de Painéis)
-- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 2 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 040 (Radar de Divergência Volume/Preço):
+  - Tabela `radar_divergencia_volume_cache` no banco SQLite.
+  - Coletor com yfinance (chart v8) buscando fechamentos de 5 dias para identificar topos.
+  - Adicionado painel em "Alertas Intraday" e `/api/snapshot` exporta dados se disponíveis.
 - Spec 035 (Reorganização dos Gauges de Tendência):
   - Integrados medidores de MM21 e MM200 ao card "Ibovespa hoje".
   - Removido o painel autônomo de Tendência (Ibovespa).

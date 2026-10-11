@@ -20,6 +20,10 @@ from tests import yahoo_falso
 
 
 def _coletar_tudo(monkeypatch) -> None:
+    import app.collectors.radar_divergencia_volume
+
+    if "DIV" not in app.collectors.radar_divergencia_volume.TICKERS:
+        monkeypatch.setattr("app.collectors.radar_divergencia_volume.TICKERS", ["DIV"])
     yahoo_falso.instalar(monkeypatch)
     agendador.coletar_tudo()
     assert agendador.estado["ultimo_erro"] is None, agendador.estado["ultimo_erro"]

@@ -389,6 +389,7 @@ def snapshot():
         get_latest_radar_congestionamento_data,
         get_latest_detector_acao_orfa_data,
         get_latest_esforco_resultado_data,
+        get_latest_radar_divergencia_volume_data,
     )
 
     radar_short_squeeze_data = get_latest_radar_short_squeeze_data()
@@ -456,6 +457,15 @@ def snapshot():
     else:
         resp["paineis"]["esforco_resultado"] = []
 
+    radar_divergencia_volume_data = get_latest_radar_divergencia_volume_data()
+    if radar_divergencia_volume_data:
+        try:
+            alertas = json.loads(radar_divergencia_volume_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["divergencia_volume"] = alertas
+    else:
+        resp["paineis"]["divergencia_volume"] = []
     anomalia_peso_data = get_latest_anomalia_peso_data()
     if anomalia_peso_data:
         try:
@@ -565,6 +575,7 @@ async def index(request: Request):
         get_latest_radar_congestionamento_data,
         get_latest_detector_acao_orfa_data,
         get_latest_esforco_resultado_data,
+        get_latest_radar_divergencia_volume_data,
     )
 
     radar_data = get_latest_radar_inflexao_data()
@@ -609,6 +620,20 @@ async def index(request: Request):
         except Exception:
             pass
 
+    radar_divergencia_volume_data = get_latest_radar_divergencia_volume_data()
+    radar_divergencia_volume = None
+    if radar_divergencia_volume_data:
+        try:
+            alertas = json.loads(radar_divergencia_volume_data.alertas_json)
+            radar_divergencia_volume = {
+                "coletado_em": radar_divergencia_volume_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": radar_divergencia_volume_data.fonte,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
     anomalia_peso = None
     if anomalia_data:
         try:
@@ -653,6 +678,7 @@ async def index(request: Request):
             "radar_congestionamento": radar_congestionamento_data,
             "detector_acao_orfa": detector_acao_orfa_data,
             "esforco_resultado": esforco_resultado,
+            "radar_divergencia_volume": radar_divergencia_volume,
             "mare": mare,
         },
     )

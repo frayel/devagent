@@ -432,6 +432,37 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda 10d', 'num': True}, {'titulo': 'Volume'}, {'titulo': 'Alta', 'num': True}], 'short-squeeze') }}
     {% endif %}
 {% endcall %}
+        {% call painel("Divergência Volume/Preço", 4, "Ações que subiram nos últimos 5 dias, mas cujo volume negociado secou (exaustão).", radar_divergencia_volume.fonte if radar_divergencia_volume else "", radar_divergencia_volume.coletado_em if radar_divergencia_volume else "", "visao-micro alertas") %}
+            {% if not radar_divergencia_volume %}
+                <div class="dado-indisponivel">Dado indisponível agora</div>
+            {% elif not radar_divergencia_volume.alertas %}
+                <div class="dado-indisponivel">Nenhuma divergência detectada</div>
+            {% else %}
+                <table class="ranking">
+                    <thead>
+                        <tr>
+                            <th>Ativo</th>
+                            <th class="numero">Alta (%)</th>
+                            <th class="numero">Vol (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in radar_divergencia_volume.alertas %}
+                        <tr>
+                            <td>{{ a.ticker }}</td>
+                            <td class="numero positivo">
+                                {% if a.alta_acumulada > 0 %}▲ {% else %}▼ {% endif %}{{ "%.2f"|format(a.alta_acumulada)|replace('.', ',') }}%
+                            </td>
+                            <td class="numero negativo">
+                                {% if a.var_volume > 0 %}▲ {% else %}▼ {% endif %}{{ "%.2f"|format(a.var_volume)|replace('.', ',') }}%
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        {% endcall %}
+
 
 
 {% call painel("Índice de Esforço vs Resultado", 4, "Ações com volume muito acima da média (esforço alto) mas cuja amplitude de preço (abertura vs atual) permaneceu perto de zero, indicando absorção institucional.", esforco_resultado.fonte if esforco_resultado else "", esforco_resultado.coletado_em if esforco_resultado else "", "visao-micro alertas") %}

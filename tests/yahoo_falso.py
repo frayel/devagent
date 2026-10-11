@@ -57,6 +57,8 @@ def _fechamentos(simbolo: str, n: int) -> list[float]:
         return valores
     elif simbolo == "BRL=X":
         base, forma = 5.2, 2
+    elif "DIV" in simbolo:
+        base, forma = 10.0, 1  # Continuous high
     elif "TICKER" in simbolo or simbolo == "PETR4.SA":
         base, forma = 10.0 + s % 50, 0
     else:
@@ -90,6 +92,8 @@ def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
     volumes = [1_000_000 + (s % 7) * 100_000 for _ in range(n)]
     if simbolo == "PETR4.SA" and intervalo == "15m":
         volumes[-1] = 0  # testacao_orfa: volume 0 (acao orfa)
+    elif "DIV" in simbolo:  # For radar divergencia test
+        volumes = [100000, 100000, 100000, 10000, 10000]
     elif s % 3 == 0 or "TICKER" in simbolo or simbolo == "PETR4.SA":
         volumes[-1] *= 4  # pico de volume no último pregão
     ultimo = fechamentos[-1]

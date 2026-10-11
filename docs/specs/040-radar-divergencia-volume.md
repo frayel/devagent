@@ -1,7 +1,7 @@
 ---
 id: 040
 titulo: Radar de Divergência Volume/Preço (Exaustão)
-status: ready
+status: done
 esforco: M
 ---
 
@@ -23,8 +23,8 @@ Se nenhuma ação se encaixar nos critérios, o painel não aparece.
 - Exibir os casos onde a alta de preço é acompanhada pela queda do volume negociado.
 
 ## Critérios de aceite
-- [ ] Teste automatizado confirma a lógica de divergência (preço subindo e volume declinando).
-- [ ] Painel oculto e contrato `/api/snapshot` não quebram se não houver ativos que atendam aos requisitos.
+- [x] Teste automatizado confirma a lógica de divergência (preço subindo e volume declinando).
+- [x] Painel oculto e contrato `/api/snapshot` não quebram se não houver ativos que atendam aos requisitos.
 
 ## Invariantes de produção
 A chave `divergencia_volume` em `/api/snapshot` expõe a lista (podendo ser vazia) sem quebrar o layout.
