@@ -44,4 +44,3 @@
 - **O que fiz:** Adicionei os índices (`idx_anomalia_peso_cache_timestamp` e `idx_radar_inflexao_cache_timestamp`) nas tabelas `anomalia_peso_cache` e `radar_inflexao_cache` para a coluna `timestamp DESC`.
 - **O que aprendi:** Semelhante às tabelas `highlights_cache` e `concentracao_cache`, a ausência dos índices causava lentidão na consulta `ORDER BY timestamp DESC LIMIT 1` usada no método `get_latest_*`, exigindo que o banco varresse toda a tabela nessas requisições. A adição otimizou essas queries.
 - **O que evitar:** Criar tabelas para cache de relatórios limitadas ao timestamp mais recente (`get_latest_...`) sem adicionar o índice de ordenação.
-
