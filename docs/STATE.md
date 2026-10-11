@@ -8,6 +8,11 @@
 - Painéis, seções ou telas acrescentados desde a última revisão: 2 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+- Spec 041 (Alerta de Falso Rompimento):
+  - Banco de dados SQLite (`falso_rompimento_cache`).
+  - Coletor buscando fechamentos, máximas e volumes para 30 ações de alta liquidez via `yfinance` nos últimos 2 dias.
+  - Cálculo de rompimento da máxima do dia anterior seguido de reversão de preço e aumento de volume.
+  - Exibição de painel na visão micro e tabela de alertas via contrato `/api/snapshot`.
 - Spec 040 (Radar de Divergência Volume/Preço):
   - Tabela `radar_divergencia_volume_cache` no banco SQLite.
   - Coletor com yfinance (chart v8) buscando fechamentos de 5 dias para identificar topos.

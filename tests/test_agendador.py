@@ -127,6 +127,7 @@ def test_mascara_token_no_estado(monkeypatch):
         "detector_acao_orfa",
         "esforco_resultado",
         "radar_divergencia_volume",
+        "falso_rompimento",
     ):
         monkeypatch.setattr(f"app.collectors.{nome}.collect_and_save", lambda: True)
 
