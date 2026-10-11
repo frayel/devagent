@@ -112,6 +112,7 @@ def _coletar() -> None:
         "detector_acao_orfa",
         "esforco_resultado",
         "radar_divergencia_volume",
+        "falso_rompimento",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
         mt5.reiniciar_rastreio()

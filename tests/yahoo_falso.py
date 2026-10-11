@@ -97,6 +97,39 @@ def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
     elif s % 3 == 0 or "TICKER" in simbolo or simbolo == "PETR4.SA":
         volumes[-1] *= 4  # pico de volume no último pregão
     ultimo = fechamentos[-1]
+
+    if "ELET3" in simbolo:
+        highs = [round(v * 1.01, 2) for v in fechamentos]
+        if n >= 2:
+            highs[-1] = highs[-2] + 0.5  # higher high
+            fechamentos[-1] = fechamentos[-2] - 0.5  # lower close
+            volumes[-1] = volumes[-2] * 2  # higher volume
+        return {
+            "meta": {
+                "symbol": simbolo,
+                "currency": "BRL",
+                "regularMarketPrice": ultimo,
+                "chartPreviousClose": anterior,
+                "previousClose": anterior,
+                "regularMarketDayLow": round(ultimo * 0.97, 2),
+                "regularMarketDayHigh": round(ultimo * 1.01, 2),
+                "regularMarketVolume": volumes[-1],
+                "regularMarketTime": tempos[-1],
+            },
+            "timestamp": tempos,
+            "indicators": {
+                "quote": [
+                    {
+                        "open": [round(v * 1.005, 2) for v in fechamentos],
+                        "high": highs,
+                        "low": [round(v * 0.97, 2) for v in fechamentos],
+                        "close": fechamentos,
+                        "volume": volumes,
+                    }
+                ]
+            },
+        }
+
     return {
         "meta": {
             "symbol": simbolo,

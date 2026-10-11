@@ -1,7 +1,7 @@
 ---
 id: 041
 titulo: Alerta de Falso Rompimento
-status: ready
+status: done
 esforco: M
 ---
 
