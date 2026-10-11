@@ -267,4 +267,3 @@
 | Revisão de Experiência: Consolidação de Gauges | Responde: Como simplificar a leitura de medidores espalhados? Funde "Apetite a Risco" e "Rotação de Capital" no mesmo painel de Maré do Mercado. | N/A | P | Baixo |
 | Assimetria de Livro de Ofertas | Responde: Qual a pressão real do book em ativos de liquidez média? | brapi.dev | G | Alto (Limites de API) |
 | Radar de Exaustão de Tendência | Responde: Quando um ativo subiu 5 dias seguidos com volume decrescente? | yfinance | M | Baixo |
-| Filtro de Sensibilidade a Juros | Responde: Quais ativos do varejo e construção mais reagem aos movimentos diários do DI futuro? | brapi.dev | M | Médio |
