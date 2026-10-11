@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- Spec 039: Índice de Esforço vs Resultado.
 - feat: Adiciona Detector de Ação Órfã (Spec 038). Novo painel na visão micro que exibe as ações com queda brusca de volume intradiário (secaram em lote de 15min). Adicionado ao contrato `/api/snapshot` e verificação no auditor.
 - feat: Radar de Congestionamento (Estreitamento de Bandas) (Spec 037). Novo painel que identifica ações operando em faixas estreitas com base nas Bandas de Bollinger, sinalizando potencial para um movimento forte em breve. Baseado no Yahoo Finance.
 - **Radar de Short Squeeze**: Painel em "Alertas Intraday" para ações em forte queda recente, mas com alta diária violenta acompanhada de volume anormal (Spec 36).

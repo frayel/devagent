@@ -433,6 +433,26 @@
     {% endif %}
 {% endcall %}
 
+
+{% call painel("Índice de Esforço vs Resultado", 4, "Ações com volume muito acima da média (esforço alto) mas cuja amplitude de preço (abertura vs atual) permaneceu perto de zero, indicando absorção institucional.", esforco_resultado.fonte if esforco_resultado else "", esforco_resultado.coletado_em if esforco_resultado else "", "visao-micro alertas") %}
+    {% if not esforco_resultado %}
+        {{ estado("indisponivel") }}
+    {% elif not esforco_resultado.alertas %}
+        <div class="vazio">Nenhuma anomalia detectada hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in esforco_resultado.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': ("%.1fx" | format(a.vol_ratio)) | replace('.', ',')},
+                {'num': True, 'conteudo': (variacao("%.2f%%" | format(a.price_var), 1 if a.price_var > 0 else -1 if a.price_var < 0 else 0)) | safe}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Volume', 'num': True}, {'titulo': 'Variação', 'num': True}], 'esforco-resultado') }}
+    {% endif %}
+{% endcall %}
+
 {% call painel("Scanner de Capitulação", 4, "Ações caindo >2% mas com pico extremo recente de volume e longa sombra inferior (sinal de absorção).", scanner_capitulacao.fonte if scanner_capitulacao else "", scanner_capitulacao.time if scanner_capitulacao else "", "visao-micro alertas") %}
     {% if not scanner_capitulacao %}
         {{ estado("indisponivel") }}
