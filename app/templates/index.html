@@ -425,7 +425,7 @@
             {% set _ = linhas.append([
                 {'conteudo': a.ticker, 'tk': True},
                 {'conteudo': (variacao("%.2f%%" | format(a.queda_10d), -1)) | safe, 'num': True},
-                {'conteudo': ('<span>' ~ a.mult_vol ~ 'x vol</span>') | safe},
+                {'conteudo': ('<span>' | safe) ~ (a.mult_vol | e) ~ ('x vol</span>' | safe)},
                 {'conteudo': (variacao("%.2f%%" | format(a.alta_hoje), 1)) | safe, 'num': True}
             ]) %}
         {% endfor %}
@@ -494,7 +494,7 @@
         {% for a in scanner_capitulacao.alertas %}
             {% set _ = linhas.append([
                 {'conteudo': a.ticker, 'tk': True},
-                {'conteudo': ('<span>' ~ a.texto ~ '</span>') | safe},
+                {'conteudo': ('<span>' | safe) ~ (a.texto | e) ~ ('</span>' | safe)},
                 {'conteudo': (variacao("%.2f%%" | format(a.queda_pct), -1)) | safe, 'num': True}
             ]) %}
         {% endfor %}
@@ -599,7 +599,7 @@
             {% set _ = linhas.append([
                 {'conteudo': a.ticker, 'tk': True},
                 {'conteudo': (variacao(val, -1)) | safe, 'num': True},
-                {'conteudo': ('<span>' ~ (("R$ %.2f" | format(a.preco_atual)) | replace('.', ',')) ~ '</span>') | safe, 'num': True}
+                {'conteudo': ('<span>' | safe) ~ (("R$ %.2f" | format(a.preco_atual)) | replace('.', ',') | e) ~ ('</span>' | safe), 'num': True}
             ]) %}
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda Máx.'}, {'titulo': 'Atual', 'num': True}], 'compradores-fundo') }}

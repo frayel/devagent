@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 from datetime import datetime, time, timedelta, timezone
 
 
@@ -48,6 +49,10 @@ def intervalo(agora: datetime) -> timedelta:
     return FORA_DO_PREGAO
 
 
+def _mask_secrets(text: str) -> str:
+    return re.sub(r"([?&]token=)[^&\s]+", r"\1***", text)
+
+
 class _Memoria(logging.Handler):
     """Guarda os avisos e erros dos coletores da rodada, para /api/coleta."""
 
@@ -56,7 +61,7 @@ class _Memoria(logging.Handler):
         self.linhas: list[str] = []
 
     def emit(self, record: logging.LogRecord) -> None:
-        self.linhas.append(f"{record.name}: {record.getMessage()}"[:300])
+        self.linhas.append(_mask_secrets(f"{record.name}: {record.getMessage()}"[:300]))
 
 
 def coletar_tudo() -> None:
@@ -116,7 +121,7 @@ def _coletar() -> None:
                 estado["ultimo_erro"] = f"{nome}: nenhuma fonte respondeu"
         except Exception as e:  # noqa: BLE001 - o laço não pode morrer
             logger.exception("Coleta de %s falhou", nome)
-            estado["ultimo_erro"] = f"{nome}: {e}"
+            estado["ultimo_erro"] = _mask_secrets(f"{nome}: {e}")
 
 
 async def laco_de_coleta() -> None:

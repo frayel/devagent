@@ -82,3 +82,59 @@ def test_httpx_e_dependencia_de_producao():
     a coleta quebra em produção mesmo com os testes passando."""
     with open("requirements.txt") as f:
         assert "httpx" in {linha.strip().split("=")[0] for linha in f}
+
+
+def test_mascara_token_no_estado(monkeypatch):
+    from app import agendador
+    import httpx
+
+    agendador.estado["ultimo_erro"] = None
+    agendador.estado["detalhes"] = None
+
+    def quebra():
+        raise httpx.RequestError(
+            "Falha na url https://api.com/?token=SEGREDO_123&range=1d",
+            request=httpx.Request("GET", "https://api.com/?token=SEGREDO_123&range=1d"),
+        )
+
+    monkeypatch.setattr("app.collectors.ibovespa.collect_and_save", quebra)
+
+    # Mocking others to just return True
+    for nome in (
+        "highlights",
+        "mare",
+        "volume_alerts",
+        "dolar_correlation",
+        "forca_relativa",
+        "escudo_quedas",
+        "coesao",
+        "atrasadas_rally",
+        "concentracao",
+        "apetite_risco",
+        "variacao_subita",
+        "concentracao_setorial",
+        "rotacao_capital",
+        "faca_caindo",
+        "compradores_fundo",
+        "armadilha_abertura",
+        "sobrevivencia_semanal",
+        "volatilidade_silenciosa",
+        "scanner_capitulacao",
+        "radar_inflexao",
+        "anomalia_peso",
+        "radar_short_squeeze",
+        "radar_congestionamento",
+        "detector_acao_orfa",
+        "esforco_resultado",
+        "radar_divergencia_volume",
+    ):
+        monkeypatch.setattr(f"app.collectors.{nome}.collect_and_save", lambda: True)
+
+    agendador.coletar_tudo()
+
+    assert "SEGREDO_123" not in agendador.estado["ultimo_erro"]
+    assert "token=***" in agendador.estado["ultimo_erro"]
+
+    if agendador.estado["detalhes"] is not None:
+        assert "SEGREDO_123" not in agendador.estado["detalhes"]
+        assert "token=***" in agendador.estado["detalhes"]
