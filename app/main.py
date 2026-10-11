@@ -390,6 +390,7 @@ def snapshot():
         get_latest_detector_acao_orfa_data,
         get_latest_esforco_resultado_data,
         get_latest_radar_divergencia_volume_data,
+        get_latest_falso_rompimento_data,
     )
 
     radar_short_squeeze_data = get_latest_radar_short_squeeze_data()
@@ -466,6 +467,17 @@ def snapshot():
         resp["paineis"]["divergencia_volume"] = alertas
     else:
         resp["paineis"]["divergencia_volume"] = []
+
+    falso_rompimento_data = get_latest_falso_rompimento_data()
+    if falso_rompimento_data:
+        try:
+            alertas = json.loads(falso_rompimento_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["falso_rompimento"] = alertas
+    else:
+        resp["paineis"]["falso_rompimento"] = []
+
     anomalia_peso_data = get_latest_anomalia_peso_data()
     if anomalia_peso_data:
         try:
@@ -576,6 +588,7 @@ async def index(request: Request):
         get_latest_detector_acao_orfa_data,
         get_latest_esforco_resultado_data,
         get_latest_radar_divergencia_volume_data,
+        get_latest_falso_rompimento_data,
     )
 
     radar_data = get_latest_radar_inflexao_data()
@@ -615,6 +628,21 @@ async def index(request: Request):
                     timezone(timedelta(hours=-3))
                 ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                 "fonte": esforco_resultado_data.fonte,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+
+    falso_rompimento_data = get_latest_falso_rompimento_data()
+    falso_rompimento = None
+    if falso_rompimento_data:
+        try:
+            alertas = json.loads(falso_rompimento_data.alertas_json)
+            falso_rompimento = {
+                "coletado_em": falso_rompimento_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": falso_rompimento_data.fonte,
                 "alertas": alertas,
             }
         except Exception:
@@ -679,6 +707,7 @@ async def index(request: Request):
             "detector_acao_orfa": detector_acao_orfa_data,
             "esforco_resultado": esforco_resultado,
             "radar_divergencia_volume": radar_divergencia_volume,
+            "falso_rompimento": falso_rompimento,
             "mare": mare,
         },
     )

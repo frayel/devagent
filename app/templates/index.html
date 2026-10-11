@@ -432,6 +432,37 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda 10d', 'num': True}, {'titulo': 'Volume'}, {'titulo': 'Alta', 'num': True}], 'short-squeeze') }}
     {% endif %}
 {% endcall %}
+        {% call painel("Falso Rompimento", 4, "Ações que romperam a máxima anterior, mas reverteram para baixo com volume alto (Bull Trap).", falso_rompimento.fonte if falso_rompimento else "", falso_rompimento.coletado_em if falso_rompimento else "", "visao-micro alertas") %}
+            {% if not falso_rompimento %}
+                <div class="dado-indisponivel">Dado indisponível agora</div>
+            {% elif not falso_rompimento.alertas %}
+                <div class="dado-indisponivel">Nenhum falso rompimento detectado</div>
+            {% else %}
+                <table class="ranking">
+                    <thead>
+                        <tr>
+                            <th>Ativo</th>
+                            <th class="numero">Variação (%)</th>
+                            <th class="numero">Vol (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in falso_rompimento.alertas %}
+                        <tr>
+                            <td>{{ a.ticker }}</td>
+                            <td class="numero negativo">
+                                {% if a.variacao > 0 %}▲ {% else %}▼ {% endif %}{{ "%.2f"|format(a.variacao)|replace('.', ',') }}%
+                            </td>
+                            <td class="numero positivo">
+                                {% if a.var_volume > 0 %}▲ {% else %}▼ {% endif %}{{ "%.2f"|format(a.var_volume)|replace('.', ',') }}%
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        {% endcall %}
+
         {% call painel("Divergência Volume/Preço", 4, "Ações que subiram nos últimos 5 dias, mas cujo volume negociado secou (exaustão).", radar_divergencia_volume.fonte if radar_divergencia_volume else "", radar_divergencia_volume.coletado_em if radar_divergencia_volume else "", "visao-micro alertas") %}
             {% if not radar_divergencia_volume %}
                 <div class="dado-indisponivel">Dado indisponível agora</div>

@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- Painel "Falso Rompimento" na visão micro listando ações que romperam a máxima mas reverteram para baixo com volume (Spec 041).
 - Spec 040: Radar de Divergência Volume/Preço. Painel de alerta intraday para exaustão de topo (alta com queda progressiva no volume médio).
 - Spec 039: Índice de Esforço vs Resultado.
 - feat: Adiciona Detector de Ação Órfã (Spec 038). Novo painel na visão micro que exibe as ações com queda brusca de volume intradiário (secaram em lote de 15min). Adicionado ao contrato `/api/snapshot` e verificação no auditor.
