@@ -50,10 +50,16 @@ def _fechamentos(simbolo: str, n: int) -> list[float]:
     if simbolo in ("^BVSP", "%5EBVSP"):
         # Sobe 1,4% e cai 0,4% em dias alternados: rally nos últimos
         # pregões e dias de queda para os painéis defensivos.
+        # Make the very last day a DROP to trigger concentracao_vendedora.
         valores, v = [], 120_000.0
         for i in range(n + 1):
             v *= 1.014 if i % 2 else 0.996
             valores.append(round(v, 2))
+
+        # Force the last day to be negative relative to the previous
+        if valores[-1] >= valores[-2]:
+            valores[-1] = round(valores[-2] * 0.99, 2)
+
         return valores
     elif simbolo == "BRL=X":
         base, forma = 5.2, 2

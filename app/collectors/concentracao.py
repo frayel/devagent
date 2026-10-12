@@ -1,7 +1,11 @@
 import json
 import logging
 from datetime import datetime, timezone
-from app.database import ConcentracaoData, save_concentracao_data
+from app.database import (
+    ConcentracaoData,
+    save_concentracao_data,
+    save_concentracao_vendedora_data,
+)
 from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 
@@ -110,9 +114,83 @@ def fetch_yfinance() -> ConcentracaoData | None:
         return None
 
 
+def fetch_concentracao_vendedora_yfinance() -> ConcentracaoData | None:
+    symbols = ",".join([f"{t}.SA" for t in TICKERS_PESOS.keys()]) + ",%5EBVSP"
+    url = f"https://query2.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=5d&interval=1d"
+    try:
+        response = fetch_with_retry(url)
+        data = response.json()
+        results = data.get("spark", {}).get("result", [])
+        if not results:
+            return None
+
+        history_map = {}
+        for item in results:
+            symbol = item.get("symbol", "").replace(".SA", "")
+            resp = item.get("response", [])
+            if resp and resp[0].get("indicators", {}).get("quote", []):
+                closes = resp[0]["indicators"]["quote"][0].get("close", [])
+                valid_closes = [c for c in closes if c is not None]
+                if len(valid_closes) >= 2:
+                    history_map[symbol] = {
+                        "current": valid_closes[-1],
+                        "prev": valid_closes[-2],
+                    }
+
+        if "^BVSP" not in history_map:
+            return None
+
+        ibov = history_map["^BVSP"]
+        ibov_var_pts = ibov["current"] - ibov["prev"]
+
+        if ibov_var_pts >= 0:
+            return None
+
+        contribs = []
+        for ticker, peso in TICKERS_PESOS.items():
+            if ticker in history_map:
+                t_data = history_map[ticker]
+                t_var_pct = (t_data["current"] - t_data["prev"]) / t_data["prev"]
+                t_pts = t_var_pct * peso * ibov["prev"]
+                if t_pts < 0:
+                    contribs.append({"ticker": ticker, "pontos": t_pts, "peso": peso})
+
+        contribs.sort(key=lambda x: x["pontos"])
+
+        soma_pts_negativos = sum([c["pontos"] for c in contribs[:5]])
+        perc_fmt = (
+            min(100, int((soma_pts_negativos / ibov_var_pts) * 100))
+            if ibov_var_pts < 0
+            else 0
+        )
+
+        if len(contribs) == 0:
+            return None
+
+        mensagem = f"Os {min(5, len(contribs))} piores ativos hoje respondem por {perc_fmt}% da queda total do Ibovespa."
+
+        return ConcentracaoData(
+            timestamp=datetime.now(timezone.utc),
+            resumo_json=json.dumps(
+                {"estado": "vendedora", "mensagem": mensagem, "percentual": perc_fmt}
+            ),
+            top3_json=json.dumps(contribs[:5]),
+            fonte=mt5.fonte_efetiva("yfinance"),
+        )
+    except Exception as e:
+        logger.error(f"Erro no coletor concentracao_vendedora: {e}")
+        return None
+
+
 def collect_and_save() -> bool:
     data = fetch_yfinance()
+    data_vend = fetch_concentracao_vendedora_yfinance()
+
+    success = False
     if data:
         save_concentracao_data(data)
-        return True
-    return False
+        success = True
+    if data_vend:
+        save_concentracao_vendedora_data(data_vend)
+        success = True
+    return success

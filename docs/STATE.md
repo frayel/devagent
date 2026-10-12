@@ -14,7 +14,7 @@
   - Coletor com yfinance buscando ^BVSP e top 5 ações por peso para calcular a contribuição no movimento.
   - Exibição de painel na visão macro com a proporção.
   - Adicionado ao contrato `/api/snapshot`.
-  - Contador da cadência de experiência: 2.
+  - Contador da cadência de experiência: 3.
 
 - Spec 045 (Destaque Visual para a Maré):
   - Ajuste de espaçamento e respiro do painel `.painel-mare` com `padding` e `gap` ajustados no CSS, conforme guia visual.
@@ -107,7 +107,7 @@
   - Cálculo em `app/services/mare.py` e coletor `app/collectors/mare.py` (cesta `TICKERS` com `spark` 3mo e Ibovespa com `chart` 2y, MT5 preferencial, brapi como reserva do Ibovespa); cache `mare_cache`.
   - Painel `span-4` ao lado do Ibovespa; Tendência, Dispersão e Coesão viram a linha seguinte.
   - Chave `mare` no `/api/snapshot`; `checar_mare` em `auditoria/auditar.py`.
-  - Contador da cadência de experiência: 2.
+  - Contador da cadência de experiência: 3.
 
 - Spec 026 (Gauges para valores únicos):
   - Macro `gauge` em `componentes.html` e cálculo em `app/gauge.py` (filtro `gauge_pct` e global `gauge_dados`).
