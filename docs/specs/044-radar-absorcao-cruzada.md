@@ -1,7 +1,7 @@
 ---
 id: 044
 titulo: Radar de Absorção Cruzada
-status: ready
+status: done
 esforco: M
 ---
 

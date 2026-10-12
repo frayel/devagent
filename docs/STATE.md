@@ -5,9 +5,14 @@
 ## Experiência
 
 - Última revisão de experiência: 09/10/2026 (Minimização de Painéis)
-- Painéis, seções ou telas acrescentados desde a última revisão: 3 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 4 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+
+- Spec 044 (Radar de Absorção Cruzada):
+  - Banco de dados SQLite (`radar_absorcao_cruzada_cache`).
+  - Coletor com yfinance (chart intraday) monitorando ações com queda forte que apresentam pico de volume atípico nas mínimas, sinalizando defesa institucional (VSA).
+  - Adicionado painel em "Alertas Intraday" e no `/api/snapshot`.
 - Spec 043 (Radar de Liquidez de Abertura):
   - Banco de dados SQLite (`liquidez_abertura_cache`).
   - Coletor buscando alertas de anomalia de volume da primeira hora via `yfinance`.

@@ -328,6 +328,25 @@
 
 
 
+
+{% call painel("Radar de Absorção Cruzada", 4, "Ações que tiveram forte queda intradiária (>1.5%) mas no fundo encontraram volume anormal (2x a média), indicando possível absorção.", radar_absorcao_cruzada.fonte if radar_absorcao_cruzada else "", radar_absorcao_cruzada.coletado_em if radar_absorcao_cruzada else "", "visao-micro alertas") %}
+    {% if not radar_absorcao_cruzada %}
+        {{ estado("indisponivel") }}
+    {% elif not radar_absorcao_cruzada.alertas %}
+        <div class="vazio">Nenhuma absorção detectada no momento.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in radar_absorcao_cruzada.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': variacao(('+%.0f%%' | format(a.ratio * 100)), a.ratio)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Volume Relativo', 'num': True}], 'radar-absorcao-cruzada') }}
+    {% endif %}
+{% endcall %}
+
 {% call painel("Radar de Liquidez", 4, "Ações que concentraram volume anormal de negociação logo nos primeiros momentos do pregão.", liquidez_abertura.fonte if liquidez_abertura else "", liquidez_abertura.coletado_em if liquidez_abertura else "", "visao-micro alertas") %}
     {% if liquidez_abertura and liquidez_abertura.alertas %}
         <table class="tabela-compacta">
