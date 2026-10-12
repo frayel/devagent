@@ -1,7 +1,7 @@
 ---
 id: 045
 titulo: Destaque Visual para a Maré
-status: ready
+status: done
 esforco: P
 ---
 
