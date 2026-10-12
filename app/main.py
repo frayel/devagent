@@ -411,6 +411,7 @@ def snapshot():
         get_latest_esforco_resultado_data,
         get_latest_radar_divergencia_volume_data,
         get_latest_radar_absorcao_cruzada_data,
+        get_latest_fator_peso_pesado_data,
         get_latest_liquidez_abertura_data,
         get_latest_falso_rompimento_data,
     )
@@ -501,6 +502,13 @@ def snapshot():
         resp["paineis"]["falso_rompimento"] = []
 
     radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
+    fator_peso_pesado_data = get_latest_fator_peso_pesado_data()
+
+    if fator_peso_pesado_data:
+        resp["paineis"]["fator_peso_pesado"] = {
+            "proporcao": fator_peso_pesado_data.proporcao,
+            "mercado_lateral": fator_peso_pesado_data.mercado_lateral,
+        }
     if radar_absorcao_cruzada_data:
         try:
             alertas = json.loads(radar_absorcao_cruzada_data.alertas_json)
@@ -636,6 +644,7 @@ async def index(request: Request):
         get_latest_esforco_resultado_data,
         get_latest_radar_divergencia_volume_data,
         get_latest_radar_absorcao_cruzada_data,
+        get_latest_fator_peso_pesado_data,
         get_latest_liquidez_abertura_data,
         get_latest_falso_rompimento_data,
     )
@@ -698,6 +707,7 @@ async def index(request: Request):
             pass
 
     radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
+    fator_peso_pesado_data = get_latest_fator_peso_pesado_data()
     radar_absorcao_cruzada = None
     if radar_absorcao_cruzada_data:
         try:
@@ -789,6 +799,7 @@ async def index(request: Request):
             "radar_divergencia_volume": radar_divergencia_volume,
             "falso_rompimento": falso_rompimento,
             "radar_absorcao_cruzada": radar_absorcao_cruzada,
+            "fator_peso_pesado_data": fator_peso_pesado_data,
             "liquidez_abertura": liquidez_abertura,
             "mare": mare,
         },
