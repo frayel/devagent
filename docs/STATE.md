@@ -4,7 +4,7 @@
 
 ## Experiência
 
-- Última revisão de experiência: 12/10/2026 (Destaque Visual para a Maré)
+- Última revisão de experiência: 12/10/2026 (Motores do Índice)
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
