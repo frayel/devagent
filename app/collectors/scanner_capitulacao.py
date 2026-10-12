@@ -10,19 +10,25 @@ from app.database import ScannerCapitulacaoData, save_scanner_capitulacao_data
 logger = logging.getLogger(__name__)
 
 
-async def fetch_ticker(client, ticker):
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}.SA?interval=15m&range=2d"
-    try:
-        resp = await client.get(url, timeout=10.0)
-        resp.raise_for_status()
-        return ticker, resp.json()
-    except Exception:
-        return ticker, None
+async def fetch_ticker(client, ticker, semaphore, i):
+    subdomain = "query1" if i % 2 == 0 else "query2"
+    url = f"https://{subdomain}.finance.yahoo.com/v8/finance/chart/{ticker}.SA?interval=15m&range=2d"
+
+    async with semaphore:
+        try:
+            resp = await client.get(url, timeout=10.0)
+            resp.raise_for_status()
+            return ticker, resp.json()
+        except Exception:
+            return ticker, None
 
 
 async def fetch_all():
+    semaphore = asyncio.Semaphore(
+        2
+    )  # Limit concurrency to 2 to prevent 429 and blockages
     async with httpx.AsyncClient() as client:
-        tasks = [fetch_ticker(client, t) for t in TICKERS]
+        tasks = [fetch_ticker(client, t, semaphore, i) for i, t in enumerate(TICKERS)]
         return await asyncio.gather(*tasks)
 
 

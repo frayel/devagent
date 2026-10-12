@@ -19,9 +19,10 @@ def fetch_yfinance() -> LiquidezAberturaData | None:
     successful_fetches = 0
 
     with httpx.Client(timeout=10.0) as client:
-        for symbol in TICKERS:
+        for i, symbol in enumerate(TICKERS):
             yf_symbol = f"{symbol}.SA"
-            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{yf_symbol}?range=1mo&interval=1d"
+            subdomain = "query1" if i % 2 == 0 else "query2"
+            url = f"https://{subdomain}.finance.yahoo.com/v8/finance/chart/{yf_symbol}?range=1mo&interval=1d"
             try:
                 response = fetch_with_retry(url, client=client)
                 data = response.json()
