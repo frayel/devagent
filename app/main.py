@@ -410,6 +410,7 @@ def snapshot():
         get_latest_detector_acao_orfa_data,
         get_latest_esforco_resultado_data,
         get_latest_radar_divergencia_volume_data,
+        get_latest_radar_absorcao_cruzada_data,
         get_latest_liquidez_abertura_data,
         get_latest_falso_rompimento_data,
     )
@@ -498,6 +499,20 @@ def snapshot():
         resp["paineis"]["falso_rompimento"] = alertas
     else:
         resp["paineis"]["falso_rompimento"] = []
+
+    radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
+    if radar_absorcao_cruzada_data:
+        try:
+            alertas = json.loads(radar_absorcao_cruzada_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["radar_absorcao_cruzada"] = {
+            "coletado_em": radar_absorcao_cruzada_data.timestamp.isoformat(),
+            "fonte": radar_absorcao_cruzada_data.fonte,
+            "alertas": alertas,
+        }
+    else:
+        resp["paineis"]["radar_absorcao_cruzada"] = []
 
     liquidez_abertura_data = get_latest_liquidez_abertura_data()
     if liquidez_abertura_data:
@@ -620,6 +635,7 @@ async def index(request: Request):
         get_latest_detector_acao_orfa_data,
         get_latest_esforco_resultado_data,
         get_latest_radar_divergencia_volume_data,
+        get_latest_radar_absorcao_cruzada_data,
         get_latest_liquidez_abertura_data,
         get_latest_falso_rompimento_data,
     )
@@ -676,6 +692,21 @@ async def index(request: Request):
                     timezone(timedelta(hours=-3))
                 ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                 "fonte": falso_rompimento_data.fonte,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+
+    radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
+    radar_absorcao_cruzada = None
+    if radar_absorcao_cruzada_data:
+        try:
+            alertas = json.loads(radar_absorcao_cruzada_data.alertas_json)
+            radar_absorcao_cruzada = {
+                "coletado_em": radar_absorcao_cruzada_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": radar_absorcao_cruzada_data.fonte,
                 "alertas": alertas,
             }
         except Exception:
@@ -757,6 +788,7 @@ async def index(request: Request):
             "esforco_resultado": esforco_resultado,
             "radar_divergencia_volume": radar_divergencia_volume,
             "falso_rompimento": falso_rompimento,
+            "radar_absorcao_cruzada": radar_absorcao_cruzada,
             "liquidez_abertura": liquidez_abertura,
             "mare": mare,
         },

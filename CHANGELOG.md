@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 ### Added
+- Spec 044 (Radar de Absorção Cruzada):
+  - Banco de dados SQLite (`radar_absorcao_cruzada_cache`).
+  - Coletor com yfinance monitorando exaustão de tendência de baixa.
+  - Adicionado painel em "Alertas Intraday" e `/api/snapshot`.
 - Spec 043 (Radar de Liquidez de Abertura):
   - Banco de dados SQLite (`liquidez_abertura_cache`).
   - Coletor buscando fechamentos intraday para ações de alta liquidez via `yfinance` para detectar picos anormais de volume na abertura comparados à média.
