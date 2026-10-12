@@ -74,7 +74,9 @@ def coletar_tudo() -> None:
         _coletar()
     finally:
         raiz.removeHandler(memoria)
-        estado["detalhes"] = "\n".join(memoria.linhas[-10:]) or None
+        estado["detalhes"] = (
+            _mask_secrets("\n".join(memoria.linhas[-10:])) if memoria.linhas else None
+        )
     estado["ultima_coleta"] = datetime.now(timezone.utc).isoformat()
 
 

@@ -157,3 +157,27 @@ def test_mascara_token_no_estado(monkeypatch):
     if agendador.estado["detalhes"] is not None:
         assert "SEGREDO_123" not in agendador.estado["detalhes"]
         assert "token=***" in agendador.estado["detalhes"]
+
+
+def test_estado_detalhes_masking(monkeypatch):
+    import app.agendador
+
+    class FakeMemoria:
+        def __init__(self):
+            self.linhas = ["Error: http://api.com?token=supersecret"]
+
+    monkeypatch.setattr("app.agendador._Memoria", FakeMemoria)
+    monkeypatch.setattr("app.agendador._coletar", lambda: None)
+
+    # Needs a fake logger handler mock, let's just mock the handler remove
+    import logging
+
+    raiz = logging.getLogger("app.collectors")
+
+    monkeypatch.setattr(raiz, "removeHandler", lambda x: None)
+    monkeypatch.setattr(raiz, "addHandler", lambda x: None)
+
+    app.agendador.coletar_tudo()
+
+    assert "supersecret" not in app.agendador.estado["detalhes"]
+    assert "***" in app.agendador.estado["detalhes"]
