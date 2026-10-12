@@ -53,6 +53,9 @@ def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
         "app.collectors.esforco_resultado.collect_and_save", lambda: True
     )
     monkeypatch.setattr(
+        "app.collectors.fator_peso_pesado.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
         "app.collectors.radar_divergencia_volume.collect_and_save", lambda: True
     )
     monkeypatch.setattr(
@@ -146,6 +149,7 @@ def test_mascara_token_no_estado(monkeypatch):
         "falso_rompimento",
         "radar_liquidez_abertura",
         "radar_absorcao_cruzada",
+        "fator_peso_pesado",
     ):
         monkeypatch.setattr(f"app.collectors.{nome}.collect_and_save", lambda: True)
 

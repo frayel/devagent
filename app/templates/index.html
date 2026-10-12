@@ -92,6 +92,32 @@
     {% endif %}
 {% endcall %}
 
+
+{% call painel("Fator Peso Pesado", 4, "Mostra a proporção do movimento do Ibovespa no dia que é explicada apenas pelas 5 ações de maior peso (VALE3, PETR4, ITUB4, PETR3, BBAS3). Calculado pela soma da contribuição em pontos de cada uma (variação % * peso da ação) sobre a variação total do índice.", fator_peso_pesado_data.fonte if fator_peso_pesado_data else "", data.time if data else "", "visao-macro visao-geral") %}
+    {% if fator_peso_pesado_data %}
+        {% if fator_peso_pesado_data.mercado_lateral %}
+            <div class="kpi-container espaco-topo">
+                <span class="texto-2">Mercado lateral</span>
+            </div>
+        {% else %}
+            <div class="kpi-container espaco-topo">
+                <span class="fs-hero num">
+                {% if fator_peso_pesado_data.proporcao > 0 %}
+                    +{{ '%.1f' % fator_peso_pesado_data.proporcao }}%
+                {% elif fator_peso_pesado_data.proporcao < 0 %}
+                    {{ '%.1f' % fator_peso_pesado_data.proporcao }}%
+                {% else %}
+                    0.0%
+                {% endif %}
+                </span>
+                <div class="texto-2 espaco-topo-curto">do movimento do Ibovespa é explicado pelas 5 maiores ações (VALE, PETR e ITUB)</div>
+            </div>
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
 <!-- Linha 3: humor e rotação do dia -->
 {% call painel('Apetite a Risco', 4, 'Se o índice SMLL estiver subindo mais que o IBOV, o mercado está tomando risco.', apetite_risco.fonte if apetite_risco else '', apetite_risco.time if apetite_risco else '', 'visao-macro painel-apetite sentimento-risco') %}
   {% if not apetite_risco %}

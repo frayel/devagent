@@ -1,7 +1,7 @@
 ---
 id: 046
 titulo: Fator "Peso Pesado"
-status: ready
+status: done
 esforco: M
 ---
 

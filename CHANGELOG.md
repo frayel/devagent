@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - Spec 045: Ajuste de espaçamento e respiro visual para o painel `.painel-mare`.
 - (Spec 045) Destaque Visual para a Maré: ajustes de CSS em `tema.css` para aprimorar o destaque ao gauge e espaçamento na grade.
 - Destaque Visual para a Maré adicionado como ideia, Spec 045 criada, Contador de experiência zerado no STATE.md.
@@ -29,11 +30,14 @@
 - Integrados os gauges de Tendência ao card principal do Ibovespa (Spec 035).
 - núcleo: o Jules passa a ser acordado por um relógio externo (ADR 010). O job `vigia`, que ficava ligado 24 h por dia no Actions, dá lugar à ação `rodada` (inicia a persona da hora, destrava e sai em segundos); o `jules.yml` perde o `schedule` e é chamado a cada 30 min pelo cron-job.org via `workflow_dispatch`, porque o cron do GitHub descarta a maior parte dos disparos frequentes. Configuração em `devagent/OPERACAO.md`.
 ### Added
+- Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - docs: atualiza estado das specs 029 e 030
 ### Added
+- Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - feat: Implementa Abas de Navegação Contextual (Spec 030). Substitui os botões de filtro por abas no topo que organizam a interface em Visão Geral, Sentimento & Risco, Rankings & Destaques e Alertas Intraday, ocultando os painéis via JS sem recarregar a página. O filtro "Só Sinais" foi incorporado nas abas.
 - feat: Adiciona Sparklines nos rankings (Spec 029). Adiciona um minigráfico (SVG) nas tabelas "Maiores altas", "Maiores baixas" e "Força Relativa", ilustrando a performance dos últimos 10 pregões com base em histórico do Yahoo Finance.
 ### Added
+- Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - feat: Alerta de Volatilidade Silenciosa (Doji Extremo) (Spec 028). Novo painel na visão micro que exibe as top 3 ações com maior amplitude intraday e fechamento próximo à abertura (≤ 0.5% de variação), refletindo forte indecisão de mercado. Baseado em dados do Yahoo Finance.
 ### Changed
 - agent: `docs/DESIGN.md` reduz o gráfico do Ibovespa para 200px e proíbe eixo Y de preço começando em zero (vai de 2% abaixo do mínimo do período), a pedido do dono do produto.
@@ -41,10 +45,12 @@
 - fix: a Calma da Maré do mercado (Spec 027) passa a medir só a volatilidade de queda (semidesvio com alvo zero). Com o desvio-padrão comum, a alta de 7,42% do Ibovespa em 05/10/2026 zerava a Calma e deixava a Maré em Medo (25) no dia seguinte a uma alta histórica.
 - fix: gráfico do Ibovespa com 200px de altura (antes ficava com a altura padrão do Plotly, 450px) e eixo Y a partir de 2% abaixo do mínimo do período, em vez de zero.
 ### Added
+- Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - feat: Maré do mercado (Spec 027), índice de otimismo de 0 a 100 ao lado do Ibovespa: Fluxo (40%, volume financeiro em ações que sobem), Calma (35%, percentil da volatilidade de 10 pregões do Ibovespa) e Volume (25%, ritmo contra a média de 21 pregões no sentido da maioria). Gauge com as cinco faixas (Pânico, Medo, Neutro, Confiança, Otimismo extremo), barras dos componentes, linha dos últimos 21 pregões e selo `parcial` quando falta um componente. Chave `mare` no `/api/snapshot` e invariantes no auditor (`checar_mare`). Tendência, Dispersão e Coesão passam para a linha seguinte.
 ### Fixed
 - agent: PR vazio não entra mais. O #171 ("Spec 027a") chegou sem nenhum arquivo, passou no CI e foi mergeado; a Maré do mercado continua sem implementação e a spec 027 segue `ready` na seção Correções. Regra 5 em `devagent/conferir_pr.py` (reprova PR sem alteração em `pull_request` ou com `--exigir-alteracao`) e segunda trava no `automerge.yml`, que fecha o PR vazio sem merge.
 ### Added
+- Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - feat: Gauges para valores únicos (Spec 026). Macro `gauge` em SVG desenhada no servidor, com o cálculo em `app/gauge.py`; Dispersão, Índice de Coesão, Apetite a Risco, Rotação de Capital e Tendência mostram o número dentro da escala. A barra subiram × caíram da Dispersão, que saía vazia desde que a CSP proibiu estilo inline, passa a ser desenhada em SVG.
 - núcleo: retomada depois de ambiente reiniciado (ADR 009). O status `in-progress` deixa de ser commitado; as cobranças do guardião trazem o comando para voltar à branch do PR; o vigia do Jules responde apontando a branch quando o PR está aberto e encerra a sessão quando o PR foi fechado; nova ação `encerrar` no `jules.yml`.
 - feat: Índice de Concentração Setorial (Spec 025): setor da cesta com a maior variação média do dia, com nomes de setor em português; quando nenhum setor tem média positiva, o painel diz "Nenhum setor em alta". A chave `concentracao_setorial` entra no `/api/snapshot`.
@@ -62,10 +68,12 @@
 
 
 ### Added
+- Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - Painel 'Resiliência (Fator Mola)' para mostrar a recuperação das ações frente à mínima diária.
 - Inclusão do 'fator_mola' no payload JSON do `/api/snapshot`.
 
 ### Added
+- Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - Painel 'Resiliência (Fator Mola)' para mostrar a recuperação das ações frente à mínima diária.
 - Inclusão do 'fator_mola' no payload JSON do `/api/snapshot`.
 ### Changed
@@ -86,6 +94,7 @@
 - fix(coletor): Yahoo Finance fallback agora extrai a variação diária corretamente pelo penúltimo candle (ou `meta.previousClose`) em vez de basear o cálculo do candle do mês passado.
 - CI: `ruff` fixado em 0.15.22; a versão 0.16 ampliou as regras padrão e deixou o lint vermelho na `main`, travando o auto-merge.
 ### Added
+- Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - Coleta automática dentro do web service (`app/agendador.py`, ADR 004): ao subir, a cada 15 min no pregão e a cada 2 h fora dele; diagnóstico em `/api/coleta`. Produção passa a exibir dados reais.
 - `scripts/jules.py` e workflows `jules.yml`/`auditoria-llm.yml`: sessões do Jules criadas pela API sem aprovação de plano; planos pendentes aprovados e perguntas respondidas a cada 15 min.
 - Auditor de produção (`auditoria/`): confere o site publicado contra Yahoo Finance/Stooq, calendário da B3, coerência dos números e vazamento de fixtures; workflow `auditoria-producao.yml` abre issues `producao-incorreta`.

@@ -305,7 +305,16 @@ def init_db() -> None:
             alertas_json TEXT,
             fonte TEXT
         );
-    """)
+
+        CREATE TABLE IF NOT EXISTS fator_peso_pesado_cache (
+            timestamp DATETIME PRIMARY KEY,
+            proporcao REAL,
+            mercado_lateral BOOLEAN,
+            resumo_json TEXT,
+            fonte TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_fator_peso_pesado_timestamp ON fator_peso_pesado_cache(timestamp DESC);
+""")
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_radar_congestionamento_timestamp ON radar_congestionamento_cache (timestamp DESC)
     """)
@@ -1867,6 +1876,15 @@ class RadarDivergenciaVolumeData:
     fonte: str = "yfinance"
 
 
+@dataclass
+class FatorPesoPesadoData:
+    timestamp: datetime
+    proporcao: float
+    mercado_lateral: bool
+    resumo_json: str
+    fonte: str = "yfinance"
+
+
 def save_liquidez_abertura_data(data: LiquidezAberturaData) -> None:
     conn = get_connection()
     cursor = conn.cursor()
@@ -1955,5 +1973,41 @@ def get_latest_sensibilidade_juros_data() -> SensibilidadeJurosData | None:
             timestamp=datetime.fromisoformat(row[0]),
             alertas_json=row[1],
             fonte=row[2],
+        )
+    return None
+
+
+def save_fator_peso_pesado_data(data: FatorPesoPesadoData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO fator_peso_pesado_cache (timestamp, proporcao, mercado_lateral, resumo_json, fonte) VALUES (?, ?, ?, ?, ?)",
+        (
+            data.timestamp,
+            data.proporcao,
+            data.mercado_lateral,
+            data.resumo_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_fator_peso_pesado_data() -> FatorPesoPesadoData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT timestamp, proporcao, mercado_lateral, resumo_json, fonte FROM fator_peso_pesado_cache ORDER BY timestamp DESC LIMIT 1"
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return FatorPesoPesadoData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            proporcao=row["proporcao"],
+            mercado_lateral=bool(row["mercado_lateral"]),
+            resumo_json=row["resumo_json"],
+            fonte=row["fonte"],
         )
     return None

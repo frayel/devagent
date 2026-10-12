@@ -116,6 +116,7 @@ def _coletar() -> None:
         "radar_liquidez_abertura",
         "esforco_resultado",
         "radar_divergencia_volume",
+        "fator_peso_pesado",
         "falso_rompimento",
         "radar_absorcao_cruzada",
     ):
