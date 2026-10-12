@@ -499,7 +499,7 @@
             {% set _ = linhas.append([
                 {'conteudo': a.ticker, 'tk': True},
                 {'conteudo': ('<span>' | safe) ~ a.dias ~ (' dias</span>' | safe)},
-                {'conteudo': (variacao(val, s)) | safe, 'num': True}
+                {'conteudo': (variacao(val, s)) | safe, 'num': True, 'barra': True, 'valor_barra': a.variacao_acumulada | abs}
             ]) %}
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Quedas'}, {'titulo': 'Retorno', 'num': True}], 'faca-caindo') }}
@@ -639,7 +639,7 @@
                 {% set s = 1 if item.retorno > 0 else -1 if item.retorno < 0 else 0 %}
                 {% set _ = linhas.append([
                     {'conteudo': item.ticker, 'tk': True},
-                    {'conteudo': (variacao(val, s)) | safe, 'num': True}
+                    {'conteudo': (variacao(val, s)) | safe, 'num': True, 'barra': True, 'valor_barra': item.retorno | abs}
                 ]) %}
             {% endfor %}
             {{ tabela_ativos(linhas, [{"titulo": "Ativo"}, {"titulo": "5d (Ativo)", "num": True}], "atrasadas-rally") }}
@@ -792,7 +792,7 @@
         {% for a in volatilidade_silenciosa.alertas %}
             {% set celulas = [
                 {'tk': True, 'conteudo': a.ticker},
-                {'num': True, 'conteudo': ("%.1f%%" | format(a.amplitude)) | replace('.', ',')},
+                {'num': True, 'conteudo': ("%.1f%%" | format(a.amplitude)) | replace('.', ','), 'barra': True, 'valor_barra': a.amplitude},
                 {'num': True, 'conteudo': (variacao("%.2f%%" | format(a.variacao), 1 if a.variacao > 0 else -1 if a.variacao < 0 else 0)) | safe}
             ] %}
             {% set _ = linhas.append(celulas) %}
