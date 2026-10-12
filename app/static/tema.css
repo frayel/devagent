@@ -340,9 +340,9 @@ body.modo-so-sinais .painel-rotacao .hero {
 .gauges { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e3); }
 
 /* Maré do mercado (spec 027 e 045): componentes e sparkline desenhados no servidor. */
-.painel-mare { padding-bottom: var(--e5); padding-top: var(--e4); gap: var(--e4); }
+.painel-mare { padding-bottom: var(--e6, 32px); padding-top: var(--e5, 24px); gap: var(--e5, 24px); }
 .painel-mare .selo { align-self: flex-start; }
-.painel-mare .mare-componentes { opacity: 0.8; }
+.painel-mare .mare-componentes { opacity: 0.6; }
 .mare-componentes { display: grid; gap: var(--e2); }
 .comp { display: grid; grid-template-columns: 112px 1fr 28px; align-items: center; gap: var(--e2); font-size: var(--fs-meta); color: var(--texto-2); }
 .comp-peso { color: var(--texto-3); }
