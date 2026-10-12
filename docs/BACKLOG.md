@@ -297,3 +297,14 @@
 | Sombra do Exterior na Abertura | Responde: Como o mercado abriu em relação ao SP500 futuro? Originalidade: Distingue variações locais vs arrasto gringo no leilão. | yfinance | M | Baixo |
 | Assimetria de Livro de Ofertas e Pressão de Venda | Responde: Quem está sofrendo despejo forçado sem defesa? Originalidade: Leitura em tempo real de pressão. | brapi | G | Alto |
 | Índice de Esforço vs Resultado | Responde: Muito volume e pouca alta? Absorção? Originalidade: VSA (Volume Spread Analysis) aplicada a ativos do IBOV no dia de hoje. | yfinance | M | Baixo |
+
+## Ideias (Passo 7 - 2026-10-13)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Tracker de Dividendos Flash | Responde: Qual ação está pagando dividendo alto hoje? Originalidade: Cruza dados de proventos imediatos com a cotação intraday para ver se o mercado já precificou. | yfinance | M | Baixo |
+| Radar de Squeeze de Volatilidade | Responde: Qual ativo está prestes a explodir (para cima ou para baixo)? Originalidade: Baseia-se no encurtamento extremo das bandas de Bollinger ou ATR nos últimos dias. | yfinance | M | Baixo |
+| Sentimento de Notícias vs Preço | Responde: O mercado está ignorando notícias ruins? Originalidade: Compara a polaridade das manchetes recentes com a performance do ativo no dia. | brapi | G | Alto |
+| Fator "Peso Pesado" | Responde: O IBOV está subindo só por causa da Vale ou Petrobras? Originalidade: Calcula a contribuição ponderada dos 5 maiores ativos para a pontuação diária do índice. | yfinance | M | Baixo |
+| Alerta de Abertura em Extremos | Responde: O ativo abriu muito fora da curva? Originalidade: Detecta gaps de abertura que superam 2 desvios padrões do movimento médio diário. | yfinance | M | Baixo |
+| Experiência: Reorganização por "Temperamento" | Responde: O que está calmo e o que está agitado? Originalidade: Agrupa os painéis secundários em abas de 'Alta Volatilidade' e 'Estabilidade' ao invés de categorização padrão. | N/A | P | Baixo |
