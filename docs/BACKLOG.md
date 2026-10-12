@@ -54,6 +54,17 @@
 | Variação vs IBOV (Força Relativa Diária) | Exibir o alfa diário gerado em relação ao benchmark | yfinance | P | Baixo |
 | Ações "Esquecidas" (Volume sumiu) | Oportunidades em ativos que secaram de liquidez recentemente | yfinance | P | Baixo |
 
+
+## Ideias (Passo 7 - 2026-10-12 4)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Destaque Visual para a Maré | Responde: Consigo achar o que preciso, rápido? Evidência: O gauge da Maré é muito grande e empurra o Ibovespa visualmente, disputando peso. Mudança: Ajustar a classe e estilos do painel Maré. | N/A | P | Baixo |
+| Radar de Divergência Acumulada | Responde: Quem está com o indicador de divergência estourado mas ainda não andou? Originalidade: Olha não para o último fechamento, mas para o acúmulo de alertas falsos recentes. | yfinance | M | Baixo |
+| Termômetro de Estresse Cripto | Responde: A variação bruta do mercado local tem a ver com liquidações forçadas em cripto? Originalidade: Isolar picos de liquidação no mercado futuro de criptomoedas correlacionando com dumps na B3. | API Cripto | G | Alto |
+| Impacto de Ajuste do Dólar | Responde: Quem costuma reagir mais ao fechamento da PTAX? Originalidade: Exclusão de ruído normal do dia e foco nos minutos que cercam a formação da PTAX. | Brapi | M | Baixo |
+| Volume Institucional de Fim de Pregão | Responde: Para onde foi o dinheiro pesado nos últimos 15 min? Originalidade: Separa o volume de giro natural do volume do leilão que sinaliza intenção futura. | Brapi | G | Alto |
+
 ## Ideias (Passo 7 - 2026-10-12 3)
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |

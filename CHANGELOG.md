@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- Destaque Visual para a Maré adicionado como ideia, Spec 045 criada, Contador de experiência zerado no STATE.md.
 - Spec 044 (Radar de Absorção Cruzada):
   - Banco de dados SQLite (`radar_absorcao_cruzada_cache`).
   - Coletor com yfinance monitorando exaustão de tendência de baixa.
