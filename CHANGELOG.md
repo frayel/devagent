@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- Spec 045: Ajuste de espaçamento e respiro visual para o painel `.painel-mare`.
 - (Spec 045) Destaque Visual para a Maré: ajustes de CSS em `tema.css` para aprimorar o destaque ao gauge e espaçamento na grade.
 - Destaque Visual para a Maré adicionado como ideia, Spec 045 criada, Contador de experiência zerado no STATE.md.
 - Spec 044 (Radar de Absorção Cruzada):
