@@ -9,6 +9,11 @@
 
 ## Implementado
 
+- Spec 045 (Destaque Visual para a Maré):
+  - Ajuste de espaçamento e respiro do painel `.painel-mare` com `padding` e `gap` ajustados no CSS, conforme guia visual.
+  - Ocultação parcial/diminuída a opacidade dos itens componentes para dar mais destaque ao gauge.
+  - Nenhum painel novo: o contador da cadência de experiência não muda.
+
 - Spec 044 (Radar de Absorção Cruzada):
   - Banco de dados SQLite (`radar_absorcao_cruzada_cache`).
   - Coletor com yfinance (chart intraday) monitorando ações com queda forte que apresentam pico de volume atípico nas mínimas, sinalizando defesa institucional (VSA).
