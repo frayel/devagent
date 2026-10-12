@@ -286,7 +286,7 @@
 | Termômetro de Correlacionamento do VIX | Responde: O mercado local está blindado do pânico externo hoje? Originalidade: Cruza variações extremas intraday do VIX americano (quando > +5%) com a resiliência momentânea do IBOV. | yfinance | P | Baixo |
 | Alerta de Abertura Descolada | Responde: Quais ativos ignoraram o clima macro logo no leilão? Originalidade: Identifica ativos que abriram na direção oposta do gap do Ibovespa e com intensidade superior a 1%. | brapi | M | Baixo |
 
-| Revisão de Experiência: Consolidação de Gauges | Responde: Como simplificar a leitura de medidores espalhados? Funde "Apetite a Risco" e "Rotação de Capital" no mesmo painel de Maré do Mercado. | N/A | P | Baixo |
+
 | Assimetria de Livro de Ofertas | Responde: Qual a pressão real do book em ativos de liquidez média? | brapi.dev | G | Alto (Limites de API) |
 | Radar de Exaustão de Tendência | Responde: Quando um ativo subiu 5 dias seguidos com volume decrescente? | yfinance | M | Baixo |
 
