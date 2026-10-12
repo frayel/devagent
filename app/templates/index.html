@@ -195,6 +195,27 @@
 {% endcall %}
 
 
+
+
+{% call painel("Pressão Vendedora", 12, "Mostra a contribuição dos 5 ativos com o pior desempenho absoluto para a queda do Ibovespa no dia atual.", concentracao_vendedora.fonte if concentracao_vendedora else "", concentracao_vendedora.time if concentracao_vendedora else "", "visao-macro visao-geral escondido" if not concentracao_vendedora else "visao-macro visao-geral") %}
+    {% if concentracao_vendedora %}
+        <div class="destaque-texto">{{ concentracao_vendedora.resumo.mensagem }}</div>
+        {% set linhas = [] %}
+        {% for a in concentracao_vendedora.top3 %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': ("%.0f pts"|format(a.pontos))},
+                {'num': True, 'conteudo': ("%.0f%%"|format(a.peso * 100))}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Impacto', 'num': True}, {'titulo': 'Peso Est.', 'num': True}], 'a') }}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+
 {% call painel("Concentração de Ganhos", 12, "Mostra quantas ações explicam 50% dos pontos de variação do índice hoje.", concentracao.fonte if concentracao else "", concentracao.time if concentracao else "", "visao-macro visao-geral escondido" if not concentracao else "visao-macro visao-geral") %}
     {% if concentracao %}
         {% if concentracao.resumo.estado == 'estavel' %}

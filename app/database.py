@@ -434,7 +434,17 @@ def init_db() -> None:
         "CREATE INDEX IF NOT EXISTS idx_rotacao_capital_timestamp ON rotacao_capital_cache(timestamp DESC)"
     )
 
-    cursor.execute("""
+    cursor.executescript("""
+
+        CREATE TABLE IF NOT EXISTS concentracao_vendedora_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            resumo_json TEXT NOT NULL,
+            top3_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_concentracao_vendedora_timestamp ON concentracao_vendedora_cache (timestamp);
+
         CREATE TABLE IF NOT EXISTS concentracao_cache (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp DATETIME NOT NULL,
@@ -1088,6 +1098,47 @@ def save_concentracao_data(data: ConcentracaoData) -> None:
     )
     conn.commit()
     conn.close()
+
+
+def save_concentracao_vendedora_data(data: ConcentracaoData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO concentracao_vendedora_cache (timestamp, resumo_json, top3_json, fonte)
+        VALUES (?, ?, ?, ?)
+        """,
+        (
+            data.timestamp.isoformat(),
+            data.resumo_json,
+            data.top3_json,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_concentracao_vendedora_data() -> ConcentracaoData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT timestamp, resumo_json, top3_json, fonte
+        FROM concentracao_vendedora_cache
+        ORDER BY timestamp DESC LIMIT 1
+        """
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return ConcentracaoData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            resumo_json=row["resumo_json"],
+            top3_json=row["top3_json"],
+            fonte=row["fonte"],
+        )
+    return None
 
 
 def get_latest_concentracao_data() -> ConcentracaoData | None:

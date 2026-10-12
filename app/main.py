@@ -22,7 +22,10 @@ from app.services.forca_relativa import get_forca_relativa_view_data
 from app.services.escudo_quedas import get_escudo_quedas_view_data
 from app.services.coesao import get_coesao_view_data
 from app.services.atrasadas_rally import get_atrasadas_rally_view_data
-from app.services.concentracao import get_concentracao_view_data
+from app.services.concentracao import (
+    get_concentracao_view_data,
+    get_concentracao_vendedora_view_data,
+)
 from app.services.apetite_risco import get_apetite_risco_view_data
 from app.services.variacao_subita import get_variacao_subita_view_data
 from app.services.rotacao_capital import get_rotacao_capital_view
@@ -44,6 +47,7 @@ from app.database import (
     get_latest_coesao_data,
     get_latest_atrasadas_rally_data,
     get_latest_concentracao_data,
+    get_latest_concentracao_vendedora_data,
     get_latest_variacao_subita_data,
     get_latest_rotacao_capital_data,
     get_latest_compradores_fundo_data,
@@ -295,8 +299,20 @@ def snapshot():
             }
         except Exception:
             resp["paineis"]["concentracao"] = {}
+
+    concentracao_vendedora_data = get_latest_concentracao_vendedora_data()
+    if concentracao_vendedora_data:
+        try:
+            resp["paineis"]["concentracao_vendedora"] = {
+                "coletado_em": concentracao_vendedora_data.timestamp.isoformat(),
+                "fonte": concentracao_vendedora_data.fonte,
+                "resumo": json.loads(concentracao_vendedora_data.resumo_json),
+                "top3": json.loads(concentracao_vendedora_data.top3_json),
+            }
+        except Exception:
+            resp["paineis"]["concentracao_vendedora"] = {}
     else:
-        resp["paineis"]["concentracao"] = {}
+        resp["paineis"]["concentracao_vendedora"] = {}
 
     concentracao_setorial_data = get_latest_concentracao_setorial_data()
     if concentracao_setorial_data:
@@ -614,7 +630,9 @@ async def index(request: Request):
 
     coesao = get_coesao_view_data()
     atrasadas_rally = get_atrasadas_rally_view_data()
+
     concentracao = get_concentracao_view_data()
+    concentracao_vendedora = get_concentracao_vendedora_view_data()
 
     apetite_risco = get_apetite_risco_view_data()
     concentracao_setorial_data = get_latest_concentracao_setorial_data()
@@ -780,6 +798,7 @@ async def index(request: Request):
             "coesao": coesao,
             "atrasadas_rally": atrasadas_rally,
             "concentracao": concentracao,
+            "concentracao_vendedora": concentracao_vendedora,
             "apetite_risco": apetite_risco,
             "concentracao_setorial": concentracao_setorial,
             "variacao_subita": variacao_subita,

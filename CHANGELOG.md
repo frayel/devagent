@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- Spec 047: Adicionado o painel Concentração de Força Vendedora (visoão macro) calculando a contribuição negativa dos piores 5 ativos quando o Ibovespa cai.
 - Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - Spec 045: Ajuste de espaçamento e respiro visual para o painel `.painel-mare`.
 - (Spec 045) Destaque Visual para a Maré: ajustes de CSS em `tema.css` para aprimorar o destaque ao gauge e espaçamento na grade.

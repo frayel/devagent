@@ -1,7 +1,7 @@
 ---
 id: 047
 titulo: Concentração de Força Vendedora
-status: ready
+status: done
 esforco: P
 ---
 
@@ -25,9 +25,9 @@ Se o índice estiver no positivo, o painel não precisa ser exibido ou pode indi
   - Dividir essa soma pela variação total do índice para obter o percentual de concentração.
 
 ## Critérios de aceite
-- [ ] A lógica de cálculo possui cobertura de testes garantindo matemática correta (positiva, negativa e neutra).
-- [ ] Os dados refletem em um novo campo `concentracao_vendedora` em `/api/snapshot`.
-- [ ] O painel aparece condicionalmente apenas quando a contribuição é relevante e o IBOV está negativo.
+- [x] A lógica de cálculo possui cobertura de testes garantindo matemática correta (positiva, negativa e neutra).
+- [x] Os dados refletem em um novo campo `concentracao_vendedora` em `/api/snapshot`.
+- [x] O painel aparece condicionalmente apenas quando a contribuição é relevante e o IBOV está negativo.
 
 ## Invariantes de produção
 - A consulta à API e atualização do banco ocorre no ciclo do agendador e lida com indisponibilidades.
