@@ -54,6 +54,17 @@
 | Variação vs IBOV (Força Relativa Diária) | Exibir o alfa diário gerado em relação ao benchmark | yfinance | P | Baixo |
 | Ações "Esquecidas" (Volume sumiu) | Oportunidades em ativos que secaram de liquidez recentemente | yfinance | P | Baixo |
 
+## Ideias (Passo 7 - 2026-10-12 3)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Radar de Absorção Cruzada | Responde: Qual ação está liderando na absorção de vendas massivas no seu setor? Originalidade: Cruzamento de volume agressivo no topo do book contra queda livre de setor. | yfinance/brapi | M | Baixo |
+| Risco de Cauda (Extremos) | Responde: Quais ativos têm o maior risco escondido hoje caso o mercado inverta rápido? Originalidade: Mede a diferença entre a volatilidade média e a variação direcional atual de curto prazo. | yfinance | M | Baixo |
+| Índice de Impulso Retardatário | Responde: Quem demorou a engatar alta mas agora tem volume acelerado? Originalidade: Isolamento de ralis que iniciam na segunda metade do pregão. | yfinance | P | Baixo |
+| Cesta de Refúgio Intraday | Responde: Para onde o dinheiro "smart money" está correndo hoje no meio da volatilidade? Originalidade: Criação dinâmica de um mini-ETF defensivo baseado na performance das últimas duas horas. | brapi | M | Médio |
+| Experiência: Heatmap Setorial Miniatura | Responde: A variação do Ibovespa reflete todo o mercado? Originalidade: Um heatmap em miniatura acoplado ao card principal para contexto imediato, sem consumir painéis inteiros. | N/A | P | Baixo |
+| Correlação de Gaps (Gap Sympathy) | Responde: Um gap monstruoso de uma blue chip puxou papéis irrelevantes hoje? Originalidade: Exibe a lista de papéis "passageiros" da variação alheia na abertura. | brapi | M | Baixo |
+
 ## Ideias (Passo 7 - 2026-10-02)
 
 
