@@ -17,9 +17,10 @@ def fetch_yfinance() -> FalsoRompimentoData | None:
     successful_fetches = 0
 
     with httpx.Client(timeout=10.0) as client:
-        for ticker in TICKERS:
+        for i, ticker in enumerate(TICKERS):
             symbol = f"{ticker}.SA"
-            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=2d&interval=1d"
+            subdomain = "query1" if i % 2 == 0 else "query2"
+            url = f"https://{subdomain}.finance.yahoo.com/v8/finance/chart/{symbol}?range=2d&interval=1d"
             try:
                 response = fetch_with_retry(url, client=client)
                 data = response.json()

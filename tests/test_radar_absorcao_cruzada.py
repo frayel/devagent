@@ -33,7 +33,7 @@ def test_fetch_yfinance_success(respx_mock, monkeypatch):
         "app.collectors.radar_absorcao_cruzada.TICKERS", ["VALE3", "PETR4"]
     )
     respx_mock.get(
-        "https://query1.finance.yahoo.com/v8/finance/chart/PETR4.SA?range=5d&interval=15m"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/chart/PETR4.SA\?range=5d&interval=15m"
     ).respond(status_code=404)
 
     # We need timestamps that span multiple days.
@@ -94,7 +94,7 @@ def test_fetch_yfinance_success(respx_mock, monkeypatch):
     }
 
     respx_mock.get(
-        "https://query1.finance.yahoo.com/v8/finance/chart/VALE3.SA?range=5d&interval=15m"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/chart/VALE3.SA\?range=5d&interval=15m"
     ).respond(json=chart_data)
 
     result = fetch_yfinance()
@@ -150,7 +150,7 @@ def test_collect_and_save_success(respx_mock, monkeypatch, setup_db):
     }
 
     respx_mock.get(
-        "https://query1.finance.yahoo.com/v8/finance/chart/VALE3.SA?range=5d&interval=15m"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/chart/VALE3.SA\?range=5d&interval=15m"
     ).respond(json=chart_data)
 
     assert collect_and_save() is True
