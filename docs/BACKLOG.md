@@ -308,3 +308,14 @@
 | Fator "Peso Pesado" | Responde: O IBOV está subindo só por causa da Vale ou Petrobras? Originalidade: Calcula a contribuição ponderada dos 5 maiores ativos para a pontuação diária do índice. | yfinance | M | Baixo |
 | Alerta de Abertura em Extremos | Responde: O ativo abriu muito fora da curva? Originalidade: Detecta gaps de abertura que superam 2 desvios padrões do movimento médio diário. | yfinance | M | Baixo |
 | Experiência: Reorganização por "Temperamento" | Responde: O que está calmo e o que está agitado? Originalidade: Agrupa os painéis secundários em abas de 'Alta Volatilidade' e 'Estabilidade' ao invés de categorização padrão. | N/A | P | Baixo |
+
+## Ideias (Passo 7 - 2026-10-12)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Reorganização de Alertas por Urgência | Responde: Quais alertas eu preciso olhar agora e quais podem esperar? Originalidade: Em vez de agrupar por tipo de alerta, consolida todos e ordena por intensidade do sinal, com um indicador visual de temperatura. | N/A | M | Baixo |
+| Radar de Anomalia de Fechamento (Leilão) | Responde: Quais ações tiveram o preço distorcido no leilão de fechamento de ontem? Originalidade: Calcula a diferença entre o preço das 16:50 e o fechamento final para identificar movimentações bruscas (frequentemente revertidas na abertura). | yfinance | M | Baixo |
+| Divergência IBOV vs Dólar na Última Hora | Responde: O mercado local está ignorando o dólar no curtíssimo prazo? Originalidade: Mede a correlação do Ibovespa e do Dólar na última hora para apontar anomalias de fluxo. | yfinance | M | Médio |
+| Concentração de Força Vendedora | Responde: A queda de hoje é generalizada ou localizada em poucos ativos derretendo? Originalidade: Calcula quanto os 5 ativos com pior desempenho estão contribuindo negativamente para o índice, focando em isolar pânico. | yfinance | P | Baixo |
+| Sensibilidade a Juros Futuros | Responde: Quais ativos estão sofrendo mais com a abertura da curva de juros hoje? Originalidade: Identifica os papéis mais inversamente correlacionados com o movimento de juros (DI) intradiário. | brapi | M | Médio |
+| Radar de Rejeição de Topo (Sombra Superior) | Responde: Qual ativo tentou subir forte mas foi imediatamente amassado? Originalidade: Busca ações que registraram máxima intradiária >3% acima da abertura, mas que agora operam no negativo, indicando bull trap. | yfinance | M | Baixo |
