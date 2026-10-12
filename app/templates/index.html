@@ -17,6 +17,32 @@
 </div>
 
 
+{% if motores_cards %}
+<div class="span-12 painel-motores-indice visao-geral">
+    <section class="painel">
+        <div class="cab">
+            <h2>Motores do Índice</h2>
+            <details>
+                <summary aria-label="Método">i</summary>
+                <div class="metodo">Desempenho dos 3 principais grupos de ações que ditam o rumo do Ibovespa.</div>
+            </details>
+        </div>
+        <div class="motores-grid">
+            {% for motor in motores_cards %}
+            <div class="motor-card">
+                <div class="rot">{{ motor.nome }}</div>
+                <div class="kpi">
+                    <span class="var {% if motor.variacao > 0 %}alta{% elif motor.variacao < 0 %}baixa{% else %}neutra{% endif %}">
+                        {% if motor.variacao > 0 %}▲{% elif motor.variacao < 0 %}▼{% else %}■{% endif %} {{ "{:+.2f}%".format(motor.variacao) }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endif %}
+
 <!-- Linha 1: Ibovespa e Maré do mercado -->
 {% call painel("Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "", "visao-macro painel-ibovespa visao-geral") %}
     {% if data %}

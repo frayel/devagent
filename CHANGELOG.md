@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Entrega a Spec 048, adicionando cards dos Motores do Índice.
 ### Added
 - Spec 047: Adicionado o painel Concentração de Força Vendedora (visoão macro) calculando a contribuição negativa dos piores 5 ativos quando o Ibovespa cai.
 - Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)

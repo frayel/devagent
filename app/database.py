@@ -306,6 +306,11 @@ def init_db() -> None:
             fonte TEXT
         );
 
+        CREATE TABLE IF NOT EXISTS motores_indice_cache (
+            timestamp TEXT PRIMARY KEY,
+            motores_json TEXT NOT NULL,
+            fonte TEXT DEFAULT 'yfinance'
+        );
         CREATE TABLE IF NOT EXISTS fator_peso_pesado_cache (
             timestamp DATETIME PRIMARY KEY,
             proporcao REAL,
@@ -1839,7 +1844,6 @@ def get_latest_detector_acao_orfa_data() -> DetectorAcaoOrfaData | None:
 
 
 @dataclass
-@dataclass
 class FalsoRompimentoData:
     timestamp: datetime
     alertas_json: str
@@ -1924,6 +1928,13 @@ class LiquidezAberturaData:
 class RadarDivergenciaVolumeData:
     timestamp: datetime
     alertas_json: str
+    fonte: str = "yfinance"
+
+
+@dataclass
+class MotoresIndiceData:
+    timestamp: datetime
+    motores_json: str
     fonte: str = "yfinance"
 
 
@@ -2059,6 +2070,41 @@ def get_latest_fator_peso_pesado_data() -> FatorPesoPesadoData | None:
             proporcao=row["proporcao"],
             mercado_lateral=bool(row["mercado_lateral"]),
             resumo_json=row["resumo_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+def save_motores_indice_data(data: MotoresIndiceData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO motores_indice_cache (timestamp, motores_json, fonte)
+        VALUES (?, ?, ?)
+    """,
+        (data.timestamp.isoformat(), data.motores_json, data.fonte),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_motores_indice_data() -> MotoresIndiceData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT timestamp, motores_json, fonte
+        FROM motores_indice_cache
+        ORDER BY timestamp DESC
+        LIMIT 1
+    """)
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return MotoresIndiceData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            motores_json=row["motores_json"],
             fonte=row["fonte"],
         )
     return None

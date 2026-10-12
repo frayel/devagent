@@ -77,6 +77,11 @@
   - Coletor com `yfinance` buscando histórico de fechamentos diários (spark).
   - Cálculo de Bandwidth das Bandas de Bollinger e geração de minigráficos.
   - Exibição de painel na visão de Alertas Intraday e via `/api/snapshot`.
+- Spec 048 (Reorganização por Motores do Índice):
+  - Banco de dados SQLite (`motores_indice_cache`).
+  - Coletor buscando fechamentos intraday para as ações representativas de 3 motores (Financeiro, Commodities, Doméstico) via `yfinance`.
+  - Cálculo de variação e exibição de cards na visão macro da home.
+  - Adicionado painel e chaves em `/api/snapshot`.
 - Spec 036 (Radar de Short Squeeze):
   - Coletor com yfinance (spark).
   - Exibe ações caindo >=10% nos últimos 10 dias com aumento anormal de volume (>2x média diária) e alta >= 4%.
