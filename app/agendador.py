@@ -119,6 +119,7 @@ def _coletar() -> None:
         "fator_peso_pesado",
         "falso_rompimento",
         "radar_absorcao_cruzada",
+        "motores_indice",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
         mt5.reiniciar_rastreio()

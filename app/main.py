@@ -37,6 +37,7 @@ from app.services.volatilidade_silenciosa import get_volatilidade_silenciosa_vie
 from app.services import scanner_capitulacao
 from app.services import mare as mare_servico
 from app.database import (
+    get_latest_motores_indice_data,
     get_latest_concentracao_setorial_data,
     get_latest_ibovespa_data,
     get_latest_volume_alerts_data,
@@ -261,6 +262,9 @@ def snapshot():
     else:
         resp["paineis"]["escudo_quedas"] = {}
 
+    motores_data = get_latest_motores_indice_data()
+    if motores_data:
+        resp["paineis"]["motores_indice"] = json.loads(motores_data.motores_json)
     coesao_data = get_latest_coesao_data()
     if coesao_data:
         resp["paineis"]["coesao"] = {
@@ -600,6 +604,8 @@ def snapshot():
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
+    motores_data = get_latest_motores_indice_data()
+    motores_cards = json.loads(motores_data.motores_json) if motores_data else None
     ibovespa_data = get_ibovespa_view_data()
 
     highlights_data = get_latest_highlights_data()
@@ -821,5 +827,6 @@ async def index(request: Request):
             "fator_peso_pesado_data": fator_peso_pesado_data,
             "liquidez_abertura": liquidez_abertura,
             "mare": mare,
+            "motores_cards": motores_cards,
         },
     )

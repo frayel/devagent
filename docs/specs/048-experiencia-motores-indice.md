@@ -1,7 +1,7 @@
 ---
 id: 048
 titulo: Reorganização por Motores do Índice (Experiência)
-status: ready
+status: done
 esforco: G
 ---
 

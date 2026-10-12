@@ -49,6 +49,20 @@ def _semear(db_path: str) -> None:
     db.init_db()
     agora = datetime.now(timezone.utc)
 
+    db.save_motores_indice_data(
+        db.MotoresIndiceData(
+            timestamp=agora,
+            motores_json=json.dumps(
+                [
+                    {"nome": "Financeiro", "variacao": 1.83},
+                    {"nome": "Commodities", "variacao": -0.45},
+                    {"nome": "Doméstico", "variacao": 2.12},
+                ]
+            ),
+            fonte="demonstracao",
+        )
+    )
+
     db.save_liquidez_abertura_data(
         db.LiquidezAberturaData(
             timestamp=agora,
