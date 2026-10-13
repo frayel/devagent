@@ -1,7 +1,7 @@
 ---
 id: 050
 titulo: Experiência: Reorganização da Maré do Mercado (Consolidação de Sinais)
-status: ready
+status: done
 esforco: P
 ---
 

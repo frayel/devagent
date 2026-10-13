@@ -87,6 +87,11 @@
   - Consolidou-se os medidores semicirculares (gauges) de Apetite a Risco e Rotação de Capital no painel da Maré do Mercado.
   - Painéis isolados foram removidos para limpar a interface sem perder funcionalidade.
 
+- Spec 050 (Experiência: Reorganização da Maré do Mercado):
+  - Consolidado layout dos gauges no Painel da Maré do mercado.
+  - Gauge de Confiança não é mais `grande`.
+  - Gauges de Apetite a Risco e Rotação usando novo grid `gauges-pequenos`.
+  - Contador da cadência de experiência: 4.
 - Spec 036 (Radar de Short Squeeze):
   - Coletor com yfinance (spark).
   - Exibe ações caindo >=10% nos últimos 10 dias com aumento anormal de volume (>2x média diária) e alta >= 4%.
