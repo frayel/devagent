@@ -10,7 +10,9 @@
     {% endif %}
   </div>
   {{ caller() }}
+  {% if fonte and horario %}
   <div class="rodape">Fonte {{ fonte }} · {{ horario }}</div>
+  {% endif %}
 </section>
 {% endmacro %}
 
