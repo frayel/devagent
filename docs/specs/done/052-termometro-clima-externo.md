@@ -1,7 +1,7 @@
 ---
 id: 052
 titulo: Termômetro de Clima Externo
-status: ready
+status: done
 esforco: M
 ---
 

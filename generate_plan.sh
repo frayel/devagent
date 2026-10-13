@@ -1,0 +1,6 @@
+echo "1. Change status to done in docs/specs/052-termometro-clima-externo.md"
+echo "2. Move docs/specs/052-termometro-clima-externo.md to docs/specs/done/"
+echo "3. Update CHANGELOG.md to include the completion of Spec 052."
+echo "4. Execute make verify."
+echo "5. Complete pre-commit steps to ensure proper testing, verification, review, and reflection are done."
+echo "6. Submit the changes back to the PR."

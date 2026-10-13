@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Finaliza Spec 052: Termômetro de Clima Externo já estava implementada e adicionada no snapshot, movido para done
 - Corrige `400 Bad Request` no coletor de Atrasadas do Rally fatiando requisições (resolvido por `app/collectors/atrasadas_rally.py`)
 
 ## [2026-10-13]
