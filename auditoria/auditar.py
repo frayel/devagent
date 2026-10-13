@@ -665,6 +665,26 @@ def auditar(
     )
     r += pagina
 
+    import re
+
+    if re.search(r'<div class="rodape">\s*Fonte\s*·\s*</div>', html):
+        r.append(
+            Resultado(
+                "app.rodape_incompleto",
+                FALHA,
+                "Painéis vazios exibem rodapé incompleto sem fonte",
+                "Encontrado rodapé incompleto no HTML",
+            )
+        )
+    else:
+        r.append(
+            Resultado(
+                "app.rodape_incompleto",
+                OK,
+                "Rodapés de painéis vazios estão corretos ou ocultos",
+            )
+        )
+
     painel = extrair_do_html(html)
     s_status, s_corpo = baixar(f"{url}/api/snapshot", timeout=30)
     snap_dict = None

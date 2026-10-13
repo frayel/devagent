@@ -2,7 +2,7 @@
 id: 2026-10-13-paineis-rodape-incompleto-sem-dados
 severidade: media
 painel: multiplos
-status: aberto
+status: resolvido
 visto_em: 2026-10-13T02:46+00:00
 ---
 
@@ -37,3 +37,6 @@ Por exemplo:
 
 ## Invariante proposta
 Verificar no auditor determinístico (`auditar.py`) se não existe nenhum elemento `.rodape` contendo apenas `Fonte  · `.
+
+## Resolução
+Corrigido via PR, condicionando a exibição do rodapé à presença de fonte no HTML (`app/templates/componentes.html`), e com o teste garantido em `auditoria/auditar.py`.
