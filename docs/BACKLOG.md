@@ -271,7 +271,7 @@
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |
 |---|---|---|---|---|
-| Experiência: Densidade Dinâmica da Grade | Responde: A tela parece muito apertada para leitura rápida? Originalidade: Um toggle no topo (Confortável/Compacto) que ajusta margens e paddings via CSS, permitindo leitura focada ou visão panorâmica. | N/A | P | Baixo |
+
 | Índice de Esforço vs Resultado | Responde: Qual ação teve volume gigantesco hoje, mas o preço não andou? Originalidade: Cruza o aumento explosivo de volume (esforço) com um corpo de candle mínimo (resultado), sinalizando forte absorção de ordens. | yfinance | M | Baixo |
 | Termômetro de Exaustão de Tendência | Responde: O rali de alta de um ativo já chegou ao limite? Originalidade: Procura o último suspiro de um movimento: volume climático acompanhado de pavio longo no topo, após múltiplos dias de alta. | yfinance | M | Médio |
 | Painel de Incorrelação Agressiva | Responde: Que ação pesada no índice está desabando enquanto o mercado voa? Originalidade: Isola papéis do topo do IBOV operando na direção oposta ao benchmark com força (> 2% de diferença direcional). | brapi | M | Baixo |
@@ -339,4 +339,3 @@
 | Radar de Absorção em Topos | Responde: Qual ativo está sendo distribuído silenciosamente? Originalidade: Identifica aumento expressivo de volume no topo intradiário sem deslocamento correspondente no preço. | yfinance | M | Médio |
 | Índice de Medo de Abertura | Responde: O mercado abriu em pânico ou calmo? Originalidade: Mede o tamanho médio dos gaps de abertura de toda a cesta no início do pregão. | yfinance | M | Baixo |
 | Alerta de Ruptura Falsa Setorial | Responde: Um setor rompeu máxima mas falhou em seguida? Originalidade: Detecta falsos rompimentos agrupados por setor, e não apenas ações individuais. | brapi | M | Baixo |
-| Experiência: Densidade Dinâmica da Grade | Responde: A tela parece muito apertada para leitura rápida? Originalidade: Um toggle no topo (Confortável/Compacto) que ajusta margens e paddings via CSS, permitindo leitura focada ou visão panorâmica. | N/A | P | Baixo |

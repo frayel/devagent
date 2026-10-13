@@ -43,6 +43,35 @@ document.addEventListener('DOMContentLoaded', () => {
             p.style.display = 'none';
         }
     });
+
+    // Densidade Dinamica
+    const btnDensidade = document.getElementById('btn-densidade');
+    if (btnDensidade) {
+        const grade = document.querySelector('.grade');
+
+        // Load state from localStorage
+        const densidadeState = localStorage.getItem('densidade');
+        if (densidadeState === 'compacto') {
+            grade.classList.add('compacto');
+            btnDensidade.textContent = 'Confortável';
+            btnDensidade.classList.add('ativo');
+        }
+
+        btnDensidade.addEventListener('click', () => {
+            if (grade.classList.contains('compacto')) {
+                grade.classList.remove('compacto');
+                btnDensidade.textContent = 'Compacto';
+                btnDensidade.classList.remove('ativo');
+                localStorage.setItem('densidade', 'confortavel');
+            } else {
+                grade.classList.add('compacto');
+                btnDensidade.textContent = 'Confortável';
+                btnDensidade.classList.add('ativo');
+                localStorage.setItem('densidade', 'compacto');
+            }
+        });
+    }
+
 });
 
 document.addEventListener("DOMContentLoaded", () => {

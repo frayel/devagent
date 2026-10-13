@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+
+## [2026-10-13]
+- Implementada Spec 051: Experiência: Densidade Dinâmica da Grade.
+
 ### Adicionado
 - **Reorganização da Maré do Mercado (Spec 050)**:
   - Gauge de Confiança compactado para ocupar menos espaço.
