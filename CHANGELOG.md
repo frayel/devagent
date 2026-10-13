@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+
+### Alterado
+- Consolidação de medidores de Apetite a Risco e Rotação de Capital na Maré do Mercado (Spec 049).
 - Entrega a Spec 048, adicionando cards dos Motores do Índice.
 ### Added
 - Spec 047: Adicionado o painel Concentração de Força Vendedora (visoão macro) calculando a contribuição negativa dos piores 5 ativos quando o Ibovespa cai.

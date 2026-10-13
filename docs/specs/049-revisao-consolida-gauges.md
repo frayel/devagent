@@ -1,7 +1,7 @@
 ---
 id: 049
 titulo: Revisão de Experiência - Consolidação de Gauges na Maré do Mercado
-status: ready
+status: done
 esforco: P
 ---
 
