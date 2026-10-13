@@ -325,3 +325,13 @@
 | Radar de Atividade de Leilão Anômala | Responde: Alguém sabe de algo que não sabemos? Originalidade: Compara o volume transacionado exclusivamente no leilão de abertura contra a média histórica dos leilões (não do intraday inteiro). | brapi | M | Alto (Falta de dados específicos de leilão em tempo real) |
 | Sentimento Contrário Institucional | Responde: Onde os analistas estão errados (e o mercado está indo contra)? Originalidade: Cruza os 10 ativos com maior recomendação de "Venda" do consenso, mas que estão acumulando fortes altas nos últimos 15 dias. | Scraping CVM / yfinance | G | Alto (Problemas com scraping de recomendações) |
 | Diferencial de Rendimento Ações vs Tesouro SELIC | Responde: O dividend yield médio da carteira B3 ainda compensa o risco da Selic de hoje? Originalidade: Não olha rentabilidade de cotação, mas o carrego. Proporcionaliza o DY acumulado dos últimos 12 meses das 20 maiores ações contra a taxa livre de risco atual diária. | yfinance / B3 | M | Baixo |
+
+## Ideias (Passo 7 - 2026-10-13 2)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Reorganização da Maré do Mercado | Responde: Consigo ler rapidamente a direção principal e seus motivadores? Originalidade: Condensação dos gauges da Maré e seus subindicadores em um formato mais denso para recuperar espaço vital na primeira dobra da página. | N/A | P | Baixo |
+| Detector de Ação Órfã | Responde: Qual papel está largado às moscas? Originalidade: Busca ativos que não registraram nenhum negócio (spread vazio) nos últimos 15 minutos em horário de pico. | brapi | M | Médio |
+| Termômetro de Concentração de Ordens | Responde: O volume é orgânico ou um único tubarão operando? Originalidade: Compara o número de negócios com o volume financeiro total para estimar o ticket médio intraday. | brapi | M | Médio |
+| Radar de Inversão Pós-Notícia | Responde: O mercado "comprou no boato e vendeu no fato"? Originalidade: Destaca ativos que abriram forte com alto volume após anúncio, mas que agora operam perto da mínima do dia. | yfinance | M | Médio |
+| Efeito Halo Setorial | Responde: Uma ação ruim está sendo puxada por um setor forte? Originalidade: Ativos com P/L muito ruim que estão subindo hoje puramente impulsionados por pares de setor. | brapi | M | Médio |
