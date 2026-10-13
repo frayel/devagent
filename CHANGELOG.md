@@ -1,6 +1,11 @@
 # Changelog
 
 ## [Unreleased]
+### Adicionado
+- **Reorganização da Maré do Mercado (Spec 050)**:
+  - Gauge de Confiança compactado para ocupar menos espaço.
+  - Gauges de Apetite a Risco e Rotação reorganizados de forma mais densa.
+
 
 ### Alterado
 - Consolidação de medidores de Apetite a Risco e Rotação de Capital na Maré do Mercado (Spec 049).
