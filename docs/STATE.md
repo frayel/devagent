@@ -9,6 +9,11 @@
 
 ## Implementado
 
+- Spec 051 (Experiência: Densidade Dinâmica da Grade):
+  - Adicionado toggle (Confortável/Compacto) no cabeçalho das abas para alterar paddings e espaçamentos (classe `.compacto` via CSS).
+  - Estado armazenado no `localStorage` via JavaScript.
+
+
 - Spec 046 (Fator "Peso Pesado"):
   - Banco de dados SQLite (`fator_peso_pesado_cache`).
   - Coletor com yfinance buscando ^BVSP e top 5 ações por peso para calcular a contribuição no movimento.

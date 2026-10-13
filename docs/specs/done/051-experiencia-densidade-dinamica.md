@@ -1,7 +1,7 @@
 ---
 id: 051
 titulo: "Experiência: Densidade Dinâmica da Grade"
-status: ready
+status: done
 esforco: P
 ---
 
