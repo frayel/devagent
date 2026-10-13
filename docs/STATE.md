@@ -82,6 +82,11 @@
   - Coletor buscando fechamentos intraday para as ações representativas de 3 motores (Financeiro, Commodities, Doméstico) via `yfinance`.
   - Cálculo de variação e exibição de cards na visão macro da home.
   - Adicionado painel e chaves em `/api/snapshot`.
+
+- Spec 049 (Consolidação de Gauges na Maré do Mercado):
+  - Consolidou-se os medidores semicirculares (gauges) de Apetite a Risco e Rotação de Capital no painel da Maré do Mercado.
+  - Painéis isolados foram removidos para limpar a interface sem perder funcionalidade.
+
 - Spec 036 (Radar de Short Squeeze):
   - Coletor com yfinance (spark).
   - Exibe ações caindo >=10% nos últimos 10 dias com aumento anormal de volume (>2x média diária) e alta >= 4%.

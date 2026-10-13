@@ -92,6 +92,30 @@
     {% else %}
         {{ estado('indisponivel') }}
     {% endif %}
+    {% if apetite_risco or rotacao_capital %}
+    <div class="gauges espaco-topo">
+        {% if apetite_risco %}
+        <div>
+            <div class="rot texto-centro espaco-fundo-pequeno">Apetite a Risco <span class="sub bloco">(SMLL - IBOV)</span></div>
+            <div class="hero num {% if apetite_risco.estado == 'Tomando risco' %}texto-alta{% elif apetite_risco.estado == 'Defensivo' %}texto-baixa{% else %}texto-neutro{% endif %} texto-centro texto-medio">
+                {{ apetite_risco.estado }}
+            </div>
+            {{ gauge(apetite_risco.diferenca, "SMLL − IBOV hoje", -2.0, 2.0, "{:+.2f} p.p.", divergente=True, resumo="Small caps menos Ibovespa hoje", escala=False) }}
+        </div>
+        {% endif %}
+
+        {% if rotacao_capital %}
+        <div>
+            <div class="rot texto-centro espaco-fundo-pequeno">Rotação <span class="sub bloco">(Bancos - Cmdts)</span></div>
+            <div class="hero num {% if rotacao_capital.estado == 'Para Bancos' or rotacao_capital.estado == 'Para Commodities' %}texto-alta{% else %}texto-neutro{% endif %} texto-centro texto-medio">
+                {{ rotacao_capital.estado }}
+            </div>
+            {{ gauge(rotacao_capital.diferenca, "bancos − commodities", -3.0, 3.0, "{:+.2f} p.p.", divergente=True, resumo="Variação de bancos menos commodities hoje", escala=["Para Commodities", "Para Bancos"]) }}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
 {% endcall %}
 
 
@@ -145,18 +169,7 @@
 {% endcall %}
 
 <!-- Linha 3: humor e rotação do dia -->
-{% call painel('Apetite a Risco', 4, 'Se o índice SMLL estiver subindo mais que o IBOV, o mercado está tomando risco.', apetite_risco.fonte if apetite_risco else '', apetite_risco.time if apetite_risco else '', 'visao-macro painel-apetite sentimento-risco') %}
-  {% if not apetite_risco %}
-    {{ estado('indisponivel') }}
-  {% else %}
-    <div class="painel-estado-container">
-      <div class="hero num {% if apetite_risco.estado == 'Tomando risco' %}texto-alta{% elif apetite_risco.estado == 'Defensivo' %}texto-baixa{% else %}texto-neutro{% endif %} texto-centro">
-        {{ apetite_risco.estado }}
-      </div>
-      {{ gauge(apetite_risco.diferenca, "SMLL − IBOV hoje", -2.0, 2.0, "{:+.2f} p.p.", divergente=True, resumo="Small caps menos Ibovespa hoje") }}
-    </div>
-  {% endif %}
-{% endcall %}
+
 
 {% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje, e qual atrai mais volume financeiro.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial visao-geral escondido' if not concentracao_setorial else 'visao-macro painel-concentracao-setorial visao-geral') %}
   {% if not concentracao_setorial %}
@@ -203,22 +216,7 @@
   {% endif %}
 {% endcall %}
 
-{% call painel('Rotação de Capital', 4, 'Troca de capital entre os dois principais motores da bolsa: Bancos vs Commodities.', rotacao_capital.fonte if rotacao_capital else '', rotacao_capital.time if rotacao_capital else '', 'visao-macro painel-rotacao sentimento-risco') %}
-  {% if not rotacao_capital %}
-    {{ estado('indisponivel') }}
-  {% else %}
-    <div class='painel-estado-container'>
-      <div class='hero num {% if rotacao_capital.estado == "Para Bancos" or rotacao_capital.estado == "Para Commodities" %}texto-alta{% else %}texto-neutro{% endif %} texto-centro'>
-        {{ rotacao_capital.estado }}
-      </div>
-      {{ gauge(rotacao_capital.diferenca, "bancos − commodities", -3.0, 3.0, "{:+.2f} p.p.", divergente=True, resumo="Variação de bancos menos commodities hoje", escala=["Para Commodities", "Para Bancos"]) }}
-      <div class="legenda num">
-        <span>Bancos {{ variacao("%.2f%%" | format((rotacao_capital.var_bancos or 0) | abs) | replace(".", ","), 1 if (rotacao_capital.var_bancos or 0) > 0 else -1 if (rotacao_capital.var_bancos or 0) < 0 else 0) }}</span>
-        <span>Commodities {{ variacao("%.2f%%" | format((rotacao_capital.var_commodities or 0) | abs) | replace(".", ","), 1 if (rotacao_capital.var_commodities or 0) > 0 else -1 if (rotacao_capital.var_commodities or 0) < 0 else 0) }}</span>
-      </div>
-    </div>
-  {% endif %}
-{% endcall %}
+
 
 
 
