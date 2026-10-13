@@ -295,45 +295,24 @@ def _epoch(d: date) -> int:
     return int(datetime(d.year, d.month, d.day, 13, 0, tzinfo=timezone.utc).timestamp())
 
 
-def _spark(cesta, lote):
-    return {
-        "spark": {
-            "result": [
-                {
-                    "symbol": f"{t}.SA",
-                    "response": [
-                        {
-                            "timestamp": [_epoch(d) for d in sorted(cesta[t])],
-                            "indicators": {
-                                "quote": [
-                                    {
-                                        "close": [
-                                            cesta[t][d][0] for d in sorted(cesta[t])
-                                        ],
-                                        "volume": [
-                                            cesta[t][d][1] for d in sorted(cesta[t])
-                                        ],
-                                    }
-                                ]
-                            },
-                        }
-                    ],
-                }
-                for t in lote
-                if t in cesta
-            ]
-        }
-    }
 
-
-def _chart(ibov):
+def _chart(ibov, volumes=None):
     dias = sorted(ibov)
     return {
         "chart": {
             "result": [
                 {
                     "timestamp": [_epoch(d) for d in dias],
-                    "indicators": {"quote": [{"close": [ibov[d] for d in dias]}]},
+                    "indicators": {
+                        "quote": [
+                            {
+                                "close": [ibov[d] for d in dias],
+                                "volume": [
+                                    volumes[d] if volumes else 1000 for d in dias
+                                ],
+                            }
+                        ]
+                    },
                 }
             ]
         }
@@ -349,12 +328,18 @@ def sem_espera(monkeypatch):
 
 def _mock_cesta(cesta):
     def responder(request):
-        simbolos = request.url.params["symbols"].split(",")
-        lote = [s.replace(".SA", "") for s in simbolos]
-        return httpx.Response(200, json=_spark(cesta, lote))
+        url = str(request.url)
+        match = re.search(r"/chart/([^?]+)\?", url)
+        if match:
+            t = match.group(1).replace(".SA", "")
+            if t in cesta:
+                fech = {d: cesta[t][d][0] for d in cesta[t]}
+                vol = {d: cesta[t][d][1] for d in cesta[t]}
+                return httpx.Response(200, json=_chart(fech, volumes=vol))
+        return httpx.Response(404)
 
     respx.get(
-        url__regex=r"https://query1\.finance\.yahoo\.com/v7/finance/spark.*"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/chart/[A-Z0-9]+\.SA\?.*"
     ).mock(side_effect=responder)
 
 

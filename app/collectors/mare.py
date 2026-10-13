@@ -30,11 +30,7 @@ from app.services import mare
 
 logger = logging.getLogger(__name__)
 
-LOTE = 15
-URL_CESTA = (
-    "https://query1.finance.yahoo.com/v7/finance/spark"
-    "?symbols={simbolos}&range=3mo&interval=1d"
-)
+URL_CESTA = "https://{domain}.finance.yahoo.com/v8/finance/chart/{simbolo}?range=3mo&interval=1d"
 URL_IBOV = (
     "https://query2.finance.yahoo.com/v8/finance/chart/%5EBVSP?range=2y&interval=1d"
 )
@@ -67,21 +63,20 @@ def _serie_do_bloco(bloco: dict) -> mare.SerieAcao:
 
 def buscar_cesta(client: httpx.Client) -> dict[str, mare.SerieAcao]:
     series: dict[str, mare.SerieAcao] = {}
-    for i in range(0, len(TICKERS), LOTE):
-        lote = TICKERS[i : i + LOTE]
-        url = URL_CESTA.format(simbolos=",".join(f"{t}.SA" for t in lote))
+    for i, ticker in enumerate(TICKERS):
+        domain = "query1" if i % 2 == 0 else "query2"
+        url = URL_CESTA.format(domain=domain, simbolo=f"{ticker}.SA")
         try:
             dados = fetch_with_retry(url, client=client).json()
         except (httpx.HTTPError, ValueError) as e:
-            logger.error("Maré: lote %s falhou: %s", ",".join(lote), e)
+            logger.error("Maré: ticker %s falhou: %s", ticker, e)
             continue
-        for item in dados.get("spark", {}).get("result", []) or []:
-            resposta = item.get("response") or []
-            if not resposta:
-                continue
-            serie = _serie_do_bloco(resposta[0])
-            if serie:
-                series[item.get("symbol", "").replace(".SA", "")] = serie
+        bloco = dados.get("chart", {}).get("result", [])
+        if not bloco:
+            continue
+        serie = _serie_do_bloco(bloco[0])
+        if serie:
+            series[ticker] = serie
     return series
 
 
