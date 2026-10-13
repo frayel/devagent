@@ -640,6 +640,52 @@ def checar_radar_inflexao(snapshot: dict) -> Resultado | None:
     return None
 
 
+def checar_clima_global(snapshot: dict) -> list[Resultado]:
+    r = []
+    dados = snapshot.get("paineis", {}).get("clima_global")
+    if dados is None:
+        r.append(
+            Resultado(
+                "clima_global.chave",
+                AVISO,
+                "Termômetro de Clima Externo ausente no snapshot",
+            )
+        )
+        return r
+    if "sp500_pct" not in dados:
+        r.append(
+            Resultado(
+                "clima_global.chave", FALHA, "Chave 'sp500_pct' ausente no clima_global"
+            )
+        )
+    if "vix_pct" not in dados:
+        r.append(
+            Resultado(
+                "clima_global.chave", FALHA, "Chave 'vix_pct' ausente no clima_global"
+            )
+        )
+    if "status" not in dados:
+        r.append(
+            Resultado(
+                "clima_global.chave", FALHA, "Chave 'status' ausente no clima_global"
+            )
+        )
+    try:
+        vix = float(dados.get("vix_pct", 0))
+        if vix <= -100:
+            r.append(
+                Resultado(
+                    "clima_global.vix",
+                    FALHA,
+                    "VIX_pct não pode ser -100% ou menos",
+                    f"Valor: {vix}",
+                )
+            )
+    except (ValueError, TypeError):
+        r.append(Resultado("clima_global.vix", FALHA, "vix_pct não é numérico"))
+    return r
+
+
 def auditar(
     url: str,
     agora: datetime | None = None,
@@ -713,6 +759,7 @@ def auditar(
         if isinstance(snap_dict, dict):
             r += checar_mare(snap_dict)
             r += checar_volatilidade_silenciosa(snap_dict)
+            r += checar_clima_global(snap_dict)
             f_orfa = checar_detector_acao_orfa(snap_dict)
             if f_orfa:
                 r.append(f_orfa)
