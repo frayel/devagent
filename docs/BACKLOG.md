@@ -339,3 +339,13 @@
 | Radar de Absorção em Topos | Responde: Qual ativo está sendo distribuído silenciosamente? Originalidade: Identifica aumento expressivo de volume no topo intradiário sem deslocamento correspondente no preço. | yfinance | M | Médio |
 | Índice de Medo de Abertura | Responde: O mercado abriu em pânico ou calmo? Originalidade: Mede o tamanho médio dos gaps de abertura de toda a cesta no início do pregão. | yfinance | M | Baixo |
 | Alerta de Ruptura Falsa Setorial | Responde: Um setor rompeu máxima mas falhou em seguida? Originalidade: Detecta falsos rompimentos agrupados por setor, e não apenas ações individuais. | brapi | M | Baixo |
+## Ideias (Passo 7 - 2026-10-13-0929)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Termômetro de Clima Externo | Responde: O pânico ou euforia da abertura é local ou importado? Originalidade: Cruza S&P 500 Futuro e VIX americano para classificar o humor global antes das 10h. | yfinance | M | Baixo |
+| Mapa de Dissonância Setorial | Responde: Quais ativos estão ignorando a maré do seu próprio setor? Originalidade: Destaca papéis que caem forte enquanto seu setor (ex. Bancos) sobe, evidenciando fatores idiossincráticos. | yfinance | M | Baixo |
+| Relógio de Volatilidade Intraday | Responde: Em qual horário o mercado esteve mais errático hoje? Originalidade: Ao invés do volume, mapeia as amplitudes de preço hora a hora para encontrar os picos de indecisão. | brapi | G | Médio |
+| Termômetro de Sangria Institucional | Responde: O volume de venda está sendo feito às claras ou em blocos fracionados? Originalidade: Avalia a divergência entre a queda de preço e a contagem de ticks (negócios). | brapi | M | Alto (Falta API granular) |
+| Filtro de Ações Imunes a Juros | Responde: Quais ações subiram consistentemente nos últimos dias de alta aguda do DI? Originalidade: Filtra diretamente o histórico cruzando a variação positiva do ativo apenas nos dias de estresse da curva de juros. | yfinance | M | Médio |
+| Experiência: Modo TV / Kiosk | Responde: Posso deixar essa tela em um monitor secundário sem interação? Originalidade: Remove todos os controles interativos (abas, botões), esconde os detalhes miúdos e expande as fontes para leitura de longo alcance, focando na manchete, Ibovespa e alertas. | N/A | P | Baixo |
