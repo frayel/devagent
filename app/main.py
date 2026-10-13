@@ -99,7 +99,11 @@ async def add_security_headers(request: Request, call_next):
         "default-src 'self'; "
         "script-src 'self' https://unpkg.com https://cdn.plot.ly; "
         "style-src 'self' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=' 'sha256-pgn1TCGZX6O77zDvy0oTODMOxemn0oj0LeCnQTRj7Kg='; "
-        "img-src 'self' data:"
+        "img-src 'self' data:; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "frame-ancestors 'none'"
     )
     return response
 
