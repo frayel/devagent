@@ -38,6 +38,7 @@ from app.services import scanner_capitulacao
 from app.services import mare as mare_servico
 from app.database import (
     get_latest_motores_indice_data,
+    get_latest_clima_global_data,
     get_latest_concentracao_setorial_data,
     get_latest_ibovespa_data,
     get_latest_volume_alerts_data,
@@ -269,6 +270,15 @@ def snapshot():
     motores_data = get_latest_motores_indice_data()
     if motores_data:
         resp["paineis"]["motores_indice"] = json.loads(motores_data.motores_json)
+
+    clima_global_data = get_latest_clima_global_data()
+    if clima_global_data:
+        resp["paineis"]["clima_global"] = {
+            "sp500_pct": clima_global_data.sp500_pct,
+            "vix_pct": clima_global_data.vix_pct,
+            "status": clima_global_data.status,
+            "fonte": clima_global_data.fonte,
+        }
     coesao_data = get_latest_coesao_data()
     if coesao_data:
         resp["paineis"]["coesao"] = {
@@ -610,6 +620,8 @@ def snapshot():
 async def index(request: Request):
     motores_data = get_latest_motores_indice_data()
     motores_cards = json.loads(motores_data.motores_json) if motores_data else None
+
+    clima_global = get_latest_clima_global_data()
     ibovespa_data = get_ibovespa_view_data()
 
     highlights_data = get_latest_highlights_data()
@@ -832,5 +844,6 @@ async def index(request: Request):
             "liquidez_abertura": liquidez_abertura,
             "mare": mare,
             "motores_cards": motores_cards,
+            "clima_global": clima_global,
         },
     )

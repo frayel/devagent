@@ -250,6 +250,15 @@ def init_db() -> None:
     cursor = conn.cursor()
 
     cursor.executescript("""
+        CREATE TABLE IF NOT EXISTS clima_global_cache (
+            timestamp TEXT NOT NULL,
+            sp500_pct REAL NOT NULL,
+            vix_pct REAL NOT NULL,
+            status TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_clima_global_cache_timestamp ON clima_global_cache(timestamp DESC);
+
 
         CREATE TABLE IF NOT EXISTS falso_rompimento_cache (
             timestamp TEXT NOT NULL,
@@ -2105,6 +2114,55 @@ def get_latest_motores_indice_data() -> MotoresIndiceData | None:
         return MotoresIndiceData(
             timestamp=datetime.fromisoformat(row["timestamp"]),
             motores_json=row["motores_json"],
+            fonte=row["fonte"],
+        )
+    return None
+
+
+@dataclass
+class ClimaGlobalData:
+    timestamp: datetime
+    sp500_pct: float
+    vix_pct: float
+    status: str
+    fonte: str = "yfinance"
+
+
+def save_clima_global_data(data: ClimaGlobalData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO clima_global_cache (timestamp, sp500_pct, vix_pct, status, fonte) VALUES (?, ?, ?, ?, ?)",
+        (
+            data.timestamp.isoformat(),
+            data.sp500_pct,
+            data.vix_pct,
+            data.status,
+            data.fonte,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_clima_global_data() -> ClimaGlobalData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT timestamp, sp500_pct, vix_pct, status, fonte FROM clima_global_cache ORDER BY timestamp DESC LIMIT 1"
+        )
+        row = cursor.fetchone()
+    except sqlite3.OperationalError:
+        return None
+    finally:
+        conn.close()
+    if row:
+        return ClimaGlobalData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            sp500_pct=row["sp500_pct"],
+            vix_pct=row["vix_pct"],
+            status=row["status"],
             fonte=row["fonte"],
         )
     return None

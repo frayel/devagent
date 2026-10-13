@@ -5,9 +5,15 @@
 ## Experiência
 
 - Última revisão de experiência: 2026-10-13 (Densidade Dinâmica)
-- Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+
+- Spec 052 (Termômetro de Clima Externo):
+  - Banco de dados SQLite (`clima_global_cache`).
+  - Coletor buscando S&P 500 Futuros e VIX via `yfinance` e calculando a variação e o status de humor (Apetite/Aversão/Neutro).
+  - Exibição de painel na visão geral cruzando os indicadores.
+  - Adicionado ao contrato `/api/snapshot`.
 
 - Spec 051 (Experiência: Densidade Dinâmica da Grade):
   - Adicionado toggle (Confortável/Compacto) no cabeçalho das abas para alterar paddings e espaçamentos (classe `.compacto` via CSS).
