@@ -18,8 +18,43 @@
 </div>
 
 
+
+{% if clima_global %}
+<div class="span-4 painel-clima-global visao-geral">
+    <section class="painel">
+        <div class="cab">
+            <h2>Clima Global</h2>
+            <div class="fonte">{{ clima_global.timestamp.strftime('%d/%m %H:%M') }} BRT | {{ clima_global.fonte }}</div>
+        </div>
+        <div class="conteudo-centralizado">
+            {% set color_class = 'neutra' %}
+            {% if clima_global.status == 'Apetite a Risco' %}
+                {% set color_class = 'alta' %}
+            {% elif clima_global.status == 'Aversão a Risco' %}
+                {% set color_class = 'baixa' %}
+            {% endif %}
+            <div class="destaque {{ color_class }}">{{ clima_global.status }}</div>
+            <div class="kpi-group">
+                <div class="kpi">
+                    <span class="rot">S&P 500 Fut</span>
+                    <span class="var {% if clima_global.sp500_pct > 0 %}alta{% elif clima_global.sp500_pct < 0 %}baixa{% else %}neutra{% endif %}">
+                        {% if clima_global.sp500_pct > 0 %}▲{% elif clima_global.sp500_pct < 0 %}▼{% else %}■{% endif %} {{ "{:+.2f}%".format(clima_global.sp500_pct) }}
+                    </span>
+                </div>
+                <div class="kpi">
+                    <span class="rot">VIX</span>
+                    <span class="var {% if clima_global.vix_pct > 0 %}alta{% elif clima_global.vix_pct < 0 %}baixa{% else %}neutra{% endif %}">
+                        {% if clima_global.vix_pct > 0 %}▲{% elif clima_global.vix_pct < 0 %}▼{% else %}■{% endif %} {{ "{:+.2f}%".format(clima_global.vix_pct) }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endif %}
+
 {% if motores_cards %}
-<div class="span-12 painel-motores-indice visao-geral">
+<div class="{% if clima_global %}span-8{% else %}span-12{% endif %} painel-motores-indice visao-geral">
     <section class="painel">
         <div class="cab">
             <h2>Motores do Índice</h2>

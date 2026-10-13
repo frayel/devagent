@@ -49,6 +49,16 @@ def _semear(db_path: str) -> None:
     db.init_db()
     agora = datetime.now(timezone.utc)
 
+    db.save_clima_global_data(
+        db.ClimaGlobalData(
+            timestamp=agora,
+            sp500_pct=1.0,
+            vix_pct=-3.0,
+            status="Apetite a Risco",
+            fonte="demonstracao",
+        )
+    )
+
     db.save_motores_indice_data(
         db.MotoresIndiceData(
             timestamp=agora,

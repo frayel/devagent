@@ -66,6 +66,7 @@ def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
     )
 
     monkeypatch.setattr("app.collectors.escudo_quedas.collect_and_save", lambda: True)
+    monkeypatch.setattr("app.collectors.clima_global.collect_and_save", lambda: True)
     monkeypatch.setattr("app.collectors.concentracao.collect_and_save", lambda: True)
     monkeypatch.setattr(
         "app.collectors.concentracao_setorial.collect_and_save", lambda: True
@@ -150,6 +151,7 @@ def test_mascara_token_no_estado(monkeypatch):
         "radar_liquidez_abertura",
         "radar_absorcao_cruzada",
         "fator_peso_pesado",
+        "clima_global",
     ):
         monkeypatch.setattr(f"app.collectors.{nome}.collect_and_save", lambda: True)
 
