@@ -295,7 +295,6 @@ def _epoch(d: date) -> int:
     return int(datetime(d.year, d.month, d.day, 13, 0, tzinfo=timezone.utc).timestamp())
 
 
-
 def _chart(ibov, volumes=None):
     dias = sorted(ibov)
     return {
