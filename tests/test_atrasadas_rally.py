@@ -15,21 +15,21 @@ def test_db(monkeypatch, tmp_path):
 
 @respx.mock
 def test_fetch_atrasadas_rally_valido():
-    mock_data = {
-        "spark": {
+
+    mock_ibov_data = {
+        "chart": {
             "result": [
                 {
-                    "symbol": "^BVSP",
-                    "response": [
-                        {
-                            "indicators": {
-                                "quote": [
-                                    {"close": [100.0, 101.0, 102.0, 103.0, 104.0]}
-                                ]
-                            }
-                        }
-                    ],
-                },
+                    "indicators": {
+                        "quote": [{"close": [100.0, 101.0, 102.0, 103.0, 104.0]}]
+                    }
+                }
+            ]
+        }
+    }
+    mock_spark_data = {
+        "spark": {
+            "result": [
                 {
                     "symbol": "VALE3.SA",
                     "response": [
@@ -39,13 +39,18 @@ def test_fetch_atrasadas_rally_valido():
                             }
                         }
                     ],
-                },
+                }
             ]
         }
     }
-    respx.get(url__startswith="https://query1.finance.yahoo.com/v7/finance/spark").mock(
-        return_value=httpx.Response(200, json=mock_data)
-    )
+    import re
+
+    respx.get(
+        re.compile(r"https://query[12]\.finance\.yahoo\.com/v8/finance/chart/\^BVSP.*")
+    ).mock(return_value=httpx.Response(200, json=mock_ibov_data))
+    respx.get(
+        re.compile(r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*")
+    ).mock(return_value=httpx.Response(200, json=mock_spark_data))
 
     data = atrasadas_rally.fetch_yfinance()
     assert data is not None
@@ -58,27 +63,26 @@ def test_fetch_atrasadas_rally_valido():
 
 @respx.mock
 def test_fetch_atrasadas_rally_invalido():
-    mock_data = {
-        "spark": {
+
+    mock_ibov_data = {
+        "chart": {
             "result": [
                 {
-                    "symbol": "^BVSP",
-                    "response": [
-                        {
-                            "indicators": {
-                                "quote": [
-                                    {"close": [100.0, 100.5, 100.8, 101.0, 101.5]}
-                                ]
-                            }
-                        }
-                    ],
+                    "indicators": {
+                        "quote": [{"close": [100.0, 100.5, 100.8, 101.0, 101.5]}]
+                    }
                 }
             ]
         }
     }
-    respx.get(url__startswith="https://query1.finance.yahoo.com/v7/finance/spark").mock(
-        return_value=httpx.Response(200, json=mock_data)
-    )
+    import re
+
+    respx.get(
+        re.compile(r"https://query[12]\.finance\.yahoo\.com/v8/finance/chart/\^BVSP.*")
+    ).mock(return_value=httpx.Response(200, json=mock_ibov_data))
+    respx.get(
+        re.compile(r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*")
+    ).mock(return_value=httpx.Response(200, json={"spark": {"result": []}}))
 
     data = atrasadas_rally.fetch_yfinance()
     assert data is not None
