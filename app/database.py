@@ -320,6 +320,7 @@ def init_db() -> None:
             motores_json TEXT NOT NULL,
             fonte TEXT DEFAULT 'yfinance'
         );
+        CREATE INDEX IF NOT EXISTS idx_motores_indice_cache_timestamp ON motores_indice_cache(timestamp DESC);
         CREATE TABLE IF NOT EXISTS fator_peso_pesado_cache (
             timestamp DATETIME PRIMARY KEY,
             proporcao REAL,
