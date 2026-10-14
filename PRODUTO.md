@@ -126,6 +126,14 @@ Complementa `devagent/skills/descobrir-ideias.md` com o território deste domín
 
 Para `devagent/skills/rever-experiencia.md`: as capturas saem de `make telas` (pasta `telas/`), a referência é `docs/design/referencia.html` e o guia é `docs/DESIGN.md`. O usuário que percorre a página é o investidor às 10h05, antes de decidir: em 1440×900, sem rolar, ele precisa saber como o mercado está e o que se destaca hoje.
 
+### Manutenção neste produto
+
+Para `devagent/skills/manutencao.md`:
+
+- **Onde medir.** Repetição: os módulos de `app/collectors/` e `app/services/`, as tabelas `*_cache` em `app/database.py` e os testes correspondentes em `tests/`. Custo de coleta: `app/agendador.py` e o diagnóstico em `GET /api/coleta` (última rodada e último erro). Partes vazias: os painéis com a classe `.escondido` nas capturas de `make telas` e as chaves sem dados em `/api/snapshot`. Fragilidade: os relatórios em `docs/runs/` e as issues `tentativa-falhou`.
+- **Critério de poda.** Um painel que, numa janela de 10 pregões, ficou sem dados ou escondido em mais da metade das coletas feitas durante o pregão é candidato a poda: remover, fundir num vizinho ou mudar de forma. Enquanto o sistema não registrar esse histórico por painel, a primeira rodada de manutenção cria o registro (um contador por chave do `/api/snapshot` já basta), sem nova dependência.
+- **Ponto de atenção conhecido.** Quase todo painel tem coletor próprio, tabela de cache própria e chamadas próprias à mesma fonte externa, muitas vezes pedindo as mesmas séries. É o primeiro lugar a medir.
+
 ## 9. Auditoria: o que é verdade neste domínio
 
 **Por que existe.** Em 26/09/2026 o painel mostrou o Ibovespa a 130.000 pontos, com o índice perto de 183.000. Os três fechamentos do gráfico (128.000, 129.000, 130.000,5) eram de `tests/fixtures/brapi_response.json`, e todos os testes passavam.

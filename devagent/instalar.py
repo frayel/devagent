@@ -51,7 +51,16 @@ PASTAS_DO_PROJETO = [
     "auditoria",
 ]
 ARQUIVOS_INICIAIS = {
-    "docs/STATE.md": "# Estado do Sistema\n\n## Implementado\n- Nada ainda.\n",
+    "docs/STATE.md": (
+        "# Estado do Sistema\n\n"
+        "## Experiência\n\n"
+        "- Última revisão de experiência: nenhuma\n"
+        "- Painéis, seções ou telas acrescentados desde a última revisão: 0\n\n"
+        "## Manutenção\n\n"
+        "- Última rodada de manutenção: nenhuma\n"
+        "- Specs entregues desde a última rodada (exceto as de manutenção): 0\n\n"
+        "## Implementado\n- Nada ainda.\n"
+    ),
     "docs/BACKLOG.md": "# Backlog\n\n## Correções\n\n## Ideias\n",
     "CHANGELOG.md": "# Changelog\n\n## [Unreleased]\n",
     "docs/auditoria/diario.md": "# Diário do auditor\n",
