@@ -29,17 +29,23 @@ def collect_and_save() -> bool:
         highs = quote[0].get("high", [])
         lows = quote[0].get("low", [])
 
-        # Calculate amplitudes
-        amplitudes = []
-        for h, low in zip(highs, lows):
-            if h is not None and low is not None:
-                amplitudes.append(h - low)
-
-        if not amplitudes:
+        # Find peak amplitude
+        timestamps = result[0].get("timestamp", [])
+        if not timestamps or not highs or not lows:
             return False
 
-        # Find peak
-        max_amp = max(amplitudes)
+        max_amp = 0
+        peak_timestamp = 0
+
+        for t, h, low in zip(timestamps, highs, lows):
+            if h is not None and low is not None:
+                amp = h - low
+                if amp > max_amp:
+                    max_amp = amp
+                    peak_timestamp = t
+
+        if max_amp == 0:
+            return False
 
         alertas = {
             "ticker": "^BVSP",
@@ -51,6 +57,7 @@ def collect_and_save() -> bool:
             * 100,
             "minima": result[0].get("meta", {}).get("regularMarketDayLow", 0),
             "maxima": result[0].get("meta", {}).get("regularMarketDayHigh", 0),
+            "pico_horario": peak_timestamp,
         }
 
         conn = get_connection()
