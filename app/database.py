@@ -129,6 +129,14 @@ def get_connection() -> sqlite3.Connection:
 
 
 @dataclass
+class RelogioVolatilidadeData:
+    id: int
+    timestamp: datetime
+    alertas_json: str
+    fonte: str
+
+
+@dataclass
 class ScannerCapitulacaoData:
     timestamp: datetime
     alertas_json: str
@@ -250,6 +258,15 @@ def init_db() -> None:
     cursor = conn.cursor()
 
     cursor.executescript("""
+
+        CREATE TABLE IF NOT EXISTS relogio_volatilidade_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME NOT NULL,
+            alertas_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_relogio_volatilidade_timestamp ON relogio_volatilidade_cache(timestamp DESC);
+
         CREATE TABLE IF NOT EXISTS clima_global_cache (
             timestamp TEXT NOT NULL,
             sp500_pct REAL NOT NULL,
@@ -2165,5 +2182,22 @@ def get_latest_clima_global_data() -> ClimaGlobalData | None:
             vix_pct=row["vix_pct"],
             status=row["status"],
             fonte=row["fonte"],
+        )
+    return None
+
+
+def get_latest_relogio_volatilidade_data() -> RelogioVolatilidadeData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM relogio_volatilidade_cache ORDER BY timestamp DESC LIMIT 1"
+    )
+    row = cursor.fetchone()
+    if row:
+        return RelogioVolatilidadeData(
+            id=row[0],
+            timestamp=datetime.fromisoformat(row[1]),
+            alertas_json=row[2],
+            fonte=row[3],
         )
     return None

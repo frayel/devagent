@@ -39,6 +39,7 @@ from app.services import mare as mare_servico
 from app.database import (
     get_latest_motores_indice_data,
     get_latest_clima_global_data,
+    get_latest_relogio_volatilidade_data,
     get_latest_concentracao_setorial_data,
     get_latest_ibovespa_data,
     get_latest_volume_alerts_data,
@@ -612,6 +613,24 @@ def snapshot():
         }
     else:
         resp["paineis"]["volatilidade_silenciosa"] = {}
+
+    relogio = get_latest_relogio_volatilidade_data()
+    if relogio:
+        try:
+            alertas = json.loads(relogio.alertas_json)
+            resp["paineis"]["relogio_volatilidade"] = {
+                "coletado_em": relogio.timestamp.isoformat(),
+                "fonte": relogio.fonte,
+                "ticker": alertas.get("ticker", ""),
+                "variacao": alertas.get("variacao", 0.0),
+                "amplitude_percentual": alertas.get("amplitude_percentual", 0.0),
+                "minima": alertas.get("minima", 0.0),
+                "maxima": alertas.get("maxima", 0.0),
+            }
+        except Exception:
+            resp["paineis"]["relogio_volatilidade"] = {}
+    else:
+        resp["paineis"]["relogio_volatilidade"] = {}
 
     return resp
 
