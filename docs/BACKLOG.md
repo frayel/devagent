@@ -37,6 +37,10 @@
 | Simulador "E se?" Histórico | Como a cesta atual se comportou no Joesley Day ou auge da pandemia | yfinance | M | Médio |
 | Alerta de "Volume Oculto" Intraday | Ações onde o volume de negócios destoa do book aparente | brapi.dev | M | Baixo |
 
+## Ideias (Passo 7 - 2026-10-14)
+
+| Saúde técnica: Refatorar todos os coletores para async_fetch_with_retry | Responde: Quanto tempo o agendador leva em inicialização? | N/A | G | Baixo |
+
 | Índice de Frustração (Pavios Superiores) | Responde: Quais ações não sustentam altas no intraday? Originalidade: Foca na anatomia do candle. | yfinance | P | Baixo |
 | Sobrevivência a Quedas (Escudo) | Responde: O que costuma segurar a carteira em dias de pânico? Originalidade: Conta os dias positivos durante quedas do Ibov. | yfinance | M | Médio |
 | Sensibilidade ao Dólar | Responde: Quais ações se beneficiam ou sofrem quando o dólar sobe? Originalidade: Mostra a correlação simples recente de ações vs BRL=X. | yfinance | P | Baixo |

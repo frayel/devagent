@@ -6,6 +6,7 @@ import asyncio
 from app.collectors.highlights import TICKERS
 from app.collectors import mt5
 from app.database import ScannerCapitulacaoData, save_scanner_capitulacao_data
+from app.collectors.utils import async_fetch_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ async def fetch_ticker(client, ticker, semaphore, i):
 
     async with semaphore:
         try:
-            resp = await client.get(url, timeout=10.0)
+            resp = await async_fetch_with_retry(url, client=client, timeout=10.0)
             resp.raise_for_status()
             return ticker, resp.json()
         except Exception:
