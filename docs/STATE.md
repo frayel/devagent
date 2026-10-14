@@ -5,9 +5,14 @@
 ## Experiência
 
 - Última revisão de experiência: 2026-10-13 (Densidade Dinâmica)
-- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 2 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Implementado
+
+- Spec 053 (Relógio de Volatilidade Intraday):
+  - Coletor com yfinance buscando dados intraday (^BVSP) em formato 15m.
+  - Cálculo de amplitude máxima para encontrar pico de volatilidade.
+  - Exibição de painel em "Alertas Intraday" e `/api/snapshot`.
 
 - Spec 052 (Termômetro de Clima Externo):
   - Banco de dados SQLite (`clima_global_cache`).
