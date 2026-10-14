@@ -626,6 +626,7 @@ def snapshot():
                 "amplitude_percentual": alertas.get("amplitude_percentual", 0.0),
                 "minima": alertas.get("minima", 0.0),
                 "maxima": alertas.get("maxima", 0.0),
+                "status": "pico_as_" + str(alertas.get("pico_horario", "")),
             }
         except Exception:
             resp["paineis"]["relogio_volatilidade"] = {}
@@ -824,6 +825,34 @@ async def index(request: Request):
         except Exception:
             pass
 
+    relogio_data = get_latest_relogio_volatilidade_data()
+    relogio = None
+    if relogio_data:
+        try:
+            alertas = json.loads(relogio_data.alertas_json)
+            from datetime import datetime
+
+            pico_horario = alertas.get("pico_horario", 0)
+            hora_str = (
+                datetime.fromtimestamp(
+                    pico_horario, tz=timezone(timedelta(hours=-3))
+                ).strftime("%H:%M")
+                if pico_horario
+                else "--:--"
+            )
+            relogio = {
+                "coletado_em": relogio_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": relogio_data.fonte,
+                "ticker": alertas.get("ticker", ""),
+                "variacao": alertas.get("variacao", 0.0),
+                "amplitude_percentual": alertas.get("amplitude_percentual", 0.0),
+                "hora_str": hora_str,
+            }
+        except Exception:
+            pass
+
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -864,5 +893,6 @@ async def index(request: Request):
             "mare": mare,
             "motores_cards": motores_cards,
             "clima_global": clima_global,
+            "relogio": relogio,
         },
     )

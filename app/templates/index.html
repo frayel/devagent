@@ -669,6 +669,18 @@
     {% endif %}
 {% endcall %}
 
+
+{% call painel("Relógio de Volatilidade Intraday", 4, "Horário de maior indecisão e oscilação intradiária (" ~ (relogio.ticker if relogio else "") ~ ").", relogio.fonte if relogio else "", relogio.coletado_em if relogio else "", "alertas") %}
+    {% if not relogio %}
+        {{ estado("indisponivel") }}
+    {% else %}
+        <div class="destaque">
+            <h3>{{ relogio.hora_str }}</h3>
+            <p>Amplitude de {{ "%.2f"|format(relogio.amplitude_percentual) }}%</p>
+        </div>
+    {% endif %}
+{% endcall %}
+
 {% call painel("Scanner de Capitulação", 4, "Ações caindo >2% mas com pico extremo recente de volume e longa sombra inferior (sinal de absorção).", scanner_capitulacao.fonte if scanner_capitulacao else "", scanner_capitulacao.time if scanner_capitulacao else "", "visao-micro alertas") %}
     {% if not scanner_capitulacao %}
         {{ estado("indisponivel") }}

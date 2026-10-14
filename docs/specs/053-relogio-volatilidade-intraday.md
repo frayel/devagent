@@ -1,7 +1,7 @@
 ---
 id: 053
 titulo: Relógio de Volatilidade Intraday
-status: ready
+status: done
 esforco: G
 ---
 
