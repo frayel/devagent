@@ -1755,7 +1755,7 @@ class RadarCongestionamentoData:
         from datetime import timezone, timedelta
 
         BRT = timezone(timedelta(hours=-3))
-        return self.timestamp.astimezone(BRT).strftime("%d/%m/%Y %H:%M:%S")
+        return self.timestamp.astimezone(BRT).strftime("%d/%m/%Y %H:%M:%S BRT")
 
 
 def save_radar_congestionamento_data(alertas: list[dict], fonte: str) -> None:

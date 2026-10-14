@@ -731,6 +731,25 @@ def auditar(
             )
         )
 
+    # Nova checagem do fuso horário
+    if re.search(r'<div class="rodape">\s*Fonte[^<]+(?<!BRT)</div>', html):
+        r.append(
+            Resultado(
+                "app.rodape_sem_fuso",
+                FALHA,
+                "Existem rodapés sem a indicação explícita do fuso horário BRT",
+                "Encontrado rodapé sem BRT no HTML",
+            )
+        )
+    else:
+        r.append(
+            Resultado(
+                "app.rodape_sem_fuso",
+                OK,
+                "Todos os rodapés com fonte indicam o fuso horário BRT",
+            )
+        )
+
     painel = extrair_do_html(html)
     s_status, s_corpo = baixar(f"{url}/api/snapshot", timeout=30)
     snap_dict = None
