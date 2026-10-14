@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import time
 import re
 from urllib.parse import urlparse
@@ -97,3 +98,55 @@ def fetch_with_retry(
             raise
 
     raise RuntimeError("Unreachable")
+
+
+async def async_fetch_with_retry(
+    url: str,
+    client: httpx.AsyncClient,
+    max_retries: int = 3,
+    backoff_factor: float = 1.0,
+    **kwargs,
+) -> httpx.Response:
+    from app.collectors import mt5
+
+    resposta_mt5 = mt5.interceptar(url)
+    if resposta_mt5 is not None:
+        return resposta_mt5
+
+    domain = _get_domain(url)
+    if "finance.yahoo.com" in domain:
+        mt5.registrar_fonte(mt5.FONTE_YAHOO)
+
+    headers = kwargs.get("headers", {})
+    if "User-Agent" not in headers:
+        headers["User-Agent"] = USER_AGENT
+    kwargs["headers"] = headers
+
+    for attempt in range(max_retries):
+        try:
+            _enforce_rate_limit(domain)
+            response = await client.get(url, **kwargs)
+            status_code = response.status_code
+            if status_code == 429 or status_code >= 500:
+                logger.warning(
+                    f"Attempt {attempt + 1} failed for {url} with status {status_code}"
+                )
+                if attempt < max_retries - 1:
+                    sleep_time = backoff_factor * (2**attempt)
+                    logger.info(f"Retrying in {sleep_time} seconds...")
+                    await asyncio.sleep(sleep_time)
+                    continue
+                response.raise_for_status()
+
+            return response
+
+        except httpx.RequestError as e:
+            logger.warning(f"Attempt {attempt + 1} failed for {url} with error {e}")
+            if attempt < max_retries - 1:
+                sleep_time = backoff_factor * (2**attempt)
+                logger.info(f"Retrying in {sleep_time} seconds...")
+                await asyncio.sleep(sleep_time)
+                continue
+            raise
+
+    raise Exception(f"Failed to fetch {url} after {max_retries} attempts")
