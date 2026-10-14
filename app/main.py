@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 import json
 from datetime import datetime, timezone, timedelta
+from datetime import timezone as dt_timezone
 from app.services.ibovespa import get_ibovespa_view_data
 from app.services.manchete import gerar_manchete
 from app.database import get_latest_highlights_data, get_latest_apetite_risco_data
@@ -830,7 +831,6 @@ async def index(request: Request):
     if relogio_data:
         try:
             alertas = json.loads(relogio_data.alertas_json)
-            from datetime import datetime, timezone as dt_timezone
 
             pico_horario = alertas.get("pico_horario", 0)
             hora_str = (
