@@ -7,6 +7,12 @@
 - Última revisão de experiência: 2026-10-13 (Densidade Dinâmica)
 - Painéis, seções ou telas acrescentados desde a última revisão: 2 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
+## Manutenção
+
+- Última rodada de manutenção: nenhuma até 2026-10-14 (a cadência foi criada nesta data, ADR 011 do núcleo).
+- Specs entregues desde a última rodada (exceto as de manutenção): 4 (com 4, o Passo 7 faz uma rodada de manutenção; veja `devagent/CICLO.md`). O valor parte de 4 porque nenhuma rodada aconteceu desde a spec 001: a próxima execução do Passo 7 é de manutenção.
+- Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
+
 ## Implementado
 
 - Spec 053 (Relógio de Volatilidade Intraday):

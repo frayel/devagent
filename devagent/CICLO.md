@@ -124,7 +124,7 @@ Encerre a execução.
 
 ### Passo 4 · Implementar uma especificação
 
-Escolha a spec com `status: ready` de menor número. Antes de começar, procure issues abertas com label `tentativa-falhou` sobre ela: leia o motivo da tentativa anterior, evite repetir o erro e inclua `Closes #N` no PR. Implemente, escreva os testes, atualize `docs/STATE.md` (inclusive o contador de painéis da cadência de experiência, se a spec acrescenta um painel, seção ou tela) e `CHANGELOG.md`, marque a spec como `done` no mesmo PR e abra o PR com prefixo `feat:`. O status vai de `ready` direto para `done`: **nunca faça commit com `in-progress`**, nem num primeiro push "para salvar o progresso", porque o PR é aberto no primeiro push e já nasce reprovado. Faça o primeiro commit só quando a spec, os testes, o `CHANGELOG.md` e o `docs/STATE.md` estiverem prontos. Antes de abrir, rode `python -m devagent.conferir_pr --exigir-alteracao`: o job `disciplina` do CI reprova PR vazio (sem nenhum arquivo alterado, como o #171, que dizia entregar a 027a e não trazia código), PR com spec `in-progress`, script de teste fora de `tests/`, spec `done` sem `CHANGELOG.md` citando o número ou sem `docs/STATE.md`, e spec nova fechada enquanto a seção *Correções* tem entrada pendente.
+Escolha a spec com `status: ready` de menor número. Antes de começar, procure issues abertas com label `tentativa-falhou` sobre ela: leia o motivo da tentativa anterior, evite repetir o erro e inclua `Closes #N` no PR. Implemente, escreva os testes, atualize `docs/STATE.md` (inclusive os contadores das cadências do Passo 7: o de experiência, se a spec acrescenta um painel, seção ou tela, e o de manutenção, se a spec não é ela mesma de manutenção) e `CHANGELOG.md`, marque a spec como `done` no mesmo PR e abra o PR com prefixo `feat:` (ou `refactor:`, se a spec é das gavetas *Saúde técnica* ou *Poda*). O status vai de `ready` direto para `done`: **nunca faça commit com `in-progress`**, nem num primeiro push "para salvar o progresso", porque o PR é aberto no primeiro push e já nasce reprovado. Faça o primeiro commit só quando a spec, os testes, o `CHANGELOG.md` e o `docs/STATE.md` estiverem prontos. Antes de abrir, rode `python -m devagent.conferir_pr --exigir-alteracao`: o job `disciplina` do CI reprova PR vazio (sem nenhum arquivo alterado, como o #171, que dizia entregar a 027a e não trazia código), PR com spec `in-progress`, script de teste fora de `tests/`, spec `done` sem `CHANGELOG.md` citando o número ou sem `docs/STATE.md`, e spec nova fechada enquanto a seção *Correções* tem entrada pendente.
 
 Se a spec for grande demais para um PR de até ~400 linhas alteradas (excluindo testes e fixtures), divida-a em specs menores, marque a original como `draft` e encerre. A implementação fica para a próxima execução.
 
@@ -163,14 +163,30 @@ Só se aplica quando não há produção quebrada, PR aberto, spec `ready`, pend
 
 Esta é a fase criativa do ciclo. Aqui você não é executor de backlog: é quem decide o que o sistema deve se tornar. Siga a skill `devagent/skills/descobrir-ideias.md`.
 
-**Cadência de experiência.** O produto não cresce só por adição. O `docs/STATE.md` guarda a data da última revisão de experiência e quantos painéis, seções ou telas entraram desde ela. Se o contador chegou a 3, esta execução é uma revisão de experiência: siga `devagent/skills/rever-experiencia.md`, escolha uma das ideias que ela gerar e pule a escolha livre do item 4. Fora da cadência, a revisão também acontece em toda rodada, em escala menor: pelo menos uma das ideias do item 2 nasce dela.
+**As quatro gavetas.** Todo trabalho que nasce aqui pertence a uma gaveta, e o relatório diz qual:
+
+| Gaveta | Pergunta | Exemplos |
+|---|---|---|
+| Capacidade nova | o que o produto ainda não responde? | tela, painel, fonte, interação |
+| Experiência | o usuário acha o que precisa, rápido? | reorganizar, fundir, navegar (`rever-experiencia.md`) |
+| Saúde técnica | o sistema aguenta crescer mais? | duplicação, custo e tempo de coleta, testes frágeis, dependências (`manutencao.md`) |
+| Poda | o que existe ainda se paga? | remover ou fundir o que fica vazio, repete outro ou ninguém usa (`manutencao.md`) |
+
+Capacidade nova é a gaveta mais tentadora e a única que aumenta o custo de todas as outras. Por isso duas cadências a contrariam.
+
+**Cadências.** O `docs/STATE.md` guarda dois contadores:
+
+- **Experiência:** painéis, seções ou telas acrescentados desde a última revisão de experiência. Com 3, esta execução é uma revisão de experiência: siga `devagent/skills/rever-experiencia.md`, escolha uma das ideias que ela gerar e pule a escolha livre do item 4.
+- **Manutenção:** specs entregues desde a última rodada de manutenção, exceto as próprias specs de manutenção. Com 4, esta execução é uma rodada de manutenção: siga `devagent/skills/manutencao.md`, escolha uma ideia das gavetas *Saúde técnica* ou *Poda* e pule a escolha livre do item 4.
+
+Se as duas vencerem juntas, a manutenção vai primeiro: reorganizar a tela é mais barato depois da poda. A outra fica para a próxima vez que o ciclo chegar ao Passo 7. Fora das cadências, toda rodada também passa pelas duas skills em escala menor (item 2).
 
 1. Leia `docs/BACKLOG.md`, `docs/STATE.md`, o `PRODUTO.md` (inclusive o roteiro e *Onde procurar ideias*), o contexto de domínio e o que o produto já mostra em produção.
-2. Gere de 5 a 8 ideias novas, sendo pelo menos uma de experiência (reorganizar, fundir, simplificar ou navegar o que já existe, a partir das capturas da tela). **Pelo menos metade precisa ser original**: algo que não está no backlog, no roteiro do `PRODUTO.md`, nem é padrão em produtos do mesmo tipo. Vale expandir uma feature existente numa direção inesperada, cruzar fontes que ninguém cruza, mudar o escopo do produto ou criar uma experiência inteira nova.
-3. Para cada ideia, registre: a pergunta do usuário que ela responde, por que é original, fonte de dados, esforço (P/M/G) e risco (legal, técnico, de confiabilidade).
-4. Adicione as ideias ao backlog e escolha a próxima pelo critério que julgar mais relevante: valor, originalidade, aprendizado ou potencial de mudar o produto. Registre o critério no relatório. Não é obrigatório escolher a de menor esforço.
+2. Gere de 5 a 8 ideias novas, com pelo menos uma de *Experiência* (a partir das capturas da tela) e uma de *Saúde técnica* ou *Poda* (a partir de uma medida do sistema). **Pelo menos metade precisa ser original**: algo que não está no backlog, no roteiro do `PRODUTO.md`, nem é padrão em produtos do mesmo tipo. Vale expandir uma feature existente numa direção inesperada, cruzar fontes que ninguém cruza, mudar o escopo do produto ou criar uma experiência inteira nova. Originalidade vale para todas as gavetas: uma poda também pode ser ousada.
+3. Para cada ideia, registre: a gaveta, a pergunta que ela responde, por que é original, fonte de dados ou evidência, esforço (P/M/G) e risco (legal, técnico, de confiabilidade).
+4. Adicione as ideias ao backlog e escolha a próxima pelo critério que julgar mais relevante: valor, originalidade, aprendizado ou potencial de mudar o produto. Registre a gaveta e o critério no relatório. Não é obrigatório escolher a de menor esforço, nem a gaveta *Capacidade nova*.
 5. Se a ideia escolhida for grande, a spec descreve a **primeira fatia visível** dela, que cabe num PR, e o backlog guarda o resto da visão.
-6. Transforme a escolhida em spec `ready` (modelo em `devagent/skills/escrever-spec.md`) e abra um PR com prefixo `docs:`.
+6. Transforme a escolhida em spec `ready` (modelo em `devagent/skills/escrever-spec.md`) e abra um PR com prefixo `docs:`. Uma spec de manutenção declara `gaveta: saúde técnica` ou `gaveta: poda` no cabeçalho, para o contador saber que não deve contá-la.
 
 Encerre a execução.
 
@@ -245,7 +261,8 @@ O núcleo mora neste mesmo repositório justamente para você poder aprimorá-lo
 | `devagent/skills/escrever-spec.md` | como escrever uma boa spec e o modelo | Passo 7, ao transformar issue em spec e ao dividir specs |
 | `devagent/skills/descobrir-ideias.md` | como gerar ideias originais e escolher a próxima | Passo 7 |
 | `devagent/skills/rever-experiencia.md` | como rever a tela inteira a partir das capturas e transformar problemas em ideias | Passo 7, em toda rodada e obrigatoriamente na cadência de experiência |
-| `devagent/decisoes/` | ADRs do núcleo: `001` guardião e Passo 2, `002` correções no Passo 1, `003` escopo aberto, `005` núcleo separado do projeto, `006` revisão de experiência, `007` sem revisão humana, `008` disciplina conferida no CI, `009` retomada depois de ambiente reiniciado | antes de mudar o ciclo de decisão |
+| `devagent/skills/manutencao.md` | como medir a saúde técnica, decidir o que podar e transformar isso em spec | Passo 7, em toda rodada e obrigatoriamente na cadência de manutenção |
+| `devagent/decisoes/` | ADRs do núcleo: `001` guardião e Passo 2, `002` correções no Passo 1, `003` escopo aberto, `005` núcleo separado do projeto, `006` revisão de experiência, `007` sem revisão humana, `008` disciplina conferida no CI, `009` retomada depois de ambiente reiniciado, `010` relógio externo, `011` cadência de manutenção e poda | antes de mudar o ciclo de decisão |
 | `devagent/agents/` | personas do auditor e dos especialistas | quando acionado como uma delas |
 
 O índice do projeto está no `PRODUTO.md`. Ao criar um arquivo novo em `devagent/skills/`, acrescente-o a esta tabela no mesmo PR; em `docs/skills/` ou `docs/context/`, à tabela do `PRODUTO.md`.

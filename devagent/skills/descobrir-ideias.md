@@ -10,6 +10,7 @@ Use no Passo 7. O objetivo é sair do óbvio: o que todo produto do mesmo tipo j
 - **Incerteza como produto.** Mostrar o quanto as fontes discordam, a faixa provável em vez de um número, o tamanho da amostra de uma estatística.
 - **Formas novas de interação.** Perguntar em linguagem natural, simular um cenário, comparar "hoje" com o dia mais parecido do passado, alertas.
 - **A experiência que já existe.** Novos painéis são só metade do produto; a outra metade é como eles convivem. Siga `rever-experiencia.md`: olhe as capturas, ache o que ficou fora de lugar, redundante ou difícil de achar. Pelo menos uma ideia de cada rodada vem daqui.
+- **O que já existe envelhecendo.** Cada parte nova herda o custo das antigas. Siga `manutencao.md`: meça repetição, custo de operação e partes que ficam vazias, e proponha simplificar ou podar. Pelo menos uma ideia de cada rodada vem daqui, com o número que a sustenta.
 - **Os territórios do domínio** listados na seção *Onde procurar ideias* do `PRODUTO.md`.
 
 ## Como testar se uma ideia é original

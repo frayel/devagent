@@ -45,6 +45,14 @@ Formato de números, datas, fuso, idioma, cores.
 
 Territórios do domínio e concorrentes para testar originalidade.
 
+### Revisão de experiência neste produto
+
+Onde ficam as capturas da tela, a referência visual e o guia, e quem é o usuário que percorre a página (`devagent/skills/rever-experiencia.md`).
+
+### Manutenção neste produto
+
+Onde medir repetição, custo de operação, fragilidade e partes vazias, e o critério objetivo de poda (`devagent/skills/manutencao.md`).
+
 ## 9. Auditoria: o que é verdade neste domínio
 
 Fontes independentes, perguntas do domínio, um exemplo de bom achado e a agenda dos workflows de auditoria.
