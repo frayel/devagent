@@ -66,3 +66,8 @@
 **Vulnerability:** Defense-in-depth for Cross-Site Scripting (XSS), Clickjacking, and malicious frame/base/object injection.
 **Learning:** The existing Content-Security-Policy in `app/main.py` correctly locked down `script-src` and `style-src` but left out several directives that provide defense-in-depth against specific vector attacks. I added `object-src 'none'` to block Flash/applets, `base-uri 'self'` to prevent `<base>` tag injection from rewriting relative URLs, `form-action 'self'` to prevent form submissions to external malicious sites, and `frame-ancestors 'none'` to definitively block the site from being embedded in iframes (reinforcing X-Frame-Options). I updated the CSP headers in `add_security_headers` middleware and the corresponding tests in `tests/test_main.py`.
 **Prevention:** Always configure comprehensive CSP policies by explicitly defining directives like `object-src`, `base-uri`, `form-action`, and `frame-ancestors` to restrict the browser capabilities and block multiple classes of injection.
+
+## 2026-10-15 - Mask API Token in async_fetch_with_retry
+**Vulnerability:** Defense-in-depth for Information Exposure in diagnostics.
+**Learning:** The asynchronous request wrapper `async_fetch_with_retry` was logging unmasked URLs containing sensitive API tokens in query parameters when a request failed, exposing the token in diagnostic logs. I updated `app/collectors/utils.py` to mask the tokens using `re.sub` before the warning is logged, matching the logic in the synchronous equivalent.
+**Prevention:** Always ensure both synchronous and asynchronous network request implementations consistently apply secret masking prior to logging.
