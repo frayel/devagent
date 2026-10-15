@@ -128,8 +128,9 @@ async def async_fetch_with_retry(
             response = await client.get(url, **kwargs)
             status_code = response.status_code
             if status_code == 429 or status_code >= 500:
+                safe_url = re.sub(r"([?&]token=)[^&\s]+", r"\1***", url)
                 logger.warning(
-                    f"Attempt {attempt + 1} failed for {url} with status {status_code}"
+                    f"Attempt {attempt + 1} failed for {safe_url} with status {status_code}"
                 )
                 if attempt < max_retries - 1:
                     sleep_time = backoff_factor * (2**attempt)
@@ -141,7 +142,10 @@ async def async_fetch_with_retry(
             return response
 
         except httpx.RequestError as e:
-            logger.warning(f"Attempt {attempt + 1} failed for {url} with error {e}")
+            safe_url = re.sub(r"([?&]token=)[^&\s]+", r"\1***", url)
+            logger.warning(
+                f"Attempt {attempt + 1} failed for {safe_url} with error {e}"
+            )
             if attempt < max_retries - 1:
                 sleep_time = backoff_factor * (2**attempt)
                 logger.info(f"Retrying in {sleep_time} seconds...")
@@ -149,4 +153,5 @@ async def async_fetch_with_retry(
                 continue
             raise
 
-    raise Exception(f"Failed to fetch {url} after {max_retries} attempts")
+    safe_url = re.sub(r"([?&]token=)[^&\s]+", r"\1***", url)
+    raise Exception(f"Failed to fetch {safe_url} after {max_retries} attempts")
