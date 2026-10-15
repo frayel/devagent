@@ -37,6 +37,18 @@
 | Simulador "E se?" Histórico | Como a cesta atual se comportou no Joesley Day ou auge da pandemia | yfinance | M | Médio |
 | Alerta de "Volume Oculto" Intraday | Ações onde o volume de negócios destoa do book aparente | brapi.dev | M | Baixo |
 
+
+## Ideias (Passo 7 - 2026-10-15)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Fusão de Indicadores Globais | Responde: O Clima Global e Fator Peso Pesado estão ocupando muito espaço na primeira dobra? Originalidade: Condensar métricas globais e de peso num único painel estreito à esquerda ou direita, abrindo espaço para o painel de Ibovespa no centro. | N/A | P | Baixo |
+| Saúde Técnica: Unificação de Consultas do yfinance (spark) | Responde: Muitos coletores chamam o yfinance separadamente para as mesmas ações (ex: PETR4, VALE3) em dados diários? Originalidade: Criar um cache intermediário de spark que consolida requisições, reduzindo chamadas repetidas. Medida: contagem de chamadas duplicadas no agendador. | yfinance | M | Médio |
+| Experiência: Modo Zen (Ocultar Valores Absolutos) | Responde: O investidor fica ansioso com a pontuação variando? Originalidade: Exibir apenas as setas de variação percentual e cores, ocultando os pontos/valores absolutos até o hover. | N/A | P | Baixo |
+| Radar de Resiliência de Baixa | Responde: Quem sobrevive ileso quando o Ibov afunda? Originalidade: Mostra apenas ações que subiram em todos os últimos 3 dias de queda forte (>1%) do Ibovespa. | yfinance | M | Médio |
+| Poda: Limpeza de Rankings Secundários | Responde: "Atrasadas do Rally" ainda entrega valor num mercado lateral? Medida: Tempo vazio ou inócuo. | N/A | P | Baixo |
+| Termômetro de Ansiedade Intraday | Responde: Quão longe a máxima intradiária ficou da abertura em média na cesta B3? | yfinance | M | Baixo |
+
 ## Ideias (Passo 7 - 2026-10-14)
 
 | Saúde técnica: Refatorar todos os coletores para async_fetch_with_retry | Responde: Quanto tempo o agendador leva em inicialização? | N/A | G | Baixo |
