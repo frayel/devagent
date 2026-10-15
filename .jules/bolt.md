@@ -49,3 +49,8 @@
 - **O que fiz:** Adicionei o índice (`idx_motores_indice_cache_timestamp`) na tabela `motores_indice_cache` para a coluna `timestamp DESC`.
 - **O que aprendi:** A ausência do índice para a tabela `motores_indice_cache` na coluna `timestamp` (apesar de ter `timestamp TEXT PRIMARY KEY`, para otimizar um `ORDER BY timestamp DESC LIMIT 1` o índice em ordem DESC ajuda em varreduras explícitas dependendo do SQLite planner), além de garantir o mesmo padrão de índices `_timestamp ON ... (timestamp DESC)` otimizou a latência em leituras do banco de dados na inicialização da aplicação e chamadas à API de snapshot em tabelas grandes.
 - **O que evitar:** Evitar definir PKs de string sem adicionar os índices explícitos necessários em ordem DESCENDENTE quando consultas com limite e ordenação invertida são executadas recorrentemente.
+## 2026-10-15
+
+- **O que fiz:** Otimizei a função `fetch_with_retry` (e sua variante assíncrona) no módulo `app/collectors/utils.py` para alternar requisições sequenciais do Yahoo Finance entre os subdomínios `query1.finance.yahoo.com` e `query2.finance.yahoo.com`.
+- **O que aprendi:** Como o limite de taxa (rate limit) de 1 requisição a cada 2 segundos no `utils.py` é calculado por domínio, alternar as requisições entre `query1` e `query2` dobra efetivamente o limite permitido, permitindo execuções mais rápidas nos coletores sem causar erros 429 (Too Many Requests).
+- **O que evitar:** Evitar focar todas as requisições do Yahoo Finance em apenas um subdomínio (`query1`) quando `query2` também está disponível e as políticas de rate limit são computadas por host no projeto.

@@ -94,7 +94,7 @@ def test_coleta_concentracao_setorial_com_yfinance_fallback(
         respx.get(url__startswith="https://brapi.dev").mock(
             return_value=httpx.Response(500)
         )
-        respx.get(url__startswith="https://query1.finance.yahoo.com").mock(
+        respx.get(url__regex=r"https://query[12]\.finance\.yahoo\.com.*").mock(
             return_value=httpx.Response(200, json=mock_yfinance_response)
         )
 
@@ -113,7 +113,7 @@ def test_coleta_concentracao_setorial_falha_total(monkeypatch, setup_db):
         respx.get(url__startswith="https://brapi.dev").mock(
             return_value=httpx.Response(500)
         )
-        respx.get(url__startswith="https://query1.finance.yahoo.com").mock(
+        respx.get(url__regex=r"https://query[12]\.finance\.yahoo\.com.*").mock(
             return_value=httpx.Response(500)
         )
 

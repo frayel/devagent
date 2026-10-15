@@ -21,7 +21,9 @@ def test_radar_congestionamento_collector_success(monkeypatch):
     vola_prices = [10.0, 15.0, 5.0, 20.0, 1.0] * 4
     import httpx
 
-    respx.get(url__startswith="https://query1.finance.yahoo.com/v7/finance/spark").mock(
+    respx.get(
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+    ).mock(
         return_value=httpx.Response(
             200,
             json={

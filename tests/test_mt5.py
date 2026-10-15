@@ -82,7 +82,7 @@ def test_spark_servido_pelo_mt5(mt5_ligado):
             "VALE3:D1": barras_diarias(30, 60.0),
         }
     )
-    yahoo = respx.get(url__startswith="https://query1.finance.yahoo.com")
+    yahoo = respx.get(url__regex=r"https://query[12]\.finance\.yahoo\.com.*")
 
     url = (
         "https://query1.finance.yahoo.com/v7/finance/spark"
@@ -156,7 +156,7 @@ def test_intradia_converte_fuso_do_servidor(mt5_ligado):
 @respx.mock
 def test_mt5_fora_do_ar_cai_para_o_yahoo_e_pausa(mt5_ligado):
     rota = respx.get(RATES).mock(side_effect=httpx.ConnectError("recusado"))
-    yahoo = respx.get(url__startswith="https://query1.finance.yahoo.com").mock(
+    yahoo = respx.get(url__regex=r"https://query[12]\.finance\.yahoo\.com.*").mock(
         return_value=httpx.Response(200, json={"spark": {"result": []}})
     )
     url = "https://query1.finance.yahoo.com/v7/finance/spark?symbols=PETR4.SA,VALE3.SA&range=1d&interval=1d"
@@ -183,7 +183,7 @@ def test_chave_recusada_cai_para_o_yahoo(mt5_ligado):
 @respx.mock
 def test_simbolo_sem_traducao_vai_ao_yahoo(mt5_ligado):
     rota = respx.get(RATES)
-    yahoo = respx.get(url__startswith="https://query1.finance.yahoo.com").mock(
+    yahoo = respx.get(url__regex=r"https://query[12]\.finance\.yahoo\.com.*").mock(
         return_value=httpx.Response(200, json={"spark": {"result": []}})
     )
     fetch_with_retry(

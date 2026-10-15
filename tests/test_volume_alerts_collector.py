@@ -18,7 +18,7 @@ def mock_yfinance_spark():
     with respx.mock(assert_all_mocked=False) as respx_mock:
         # Mock the YF spark endpoint for any matching URL
         route = respx_mock.get(
-            url__regex=r"https://query1\.finance\.yahoo\.com/v7/finance/spark\?symbols=.*"
+            url__regex=r"https:\/\/query[12]\.finance\.yahoo\.com/v7/finance/spark\?symbols=.*"
         )
 
         # Create fake volumes: 21 days of normal volume (100) and today (last)

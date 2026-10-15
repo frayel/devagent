@@ -1,3 +1,4 @@
+import re
 import json
 import os
 from unittest import mock
@@ -134,7 +135,9 @@ def test_fetch_yfinance_success(monkeypatch):
             batch, global_offset=batch_idx * batch_size
         )
         respx.get(
-            f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=15d&interval=1d"
+            re.compile(
+                rf"https://query[12]\.finance\.yahoo\.com/v7/finance/spark\?symbols={symbols}&range=15d&interval=1d"
+            )
         ).respond(status_code=200, json=yfinance_data)
 
     data = fetch_yfinance()
@@ -185,7 +188,9 @@ def test_collect_and_save_fallback(monkeypatch):
                 batch, global_offset=batch_idx * batch_size
             )
             respx.get(
-                f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=15d&interval=1d"
+                re.compile(
+                    rf"https://query[12]\.finance\.yahoo\.com/v7/finance/spark\?symbols={symbols}&range=15d&interval=1d"
+                )
             ).respond(status_code=200, json=yfinance_data)
 
         success = collect_and_save()
@@ -283,7 +288,9 @@ def test_index_route_yfinance(monkeypatch):
                 batch, global_offset=batch_idx * batch_size
             )
             respx.get(
-                f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=15d&interval=1d"
+                re.compile(
+                    rf"https://query[12]\.finance\.yahoo\.com/v7/finance/spark\?symbols={symbols}&range=15d&interval=1d"
+                )
             ).respond(status_code=200, json=yfinance_data)
 
         collect_and_save()

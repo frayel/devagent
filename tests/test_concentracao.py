@@ -10,7 +10,7 @@ from app.collectors.concentracao import (
 @respx.mock
 def test_concentracao_success():
     respx.get(
-        url__startswith="https://query1.finance.yahoo.com/v7/finance/spark"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
     ).respond(
         status_code=200,
         json={
@@ -41,7 +41,7 @@ def test_concentracao_success():
 @respx.mock
 def test_concentracao_invariant():
     respx.get(
-        url__startswith="https://query1.finance.yahoo.com/v7/finance/spark"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
     ).respond(
         status_code=200,
         json={
@@ -74,7 +74,7 @@ def test_concentracao_invariant():
 @respx.mock
 def test_concentracao_failure():
     respx.get(
-        url__startswith="https://query1.finance.yahoo.com/v7/finance/spark"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
     ).respond(status_code=500)
     data = fetch_yfinance()
     assert data is None
@@ -83,7 +83,7 @@ def test_concentracao_failure():
 @respx.mock
 def test_concentracao_stable():
     respx.get(
-        url__startswith="https://query1.finance.yahoo.com/v7/finance/spark"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
     ).respond(
         status_code=200,
         json={
