@@ -1,6 +1,5 @@
 import pytest
 from datetime import datetime, timezone
-import os
 
 from app.database import init_db, save_coleta_vazia, get_coletas_vazias_count
 
