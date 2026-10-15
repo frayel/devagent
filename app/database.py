@@ -256,6 +256,18 @@ def get_latest_esforco_resultado_data() -> EsforcoResultadoData | None:
 def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS anomalias_spread_cache (
+            timestamp TEXT PRIMARY KEY,
+            alertas_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        )
+        """
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_anomalias_spread_cache_timestamp ON anomalias_spread_cache (timestamp DESC)"
+    )
 
     cursor.executescript("""
 
@@ -2230,3 +2242,40 @@ def get_coletas_vazias_count(painel: str) -> int:
     row = cursor.fetchone()
     conn.close()
     return row[0] if row else 0
+
+
+@dataclass
+class RadarAnomaliasSpreadData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "brapi"
+
+
+def save_radar_anomalias_spread_data(data: RadarAnomaliasSpreadData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO anomalias_spread_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
+        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_radar_anomalias_spread_data() -> RadarAnomaliasSpreadData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT timestamp, alertas_json, fonte FROM anomalias_spread_cache ORDER BY timestamp DESC LIMIT 1"
+        )
+        row = cursor.fetchone()
+    except Exception:
+        return None
+    finally:
+        conn.close()
+    if row:
+        return RadarAnomaliasSpreadData(
+            timestamp=datetime.fromisoformat(row[0]), alertas_json=row[1], fonte=row[2]
+        )
+    return None

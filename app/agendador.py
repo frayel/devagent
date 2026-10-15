@@ -123,6 +123,7 @@ def _coletar() -> None:
         "motores_indice",
         "clima_global",
         "relogio_volatilidade",
+        "radar_anomalias_spread",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
         mt5.reiniciar_rastreio()

@@ -1,7 +1,7 @@
 ---
 id: 057
 titulo: Radar de Anomalias de Spread (Medo do Market Maker)
-status: ready
+status: done
 esforco: M
 ---
 

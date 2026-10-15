@@ -14,6 +14,13 @@
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
+
+- Spec 057 (Radar de Anomalias de Spread):
+  - Banco de dados SQLite (`anomalias_spread_cache`).
+  - Coletor buscando bid e ask para cesta de liquidez (`brapi` primário, `yfinance` fallback).
+  - Cálculo de variação percentual do spread atual para as 10 ações mais líquidas.
+  - Exibição de painel em Alertas Intraday e `/api/snapshot`.
+
 - Spec 056 (Instrumentação de Coleta Vazia):
   - Banco de dados SQLite (`instrumentacao_coleta_vazia`).
   - Registra a hora e o painel quando uma coleta falha ou retorna vazia.
