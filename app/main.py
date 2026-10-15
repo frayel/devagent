@@ -59,6 +59,7 @@ from app.database import (
     get_latest_sobrevivencia_semanal_data,
     get_latest_mare_data,
     get_latest_radar_anomalias_spread_data,
+    get_latest_concentracao_ordens_data,
 )
 from app import agendador
 
@@ -425,6 +426,20 @@ def snapshot():
     else:
         resp["paineis"]["compradores_fundo"] = {}
 
+    concentracao_ordens_data = get_latest_concentracao_ordens_data()
+    if concentracao_ordens_data:
+        try:
+            alertas = json.loads(concentracao_ordens_data.alertas_json)
+        except Exception:
+            alertas = []
+        resp["paineis"]["concentracao_ordens"] = {
+            "fonte": concentracao_ordens_data.fonte,
+            "coletado_em": concentracao_ordens_data.timestamp.isoformat(),
+            "alertas": alertas,
+        }
+    else:
+        resp["paineis"]["concentracao_ordens"] = {}
+
     armadilha_abertura_data = get_latest_armadilha_abertura_data()
     if armadilha_abertura_data:
         try:
@@ -719,6 +734,7 @@ async def index(request: Request):
         get_latest_fator_peso_pesado_data,
         get_latest_liquidez_abertura_data,
         get_latest_falso_rompimento_data,
+        get_latest_concentracao_ordens_data,
     )
 
     radar_data = get_latest_radar_inflexao_data()
@@ -762,6 +778,23 @@ async def index(request: Request):
             }
         except Exception:
             pass
+
+    concentracao_ordens_data = get_latest_concentracao_ordens_data()
+    concentracao_ordens = None
+    if concentracao_ordens_data:
+        try:
+            alertas = json.loads(concentracao_ordens_data.alertas_json)
+        except Exception:
+            alertas = []
+
+        def formatar_data(t):
+            return t.strftime("%H:%M BRT")
+
+        concentracao_ordens = {
+            "alertas": alertas,
+            "coletado_em": formatar_data(concentracao_ordens_data.timestamp),
+            "fonte": concentracao_ordens_data.fonte,
+        }
 
     falso_rompimento_data = get_latest_falso_rompimento_data()
     falso_rompimento = None
@@ -930,6 +963,7 @@ async def index(request: Request):
             "radar_divergencia_volume": radar_divergencia_volume,
             "falso_rompimento": falso_rompimento,
             "radar_absorcao_cruzada": radar_absorcao_cruzada,
+            "concentracao_ordens": concentracao_ordens,
             "fator_peso_pesado_data": fator_peso_pesado_data,
             "liquidez_abertura": liquidez_abertura,
             "mare": mare,

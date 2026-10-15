@@ -5,7 +5,7 @@
 ## Experiência
 
 - Última revisão de experiência: 2026-10-15 (Fusão de Globais)
-- Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Manutenção
 
@@ -14,6 +14,14 @@
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
+
+- Spec 058 (Termômetro de Concentração de Ordens):
+  - Banco de dados SQLite (`concentracao_ordens_cache`).
+  - Coletor buscando `regularMarketTrades` via `brapi`.
+  - Cálculo de ticket médio intraday (Volume Financeiro / Trades).
+  - Exibição de painel na `visao-micro`.
+  - Adicionado ao contrato `/api/snapshot`.
+
 
 - Spec 057 (Radar de Anomalias de Spread):
   - Banco de dados SQLite (`anomalias_spread_cache`).

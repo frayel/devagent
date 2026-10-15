@@ -122,6 +122,13 @@ class ApetiteRiscoData:
     fonte: str = "yfinance"
 
 
+@dataclass
+class ConcentracaoOrdensData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "brapi"
+
+
 def get_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -256,6 +263,18 @@ def get_latest_esforco_resultado_data() -> EsforcoResultadoData | None:
 def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS concentracao_ordens_cache (
+            timestamp TEXT PRIMARY KEY,
+            alertas_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        )
+        """
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_concentracao_ordens_cache_timestamp ON concentracao_ordens_cache (timestamp DESC)"
+    )
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS anomalias_spread_cache (
@@ -2276,6 +2295,32 @@ def get_latest_radar_anomalias_spread_data() -> RadarAnomaliasSpreadData | None:
         conn.close()
     if row:
         return RadarAnomaliasSpreadData(
+            timestamp=datetime.fromisoformat(row[0]), alertas_json=row[1], fonte=row[2]
+        )
+    return None
+
+
+def save_concentracao_ordens_data(data: ConcentracaoOrdensData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO concentracao_ordens_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
+        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_concentracao_ordens_data() -> ConcentracaoOrdensData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT timestamp, alertas_json, fonte FROM concentracao_ordens_cache ORDER BY timestamp DESC LIMIT 1"
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return ConcentracaoOrdensData(
             timestamp=datetime.fromisoformat(row[0]), alertas_json=row[1], fonte=row[2]
         )
     return None

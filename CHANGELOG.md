@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- Termômetro de Concentração de Ordens (Spec 058) adicionado.
 - Radar de Anomalias de Spread (Spec 057) adicionado.
 - `instrumentacao_coleta_vazia`: tabela e rotina para registrar quando a coleta de um painel retorna vazia (Spec 056, saúde técnica).
 - `instrumentacao_coleta_vazia`: tabela e rotina para registrar quando a coleta de um painel retorna vazia (Spec 056, saúde técnica).

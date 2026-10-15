@@ -24,6 +24,29 @@ def _coletar_tudo(monkeypatch) -> None:
 
     if "DIV" not in app.collectors.radar_divergencia_volume.TICKERS:
         monkeypatch.setattr("app.collectors.radar_divergencia_volume.TICKERS", ["DIV"])
+    monkeypatch.setattr(
+        "app.collectors.concentracao_ordens.collect_and_save", lambda: True
+    )
+    from app.database import ConcentracaoOrdensData, save_concentracao_ordens_data
+    import json
+    from datetime import datetime, timezone
+
+    save_concentracao_ordens_data(
+        ConcentracaoOrdensData(
+            timestamp=datetime.now(timezone.utc),
+            alertas_json=json.dumps(
+                [
+                    {
+                        "ticker": "FAKE3",
+                        "ticket_medio": 1500.5,
+                        "volume_financeiro": 150050,
+                        "trades": 100,
+                    }
+                ]
+            ),
+            fonte="mock",
+        )
+    )
     yahoo_falso.instalar(monkeypatch)
     agendador.coletar_tudo()
     assert agendador.estado["ultimo_erro"] is None, agendador.estado["ultimo_erro"]
