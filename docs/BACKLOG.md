@@ -374,3 +374,13 @@
 | Radar de Reversão de Abertura | Responde: O que abriu caindo e já está subindo? Originalidade: Foca na primeira hora de negociação para buscar oportunidades de reversão intradiária. | yfinance | M | Baixo |
 | Termômetro de Convicção Setorial | Responde: O setor todo sobe junto ou é só uma ação puxando? Originalidade: Mede a variância interna de retornos de cada setor listado. | yfinance | M | Médio |
 | Painel de 'Sustos' (Gap + Sombra) | Responde: Quais ações tiveram gaps de baixa seguidos de forte rejeição nas primeiras horas? Originalidade: Indicador de suporte institucional ou forte defesa na mínima. | yfinance | M | Baixo |
+
+## Ideias (Passo 7 - 2026-10-15-0429)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Radar de Anomalias de Spread | Responde: O market maker está em pânico? Originalidade: Detecta se o spread entre bid e ask de ações hiperlíquidas abriu subitamente, o que precede quedas bruscas antes mesmo do preço cair. | brapi | M | Alto |
+| Termômetro de Concentração de Ordens | Responde: O volume é orgânico ou um único tubarão operando? Originalidade: Compara o número de negócios com o volume financeiro total para estimar o ticket médio intraday. | brapi | M | Médio |
+| Experiência: Agrupamento Dinâmico de Indicadores | Responde: Como ver apenas o que está fora do normal? Originalidade: Oculta painéis cujo valor está dentro de 1 desvio padrão da média, focando a atenção apenas em anomalias. | N/A | M | Baixo |
+| Saúde Técnica: Instrumentação de Coleta por Tempo | Responde: Quais painéis demoram mais para carregar? Originalidade: Registra o tempo de resposta da API por painel para basear futuras podas em custo computacional. | Banco SQLite | P | Baixo |
+| Detector de Ação Órfã | Responde: Qual papel está largado às moscas? Originalidade: Busca ativos que não registraram nenhum negócio (spread vazio) nos últimos 15 minutos em horário de pico. | brapi | M | Médio |
