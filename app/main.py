@@ -58,6 +58,7 @@ from app.database import (
     get_latest_armadilha_abertura_data,
     get_latest_sobrevivencia_semanal_data,
     get_latest_mare_data,
+    get_latest_radar_anomalias_spread_data,
 )
 from app import agendador
 
@@ -615,6 +616,16 @@ def snapshot():
     else:
         resp["paineis"]["volatilidade_silenciosa"] = {}
 
+    anomalias_spread_data = get_latest_radar_anomalias_spread_data()
+    if anomalias_spread_data:
+        try:
+            alertas = json.loads(anomalias_spread_data.alertas_json)
+            resp["paineis"]["anomalias_spread"] = alertas
+        except Exception:
+            resp["paineis"]["anomalias_spread"] = []
+    else:
+        resp["paineis"]["anomalias_spread"] = []
+
     relogio = get_latest_relogio_volatilidade_data()
     if relogio:
         try:
@@ -826,6 +837,37 @@ async def index(request: Request):
         except Exception:
             pass
 
+    anomalias_spread_data = get_latest_radar_anomalias_spread_data()
+    anomalias_spread = None
+    if anomalias_spread_data:
+        try:
+            alertas = json.loads(anomalias_spread_data.alertas_json)
+            anomalias_spread = {
+                "alertas": alertas,
+                "coletado_em": anomalias_spread_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m %H:%M")
+                + " BRT",
+                "fonte": anomalias_spread_data.fonte,
+            }
+        except Exception:
+            pass
+
+    anomalias_spread_data = get_latest_radar_anomalias_spread_data()
+    anomalias_spread = None
+    if anomalias_spread_data:
+        try:
+            alertas = json.loads(anomalias_spread_data.alertas_json)
+            anomalias_spread = {
+                "alertas": alertas,
+                "coletado_em": anomalias_spread_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m %H:%M")
+                + " BRT",
+                "fonte": anomalias_spread_data.fonte,
+            }
+        except Exception:
+            pass
     relogio_data = get_latest_relogio_volatilidade_data()
     relogio = None
     if relogio_data:
@@ -894,5 +936,6 @@ async def index(request: Request):
             "motores_cards": motores_cards,
             "clima_global": clima_global,
             "relogio": relogio,
+            "anomalias_spread": anomalias_spread,
         },
     )

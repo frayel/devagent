@@ -155,6 +155,7 @@ def test_mascara_token_no_estado(monkeypatch):
         "radar_absorcao_cruzada",
         "fator_peso_pesado",
         "clima_global",
+        "radar_anomalias_spread",
     ):
         monkeypatch.setattr(f"app.collectors.{nome}.collect_and_save", lambda: True)
 

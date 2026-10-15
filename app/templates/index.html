@@ -566,6 +566,37 @@
     {% endif %}
 {% endcall %}
 
+<div class="span-4">
+    {% call painel("Anomalias de Spread", 4, "Ações de alta liquidez com spread (ask - bid) anormalmente superior à média, indicando possível retirada de ordens por formadores de mercado (pânico incipiente).", anomalias_spread.fonte if anomalias_spread else "", anomalias_spread.coletado_em if anomalias_spread else "", "visao-micro alertas") %}
+        {% if not anomalias_spread %}
+            <div class="estado vazia"><span class="icone">--</span> Sem dados</div>
+        {% elif not anomalias_spread.alertas %}
+            <div class="estado normal"><span class="icone">✓</span> Spreads normais hoje</div>
+        {% else %}
+            <table class="ranking">
+                <thead>
+                    <tr>
+                        <th class="esq">Ativo</th>
+                        <th class="dir">Spread</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in anomalias_spread.alertas %}
+                    <tr>
+                        <td class="esq">{{ a.ticker }}</td>
+                        <td class="dir">
+                            <span class="var alta">{{ "%.2f"|format(a.spread_percent) }}%</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endcall %}
+</div>
+
+
+
 
 
 {% call painel("Radar de Short Squeeze", 4, "Ações que vêm de forte queda recente mas hoje reagem com alta violenta e volume atípico (capitulação vendida).", short_squeeze.fonte if short_squeeze else "", short_squeeze.coletado_em if short_squeeze else "", "visao-micro alertas") %}
