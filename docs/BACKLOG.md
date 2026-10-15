@@ -384,3 +384,13 @@
 | Experiência: Agrupamento Dinâmico de Indicadores | Responde: Como ver apenas o que está fora do normal? Originalidade: Oculta painéis cujo valor está dentro de 1 desvio padrão da média, focando a atenção apenas em anomalias. | N/A | M | Baixo |
 | Saúde Técnica: Instrumentação de Coleta por Tempo | Responde: Quais painéis demoram mais para carregar? Originalidade: Registra o tempo de resposta da API por painel para basear futuras podas em custo computacional. | Banco SQLite | P | Baixo |
 | Detector de Ação Órfã | Responde: Qual papel está largado às moscas? Originalidade: Busca ativos que não registraram nenhum negócio (spread vazio) nos últimos 15 minutos em horário de pico. | brapi | M | Médio |
+
+## Ideias (Passo 7 - 2026-10-15-1154)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Radar de Anomalia de Preço no Leilão | Responde: O preço do fechamento foi manipulado? Originalidade: Identifica discrepâncias atípicas entre o último negócio antes do leilão e o preço de fechamento final. | yfinance / brapi | M | Baixo |
+| Termômetro de Concentração de Ordens | Responde: O volume é orgânico ou um único tubarão operando? Originalidade: Compara o número de negócios com o volume financeiro total para estimar o ticket médio intraday. | brapi | M | Médio |
+| Filtro de Divergência Ibov/Juros | Responde: Quais ativos estão ignorando a alta dos juros hoje? Originalidade: Busca papéis que sobem enquanto o DI (juros futuros) dispara, isolando força idiossincrática. | brapi | M | Médio |
+| Saúde Técnica: Instrumentação de Tempo de Renderização | Responde: Quais painéis travam a página? Originalidade: Mede o tempo de geração do template no backend para subsidiar podas futuras. | Sistema | P | Baixo |
+| Experiência: Modo TV / Kiosk | Responde: Posso deixar essa tela em um monitor secundário sem interação? Originalidade: Remove todos os controles interativos e expande as fontes para leitura de longo alcance. | N/A | P | Baixo |
