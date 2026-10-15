@@ -1,7 +1,7 @@
 ---
 id: 058
 titulo: Termômetro de Concentração de Ordens
-status: ready
+status: done
 esforco: M
 ---
 

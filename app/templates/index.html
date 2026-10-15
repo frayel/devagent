@@ -436,6 +436,31 @@
 
 
 
+{% call painel("Concentração de Ordens", 4, "Ações de alta liquidez com maior concentração de volume financeiro por negócio (Ticket Médio Intraday).", concentracao_ordens.fonte if concentracao_ordens else "", concentracao_ordens.coletado_em if concentracao_ordens else "", "visao-micro alertas") %}
+    {% if not concentracao_ordens %}
+        {{ estado("indisponivel") }}
+    {% elif not concentracao_ordens.alertas %}
+        <div class="vazio">Nenhuma concentração identificada.</div>
+    {% else %}
+        <table class="tabela-compacta">
+            <thead>
+                <tr>
+                    <th>Ativo</th>
+                    <th class="num">Ticket Médio (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in concentracao_ordens.alertas %}
+                <tr>
+                    <td><strong>{{ a.ticker }}</strong></td>
+                    <td class="num">{{ "{:,.2f}".format(a.ticket_medio).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endcall %}
+
 {% call painel("Radar de Absorção Cruzada", 4, "Ações que tiveram forte queda intradiária (>1.5%) mas no fundo encontraram volume anormal (2x a média), indicando possível absorção.", radar_absorcao_cruzada.fonte if radar_absorcao_cruzada else "", radar_absorcao_cruzada.coletado_em if radar_absorcao_cruzada else "", "visao-micro alertas") %}
     {% if not radar_absorcao_cruzada %}
         {{ estado("indisponivel") }}
