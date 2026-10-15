@@ -33,6 +33,9 @@ def _enforce_rate_limit(domain: str) -> None:
     _last_request_time[domain] = time.time()
 
 
+_request_counter: int = 0
+
+
 def fetch_with_retry(
     url: str,
     client: httpx.Client | None = None,
@@ -40,6 +43,11 @@ def fetch_with_retry(
     backoff_factor: float = 1.0,
     **kwargs,
 ) -> httpx.Response:
+    global _request_counter
+    if "query1.finance.yahoo.com" in url:
+        if _request_counter % 2 == 1:
+            url = url.replace("query1.finance.yahoo.com", "query2.finance.yahoo.com")
+        _request_counter += 1
     # O MetaTrader 5 é a fonte preferencial das URLs do Yahoo Finance: se ele
     # responder, o Yahoo nem é chamado (app/collectors/mt5.py).
     from app.collectors import mt5
@@ -107,6 +115,11 @@ async def async_fetch_with_retry(
     backoff_factor: float = 1.0,
     **kwargs,
 ) -> httpx.Response:
+    global _request_counter
+    if "query1.finance.yahoo.com" in url:
+        if _request_counter % 2 == 1:
+            url = url.replace("query1.finance.yahoo.com", "query2.finance.yahoo.com")
+        _request_counter += 1
     from app.collectors import mt5
 
     resposta_mt5 = mt5.interceptar(url)

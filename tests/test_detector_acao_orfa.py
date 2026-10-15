@@ -34,7 +34,9 @@ def test_detector_acao_orfa_collector_success(mock_datetime, monkeypatch):
 
     import httpx
 
-    respx.get(url__startswith="https://query1.finance.yahoo.com/v7/finance/spark").mock(
+    respx.get(
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+    ).mock(
         return_value=httpx.Response(
             200,
             json={

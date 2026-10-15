@@ -1,3 +1,4 @@
+import re
 import json
 from datetime import datetime, timezone
 import httpx
@@ -47,10 +48,14 @@ def mock_yfinance_response(with_alerts=True):
 @respx.mock
 def test_coletor_com_alertas():
     respx.get(
-        "https://query1.finance.yahoo.com/v7/finance/spark?symbols=PETR4.SA,VALE3.SA,ITUB4.SA,BBDC4.SA,B3SA3.SA,ABEV3.SA,ELET3.SA,RENT3.SA,WEGE3.SA,BBAS3.SA,ITSA4.SA,SUZB3.SA,BPAC11.SA,RADL3.SA,EQTL3.SA&range=1d&interval=15m"
+        re.compile(
+            r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark\?symbols=PETR4\.SA,VALE3\.SA,ITUB4\.SA,BBDC4\.SA,B3SA3\.SA,ABEV3\.SA,ELET3\.SA,RENT3\.SA,WEGE3\.SA,BBAS3\.SA,ITSA4\.SA,SUZB3\.SA,BPAC11\.SA,RADL3\.SA,EQTL3\.SA&range=1d&interval=15m"
+        )
     ).mock(return_value=mock_yfinance_response(with_alerts=True))
     respx.get(
-        "https://query1.finance.yahoo.com/v7/finance/spark?symbols=CSAN3.SA,PRIO3.SA,RDOR3.SA,RAIL3.SA,SBSP3.SA,VIVT3.SA,CMIG4.SA,LREN3.SA,CPLE6.SA,UGPA3.SA,ENEV3.SA,TIMS3.SA,TOTS3.SA,EGIE3.SA,HAPV3.SA&range=1d&interval=15m"
+        re.compile(
+            r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark\?symbols=CSAN3\.SA,PRIO3\.SA,RDOR3\.SA,RAIL3\.SA,SBSP3\.SA,VIVT3\.SA,CMIG4\.SA,LREN3\.SA,CPLE6\.SA,UGPA3\.SA,ENEV3\.SA,TIMS3\.SA,TOTS3\.SA,EGIE3\.SA,HAPV3\.SA&range=1d&interval=15m"
+        )
     ).mock(return_value=httpx.Response(200, json={"spark": {"result": []}}))
 
     assert variacao_subita.collect_and_save() is True
@@ -71,10 +76,14 @@ def test_coletor_com_alertas():
 @respx.mock
 def test_coletor_sem_alertas():
     respx.get(
-        "https://query1.finance.yahoo.com/v7/finance/spark?symbols=PETR4.SA,VALE3.SA,ITUB4.SA,BBDC4.SA,B3SA3.SA,ABEV3.SA,ELET3.SA,RENT3.SA,WEGE3.SA,BBAS3.SA,ITSA4.SA,SUZB3.SA,BPAC11.SA,RADL3.SA,EQTL3.SA&range=1d&interval=15m"
+        re.compile(
+            r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark\?symbols=PETR4\.SA,VALE3\.SA,ITUB4\.SA,BBDC4\.SA,B3SA3\.SA,ABEV3\.SA,ELET3\.SA,RENT3\.SA,WEGE3\.SA,BBAS3\.SA,ITSA4\.SA,SUZB3\.SA,BPAC11\.SA,RADL3\.SA,EQTL3\.SA&range=1d&interval=15m"
+        )
     ).mock(return_value=mock_yfinance_response(with_alerts=False))
     respx.get(
-        "https://query1.finance.yahoo.com/v7/finance/spark?symbols=CSAN3.SA,PRIO3.SA,RDOR3.SA,RAIL3.SA,SBSP3.SA,VIVT3.SA,CMIG4.SA,LREN3.SA,CPLE6.SA,UGPA3.SA,ENEV3.SA,TIMS3.SA,TOTS3.SA,EGIE3.SA,HAPV3.SA&range=1d&interval=15m"
+        re.compile(
+            r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark\?symbols=CSAN3\.SA,PRIO3\.SA,RDOR3\.SA,RAIL3\.SA,SBSP3\.SA,VIVT3\.SA,CMIG4\.SA,LREN3\.SA,CPLE6\.SA,UGPA3\.SA,ENEV3\.SA,TIMS3\.SA,TOTS3\.SA,EGIE3\.SA,HAPV3\.SA&range=1d&interval=15m"
+        )
     ).mock(return_value=httpx.Response(200, json={"spark": {"result": []}}))
 
     assert variacao_subita.collect_and_save() is True

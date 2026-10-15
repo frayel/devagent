@@ -5,7 +5,6 @@ from app.collectors.apetite_risco import fetch_yfinance
 
 @respx.mock
 def test_fetch_yfinance_tomando_risco():
-    url = "https://query1.finance.yahoo.com/v7/finance/spark?symbols=SMAL11.SA,%5EBVSP&range=1d&interval=1d"
     mock_response = {
         "spark": {
             "result": [
@@ -30,7 +29,9 @@ def test_fetch_yfinance_tomando_risco():
             ]
         }
     }
-    respx.get(url).mock(return_value=httpx.Response(200, json=mock_response))
+    respx.get(
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+    ).mock(return_value=httpx.Response(200, json=mock_response))
     data = fetch_yfinance()
     assert data is not None
     assert data.estado == "Tomando risco"
@@ -39,7 +40,6 @@ def test_fetch_yfinance_tomando_risco():
 
 @respx.mock
 def test_fetch_yfinance_defensivo():
-    url = "https://query1.finance.yahoo.com/v7/finance/spark?symbols=SMAL11.SA,%5EBVSP&range=1d&interval=1d"
     mock_response = {
         "spark": {
             "result": [
@@ -64,7 +64,9 @@ def test_fetch_yfinance_defensivo():
             ]
         }
     }
-    respx.get(url).mock(return_value=httpx.Response(200, json=mock_response))
+    respx.get(
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+    ).mock(return_value=httpx.Response(200, json=mock_response))
     data = fetch_yfinance()
     assert data is not None
     assert data.estado == "Defensivo"
@@ -73,7 +75,6 @@ def test_fetch_yfinance_defensivo():
 
 @respx.mock
 def test_fetch_yfinance_neutro():
-    url = "https://query1.finance.yahoo.com/v7/finance/spark?symbols=SMAL11.SA,%5EBVSP&range=1d&interval=1d"
     mock_response = {
         "spark": {
             "result": [
@@ -98,7 +99,9 @@ def test_fetch_yfinance_neutro():
             ]
         }
     }
-    respx.get(url).mock(return_value=httpx.Response(200, json=mock_response))
+    respx.get(
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+    ).mock(return_value=httpx.Response(200, json=mock_response))
     data = fetch_yfinance()
     assert data is not None
     assert data.estado == "Neutro"
