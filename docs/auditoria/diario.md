@@ -9,4 +9,5 @@ Memória entre execuções do auditor LLM. No máximo 20 linhas: condense em vez
 - 2026-10-08 · Novo achado: múltiplos painéis falhando na coleta exibem "Dado indisponível agora", mas o rodapé fica malformado ("Fonte  · ") sem fonte ou data de tentativa.
 - 2026-10-10 · Auditoria limpa (24 checagens). Problema do rodapé em painéis vazios resolvido (parcialmente).
 - 2026-10-13 · Auditoria limpa. Constatado que o defeito de rodapés "Fonte  · " em painéis vazios persiste em produção. Achado reportado novamente (status: aberto).
-- Pendente: acompanhar integridade de dados e rodapés de painéis, e confirmar se o bug de rodapé fantasma é completamente extinto.
+- 2026-10-15 · Auditoria limpa (26 checagens). Bug do rodapé fantasma extinto em produção.
+- Pendente: checar integridade de dados e confirmar se há novos painéis com problemas semelhantes de tratamento de erro.
