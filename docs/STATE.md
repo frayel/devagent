@@ -4,7 +4,7 @@
 
 ## Experiência
 
-- Última revisão de experiência: 2026-10-13 (Densidade Dinâmica)
+- Última revisão de experiência: 2026-10-15 (Fusão de Globais)
 - Painéis, seções ou telas acrescentados desde a última revisão: 0 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Manutenção
@@ -14,6 +14,10 @@
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
+
+- Spec 055 (Experiência: Fusão de Globais):
+  - Reorganizada seção Visão Geral no `index.html`.
+  - Reduzido tamanho do "Clima Global" e "Motores do Índice" para span-6 para caberem lado a lado na mesma linha.
 
 - Spec 053 (Relógio de Volatilidade Intraday):
   - Coletor com yfinance buscando dados intraday (^BVSP) em formato 15m.

@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- Spec 055: Experiência - Fusão de Indicadores Globais
 - agent: Cadência de manutenção e poda (ADR 011): o Passo 7 classifica o trabalho em quatro gavetas (capacidade nova, experiência, saúde técnica, poda), toda rodada gera ao menos uma ideia de saúde técnica ou poda, e a cada 4 specs entregues o Passo 7 faz uma rodada obrigatória de manutenção. Nova skill `devagent/skills/manutencao.md` e critério de poda no `PRODUTO.md`.
 - Spec 053: Relógio de Volatilidade Intraday, mapeando amplitudes hora a hora.
 - Finaliza Spec 052: Termômetro de Clima Externo já estava implementada e adicionada no snapshot, movido para done
