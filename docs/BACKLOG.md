@@ -364,3 +364,13 @@
 | Termômetro de Sangria Institucional | Responde: O volume de venda está sendo feito às claras ou em blocos fracionados? Originalidade: Avalia a divergência entre a queda de preço e a contagem de ticks (negócios). | brapi | M | Alto (Falta API granular) |
 | Filtro de Ações Imunes a Juros | Responde: Quais ações subiram consistentemente nos últimos dias de alta aguda do DI? Originalidade: Filtra diretamente o histórico cruzando a variação positiva do ativo apenas nos dias de estresse da curva de juros. | yfinance | M | Médio |
 | Experiência: Modo TV / Kiosk | Responde: Posso deixar essa tela em um monitor secundário sem interação? Originalidade: Remove todos os controles interativos (abas, botões), esconde os detalhes miúdos e expande as fontes para leitura de longo alcance, focando na manchete, Ibovespa e alertas. | N/A | P | Baixo |
+
+## Ideias (Passo 7 - 2026-10-15-0230)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Saúde Técnica: Instrumentação de Coleta Vazia | Responde: Quais painéis ficam vazios na maioria das vezes? Originalidade: Coleta telemetria do próprio sistema para basear a poda, não necessita de dados externos. | Banco SQLite | P | Baixo |
+| Experiência: Abas por Intensidade | Responde: Como ordenar painéis pelo que mais destoa do normal? Originalidade: Oculta painéis normais e exibe os que romperam limites de desvio padrão. | N/A | M | Baixo |
+| Radar de Reversão de Abertura | Responde: O que abriu caindo e já está subindo? Originalidade: Foca na primeira hora de negociação para buscar oportunidades de reversão intradiária. | yfinance | M | Baixo |
+| Termômetro de Convicção Setorial | Responde: O setor todo sobe junto ou é só uma ação puxando? Originalidade: Mede a variância interna de retornos de cada setor listado. | yfinance | M | Médio |
+| Painel de 'Sustos' (Gap + Sombra) | Responde: Quais ações tiveram gaps de baixa seguidos de forte rejeição nas primeiras horas? Originalidade: Indicador de suporte institucional ou forte defesa na mínima. | yfinance | M | Baixo |
