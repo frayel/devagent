@@ -394,3 +394,13 @@
 | Filtro de Divergência Ibov/Juros | Responde: Quais ativos estão ignorando a alta dos juros hoje? Originalidade: Busca papéis que sobem enquanto o DI (juros futuros) dispara, isolando força idiossincrática. | brapi | M | Médio |
 | Saúde Técnica: Instrumentação de Tempo de Renderização | Responde: Quais painéis travam a página? Originalidade: Mede o tempo de geração do template no backend para subsidiar podas futuras. | Sistema | P | Baixo |
 | Experiência: Modo TV / Kiosk | Responde: Posso deixar essa tela em um monitor secundário sem interação? Originalidade: Remove todos os controles interativos e expande as fontes para leitura de longo alcance. | N/A | P | Baixo |
+
+## Ideias (Passo 7 - 2026-10-15-1527)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Termômetro de Exaustão de Tendência | Responde: O rali recente está perdendo fôlego? Originalidade: Busca ativos subindo por vários pregões consecutivos, mas com volume decrescente a cada dia. | yfinance | M | Baixo |
+| Radar de Reversão de Abertura | Responde: O que abriu em pânico e já recuperou? Originalidade: Busca gaps de baixa > 1% na abertura que já viraram para alta no intraday, sinalizando suporte oculto. | yfinance | M | Baixo |
+| Experiência: Agrupamento Dinâmico de Alertas | Responde: Como ver apenas o que está fora do normal? Originalidade: Esconde da interface alertas cujos desvios da média estão abaixo do normal, focando em anomalias extremas. | N/A | M | Baixo |
+| Saúde Técnica: Otimização de Coleta Conjunta | Responde: A arquitetura atual aguenta mais coletores? Originalidade: Faz merge de requisições de diferentes coletores para as mesmas listas de ativos (ex: dados diários intraday), reduzindo chamadas ao yfinance. | N/A | M | Médio |
+| Radar de Falsos Rompimentos Intraday | Responde: Qual ativo atraiu compradores no topo e voltou a cair? Originalidade: Busca ativos que romperam a máxima dos últimos 5 pregões na primeira hora, mas já recuaram para dentro do canal anterior. | yfinance | M | Baixo |
