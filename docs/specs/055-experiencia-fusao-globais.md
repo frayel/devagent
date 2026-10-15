@@ -1,7 +1,7 @@
 ---
 id: 055
 titulo: Experiência: Fusão de Indicadores Globais
-status: ready
+status: done
 esforco: P
 ---
 
