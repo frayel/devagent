@@ -14,6 +14,9 @@
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
+- Spec 056 (Instrumentação de Coleta Vazia):
+  - Banco de dados SQLite (`instrumentacao_coleta_vazia`).
+  - Registra a hora e o painel quando uma coleta falha ou retorna vazia.
 
 - Spec 055 (Experiência: Fusão de Globais):
   - Reorganizada seção Visão Geral no `index.html`.

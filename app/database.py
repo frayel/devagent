@@ -266,6 +266,13 @@ def init_db() -> None:
             fonte TEXT NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_relogio_volatilidade_timestamp ON relogio_volatilidade_cache(timestamp DESC);
+        CREATE TABLE IF NOT EXISTS instrumentacao_coleta_vazia (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            painel TEXT NOT NULL,
+            timestamp TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_instrumentacao_coleta_vazia_timestamp ON instrumentacao_coleta_vazia(timestamp DESC);
+
 
         CREATE TABLE IF NOT EXISTS clima_global_cache (
             timestamp TEXT NOT NULL,
@@ -2201,3 +2208,25 @@ def get_latest_relogio_volatilidade_data() -> RelogioVolatilidadeData | None:
             fonte=row[3],
         )
     return None
+
+
+def save_coleta_vazia(painel: str, timestamp: datetime) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO instrumentacao_coleta_vazia (painel, timestamp) VALUES (?, ?)",
+        (painel, timestamp.isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_coletas_vazias_count(painel: str) -> int:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT COUNT(*) FROM instrumentacao_coleta_vazia WHERE painel = ?", (painel,)
+    )
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else 0

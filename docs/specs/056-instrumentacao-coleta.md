@@ -1,7 +1,7 @@
 ---
 id: 056
 titulo: Saúde Técnica: Instrumentação de Coleta Vazia
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 ---

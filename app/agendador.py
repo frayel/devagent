@@ -85,6 +85,7 @@ def _coletar() -> None:
     import importlib
 
     from app.collectors import mt5
+    from app.database import save_coleta_vazia
 
     for nome in (
         "ibovespa",
@@ -129,6 +130,10 @@ def _coletar() -> None:
             ok = coletor.collect_and_save()
             if not ok:
                 estado["ultimo_erro"] = f"{nome}: nenhuma fonte respondeu"
+                try:
+                    save_coleta_vazia(nome, datetime.now(timezone.utc))
+                except Exception:
+                    logger.exception("Falha ao salvar coleta vazia para %s", nome)
         except Exception as e:  # noqa: BLE001 - o laço não pode morrer
             logger.exception("Coleta de %s falhou", nome)
             estado["ultimo_erro"] = _mask_secrets(f"{nome}: {e}")
