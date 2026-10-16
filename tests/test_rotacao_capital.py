@@ -37,6 +37,9 @@ def test_fetch_yfinance_success():
         }
     }
     respx.get(url).mock(return_value=httpx.Response(200, json=mock_response))
+    respx.get(url.replace("query1", "query2")).mock(
+        return_value=httpx.Response(200, json=mock_response)
+    )
 
     data = fetch_yfinance()
     assert data is not None

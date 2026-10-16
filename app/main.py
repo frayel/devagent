@@ -60,6 +60,7 @@ from app.database import (
     get_latest_mare_data,
     get_latest_radar_anomalias_spread_data,
     get_latest_concentracao_ordens_data,
+    get_latest_exaustao_tendencia_data,
 )
 from app import agendador
 
@@ -641,6 +642,17 @@ def snapshot():
     else:
         resp["paineis"]["anomalias_spread"] = []
 
+    exaustao_tendencia_data = get_latest_exaustao_tendencia_data()
+    if exaustao_tendencia_data:
+        try:
+            resp["paineis"]["exaustao_tendencia"] = {
+                "coletado_em": exaustao_tendencia_data.timestamp.isoformat(),
+                "fonte": getattr(exaustao_tendencia_data, "fonte", "yfinance"),
+                "alertas": json.loads(exaustao_tendencia_data.alertas_json),
+            }
+        except Exception:
+            pass
+
     relogio = get_latest_relogio_volatilidade_data()
     if relogio:
         try:
@@ -795,6 +807,21 @@ async def index(request: Request):
             "coletado_em": formatar_data(concentracao_ordens_data.timestamp),
             "fonte": concentracao_ordens_data.fonte,
         }
+
+    exaustao_tendencia_data = get_latest_exaustao_tendencia_data()
+    exaustao_tendencia = None
+    if exaustao_tendencia_data:
+        try:
+            alertas = json.loads(exaustao_tendencia_data.alertas_json)
+            exaustao_tendencia = {
+                "coletado_em": exaustao_tendencia_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": exaustao_tendencia_data.fonte,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
 
     falso_rompimento_data = get_latest_falso_rompimento_data()
     falso_rompimento = None
@@ -971,5 +998,6 @@ async def index(request: Request):
             "clima_global": clima_global,
             "relogio": relogio,
             "anomalias_spread": anomalias_spread,
+            "exaustao_tendencia": exaustao_tendencia,
         },
     )

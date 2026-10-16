@@ -1,6 +1,6 @@
 # Spec 059: Termômetro de Exaustão de Tendência
 
-status: ready
+status: done
 
 ## 1. O Problema
 No final de ciclos de alta de curto prazo, o mercado frequentemente exibe um padrão onde o preço continua a subir, mas o interesse institucional (volume) diminui ("subindo sem força"). Identificar quais ativos de alta liquidez estão nesse estado ajuda o investidor a antecipar reversões de tendência (bull traps ou topos locais) antes que o preço comece a cair.

@@ -24,6 +24,10 @@ def _coletar_tudo(monkeypatch) -> None:
 
     if "DIV" not in app.collectors.radar_divergencia_volume.TICKERS:
         monkeypatch.setattr("app.collectors.radar_divergencia_volume.TICKERS", ["DIV"])
+    import app.collectors.exaustao_tendencia
+
+    if "EXAUSTAO" not in app.collectors.exaustao_tendencia.TICKERS:
+        monkeypatch.setattr("app.collectors.exaustao_tendencia.TICKERS", ["EXAUSTAO"])
     monkeypatch.setattr(
         "app.collectors.concentracao_ordens.collect_and_save", lambda: True
     )

@@ -38,6 +38,9 @@ def test_relogio_volatilidade_sucesso(setup_db):
 
     with respx.mock:
         respx.get(yahoo_url).mock(return_value=Response(200, json=mock_data))
+        respx.get(yahoo_url.replace("query1", "query2")).mock(
+            return_value=Response(200, json=mock_data)
+        )
 
         result = collect_and_save()
         assert result is True

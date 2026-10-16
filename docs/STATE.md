@@ -5,16 +5,21 @@
 ## Experiência
 
 - Última revisão de experiência: 2026-10-15 (Fusão de Globais)
-- Painéis, seções ou telas acrescentados desde a última revisão: 1 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Painéis, seções ou telas acrescentados desde a última revisão: 2 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
 
 ## Manutenção
 
 - Última rodada de manutenção: 2026-10-14, spec 054. Medidas: scanner capitulacao assíncrono.
-- Specs entregues desde a última rodada (exceto as de manutenção): 0.
+- Specs entregues desde a última rodada (exceto as de manutenção): 1.
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
 
+- Spec 059 (Termômetro de Exaustão de Tendência):
+  - Banco de dados SQLite (`exaustao_tendencia_cache`).
+  - Coletor com yfinance buscando dados `spark` diários.
+  - Painel "Exaustão de Tendência" adicionado na seção "Alertas Intraday".
+  - Chave `exaustao_tendencia` no `/api/snapshot`.
 - Spec 058 (Termômetro de Concentração de Ordens):
   - Banco de dados SQLite (`concentracao_ordens_cache`).
   - Coletor buscando `regularMarketTrades` via `brapi`.
