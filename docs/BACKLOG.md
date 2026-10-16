@@ -414,3 +414,13 @@
 | Radar de Exaustão de Queda | Responde: Qual ativo caiu nos últimos pregões mas hoje apresenta rejeição com alto volume? Originalidade: Combina sequência de mínimas menores nos últimos 3 dias com uma abertura em gap de baixa que reverte positivamente intradiário. | yfinance | M | Baixo |
 | Índice de Resiliência Intraday | Responde: Quem está segurando melhor as quedas do Ibovespa hoje? Originalidade: Compara o drawdown intradiário do ativo com o drawdown do Ibovespa, destacando ativos que não cederam às pressões do índice. | yfinance | M | Médio |
 | Termômetro de Liquidez Oculta | Responde: O volume exibido no book é real ou há ordens iceberg? Originalidade: Avalia a proporção entre os negócios executados na pedra e as ofertas reais aparentes, estimando a presença de robôs ou institucionais operando fracionado. | brapi | M | Alto (Limitações da API) |
+
+## Ideias (Passo 7 - 2026-10-16-1056)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Reorganização do Topo | Responde: Como garantir que o Ibovespa fique no topo? Originalidade: Move os painéis 'Clima Global' e 'Motores do Índice' para baixo da primeira dobra, restaurando o protagonismo do Ibovespa e da Maré. | N/A | P | Baixo |
+| Saúde Técnica: Proxy de Cotações Intraday | Responde: Como reduzir requisições redundantes? Originalidade: Concentra todos os pedidos de histórico de 1 dia num único cache/proxy para todos os coletores. | N/A | G | Alto |
+| Capacidade Nova: Heatmap de Força Relativa | Responde: Qual setor está carregando o mercado? Originalidade: Agrupa os ativos por setor para exibir a força relativa setorial. | yfinance | M | Baixo |
+| Poda: Remoção do Fator Peso Pesado | Responde: Vale a pena manter um painel frágil? Originalidade: Remove um painel que frequentemente apresenta falhas de coleta, limpando a UI. | N/A | P | Baixo |
+| Capacidade Nova: Termômetro de Squeeze | Responde: Quais ativos estão sofrendo pressão institucional contra suporte? Originalidade: Detecta rompimento falso de suporte com volume elevado. | yfinance | M | Baixo |

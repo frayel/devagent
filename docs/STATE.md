@@ -4,8 +4,8 @@
 
 ## Experiência
 
-- Última revisão de experiência: 2026-10-15 (Fusão de Globais)
-- Painéis, seções ou telas acrescentados desde a última revisão: 3 (com 3, o Passo 7 faz uma revisão de experiência; veja `devagent/CICLO.md`).
+- Última revisão de experiência: 2026-10-16 (Ordem do Topo)
+- Painéis, seções ou telas acrescentados desde a última revisão: 0.
 
 ## Manutenção
 
