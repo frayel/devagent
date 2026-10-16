@@ -28,6 +28,7 @@ def _coletar_tudo(monkeypatch) -> None:
 
     if "EXAUSTAO" not in app.collectors.exaustao_tendencia.TICKERS:
         monkeypatch.setattr("app.collectors.exaustao_tendencia.TICKERS", ["EXAUSTAO"])
+        monkeypatch.setattr("app.collectors.exaustao_queda.TICKERS", ["EXQ"])
     monkeypatch.setattr(
         "app.collectors.concentracao_ordens.collect_and_save", lambda: True
     )
