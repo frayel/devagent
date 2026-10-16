@@ -11,3 +11,6 @@ Memória entre execuções do auditor LLM. No máximo 20 linhas: condense em vez
 - 2026-10-13 · Auditoria limpa. Constatado que o defeito de rodapés "Fonte  · " em painéis vazios persiste em produção. Achado reportado novamente (status: aberto).
 - 2026-10-15 · Auditoria limpa (26 checagens). Bug do rodapé fantasma extinto em produção.
 - Pendente: checar integridade de dados e confirmar se há novos painéis com problemas semelhantes de tratamento de erro.
+- 2026-10-15 · Auditoria de Produção OK. Painel 'clima_global' detectado como ausente da rota `/api/snapshot` nas checagens automáticas (Termômetro de Clima Externo ausente). Achado criado.
+
+- Pendente: checar integridade de dados e acompanhar correções do snapshot.
