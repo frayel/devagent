@@ -1942,7 +1942,7 @@ def get_latest_detector_acao_orfa_data() -> DetectorAcaoOrfaData | None:
         if coletado_dt.tzinfo is None:
             coletado_dt = coletado_dt.replace(tzinfo=timezone.utc)
         coletado_dt = coletado_dt.astimezone(timezone(timedelta(hours=-3)))
-        coletado_em = coletado_dt.strftime("%d/%m/%Y %H:%M") + " BRT"
+        coletado_em = coletado_dt.strftime("%d/%m/%Y %H:%M BRT")
 
         return DetectorAcaoOrfaData(
             alertas=alertas,
