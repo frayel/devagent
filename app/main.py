@@ -283,6 +283,8 @@ def snapshot():
             "status": clima_global_data.status,
             "fonte": clima_global_data.fonte,
         }
+    else:
+        resp["paineis"]["clima_global"] = {}
     coesao_data = get_latest_coesao_data()
     if coesao_data:
         resp["paineis"]["coesao"] = {
