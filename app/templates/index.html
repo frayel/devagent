@@ -91,7 +91,7 @@
 
 {% endcall %}
 
-{% call painel("Clima Global", 6, "", clima_global.fonte if clima_global else "", clima_global.timestamp.strftime('%d/%m %H:%M') if clima_global else "", "painel-clima-global visao-geral escondido" if not clima_global else "painel-clima-global visao-geral") %}
+{% call painel("Clima Global", 6, "", clima_global.fonte if clima_global else "", clima_global.timestamp.strftime('%d/%m %H:%M BRT') if clima_global else "", "painel-clima-global visao-geral escondido" if not clima_global else "painel-clima-global visao-geral") %}
     {% if clima_global %}
         <div class="conteudo-centralizado">
             {% set color_class = 'neutra' %}
@@ -163,7 +163,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Fator Peso Pesado", 4, "Mostra a proporção do movimento do Ibovespa no dia que é explicada apenas pelas 5 ações de maior peso (VALE3, PETR4, ITUB4, PETR3, BBAS3). Calculado pela soma da contribuição em pontos de cada uma (variação % * peso da ação) sobre a variação total do índice.", fator_peso_pesado_data.fonte if fator_peso_pesado_data else "", data.time if data else "", "visao-macro visao-geral") %}
+{% call painel("Fator Peso Pesado", 4, "Mostra a proporção do movimento do Ibovespa no dia que é explicada apenas pelas 5 ações de maior peso (VALE3, PETR4, ITUB4, PETR3, BBAS3). Calculado pela soma da contribuição em pontos de cada uma (variação % * peso da ação) sobre a variação total do índice.", fator_peso_pesado_data.fonte if fator_peso_pesado_data else "", fator_peso_pesado_data.coletado_em if fator_peso_pesado_data else "", "visao-macro visao-geral") %}
     {% if fator_peso_pesado_data %}
         {% if fator_peso_pesado_data.mercado_lateral %}
             <div class="kpi-container espaco-topo">
