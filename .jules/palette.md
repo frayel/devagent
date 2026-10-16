@@ -1,3 +1,7 @@
+## 2026-10-16
+- **O que fiz:** Refatorei os painéis 'Clima Global' e 'Motores do Índice' em `app/templates/index.html` para utilizarem a macro padrão `painel` em vez de tags HTML manuais (violava docs/DESIGN.md seção 4). Tratei os casos de ausência de dados usando `estado('indisponivel')`.
+- **O que aprendi:** Variáveis locais do Jinja (`{% set motores_span = ... %}`) são ótimas para calcular parâmetros complexos (como a largura responsiva de `span-6` vs `span-12`) antes de chamar a macro `painel`, mantendo o código da chamada mais limpo.
+- **O que evitar:** Nunca sobrescrever o `pytest.ini` com ferramentas de edição sem verificar o conteúdo gerado, pois quebra completamente a resolução de caminhos nos testes (Python path/module resolution).
 ## 2026-09-27
 - **O que fiz:** Ajustei a exibição da variação percentual do Ibovespa para usar o padrão brasileiro com vírgula em vez de ponto, e incluí a indicação visual da `fonte` dos dados no painel do Ibovespa, mantendo-o consistente com os painéis de altas e baixas. Verificado visualmente que as alterações estão aplicadas (fonte aparecendo e vírgula na variação).
 - **O que aprendi:** Acessar propriedades do `data` em index.html é simples, mas é preciso garantir que a propriedade também seja preenchida pelo respectivo serviço (ex.: `get_ibovespa_view_data`).
