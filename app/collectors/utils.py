@@ -168,3 +168,58 @@ async def async_fetch_with_retry(
 
     safe_url = re.sub(r"([?&]token=)[^&\s]+", r"\1***", url)
     raise Exception(f"Failed to fetch {safe_url} after {max_retries} attempts")
+
+
+def fetch_historico_diario_yfinance_spark(
+    symbols: list[str], range_str: str, interval: str, client: httpx.Client
+) -> list[dict]:
+    import json
+    from datetime import datetime, timezone
+
+    from app.database import get_historico_diario, save_historico_diario
+
+    # 1. Check cache
+    cached_data = get_historico_diario(symbols, range_str, interval)
+    missing_symbols = [s for s in symbols if s not in cached_data]
+
+    all_results = []
+
+    # Add cached data
+    for ticker, data in cached_data.items():
+        all_results.append(data)
+
+    if not missing_symbols:
+        return all_results
+
+    # 2. Fetch missing data in batches
+    batch_size = 15
+    batches = [
+        missing_symbols[i : i + batch_size]
+        for i in range(0, len(missing_symbols), batch_size)
+    ]
+
+    agora = datetime.now(timezone.utc)
+
+    for batch in batches:
+        batch_query = ",".join([f"{t}.SA" for t in batch])
+        url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={batch_query}&range={range_str}&interval={interval}"
+        try:
+            response = fetch_with_retry(url, client=client)
+            data = response.json()
+
+            for item in data.get("spark", {}).get("result", []):
+                if not item:
+                    continue
+                symbol = item.get("symbol", "").replace(".SA", "")
+
+                # Save to cache
+                save_historico_diario(
+                    symbol, range_str, interval, json.dumps(item), agora
+                )
+
+                all_results.append(item)
+        except httpx.HTTPError as e:
+            logger.error(f"Error fetching batch {batch_query} from yfinance: {e}")
+            continue
+
+    return all_results
