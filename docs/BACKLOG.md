@@ -404,3 +404,13 @@
 | Experiência: Agrupamento Dinâmico de Alertas | Responde: Como ver apenas o que está fora do normal? Originalidade: Esconde da interface alertas cujos desvios da média estão abaixo do normal, focando em anomalias extremas. | N/A | M | Baixo |
 | Saúde Técnica: Otimização de Coleta Conjunta | Responde: A arquitetura atual aguenta mais coletores? Originalidade: Faz merge de requisições de diferentes coletores para as mesmas listas de ativos (ex: dados diários intraday), reduzindo chamadas ao yfinance. | N/A | M | Médio |
 | Radar de Falsos Rompimentos Intraday | Responde: Qual ativo atraiu compradores no topo e voltou a cair? Originalidade: Busca ativos que romperam a máxima dos últimos 5 pregões na primeira hora, mas já recuaram para dentro do canal anterior. | yfinance | M | Baixo |
+
+## Ideias (Passo 7 - 2026-10-16-0525)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Modo Zen / Foco Técnico | Responde: Como reduzir o ruído visual no meio do pregão? Originalidade: Remove as cores intensas, minimiza tabelas e deixa o painel em tons de cinza focando apenas em desvios da média e manchetes principais. | N/A | P | Baixo |
+| Saúde Técnica: Unificação de Histórico Diário | Responde: Os coletores estão repetindo requisições da mesma série histórica? Originalidade: Cria um cache compartilhado (e proxy local) onde um único pull do histórico diário do Ibov ou ativos alimenta múltiplos coletores. | Banco SQLite | M | Médio |
+| Radar de Exaustão de Queda | Responde: Qual ativo caiu nos últimos pregões mas hoje apresenta rejeição com alto volume? Originalidade: Combina sequência de mínimas menores nos últimos 3 dias com uma abertura em gap de baixa que reverte positivamente intradiário. | yfinance | M | Baixo |
+| Índice de Resiliência Intraday | Responde: Quem está segurando melhor as quedas do Ibovespa hoje? Originalidade: Compara o drawdown intradiário do ativo com o drawdown do Ibovespa, destacando ativos que não cederam às pressões do índice. | yfinance | M | Médio |
+| Termômetro de Liquidez Oculta | Responde: O volume exibido no book é real ou há ordens iceberg? Originalidade: Avalia a proporção entre os negócios executados na pedra e as ofertas reais aparentes, estimando a presença de robôs ou institucionais operando fracionado. | brapi | M | Alto (Limitações da API) |
