@@ -15,6 +15,9 @@
 
 ## Implementado
 
+- Spec 062 (Instrumentação de Tempo de Coleta):
+  - Banco de dados SQLite (`instrumentacao_coleta_tempo`).
+  - `app/agendador.py` registra e salva o tempo de execução de cada painel para basear futuras podas.
 - Spec 061 (Experiência Ordem do Topo):
   - Reorganizado `app/templates/index.html` para mover os painéis 'Clima Global' e 'Motores do Índice' para baixo do 'Ibovespa' e 'Maré', garantindo a hierarquia visual acima da dobra.
 - Spec 060 (Radar de Exaustão de Queda):

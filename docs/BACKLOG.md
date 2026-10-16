@@ -424,3 +424,11 @@
 | Capacidade Nova: Heatmap de Força Relativa | Responde: Qual setor está carregando o mercado? Originalidade: Agrupa os ativos por setor para exibir a força relativa setorial. | yfinance | M | Baixo |
 | Poda: Remoção do Fator Peso Pesado | Responde: Vale a pena manter um painel frágil? Originalidade: Remove um painel que frequentemente apresenta falhas de coleta, limpando a UI. | N/A | P | Baixo |
 | Capacidade Nova: Termômetro de Squeeze | Responde: Quais ativos estão sofrendo pressão institucional contra suporte? Originalidade: Detecta rompimento falso de suporte com volume elevado. | yfinance | M | Baixo |
+
+## Ideias (Passo 7 - 2026-10-16-1326)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Radar de Resiliência de Baixa | Responde: Quem sobrevive ileso quando o Ibov afunda? Originalidade: Mostra apenas ações que subiram em todos os últimos 3 dias de queda forte (>1%) do Ibovespa. | yfinance | M | Médio |
+| Termômetro de Ansiedade Intraday | Responde: Quão longe a máxima intradiária ficou da abertura em média na cesta B3? | yfinance | M | Baixo |
+| Saúde Técnica: Instrumentação de Coleta por Tempo | Responde: Quais painéis demoram mais para carregar? Originalidade: Registra o tempo de resposta da API por painel para basear futuras podas em custo computacional. | Banco SQLite | P | Baixo |
