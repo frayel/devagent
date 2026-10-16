@@ -432,3 +432,13 @@
 | Radar de Resiliência de Baixa | Responde: Quem sobrevive ileso quando o Ibov afunda? Originalidade: Mostra apenas ações que subiram em todos os últimos 3 dias de queda forte (>1%) do Ibovespa. | yfinance | M | Médio |
 | Termômetro de Ansiedade Intraday | Responde: Quão longe a máxima intradiária ficou da abertura em média na cesta B3? | yfinance | M | Baixo |
 | Saúde Técnica: Instrumentação de Coleta por Tempo | Responde: Quais painéis demoram mais para carregar? Originalidade: Registra o tempo de resposta da API por painel para basear futuras podas em custo computacional. | Banco SQLite | P | Baixo |
+
+## Ideias (Passo 7 - 2026-10-16-1426)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Agrupamento Dinâmico por Sentimento | Responde: Como visualizar rápido os destaques positivos x negativos? Originalidade: Adicionar filtros/abas que dividem a view entre painéis "Otimistas" e "Pessimistas" baseados nos seus dados atuais. | N/A | M | Baixo |
+| Saúde Técnica: Unificação de Histórico Diário | Responde: Os coletores estão repetindo requisições da mesma série histórica? Originalidade: Cria um cache compartilhado (e proxy local) onde um único pull do histórico diário do Ibov ou ativos alimenta múltiplos coletores. | Banco SQLite | M | Médio |
+| Scanner de Fuga de Capital | Responde: Para onde o dinheiro grande está correndo agora? Originalidade: Cruzar picos intradiários de volume em opções de proteção com as quedas das grandes corporações. | yfinance / B3 | G | Médio |
+| Termômetro de Ansiedade Institucional | Responde: O mercado está travando? Originalidade: Comparar o ritmo médio de envio de ordens ao longo de 5 minutos; se houver silêncio súbito na fita, soa um alerta. | brapi | M | Alto |
+| Experiência: Painel de Compactação Intraday | Responde: E se eu só tiver 5 segundos para olhar? Originalidade: Em vez de espalhar widgets, condensar os top 3 highlights de todas as seções (Alta, Volume, Anomalia) numa frase de impacto contínua no header. | N/A | P | Baixo |
