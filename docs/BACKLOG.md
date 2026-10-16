@@ -442,3 +442,13 @@
 | Scanner de Fuga de Capital | Responde: Para onde o dinheiro grande está correndo agora? Originalidade: Cruzar picos intradiários de volume em opções de proteção com as quedas das grandes corporações. | yfinance / B3 | G | Médio |
 | Termômetro de Ansiedade Institucional | Responde: O mercado está travando? Originalidade: Comparar o ritmo médio de envio de ordens ao longo de 5 minutos; se houver silêncio súbito na fita, soa um alerta. | brapi | M | Alto |
 | Experiência: Painel de Compactação Intraday | Responde: E se eu só tiver 5 segundos para olhar? Originalidade: Em vez de espalhar widgets, condensar os top 3 highlights de todas as seções (Alta, Volume, Anomalia) numa frase de impacto contínua no header. | N/A | P | Baixo |
+
+## Ideias (Passo 7 - 2026-10-16 22:26)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Divergência IBOV vs Dólar | Responde: O mercado local está ignorando o dólar no curtíssimo prazo? Originalidade: Mede a correlação do Ibovespa e do Dólar na última hora para apontar anomalias de fluxo. | yfinance | M | Médio |
+| Análise de Assimetria Risco/Retorno | Responde: Qual ativo está mais próximo do seu fundo dos últimos 30 dias do que do seu topo? Originalidade: Substitui análise de tendência pela pura distância percentual entre os extremos recentes. | yfinance | P | Baixo |
+| Radar de Anomalia de Fechamento | Responde: Quais ações tiveram o preço distorcido no leilão de fechamento de ontem? Originalidade: Calcula a diferença entre o preço das 16:50 e o fechamento final para identificar movimentações bruscas. | yfinance | M | Baixo |
+| Saúde Técnica: Compactação de Cache SQLite | Responde: O banco está inchando com logs obsoletos? Originalidade: Poda agressiva baseada na expiração de coletas órfãs. | Banco SQLite | M | Médio |
+| Experiência: Agrupamento Dinâmico de Indicadores | Responde: Como ver apenas o que está fora do normal? Originalidade: Oculta painéis cujo valor está dentro de 1 desvio padrão da média, focando a atenção apenas em anomalias. | N/A | M | Baixo |
