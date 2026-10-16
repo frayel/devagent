@@ -265,6 +265,18 @@ def init_db() -> None:
     cursor = conn.cursor()
     cursor.execute(
         """
+        CREATE TABLE IF NOT EXISTS historico_diario_cache (
+            ticker TEXT,
+            range_str TEXT,
+            interval TEXT,
+            dados_json TEXT,
+            timestamp TEXT,
+            PRIMARY KEY (ticker, range_str, interval)
+        )
+        """
+    )
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS exaustao_tendencia_cache (
             timestamp TEXT PRIMARY KEY,
             alertas_json TEXT NOT NULL,
@@ -2436,3 +2448,44 @@ def get_latest_exaustao_tendencia_data() -> ExaustaoTendenciaData | None:
             timestamp=datetime.fromisoformat(row[0]), alertas_json=row[1], fonte=row[2]
         )
     return None
+
+
+def get_historico_diario(
+    tickers: list[str], range_str: str, interval: str, max_age_minutes: int = 15
+) -> dict[str, dict]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    placeholders = ",".join(["?"] * len(tickers))
+    try:
+        cursor.execute(
+            f"SELECT ticker, dados_json, timestamp FROM historico_diario_cache WHERE ticker IN ({placeholders}) AND range_str = ? AND interval = ?",
+            (*tickers, range_str, interval),
+        )
+        rows = cursor.fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    finally:
+        conn.close()
+
+    import json
+
+    agora = datetime.now(timezone.utc)
+    result = {}
+    for row in rows:
+        ts = datetime.fromisoformat(row[2])
+        if (agora - ts).total_seconds() <= max_age_minutes * 60:
+            result[row[0]] = json.loads(row[1])
+    return result
+
+
+def save_historico_diario(
+    ticker: str, range_str: str, interval: str, dados_json: str, timestamp: datetime
+) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR REPLACE INTO historico_diario_cache (ticker, range_str, interval, dados_json, timestamp) VALUES (?, ?, ?, ?, ?)",
+        (ticker, range_str, interval, dados_json, timestamp.isoformat()),
+    )
+    conn.commit()
+    conn.close()
