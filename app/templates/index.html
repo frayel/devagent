@@ -91,13 +91,8 @@
 
 {% endcall %}
 
-{% if clima_global %}
-<div class="span-6 painel-clima-global visao-geral">
-    <section class="painel">
-        <div class="cab">
-            <h2>Clima Global</h2>
-            <div class="fonte">{{ clima_global.timestamp.strftime('%d/%m %H:%M') }} BRT | {{ clima_global.fonte }}</div>
-        </div>
+{% call painel("Clima Global", 6, "", clima_global.fonte if clima_global else "", clima_global.timestamp.strftime('%d/%m %H:%M') if clima_global else "", "painel-clima-global visao-geral escondido" if not clima_global else "painel-clima-global visao-geral") %}
+    {% if clima_global %}
         <div class="conteudo-centralizado">
             {% set color_class = 'neutra' %}
             {% if clima_global.status == 'Apetite a Risco' %}
@@ -121,20 +116,14 @@
                 </div>
             </div>
         </div>
-    </section>
-</div>
-{% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
 
-{% if motores_cards %}
-<div class="{% if clima_global %}span-6{% else %}span-12{% endif %} painel-motores-indice visao-geral">
-    <section class="painel">
-        <div class="cab">
-            <h2>Motores do Índice</h2>
-            <details>
-                <summary aria-label="Método">i</summary>
-                <div class="metodo">Desempenho dos 3 principais grupos de ações que ditam o rumo do Ibovespa.</div>
-            </details>
-        </div>
+{% set motores_span = 6 if clima_global else 12 %}
+{% call painel("Motores do Índice", motores_span, "Desempenho dos 3 principais grupos de ações que ditam o rumo do Ibovespa.", "B3", "", "painel-motores-indice visao-geral escondido" if not motores_cards else "painel-motores-indice visao-geral") %}
+    {% if motores_cards %}
         <div class="motores-grid">
             {% for motor in motores_cards %}
             <div class="motor-card">
@@ -147,9 +136,10 @@
             </div>
             {% endfor %}
         </div>
-    </section>
-</div>
-{% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
 
 {% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro sentimento-risco") %}
     {% if highlights and highlights.dispersion_pct is not none %}
