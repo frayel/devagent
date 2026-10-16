@@ -14,6 +14,9 @@
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
+
+- Spec 061 (Experiência Ordem do Topo):
+  - Reorganizado `app/templates/index.html` para mover os painéis 'Clima Global' e 'Motores do Índice' para baixo do 'Ibovespa' e 'Maré', garantindo a hierarquia visual acima da dobra.
 - Spec 060 (Radar de Exaustão de Queda):
   - Banco de dados SQLite (`exaustao_queda_cache`).
   - Coletor com `yfinance` para queda de 3 dias, gap de baixa e recuperação intraday.

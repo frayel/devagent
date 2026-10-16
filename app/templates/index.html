@@ -7,7 +7,6 @@
     <p class="manchete-texto texto-centro">{{ manchete }}</p>
 </div>
 
-
 <div class="span-12" id="abas-navegacao">
     <button class="aba-btn ativo" data-aba="visao-geral">Visão Geral</button>
     <button class="aba-btn" data-aba="sentimento-risco">Sentimento & Risco</button>
@@ -16,68 +15,6 @@
     <button class="aba-btn aba-sinais" data-aba="sinais">Só Sinais</button>
     <button class="aba-btn aba-densidade" id="btn-densidade">Compacto</button>
 </div>
-
-
-
-{% if clima_global %}
-<div class="span-6 painel-clima-global visao-geral">
-    <section class="painel">
-        <div class="cab">
-            <h2>Clima Global</h2>
-            <div class="fonte">{{ clima_global.timestamp.strftime('%d/%m %H:%M') }} BRT | {{ clima_global.fonte }}</div>
-        </div>
-        <div class="conteudo-centralizado">
-            {% set color_class = 'neutra' %}
-            {% if clima_global.status == 'Apetite a Risco' %}
-                {% set color_class = 'alta' %}
-            {% elif clima_global.status == 'Aversão a Risco' %}
-                {% set color_class = 'baixa' %}
-            {% endif %}
-            <div class="destaque {{ color_class }}">{{ clima_global.status }}</div>
-            <div class="kpi-group">
-                <div class="kpi">
-                    <span class="rot">S&P 500 Fut</span>
-                    <span class="var {% if clima_global.sp500_pct > 0 %}alta{% elif clima_global.sp500_pct < 0 %}baixa{% else %}neutra{% endif %}">
-                        {% if clima_global.sp500_pct > 0 %}▲{% elif clima_global.sp500_pct < 0 %}▼{% else %}■{% endif %} {{ "{:+.2f}%".format(clima_global.sp500_pct) }}
-                    </span>
-                </div>
-                <div class="kpi">
-                    <span class="rot">VIX</span>
-                    <span class="var {% if clima_global.vix_pct > 0 %}alta{% elif clima_global.vix_pct < 0 %}baixa{% else %}neutra{% endif %}">
-                        {% if clima_global.vix_pct > 0 %}▲{% elif clima_global.vix_pct < 0 %}▼{% else %}■{% endif %} {{ "{:+.2f}%".format(clima_global.vix_pct) }}
-                    </span>
-                </div>
-            </div>
-        </div>
-    </section>
-</div>
-{% endif %}
-
-{% if motores_cards %}
-<div class="{% if clima_global %}span-6{% else %}span-12{% endif %} painel-motores-indice visao-geral">
-    <section class="painel">
-        <div class="cab">
-            <h2>Motores do Índice</h2>
-            <details>
-                <summary aria-label="Método">i</summary>
-                <div class="metodo">Desempenho dos 3 principais grupos de ações que ditam o rumo do Ibovespa.</div>
-            </details>
-        </div>
-        <div class="motores-grid">
-            {% for motor in motores_cards %}
-            <div class="motor-card">
-                <div class="rot">{{ motor.nome }}</div>
-                <div class="kpi">
-                    <span class="var {% if motor.variacao > 0 %}alta{% elif motor.variacao < 0 %}baixa{% else %}neutra{% endif %}">
-                        {% if motor.variacao > 0 %}▲{% elif motor.variacao < 0 %}▼{% else %}■{% endif %} {{ "{:+.2f}%".format(motor.variacao) }}
-                    </span>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </section>
-</div>
-{% endif %}
 
 <!-- Linha 1: Ibovespa e Maré do mercado -->
 {% call painel("Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "", "visao-macro painel-ibovespa visao-geral") %}
@@ -154,7 +91,65 @@
 
 {% endcall %}
 
+{% if clima_global %}
+<div class="span-6 painel-clima-global visao-geral">
+    <section class="painel">
+        <div class="cab">
+            <h2>Clima Global</h2>
+            <div class="fonte">{{ clima_global.timestamp.strftime('%d/%m %H:%M') }} BRT | {{ clima_global.fonte }}</div>
+        </div>
+        <div class="conteudo-centralizado">
+            {% set color_class = 'neutra' %}
+            {% if clima_global.status == 'Apetite a Risco' %}
+                {% set color_class = 'alta' %}
+            {% elif clima_global.status == 'Aversão a Risco' %}
+                {% set color_class = 'baixa' %}
+            {% endif %}
+            <div class="destaque {{ color_class }}">{{ clima_global.status }}</div>
+            <div class="kpi-group">
+                <div class="kpi">
+                    <span class="rot">S&P 500 Fut</span>
+                    <span class="var {% if clima_global.sp500_pct > 0 %}alta{% elif clima_global.sp500_pct < 0 %}baixa{% else %}neutra{% endif %}">
+                        {% if clima_global.sp500_pct > 0 %}▲{% elif clima_global.sp500_pct < 0 %}▼{% else %}■{% endif %} {{ "{:+.2f}%".format(clima_global.sp500_pct) }}
+                    </span>
+                </div>
+                <div class="kpi">
+                    <span class="rot">VIX</span>
+                    <span class="var {% if clima_global.vix_pct > 0 %}alta{% elif clima_global.vix_pct < 0 %}baixa{% else %}neutra{% endif %}">
+                        {% if clima_global.vix_pct > 0 %}▲{% elif clima_global.vix_pct < 0 %}▼{% else %}■{% endif %} {{ "{:+.2f}%".format(clima_global.vix_pct) }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endif %}
 
+{% if motores_cards %}
+<div class="{% if clima_global %}span-6{% else %}span-12{% endif %} painel-motores-indice visao-geral">
+    <section class="painel">
+        <div class="cab">
+            <h2>Motores do Índice</h2>
+            <details>
+                <summary aria-label="Método">i</summary>
+                <div class="metodo">Desempenho dos 3 principais grupos de ações que ditam o rumo do Ibovespa.</div>
+            </details>
+        </div>
+        <div class="motores-grid">
+            {% for motor in motores_cards %}
+            <div class="motor-card">
+                <div class="rot">{{ motor.nome }}</div>
+                <div class="kpi">
+                    <span class="var {% if motor.variacao > 0 %}alta{% elif motor.variacao < 0 %}baixa{% else %}neutra{% endif %}">
+                        {% if motor.variacao > 0 %}▲{% elif motor.variacao < 0 %}▼{% else %}■{% endif %} {{ "{:+.2f}%".format(motor.variacao) }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endif %}
 
 {% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro sentimento-risco") %}
     {% if highlights and highlights.dispersion_pct is not none %}
@@ -177,7 +172,6 @@
         {{ estado('indisponivel') }}
     {% endif %}
 {% endcall %}
-
 
 {% call painel("Fator Peso Pesado", 4, "Mostra a proporção do movimento do Ibovespa no dia que é explicada apenas pelas 5 ações de maior peso (VALE3, PETR4, ITUB4, PETR3, BBAS3). Calculado pela soma da contribuição em pontos de cada uma (variação % * peso da ação) sobre a variação total do índice.", fator_peso_pesado_data.fonte if fator_peso_pesado_data else "", data.time if data else "", "visao-macro visao-geral") %}
     {% if fator_peso_pesado_data %}
@@ -205,7 +199,6 @@
 {% endcall %}
 
 <!-- Linha 3: humor e rotação do dia -->
-
 
 {% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje, e qual atrai mais volume financeiro.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial visao-geral escondido' if not concentracao_setorial else 'visao-macro painel-concentracao-setorial visao-geral') %}
   {% if not concentracao_setorial %}
@@ -252,11 +245,6 @@
   {% endif %}
 {% endcall %}
 
-
-
-
-
-
 {% call painel("Pressão Vendedora", 12, "Mostra a contribuição dos 5 ativos com o pior desempenho absoluto para a queda do Ibovespa no dia atual.", concentracao_vendedora.fonte if concentracao_vendedora else "", concentracao_vendedora.time if concentracao_vendedora else "", "visao-macro visao-geral escondido" if not concentracao_vendedora else "visao-macro visao-geral") %}
     {% if concentracao_vendedora %}
         <div class="destaque-texto">{{ concentracao_vendedora.resumo.mensagem }}</div>
@@ -274,7 +262,6 @@
         {{ estado('indisponivel') }}
     {% endif %}
 {% endcall %}
-
 
 {% call painel("Concentração de Ganhos", 12, "Mostra quantas ações explicam 50% dos pontos de variação do índice hoje.", concentracao.fonte if concentracao else "", concentracao.time if concentracao else "", "visao-macro visao-geral escondido" if not concentracao else "visao-macro visao-geral") %}
     {% if concentracao %}
@@ -297,7 +284,6 @@
         {{ estado('indisponivel') }}
     {% endif %}
 {% endcall %}
-
 
 {% call painel("Maiores altas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro rankings") %}
     {% if highlights and highlights.highs %}
@@ -433,9 +419,6 @@
     {% endif %}
 {% endcall %}
 
-
-
-
 {% call painel("Concentração de Ordens", 4, "Ações de alta liquidez com maior concentração de volume financeiro por negócio (Ticket Médio Intraday).", concentracao_ordens.fonte if concentracao_ordens else "", concentracao_ordens.coletado_em if concentracao_ordens else "", "visao-micro alertas") %}
     {% if not concentracao_ordens %}
         {{ estado("indisponivel") }}
@@ -460,7 +443,6 @@
         </table>
     {% endif %}
 {% endcall %}
-
 
     {% call painel("Exaustão de Queda", 4, "Ações que fecharam em queda por 3 dias, abriram com gap de baixa e se recuperaram com volume projetado acima da média.", exaustao_queda.fonte if exaustao_queda else "", exaustao_queda.coletado_em if exaustao_queda else "", "visao-micro alertas") %}
     {% if not exaustao_queda %}
@@ -498,7 +480,6 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Dias Consecutivos', 'num': True}, {'titulo': 'Var. Acumulada', 'num': True}], 'exaustao_tendencia') }}
     {% endif %}
 {% endcall %}
-
 
 {% call painel("Radar de Absorção Cruzada", 4, "Ações que tiveram forte queda intradiária (>1.5%) mas no fundo encontraram volume anormal (2x a média), indicando possível absorção.", radar_absorcao_cruzada.fonte if radar_absorcao_cruzada else "", radar_absorcao_cruzada.coletado_em if radar_absorcao_cruzada else "", "visao-micro alertas") %}
     {% if not radar_absorcao_cruzada %}
@@ -609,7 +590,6 @@
     {% endif %}
 {% endcall %}
 
-
 {% call painel("Radar de Faca Caindo", 4, "Ações com mais dias consecutivos de queda, indicando a duração da sequência e a perda acumulada (nos últimos 10 pregões).", faca_caindo.fonte if faca_caindo else "", faca_caindo.time if faca_caindo else "", "visao-micro alertas") %}
     {% if not faca_caindo %}
         {{ estado("indisponivel") }}
@@ -658,10 +638,6 @@
         {% endif %}
     {% endcall %}
 </div>
-
-
-
-
 
 {% call painel("Radar de Short Squeeze", 4, "Ações que vêm de forte queda recente mas hoje reagem com alta violenta e volume atípico (capitulação vendida).", short_squeeze.fonte if short_squeeze else "", short_squeeze.coletado_em if short_squeeze else "", "visao-micro alertas") %}
     {% if not short_squeeze %}
@@ -743,8 +719,6 @@
             {% endif %}
         {% endcall %}
 
-
-
 {% call painel("Índice de Esforço vs Resultado", 4, "Ações com volume muito acima da média (esforço alto) mas cuja amplitude de preço (abertura vs atual) permaneceu perto de zero, indicando absorção institucional.", esforco_resultado.fonte if esforco_resultado else "", esforco_resultado.coletado_em if esforco_resultado else "", "visao-micro alertas") %}
     {% if not esforco_resultado %}
         {{ estado("indisponivel") }}
@@ -763,7 +737,6 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Volume', 'num': True}, {'titulo': 'Variação', 'num': True}], 'esforco-resultado') }}
     {% endif %}
 {% endcall %}
-
 
 {% call painel("Relógio de Volatilidade Intraday", 4, "Horário de maior indecisão e oscilação intradiária (" ~ (relogio.ticker if relogio else "") ~ ").", relogio.fonte if relogio else "", relogio.coletado_em if relogio else "", "alertas") %}
     {% if not relogio %}
@@ -793,7 +766,6 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Sinal'}, {'titulo': 'Queda', 'num': True}], 'scanner-capitulacao') }}
     {% endif %}
 {% endcall %}
-
 
 {% call painel("Atrasadas do Rally", 4, "Ações que ficaram para trás nos últimos 5 pregões em momentos de alta > 2% do Ibovespa.", atrasadas_rally.fonte if atrasadas_rally else "", atrasadas_rally.time if atrasadas_rally else "", "visao-micro rankings") %}
     {% if atrasadas_rally %}
@@ -875,7 +847,6 @@
     {% endif %}
 {% endcall %}
 
-
 {% call painel('Armadilhas de Abertura', 4, 'Ações que abriram em forte alta (gap) mas perderam força e já operam abaixo do fechamento anterior.', armadilha_abertura.fonte if armadilha_abertura else '', armadilha_abertura.time if armadilha_abertura else '', 'visao-micro alertas') %}
     {% if not armadilha_abertura %}
         {{ estado('indisponivel') }}
@@ -913,7 +884,6 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda Máx.'}, {'titulo': 'Atual', 'num': True}], 'compradores-fundo') }}
     {% endif %}
 {% endcall %}
-
 
 {% call painel("Sempre Verde", 4, "Ações que fecharam no verde todos os dias nos últimos 5 pregões.", sobrevivencia_semanal.fonte if sobrevivencia_semanal else "", sobrevivencia_semanal.time if sobrevivencia_semanal else "", "visao-micro rankings") %}
     {% if not sobrevivencia_semanal %}
@@ -967,6 +937,5 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Amplitude', 'num': True}, {'titulo': 'Variação', 'num': True}], 'volatilidade-silenciosa') }}
     {% endif %}
 {% endcall %}
-
 
 {% endblock %}
