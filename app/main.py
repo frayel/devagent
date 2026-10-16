@@ -279,6 +279,9 @@ def snapshot():
     clima_global_data = get_latest_clima_global_data()
     if clima_global_data:
         resp["paineis"]["clima_global"] = {
+            "coletado_em": clima_global_data.timestamp.astimezone(
+                timezone(timedelta(hours=-3))
+            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
             "sp500_pct": clima_global_data.sp500_pct,
             "vix_pct": clima_global_data.vix_pct,
             "status": clima_global_data.status,
@@ -682,7 +685,21 @@ async def index(request: Request):
     motores_data = get_latest_motores_indice_data()
     motores_cards = json.loads(motores_data.motores_json) if motores_data else None
 
-    clima_global = get_latest_clima_global_data()
+    clima_global_data = get_latest_clima_global_data()
+    clima_global = None
+    if clima_global_data:
+        clima_global = {
+            "coletado_em": clima_global_data.timestamp.astimezone(
+                timezone(timedelta(hours=-3))
+            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+            "timestamp": clima_global_data.timestamp.astimezone(
+                timezone(timedelta(hours=-3))
+            ),
+            "sp500_pct": clima_global_data.sp500_pct,
+            "vix_pct": clima_global_data.vix_pct,
+            "status": clima_global_data.status,
+            "fonte": clima_global_data.fonte,
+        }
     ibovespa_data = get_ibovespa_view_data()
 
     highlights_data = get_latest_highlights_data()
