@@ -461,6 +461,26 @@
     {% endif %}
 {% endcall %}
 
+{% call painel("Exaustão de Tendência", 4, "Ativos subindo há dias consecutivos, mas com volume financeiro em queda constante.", exaustao_tendencia.fonte if exaustao_tendencia else "", exaustao_tendencia.coletado_em if exaustao_tendencia else "", "visao-micro alertas") %}
+    {% if not exaustao_tendencia %}
+        {{ estado("indisponivel") }}
+    {% elif not exaustao_tendencia.alertas %}
+        <div class="vazio">Nenhum sinal de exaustão no momento.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in exaustao_tendencia.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': ("%d dias" % a.dias_consecutivos) },
+                {'num': True, 'conteudo': (variacao("%.2f%%" | format(a.variacao_acumulada), 1 if a.variacao_acumulada > 0 else -1 if a.variacao_acumulada < 0 else 0)) | safe }
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Dias Consecutivos', 'num': True}, {'titulo': 'Var. Acumulada', 'num': True}], 'exaustao_tendencia') }}
+    {% endif %}
+{% endcall %}
+
+
 {% call painel("Radar de Absorção Cruzada", 4, "Ações que tiveram forte queda intradiária (>1.5%) mas no fundo encontraram volume anormal (2x a média), indicando possível absorção.", radar_absorcao_cruzada.fonte if radar_absorcao_cruzada else "", radar_absorcao_cruzada.coletado_em if radar_absorcao_cruzada else "", "visao-micro alertas") %}
     {% if not radar_absorcao_cruzada %}
         {{ estado("indisponivel") }}

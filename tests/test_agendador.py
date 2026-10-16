@@ -160,6 +160,7 @@ def test_mascara_token_no_estado(monkeypatch):
         "clima_global",
         "radar_anomalias_spread",
         "concentracao_ordens",
+        "exaustao_tendencia",
     ):
         monkeypatch.setattr(f"app.collectors.{nome}.collect_and_save", lambda: True)
 

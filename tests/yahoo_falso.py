@@ -100,6 +100,13 @@ def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
         volumes[-1] = 0  # testacao_orfa: volume 0 (acao orfa)
     elif "DIV" in simbolo:  # For radar divergencia test
         volumes = [100000, 100000, 100000, 10000, 10000]
+    elif "EXAUSTAO" in simbolo:
+        # Create n elements where the last 5 days are consecutive price up, volume down
+        fechamentos = [10.0] * n
+        volumes = [100000] * n
+        for i in range(1, 6):
+            fechamentos[-i] = 10.0 + (6 - i)
+            volumes[-i] = 50000 + (i * 10000)
     elif s % 3 == 0 or "TICKER" in simbolo or simbolo == "PETR4.SA":
         volumes[-1] *= 4  # pico de volume no último pregão
     ultimo = fechamentos[-1]
