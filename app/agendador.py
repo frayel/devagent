@@ -85,7 +85,8 @@ def _coletar() -> None:
     import importlib
 
     from app.collectors import mt5
-    from app.database import save_coleta_vazia
+    import time
+    from app.database import save_coleta_vazia, save_coleta_tempo
 
     for nome in (
         "ibovespa",
@@ -131,7 +132,13 @@ def _coletar() -> None:
         coletor = importlib.import_module(f"app.collectors.{nome}")
         mt5.reiniciar_rastreio()
         try:
+            start_time = time.perf_counter()
             ok = coletor.collect_and_save()
+            duracao = time.perf_counter() - start_time
+            try:
+                save_coleta_tempo(nome, duracao, datetime.now(timezone.utc))
+            except Exception:
+                logger.exception("Falha ao salvar tempo de coleta para %s", nome)
             if not ok:
                 estado["ultimo_erro"] = f"{nome}: nenhuma fonte respondeu"
                 try:
