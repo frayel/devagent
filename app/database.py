@@ -764,6 +764,18 @@ def init_db() -> None:
         ON radar_short_squeeze_cache(timestamp DESC)
     """)
 
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS exaustao_queda_cache (
+            timestamp TEXT PRIMARY KEY,
+            alertas_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_exaustao_queda_cache_timestamp
+        ON exaustao_queda_cache(timestamp DESC)
+    """)
+
     conn.commit()
     conn.close()
 
@@ -2339,10 +2351,44 @@ def get_latest_concentracao_ordens_data() -> ConcentracaoOrdensData | None:
 
 
 @dataclass
+@dataclass
+class ExaustaoQuedaData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str
+
+
+@dataclass
 class ExaustaoTendenciaData:
     timestamp: datetime
     alertas_json: str
     fonte: str = "yfinance"
+
+
+def save_exaustao_queda_data(data: ExaustaoQuedaData) -> None:
+    conn = get_connection()
+    conn.execute(
+        "INSERT INTO exaustao_queda_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
+        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_exaustao_queda_data() -> ExaustaoQuedaData | None:
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT timestamp, alertas_json, fonte FROM exaustao_queda_cache ORDER BY timestamp DESC LIMIT 1"
+    ).fetchone()
+    conn.close()
+
+    if row:
+        return ExaustaoQuedaData(
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            alertas_json=row["alertas_json"],
+            fonte=row["fonte"],
+        )
+    return None
 
 
 def save_exaustao_tendencia_data(data: ExaustaoTendenciaData) -> None:

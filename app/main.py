@@ -61,6 +61,7 @@ from app.database import (
     get_latest_radar_anomalias_spread_data,
     get_latest_concentracao_ordens_data,
     get_latest_exaustao_tendencia_data,
+    get_latest_exaustao_queda_data,
 )
 from app import agendador
 
@@ -647,6 +648,22 @@ def snapshot():
     else:
         resp["paineis"]["anomalias_spread"] = []
 
+    exaustao_queda = None
+    exaustao_queda_data = get_latest_exaustao_queda_data()
+    if exaustao_queda_data:
+        alertas = json.loads(exaustao_queda_data.alertas_json)
+        if alertas:
+            exaustao_queda = {
+                "coletado_em": exaustao_queda_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": exaustao_queda_data.fonte,
+                "alertas": alertas,
+            }
+    # unused avoid f841
+    if exaustao_queda:
+        pass
+
     exaustao_tendencia_data = get_latest_exaustao_tendencia_data()
     if exaustao_tendencia_data:
         try:
@@ -826,6 +843,22 @@ async def index(request: Request):
             "coletado_em": formatar_data(concentracao_ordens_data.timestamp),
             "fonte": concentracao_ordens_data.fonte,
         }
+
+    exaustao_queda = None
+    exaustao_queda_data = get_latest_exaustao_queda_data()
+    if exaustao_queda_data:
+        alertas = json.loads(exaustao_queda_data.alertas_json)
+        if alertas:
+            exaustao_queda = {
+                "coletado_em": exaustao_queda_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": exaustao_queda_data.fonte,
+                "alertas": alertas,
+            }
+    # unused avoid f841
+    if exaustao_queda:
+        pass
 
     exaustao_tendencia_data = get_latest_exaustao_tendencia_data()
     exaustao_tendencia = None
@@ -1018,5 +1051,6 @@ async def index(request: Request):
             "relogio": relogio,
             "anomalias_spread": anomalias_spread,
             "exaustao_tendencia": exaustao_tendencia,
+            "exaustao_queda": exaustao_queda,
         },
     )

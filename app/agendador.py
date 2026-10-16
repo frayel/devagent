@@ -126,6 +126,7 @@ def _coletar() -> None:
         "radar_anomalias_spread",
         "concentracao_ordens",
         "exaustao_tendencia",
+        "exaustao_queda",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
         mt5.reiniciar_rastreio()

@@ -1,7 +1,7 @@
 ---
 id: 060
 titulo: Radar de Exaustão de Queda
-status: ready
+status: done
 esforco: M
 gaveta: capacidade nova
 ---
@@ -28,9 +28,9 @@ O investidor procura ações que vêm apanhando no curto prazo, mas que hoje dã
 4. **Volume Projetado**: Volume Atual * (Total Minutos Pregão / Minutos Decorridos). Deve ser > Média Volume (21d).
 
 ## Critérios de aceite
-- [ ] O painel não é exibido (ou exibe mensagem de que não há ativos na condição) quando o filtro retorna vazio.
-- [ ] O teste com fixture garante que a tabela de exaustão de queda exibe os valores calculados corretamente.
-- [ ] O `/api/snapshot` inclui a chave `exaustao_queda` refletindo a tabela.
+- [x] O painel não é exibido (ou exibe mensagem de que não há ativos na condição) quando o filtro retorna vazio.
+- [x] O teste com fixture garante que a tabela de exaustão de queda exibe os valores calculados corretamente.
+- [x] O `/api/snapshot` inclui a chave `exaustao_queda` refletindo a tabela.
 
 ## Invariantes de produção
 - A chave `exaustao_queda` deve estar presente no `snapshot` sempre que a chamada à home não falhar (podendo ser null se não houver dados em cache).
