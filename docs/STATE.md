@@ -9,8 +9,8 @@
 
 ## Manutenção
 
-- Última rodada de manutenção: 2026-10-14, spec 054. Medidas: scanner capitulacao assíncrono.
-- Specs entregues desde a última rodada (exceto as de manutenção): 2.
+- Última rodada de manutenção: 2026-10-17, spec 063. Medidas: unificação de histórico diário (cache).
+- Specs entregues desde a última rodada (exceto as de manutenção): 0.
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
