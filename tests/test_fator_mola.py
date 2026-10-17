@@ -4,11 +4,10 @@ from app.collectors import fator_mola
 
 
 def test_fetch_yfinance(monkeypatch):
-    mock_response = MagicMock()
-    mock_response.raise_for_status = MagicMock()
-    mock_response.json.return_value = {
-        "spark": {
-            "result": [
+    def mock_fetch(symbols, *args, **kwargs):
+        res = []
+        if "PETR4" in symbols:
+            res.append(
                 {
                     "symbol": "PETR4.SA",
                     "response": [
@@ -19,24 +18,27 @@ def test_fetch_yfinance(monkeypatch):
                             }
                         }
                     ],
-                },
+                }
+            )
+        if "VALE3" in symbols:
+            res.append(
                 {
                     "symbol": "VALE3.SA",
                     "response": [
                         {
                             "meta": {
                                 "regularMarketPrice": 60.00,
-                                "regularMarketDayLow": 55.00,
+                                "regularMarketDayLow": 50.00,
                             }
                         }
                     ],
-                },
-            ]
-        }
-    }
+                }
+            )
+        return res
+
     monkeypatch.setattr(
-        "app.collectors.fator_mola.fetch_with_retry",
-        lambda *args, **kwargs: mock_response,
+        "app.collectors.fator_mola.fetch_historico_diario_yfinance_spark",
+        mock_fetch,
     )
     monkeypatch.setattr("app.collectors.fator_mola.TICKERS", ["PETR4", "VALE3"])
 
@@ -46,17 +48,17 @@ def test_fetch_yfinance(monkeypatch):
 
     top3 = json.loads(data.top3_json)
     assert len(top3) == 2
-    assert top3[0]["ticker"] == "PETR4"
-    assert top3[0]["mola_percent"] > 14.0
+    assert top3[0]["ticker"] == "VALE3"
+    assert top3[0]["mola_percent"] == 20.0
 
 
 def test_fetch_yfinance_no_data(monkeypatch):
-    mock_response = MagicMock()
-    mock_response.raise_for_status = MagicMock()
-    mock_response.json.return_value = {}
+    def mock_fetch(*args, **kwargs):
+        return []
+
     monkeypatch.setattr(
-        "app.collectors.fator_mola.fetch_with_retry",
-        lambda *args, **kwargs: mock_response,
+        "app.collectors.fator_mola.fetch_historico_diario_yfinance_spark",
+        mock_fetch,
     )
 
     data = fator_mola.fetch_yfinance()

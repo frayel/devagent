@@ -10,6 +10,7 @@ from app.database import FatorMolaData, save_fator_mola_data
 from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
+from app.collectors.utils import fetch_historico_diario_yfinance_spark
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,48 +19,39 @@ logger = logging.getLogger(__name__)
 def fetch_yfinance() -> FatorMolaData | None:
     parsed_results = []
 
-    # Batching tickers in groups of 15 to respect URL length and API limits
-    batch_size = 15
-    batches = [TICKERS[i : i + batch_size] for i in range(0, len(TICKERS), batch_size)]
-
     with httpx.Client(timeout=10.0) as client:
-        for batch in batches:
-            symbols = ",".join([f"{t}.SA" for t in batch])
-            url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
-            try:
-                response = fetch_with_retry(url, client=client)
-                data = response.json()
+        try:
+            results = fetch_historico_diario_yfinance_spark(TICKERS, "1d", "1d", client)
 
-                for item in data.get("spark", {}).get("result", []):
-                    if not item.get("response"):
-                        continue
+            for item in results:
+                if not item.get("response"):
+                    continue
 
-                    symbol = item.get("symbol", "").replace(".SA", "")
-                    meta = item["response"][0].get("meta", {})
-                    price = meta.get("regularMarketPrice")
-                    low = meta.get("regularMarketDayLow")
+                symbol = item.get("symbol", "").replace(".SA", "")
+                meta = item["response"][0].get("meta", {})
+                price = meta.get("regularMarketPrice")
+                low = meta.get("regularMarketDayLow")
 
-                    if price is None or low is None or low == 0:
-                        continue
+                if price is None or low is None or low == 0:
+                    continue
 
-                    if price <= low:
-                        continue  # Não recuperou ou recuperou menos que 0, não exibe
+                if price <= low:
+                    continue  # Não recuperou ou recuperou menos que 0, não exibe
 
-                    mola_percent = ((price - low) / low) * 100
+                mola_percent = ((price - low) / low) * 100
 
-                    # Se recuperou > 0, adiciona
-                    if mola_percent > 0:
-                        parsed_results.append(
-                            {
-                                "ticker": symbol,
-                                "price": price,
-                                "low": low,
-                                "mola_percent": mola_percent,
-                            }
-                        )
-            except httpx.HTTPError as e:
-                logger.error(f"Error fetching batch {symbols} from yfinance: {e}")
-                continue
+                # Se recuperou > 0, adiciona
+                if mola_percent > 0:
+                    parsed_results.append(
+                        {
+                            "ticker": symbol,
+                            "price": price,
+                            "low": low,
+                            "mola_percent": mola_percent,
+                        }
+                    )
+        except Exception as e:
+            logger.error(f"Error fetching from yfinance: {e}")
 
     if not parsed_results:
         # Quando collectors funcionam mas os dados estão vazios, devem retornar array/objeto vazios (Fator Mola Data nula mas instanciada)
