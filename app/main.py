@@ -38,6 +38,7 @@ from app.services.volatilidade_silenciosa import get_volatilidade_silenciosa_vie
 from app.services import scanner_capitulacao
 from app.services import mare as mare_servico
 from app.database import (
+    get_divergencia_ibov_dolar,
     get_latest_motores_indice_data,
     get_latest_clima_global_data,
     get_latest_relogio_volatilidade_data,
@@ -129,6 +130,10 @@ def coleta():
 @app.get("/api/snapshot")
 def snapshot():
     resp = {"gerado_em": datetime.now(timezone.utc).isoformat(), "paineis": {}}
+
+    divergencia = get_divergencia_ibov_dolar()
+    if divergencia:
+        resp["paineis"]["divergencia_ibov_dolar"] = divergencia
 
     data = get_latest_ibovespa_data()
     if data:

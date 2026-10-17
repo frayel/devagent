@@ -15,6 +15,12 @@
 
 ## Implementado
 
+- Spec 064 (Divergência Ibovespa vs Dólar):
+  - Banco de dados SQLite (`divergencia_ibov_dolar_cache`).
+  - Coletor buscando dados intradiários do Ibov e Dólar.
+  - Alerta de correlação positiva.
+  - Adicionado ao contrato `/api/snapshot`.
+
 - Spec 062 (Instrumentação de Tempo de Coleta):
   - Banco de dados SQLite (`instrumentacao_coleta_tempo`).
   - `app/agendador.py` registra e salva o tempo de execução de cada painel para basear futuras podas.
