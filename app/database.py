@@ -1806,6 +1806,7 @@ class DetectorAcaoOrfaAtivo:
     ticker: str
     minutos_sem_negocios: int
     aviso: str
+    ratio: float
 
 
 @dataclass
