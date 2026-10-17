@@ -81,11 +81,20 @@ def fetch_yfinance() -> None:
                             is_orfa = True
 
                     if is_orfa:
+                        ratio = 0.0
+                        if last_volume == 0:
+                            ratio = 0.0
+                        elif mean_vol > 0:
+                            ratio = last_volume / mean_vol
+
                         alertas.append(
                             {
                                 "ticker": ticker,
                                 "minutos_sem_negocios": 15,
-                                "aviso": "Liquidez seca/Órfã",
+                                "aviso": "Volume Zero"
+                                if last_volume == 0
+                                else "Queda de Liquidez",
+                                "ratio": ratio,
                             }
                         )
 
@@ -94,4 +103,6 @@ def fetch_yfinance() -> None:
                     f"Erro em fetch_yfinance no detector_acao_orfa para o lote {batch}: {e}"
                 )
 
+    # Ordena por severidade: Volume zero primeiro, depois menor ratio
+    alertas.sort(key=lambda x: (0 if x["aviso"] == "Volume Zero" else 1, x["ratio"]))
     save_detector_acao_orfa_data(alertas, fonte="yfinance")

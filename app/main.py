@@ -497,6 +497,7 @@ def snapshot():
                 "ticker": a.ticker,
                 "minutos_sem_negocios": a.minutos_sem_negocios,
                 "aviso": a.aviso,
+                "ratio": a.ratio,
             }
             for a in db_detector_acao_orfa.alertas
         ]

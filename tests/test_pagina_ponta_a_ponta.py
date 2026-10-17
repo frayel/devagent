@@ -83,3 +83,13 @@ def test_faca_caindo_mostra_dias_e_variacao(monkeypatch):
     assert "Nenhuma sequência de quedas detectada" not in painel
     assert " dias</span>" in painel
     assert "%" in painel and "," in painel  # variação em formato brasileiro
+
+
+def test_nenhum_painel_vaza_dicionario_cru(monkeypatch):
+    _coletar_tudo(monkeypatch)
+    resposta = TestClient(app).get("/")
+    assert resposta.status_code == 200
+    html = resposta.text
+    # Busca por resquícios de formatação dicionário em conteúdo de tabela
+    assert "{&#39;" not in html, "Dicionário Python cru vazou no HTML"
+    assert "{'" not in html, "Dicionário Python cru vazou no HTML"

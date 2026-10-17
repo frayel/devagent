@@ -401,7 +401,7 @@
             {% set s = 1 if a.change_percent > 0 else -1 if a.change_percent < 0 else 0 %}
             {% set val = ("%.2f%%" | format(a.change_percent | abs)) %}
             {% set _ = linhas.append([
-                {'conteudo': {'tk': True, 'conteudo': a.ticker}, 'tk': True},
+                {'tk': True, 'conteudo': a.ticker},
                 {'conteudo': (variacao(val, s)) | safe, 'num': True}
             ]) %}
         {% endfor %}
@@ -522,16 +522,20 @@
             {% elif not detector_acao_orfa.alertas %}
                 <div class="painel-vazio">Nenhuma ação orfã identificada hoje.</div>
             {% else %}
-                <div class="lista">
+                <div class="tabela-scroll">
+                    {% set linhas = [] %}
                     {% for a in detector_acao_orfa.alertas %}
-                        <div class="item-lista">
-                            <span class="ticker">{{ a.ticker }}</span>
-                            <div class="coluna-valor">
-                                <span class="valor neutro">{{ a.minutos_sem_negocios }}m</span>
-                            </div>
-                            <span class="subtexto">{{ a.aviso }}</span>
-                        </div>
+                        {% set _ = linhas.append([
+                            {'tk': True, 'conteudo': a.ticker},
+                            {'conteudo': ("Zero" if a.ratio == 0 else ("%.0f%%"|format(a.ratio * 100))), 'num': True},
+                            {'conteudo': a.aviso, 'num': False}
+                        ]) %}
                     {% endfor %}
+                    {{ tabela_ativos(linhas, [
+                        {'titulo': 'Ativo', 'num': False},
+                        {'titulo': 'Vol/Média', 'num': True},
+                        {'titulo': 'Motivo', 'num': False}
+                    ], 'rank-acao-orfa') }}
                 </div>
             {% endif %}
         {% endcall %}
@@ -591,7 +595,7 @@
             {% set val = ("%.2f%%" | format(a.variacao_acumulada | abs)) | replace('.', ',') %}
             {% set s = -1 if a.variacao_acumulada < 0 else 1 if a.variacao_acumulada > 0 else 0 %}
             {% set _ = linhas.append([
-                {'conteudo': {'tk': True, 'conteudo': a.ticker}, 'tk': True},
+                {'tk': True, 'conteudo': a.ticker},
                 {'conteudo': ('<span>' | safe) ~ a.dias ~ (' dias</span>' | safe)},
                 {'conteudo': (variacao(val, s)) | safe, 'num': True, 'barra': True, 'valor_barra': a.variacao_acumulada | abs}
             ]) %}
@@ -638,7 +642,7 @@
         {% set linhas = [] %}
         {% for a in short_squeeze.alertas %}
             {% set _ = linhas.append([
-                {'conteudo': {'tk': True, 'conteudo': a.ticker}, 'tk': True},
+                {'tk': True, 'conteudo': a.ticker},
                 {'conteudo': (variacao("%.2f%%" | format(a.queda_10d), -1)) | safe, 'num': True},
                 {'conteudo': ('<span>' | safe) ~ (a.mult_vol | e) ~ ('x vol</span>' | safe)},
                 {'conteudo': (variacao("%.2f%%" | format(a.alta_hoje), 1)) | safe, 'num': True}
@@ -748,7 +752,7 @@
         {% set linhas = [] %}
         {% for a in scanner_capitulacao.alertas %}
             {% set _ = linhas.append([
-                {'conteudo': {'tk': True, 'conteudo': a.ticker}, 'tk': True},
+                {'tk': True, 'conteudo': a.ticker},
                 {'conteudo': ('<span>' | safe) ~ (a.texto | e) ~ ('</span>' | safe)},
                 {'conteudo': (variacao("%.2f%%" | format(a.queda_pct), -1)) | safe, 'num': True}
             ]) %}
@@ -847,7 +851,7 @@
         {% for a in armadilha_abertura.alertas %}
             {% set val = ('<span>R$ ' ~ (('%.2f' | format(a.preco_atual)) | replace('.', ',')) ~ '</span>') %}
             {% set _ = linhas.append([
-                {'conteudo': {'tk': True, 'conteudo': a.ticker}, 'tk': True},
+                {'tk': True, 'conteudo': a.ticker},
                 {'conteudo': 'Gap Trap'},
                 {'conteudo': val | safe, 'num': True}
             ]) %}
@@ -866,7 +870,7 @@
         {% for a in compradores_fundo.alertas %}
             {% set val = ("%.2f%%" | format(a.queda_maxima | abs)) %}
             {% set _ = linhas.append([
-                {'conteudo': {'tk': True, 'conteudo': a.ticker}, 'tk': True},
+                {'tk': True, 'conteudo': a.ticker},
                 {'conteudo': (variacao(val, -1)) | safe, 'num': True},
                 {'conteudo': ('<span>' | safe) ~ (("R$ %.2f" | format(a.preco_atual)) | replace('.', ',') | e) ~ ('</span>' | safe), 'num': True}
             ]) %}
@@ -884,7 +888,7 @@
         {% set linhas = [] %}
         {% for a in sobrevivencia_semanal.alertas %}
             {% set _ = linhas.append([
-                {'conteudo': {'tk': True, 'conteudo': a.ticker}, 'tk': True},
+                {'tk': True, 'conteudo': a.ticker},
                 {'conteudo': ('<span>' | safe) ~ a.dias_consecutivos ~ (' dias</span>' | safe), 'num': True}
             ]) %}
         {% endfor %}
@@ -900,7 +904,7 @@
         {% set linhas = [] %}
         {% for a in radar_inflexao.alertas %}
             {% set _ = linhas.append([
-                {'conteudo': {'tk': True, 'conteudo': a.ticker}, 'tk': True},
+                {'tk': True, 'conteudo': a.ticker},
                 {'conteudo': (variacao("%.2f%%" | format(a.retorno_acumulado), -1)) | safe, 'num': True},
                 {'conteudo': (variacao("%.2f%%" | format(a.variacao_hoje), 1)) | safe, 'num': True}
             ]) %}
