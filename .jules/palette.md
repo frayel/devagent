@@ -45,3 +45,8 @@
 - **Por que fiz:** O `docs/DESIGN.md` (seção 4) instrui que colunas que representam uma magnitude devem exibir uma barra horizontal discreta para facilitar a comparação visual pelo usuário. A macro `tabela_ativos` já suportava isso, mas os painéis não estavam passando os dados na renderização.
 - **O que aprendi:** Ao adicionar chaves em dicionários de templates Jinja multi-linha, a formatação precisa ser cautelosa para não quebrar a compilação do template e o diff deve ser rigorosamente verificado.
 - **O que evitar:** Modificar código visual (HTML/Jinja) utilizando Regex diretamente sem revisar o impacto se a sintaxe exata for alterada de leve no original (ex: espaços extras ou aspas); scripts em python injetando linha a linha via replace se mostraram mais confiáveis aqui.
+## 2026-10-18
+- **O que fiz:** Padronizei o painel "Fator Peso Pesado" em `app/templates/index.html` para usar a macro `kpi` em vez de estruturar o HTML manualmente com `<span class="fs-hero num">`. A descrição agora é passada adequadamente no parâmetro `variacao_str` para renderizar abaixo do valor numérico.
+- **Por que fiz:** O `docs/DESIGN.md` instrui o uso da macro `kpi` para apresentar métricas em destaque, eliminando a criação de layouts improvisados.
+- **O que aprendi:** A macro `kpi` é versátil o suficiente para comportar descrições textuais se passarmos o texto via `variacao_str`, dispensando marcação manual de divs.
+- **O que evitar:** Escrever HTML customizado para apresentar números e labels quando já existem macros padrão que garantem a consistência visual do projeto.

@@ -278,6 +278,16 @@ def _semear(db_path: str) -> None:
         )
     )
 
+    db.save_fator_peso_pesado_data(
+        db.FatorPesoPesadoData(
+            timestamp=agora,
+            proporcao=45.2,
+            mercado_lateral=False,
+            resumo_json=json.dumps([]),
+            fonte="demonstracao",
+        )
+    )
+
     db.save_rotacao_capital_data(
         db.RotacaoCapitalData(
             timestamp=agora,
