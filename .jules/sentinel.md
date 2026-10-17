@@ -71,3 +71,8 @@
 **Vulnerability:** Defense-in-depth for Information Exposure in diagnostics.
 **Learning:** The asynchronous request wrapper `async_fetch_with_retry` was logging unmasked URLs containing sensitive API tokens in query parameters when a request failed, exposing the token in diagnostic logs. I updated `app/collectors/utils.py` to mask the tokens using `re.sub` before the warning is logged, matching the logic in the synchronous equivalent.
 **Prevention:** Always ensure both synchronous and asynchronous network request implementations consistently apply secret masking prior to logging.
+
+## 2026-10-17 - Dependency audit check
+**Vulnerability:** None found in project dependencies.
+**Learning:** Ran `pip-audit -r requirements.txt`. No known vulnerabilities were found in the application's direct dependencies (`fastapi`, `uvicorn`, `jinja2`, `httpx`). The machine environment contained globally installed tools like `nltk` with known path traversal issues, but they are not part of the project. No actionable vulnerabilities were found in the codebase.
+**Prevention:** Continue regular dependency audits with `pip-audit`.
