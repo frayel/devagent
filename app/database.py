@@ -263,6 +263,13 @@ def get_latest_esforco_resultado_data() -> EsforcoResultadoData | None:
 def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS divergencia_ibov_dolar_cache (
+            timestamp TEXT PRIMARY KEY,
+            divergencia_detectada INTEGER,
+            correlacao REAL
+        );
+        """)
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS historico_diario_cache (
@@ -2490,3 +2497,44 @@ def save_historico_diario(
     )
     conn.commit()
     conn.close()
+
+
+def save_divergencia_ibov_dolar(
+    divergencia_detectada: bool, correlacao: float, timestamp: datetime
+) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT OR REPLACE INTO divergencia_ibov_dolar_cache (timestamp, divergencia_detectada, correlacao)
+        VALUES (?, ?, ?)
+        """,
+        (timestamp.isoformat(), int(divergencia_detectada), correlacao),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_divergencia_ibov_dolar() -> dict | None:
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT timestamp, divergencia_detectada, correlacao
+        FROM divergencia_ibov_dolar_cache
+        ORDER BY timestamp DESC
+        LIMIT 1
+        """
+    )
+    row = cursor.fetchone()
+    if row:
+        res = {
+            "timestamp": row["timestamp"],
+            "divergencia_detectada": bool(row["divergencia_detectada"]),
+            "correlacao": row["correlacao"],
+        }
+        conn.close()
+        return res
+    conn.close()
+    return None
