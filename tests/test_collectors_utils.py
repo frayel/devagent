@@ -154,3 +154,49 @@ def test_timeout_is_enforced():
         kwargs2 = mock_get.call_args[1]
         assert "timeout" in kwargs2
         assert kwargs2["timeout"] == 5.0
+
+
+def test_fetch_historico_diario_yfinance_spark_uses_cache():
+    from unittest.mock import patch, MagicMock
+    from app.collectors.utils import fetch_historico_diario_yfinance_spark
+
+    with (
+        patch("app.database.get_historico_diario") as mock_get_cache,
+        patch("app.database.save_historico_diario") as mock_save_cache,
+        patch("app.collectors.utils.fetch_with_retry") as mock_fetch,
+    ):
+        mock_get_cache.return_value = {
+            "PETR4": {"symbol": "PETR4", "response": [{"timestamp": [1, 2, 3]}]}
+        }
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "spark": {
+                "result": [
+                    {"symbol": "VALE3.SA", "response": [{"timestamp": [4, 5, 6]}]}
+                ]
+            }
+        }
+        mock_fetch.return_value = mock_response
+
+        client = MagicMock()
+
+        results = fetch_historico_diario_yfinance_spark(
+            ["PETR4", "VALE3"], "1mo", "1d", client
+        )
+
+        assert len(results) == 2
+        symbols_returned = [r["symbol"] for r in results]
+        assert "PETR4" in symbols_returned
+        assert "VALE3.SA" in symbols_returned
+
+        mock_get_cache.assert_called_once_with(["PETR4", "VALE3"], "1mo", "1d")
+        mock_fetch.assert_called_once()
+        url_called = mock_fetch.call_args[0][0]
+        assert "symbols=VALE3.SA" in url_called
+        assert "PETR4" not in url_called
+
+        mock_save_cache.assert_called_once()
+        args = mock_save_cache.call_args[0]
+        assert args[0] == "VALE3"
+        assert args[1] == "1mo"
+        assert args[2] == "1d"

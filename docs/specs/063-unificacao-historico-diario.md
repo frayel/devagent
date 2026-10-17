@@ -1,7 +1,7 @@
 ---
 id: 063
 titulo: Saúde Técnica: Unificação de Histórico Diário
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 ---
