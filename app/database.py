@@ -544,7 +544,7 @@ def init_db() -> None:
             top3_json TEXT NOT NULL,
             fonte TEXT NOT NULL
         );
-        CREATE INDEX IF NOT EXISTS idx_concentracao_vendedora_timestamp ON concentracao_vendedora_cache (timestamp);
+        CREATE INDEX IF NOT EXISTS idx_concentracao_vendedora_timestamp ON concentracao_vendedora_cache (timestamp DESC);
 
         CREATE TABLE IF NOT EXISTS concentracao_cache (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
