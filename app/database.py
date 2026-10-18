@@ -1658,7 +1658,8 @@ def get_latest_sobrevivencia_semanal_data() -> SobrevivenciaSemanalData | None:
 def save_mare_data(data: MareData) -> None:
     conn = get_connection()
     try:
-        conn.execute(
+        cursor = conn.cursor()
+        cursor.execute(
             """
             INSERT INTO mare_cache
                 (timestamp, valor, fluxo, calma, volume, historico_json, fonte)
@@ -1682,14 +1683,16 @@ def save_mare_data(data: MareData) -> None:
 def get_latest_mare_data() -> MareData | None:
     conn = get_connection()
     try:
-        row = conn.execute(
+        cursor = conn.cursor()
+        cursor.execute(
             """
             SELECT timestamp, valor, fluxo, calma, volume, historico_json, fonte
             FROM mare_cache
             ORDER BY timestamp DESC
             LIMIT 1
             """
-        ).fetchone()
+        )
+        row = cursor.fetchone()
     except sqlite3.OperationalError:
         row = None
     finally:
@@ -1930,7 +1933,8 @@ def get_latest_radar_short_squeeze_data() -> RadarShortSqueezeData | None:
 
 def save_detector_acao_orfa_data(alertas: list[dict], fonte: str = "yfinance") -> None:
     with get_connection() as conn:
-        conn.execute(
+        cursor = conn.cursor()
+        cursor.execute(
             "INSERT INTO detector_acao_orfa_cache (dados, fonte) VALUES (?, ?)",
             (json.dumps(alertas), fonte),
         )
@@ -1938,9 +1942,11 @@ def save_detector_acao_orfa_data(alertas: list[dict], fonte: str = "yfinance") -
 
 def get_latest_detector_acao_orfa_data() -> DetectorAcaoOrfaData | None:
     with get_connection() as conn:
-        row = conn.execute(
+        cursor = conn.cursor()
+        cursor.execute(
             "SELECT dados, timestamp, fonte FROM detector_acao_orfa_cache ORDER BY timestamp DESC LIMIT 1"
-        ).fetchone()
+        )
+        row = cursor.fetchone()
         if not row:
             return None
         dados = json.loads(row[0])
@@ -2388,7 +2394,6 @@ def get_latest_concentracao_ordens_data() -> ConcentracaoOrdensData | None:
 
 
 @dataclass
-@dataclass
 class ExaustaoQuedaData:
     timestamp: datetime
     alertas_json: str
@@ -2404,7 +2409,8 @@ class ExaustaoTendenciaData:
 
 def save_exaustao_queda_data(data: ExaustaoQuedaData) -> None:
     conn = get_connection()
-    conn.execute(
+    cursor = conn.cursor()
+    cursor.execute(
         "INSERT INTO exaustao_queda_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
         (data.timestamp.isoformat(), data.alertas_json, data.fonte),
     )
@@ -2414,9 +2420,11 @@ def save_exaustao_queda_data(data: ExaustaoQuedaData) -> None:
 
 def get_latest_exaustao_queda_data() -> ExaustaoQuedaData | None:
     conn = get_connection()
-    row = conn.execute(
+    cursor = conn.cursor()
+    cursor.execute(
         "SELECT timestamp, alertas_json, fonte FROM exaustao_queda_cache ORDER BY timestamp DESC LIMIT 1"
-    ).fetchone()
+    )
+    row = cursor.fetchone()
     conn.close()
 
     if row:
