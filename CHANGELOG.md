@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- [Spec 061] Experiência: Reorganização da ordem do topo ('Clima Global' e 'Motores do Índice' movidos para baixo do 'Ibovespa' e 'Maré') na visão geral.
 - Implementada proxy local para requisições diárias (Spec 063)
 - Radar de Exaustão de Queda (Spec 060) exibe ações que caem há 3 dias com recuperação intraday acima da abertura.
 - Termômetro de Exaustão de Tendência (Spec 059) adicionado.

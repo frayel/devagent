@@ -1,7 +1,7 @@
 ---
 id: 061
 titulo: Experiência - Ordem do Topo
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 ---
