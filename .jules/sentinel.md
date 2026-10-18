@@ -76,3 +76,8 @@
 **Vulnerability:** None found in project dependencies.
 **Learning:** Ran `pip-audit -r requirements.txt`. No known vulnerabilities were found in the application's direct dependencies (`fastapi`, `uvicorn`, `jinja2`, `httpx`). The machine environment contained globally installed tools like `nltk` with known path traversal issues, but they are not part of the project. No actionable vulnerabilities were found in the codebase.
 **Prevention:** Continue regular dependency audits with `pip-audit`.
+
+## 2026-10-18 - Fix Database Connection Leaks
+**Vulnerability:** Resource Exhaustion / Denial of Service (DoS) due to database connection leaks.
+**Learning:** The methods `save_exaustao_queda_data`, `get_latest_exaustao_queda_data`, `save_mare_data`, `get_latest_mare_data`, `save_detector_acao_orfa_data` and `get_latest_detector_acao_orfa_data` in `app/database.py` were executing queries via `conn.execute()` without explicitly using a cursor or effectively managing the database resources, leading to potential connection leaks where `conn.close()` might not free all allocated resources properly. This can eventually lead to resource exhaustion and denial of service. I modified these functions to explicitly use `conn.cursor()` and execute the queries through the cursor.
+**Prevention:** Always use `cursor = conn.cursor()` and execute queries via the cursor instead of directly on the connection object to ensure proper resource management and prevent connection leaks.
