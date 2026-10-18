@@ -330,7 +330,6 @@
 | Ideia | Detalhes | Fonte | Esforço | Risco |
 |---|---|---|---|---|
 | Experiência: Reorganização de Alertas por Urgência | Responde: Quais alertas eu preciso olhar agora e quais podem esperar? Originalidade: Em vez de agrupar por tipo de alerta, consolida todos e ordena por intensidade do sinal, com um indicador visual de temperatura. | N/A | M | Baixo |
-| Radar de Anomalia de Fechamento (Leilão) | Responde: Quais ações tiveram o preço distorcido no leilão de fechamento de ontem? Originalidade: Calcula a diferença entre o preço das 16:50 e o fechamento final para identificar movimentações bruscas (frequentemente revertidas na abertura). | yfinance | M | Baixo |
 | Divergência IBOV vs Dólar na Última Hora | Responde: O mercado local está ignorando o dólar no curtíssimo prazo? Originalidade: Mede a correlação do Ibovespa e do Dólar na última hora para apontar anomalias de fluxo. | yfinance | M | Médio |
 | Concentração de Força Vendedora | Responde: A queda de hoje é generalizada ou localizada em poucos ativos derretendo? Originalidade: Calcula quanto os 5 ativos com pior desempenho estão contribuindo negativamente para o índice, focando em isolar pânico. | yfinance | P | Baixo |
 | Sensibilidade a Juros Futuros | Responde: Quais ativos estão sofrendo mais com a abertura da curva de juros hoje? Originalidade: Identifica os papéis mais inversamente correlacionados com o movimento de juros (DI) intradiário. | brapi | M | Médio |
@@ -449,7 +448,6 @@
 |---|---|---|---|---|
 | Divergência IBOV vs Dólar | Responde: O mercado local está ignorando o dólar no curtíssimo prazo? Originalidade: Mede a correlação do Ibovespa e do Dólar na última hora para apontar anomalias de fluxo. | yfinance | M | Médio |
 | Análise de Assimetria Risco/Retorno | Responde: Qual ativo está mais próximo do seu fundo dos últimos 30 dias do que do seu topo? Originalidade: Substitui análise de tendência pela pura distância percentual entre os extremos recentes. | yfinance | P | Baixo |
-| Radar de Anomalia de Fechamento | Responde: Quais ações tiveram o preço distorcido no leilão de fechamento de ontem? Originalidade: Calcula a diferença entre o preço das 16:50 e o fechamento final para identificar movimentações bruscas. | yfinance | M | Baixo |
 | Saúde Técnica: Compactação de Cache SQLite | Responde: O banco está inchando com logs obsoletos? Originalidade: Poda agressiva baseada na expiração de coletas órfãs. | Banco SQLite | M | Médio |
 | Experiência: Agrupamento Dinâmico de Indicadores | Responde: Como ver apenas o que está fora do normal? Originalidade: Oculta painéis cujo valor está dentro de 1 desvio padrão da média, focando a atenção apenas em anomalias. | N/A | M | Baixo |
 
@@ -461,5 +459,4 @@
 | Saúde Técnica: Compactação de Cache SQLite | Responde: O banco está inchando com logs obsoletos? Originalidade: Poda agressiva baseada na expiração de coletas órfãs. | Banco SQLite | M | Médio |
 | Experiência: Agrupamento Dinâmico de Indicadores | Responde: Como ver apenas o que está fora do normal? Originalidade: Oculta painéis cujo valor está dentro de 1 desvio padrão da média, focando a atenção apenas em anomalias. | N/A | M | Baixo |
 | Análise de Assimetria Risco/Retorno | Responde: Qual ativo está mais próximo do seu fundo dos últimos 30 dias do que do seu topo? Originalidade: Substitui análise de tendência pela pura distância percentual entre os extremos recentes. | yfinance | P | Baixo |
-| Radar de Anomalia de Fechamento | Responde: Quais ações tiveram o preço distorcido no leilão de fechamento de ontem? Originalidade: Calcula a diferença entre o preço das 16:50 e o fechamento final para identificar movimentações bruscas. | yfinance | M | Baixo |
 | Saúde Técnica: Otimização do instrumentacao_coleta_tempo | Responde: O histórico de tempo está inflando a DB? Originalidade: Agrupar métricas muito antigas. | Banco SQLite | P | Baixo |
