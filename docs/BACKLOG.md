@@ -454,9 +454,15 @@
 
 ## Ideias (Passo 7 - Atual)
 
-| Ideia | Detalhes | Fonte | Esforço | Risco |
-|---|---|---|---|---|
 | Saúde Técnica: Compactação de Cache SQLite | Responde: O banco está inchando com logs obsoletos? Originalidade: Poda agressiva baseada na expiração de coletas órfãs. | Banco SQLite | M | Médio |
 | Experiência: Agrupamento Dinâmico de Indicadores | Responde: Como ver apenas o que está fora do normal? Originalidade: Oculta painéis cujo valor está dentro de 1 desvio padrão da média, focando a atenção apenas em anomalias. | N/A | M | Baixo |
 | Análise de Assimetria Risco/Retorno | Responde: Qual ativo está mais próximo do seu fundo dos últimos 30 dias do que do seu topo? Originalidade: Substitui análise de tendência pela pura distância percentual entre os extremos recentes. | yfinance | P | Baixo |
 | Saúde Técnica: Otimização do instrumentacao_coleta_tempo | Responde: O histórico de tempo está inflando a DB? Originalidade: Agrupar métricas muito antigas. | Banco SQLite | P | Baixo |
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Poda: Remover Ação Órfã | Responde: O painel tem gerado alertas na lista de alta liquidez? Originalidade: Poda de um painel subutilizado e que muitas vezes fica vazio, economizando recursos computacionais e simplificando a UI. | Banco SQLite | P | Baixo |
+| Experiência: Heatmap visual da Maré do Mercado | Responde: Quais ações compõem o humor da maré? Originalidade: Transforma os valores agregados em uma representação visual clara dos componentes do Ibovespa. | N/A | M | Baixo |
+| Saúde Técnica: Otimização do Collector Volume Alerts | Responde: Podemos reduzir a lentidão da busca no yfinance? Originalidade: Migra a coleta para a brapi que responde em lote com mais eficiência. | brapi | M | Médio |
+| Capacidade nova: Radar de Inversão de Volatilidade | Responde: A volatilidade está secando após expansão? Originalidade: Mostra quais ativos estão com range histórico encolhendo, antecedendo fortes movimentos. | yfinance | M | Baixo |
+| Capacidade nova: Termômetro Institucional | Responde: O lote médio está aumentando no spread intraday? Originalidade: Detecta a presença de formadores de mercado ou fundos atuando silenciosamente. | brapi | M | Alto |
