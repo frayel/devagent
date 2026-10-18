@@ -1,7 +1,7 @@
 ---
 id: 065
 titulo: Análise de Assimetria Risco/Retorno
-status: ready
+status: done
 esforco: P
 ---
 

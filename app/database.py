@@ -284,6 +284,18 @@ def init_db() -> None:
     )
     cursor.execute(
         """
+        CREATE TABLE IF NOT EXISTS assimetria_risco_retorno_cache (
+            timestamp TEXT PRIMARY KEY,
+            alertas_json TEXT NOT NULL,
+            fonte TEXT NOT NULL
+        )
+        """
+    )
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_assimetria_risco_retorno_cache_timestamp ON assimetria_risco_retorno_cache (timestamp DESC)"
+    )
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS exaustao_tendencia_cache (
             timestamp TEXT PRIMARY KEY,
             alertas_json TEXT NOT NULL,
@@ -2461,6 +2473,43 @@ def get_latest_exaustao_tendencia_data() -> ExaustaoTendenciaData | None:
         conn.close()
     if row:
         return ExaustaoTendenciaData(
+            timestamp=datetime.fromisoformat(row[0]), alertas_json=row[1], fonte=row[2]
+        )
+    return None
+
+
+@dataclass
+class AssimetriaRiscoRetornoData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str
+
+
+def save_assimetria_risco_retorno_data(data: AssimetriaRiscoRetornoData) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO assimetria_risco_retorno_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
+        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_latest_assimetria_risco_retorno_data() -> AssimetriaRiscoRetornoData | None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT timestamp, alertas_json, fonte FROM assimetria_risco_retorno_cache ORDER BY timestamp DESC LIMIT 1"
+        )
+        row = cursor.fetchone()
+    except Exception:
+        return None
+    finally:
+        conn.close()
+    if row:
+        return AssimetriaRiscoRetornoData(
             timestamp=datetime.fromisoformat(row[0]), alertas_json=row[1], fonte=row[2]
         )
     return None

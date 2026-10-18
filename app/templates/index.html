@@ -756,6 +756,27 @@
     {% endif %}
 {% endcall %}
 
+{% call painel("Assimetria Risco/Retorno", 4, "Ações muito próximas da sua mínima de 30 dias (<=2%) e distantes da sua máxima (>=10%).", assimetria_risco_retorno.fonte if assimetria_risco_retorno else "", assimetria_risco_retorno.coletado_em if assimetria_risco_retorno else "", "visao-micro rankings") %}
+    {% if assimetria_risco_retorno %}
+        {% if assimetria_risco_retorno.alertas|length == 0 %}
+            <div class="vazio">Nenhuma ação neste perfil hoje.</div>
+        {% else %}
+            {% set linhas = [] %}
+            {% for alerta in assimetria_risco_retorno.alertas %}
+                {% set _ = linhas.append({
+                    'ticker': alerta.ticker,
+                    'magnitudes': [alerta.dist_max_pct],
+                    'var_formatada': "{:.1f}% min".format(alerta.dist_min_pct),
+                    'sinal': 1
+                }) %}
+            {% endfor %}
+            {{ tabela_ativos(linhas, [{'titulo': 'Distância', 'num': true}]) }}
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
 {% call painel("Atrasadas do Rally", 4, "Ações que ficaram para trás nos últimos 5 pregões em momentos de alta > 2% do Ibovespa.", atrasadas_rally.fonte if atrasadas_rally else "", atrasadas_rally.time if atrasadas_rally else "", "visao-micro rankings") %}
     {% if atrasadas_rally %}
         {% if not atrasadas_rally.rally_valido %}

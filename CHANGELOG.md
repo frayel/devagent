@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- Painel de Assimetria Risco/Retorno (Spec 065) que exibe as ações mais próximas do fundo recente e distantes do topo.
 - [Spec 061] Experiência: Reorganização da ordem do topo ('Clima Global' e 'Motores do Índice' movidos para baixo do 'Ibovespa' e 'Maré') na visão geral.
 - Implementada proxy local para requisições diárias (Spec 063)
 - Radar de Exaustão de Queda (Spec 060) exibe ações que caem há 3 dias com recuperação intraday acima da abertura.

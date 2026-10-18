@@ -264,6 +264,20 @@ def _semear(db_path: str) -> None:
         )
     )
 
+    db.save_assimetria_risco_retorno_data(
+        db.AssimetriaRiscoRetornoData(
+            timestamp=agora,
+            alertas_json=json.dumps(
+                [
+                    {"ticker": "PETR4", "dist_min_pct": 1.2, "dist_max_pct": 15.4},
+                    {"ticker": "VALE3", "dist_min_pct": 0.5, "dist_max_pct": 12.1},
+                    {"ticker": "ITUB4", "dist_min_pct": 1.9, "dist_max_pct": 10.5},
+                ]
+            ),
+            fonte="demonstracao",
+        )
+    )
+
     db.save_volatilidade_silenciosa_data(
         db.VolatilidadeSilenciosaData(
             timestamp=agora,

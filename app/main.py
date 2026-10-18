@@ -39,6 +39,7 @@ from app.services import scanner_capitulacao
 from app.services import mare as mare_servico
 from app.database import (
     get_divergencia_ibov_dolar,
+    get_latest_assimetria_risco_retorno_data,
     get_latest_motores_indice_data,
     get_latest_clima_global_data,
     get_latest_relogio_volatilidade_data,
@@ -134,6 +135,14 @@ def snapshot():
     divergencia = get_divergencia_ibov_dolar()
     if divergencia:
         resp["paineis"]["divergencia_ibov_dolar"] = divergencia
+
+    assimetria = get_latest_assimetria_risco_retorno_data()
+    if assimetria:
+        resp["paineis"]["assimetria_risco_retorno"] = {
+            "coletado_em": assimetria.timestamp.isoformat(),
+            "fonte": getattr(assimetria, "fonte", "yfinance"),
+            "alertas": json.loads(assimetria.alertas_json),
+        }
 
     data = get_latest_ibovespa_data()
     if data:
