@@ -129,6 +129,7 @@ def _coletar() -> None:
         "exaustao_tendencia",
         "exaustao_queda",
         "divergencia_ibov_dolar",
+        "assimetria_risco_retorno",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
         mt5.reiniciar_rastreio()

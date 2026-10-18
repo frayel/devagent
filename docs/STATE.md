@@ -5,15 +5,21 @@
 ## Experiência
 
 - Última revisão de experiência: 2026-10-16 (Ordem do Topo)
-- Painéis, seções ou telas acrescentados desde a última revisão: 0.
+- Painéis, seções ou telas acrescentados desde a última revisão: 1.
 
 ## Manutenção
 
 - Última rodada de manutenção: 2026-10-17, spec 063. Medidas: unificação de histórico diário (cache).
-- Specs entregues desde a última rodada (exceto as de manutenção): 0.
+- Specs entregues desde a última rodada (exceto as de manutenção): 1.
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
+
+- Spec 065 (Análise de Assimetria Risco/Retorno):
+  - Banco de dados SQLite (`assimetria_risco_retorno_cache`).
+  - Coletor com yfinance (endpoint spark 30d).
+  - Exibição de ações muito próximas da mínima (<=2%) e distantes da máxima (>=10%) nos últimos 30 dias.
+  - Adicionado painel em rankings e no contrato `/api/snapshot`.
 
 - Spec 064 (Divergência Ibovespa vs Dólar):
   - Banco de dados SQLite (`divergencia_ibov_dolar_cache`).
