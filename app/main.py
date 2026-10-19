@@ -3,6 +3,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi.responses import JSONResponse
+from app.consultor.calculador import calcular_consultor
 from app.consultor.universo import (
     composicao_esta_desatualizada,
     FONTE_URL,
@@ -264,12 +265,38 @@ def verificar_credenciais(credentials: HTTPBasicCredentials = Depends(security))
 def pagina_consultor(request: Request):
     exigir_senha(request)
 
+    try:
+        dados = calcular_consultor()
+        consultor_indisponivel = False
+        import app.consultor.regras as regras_module
+
+        if "regras_limiares" in dados:
+            regras_limiares = dados["regras_limiares"]
+        else:
+            regras_limiares = {
+                "R1_QUEDAS": regras_module.R1_QUEDAS,
+                "R1_GATILHO_VOL": regras_module.R1_GATILHO_VOL,
+                "R3_IFR_MAX": regras_module.R3_IFR_MAX,
+                "R3_IFR_RECUO": regras_module.R3_IFR_RECUO,
+                "R4_DISTANCIA_MM200": regras_module.R4_DISTANCIA_MM200,
+                "R4_GATILHO_VOL": regras_module.R4_GATILHO_VOL,
+                "R5_IFR_MIN": regras_module.R5_IFR_MIN,
+                "R5_IFR_MAX": regras_module.R5_IFR_MAX,
+            }
+    except Exception:
+        dados = {"resultados": {}, "ativos_avaliados": 0}
+        consultor_indisponivel = True
+        regras_limiares = {}
+
     return templates.TemplateResponse(
         request=request,
         name="consultor.html",
         context={
             "desatualizada": composicao_esta_desatualizada(),
             "fonte": FONTE_URL,
+            "dados": dados,
+            "consultor_indisponivel": consultor_indisponivel,
+            "regras_limiares": regras_limiares,
         },
     )
 
@@ -278,11 +305,40 @@ def pagina_consultor(request: Request):
 def api_consultor(request: Request):
     exigir_senha(request)
 
+    try:
+        dados = calcular_consultor()
+    except Exception:
+        dados = {"resultados": {}, "ativos_avaliados": 0}
+
+    try:
+        if isinstance(dados, dict) and "resultados" in dados:
+            resultados_dict = dados["resultados"]
+        else:
+            if isinstance(dados, dict) and "Comprar" in dados:
+                resultados_dict = dados
+            else:
+                resultados_dict = {
+                    "Comprar": [],
+                    "Vender": [],
+                    "Aguardar": [],
+                    "Sem sinal": [],
+                }
+    except Exception:
+        resultados_dict = {"Comprar": [], "Vender": [], "Aguardar": [], "Sem sinal": []}
+
+    try:
+        ativos_avaliados = (
+            dados.get("ativos_avaliados", 0) if isinstance(dados, dict) else 0
+        )
+    except Exception:
+        ativos_avaliados = 0
+
     return JSONResponse(
         content={
             "atualizado_em": datetime.now().isoformat(),
-            "ativos_avaliados": len(CARTEIRA_IBOVESPA),
+            "ativos_avaliados": ativos_avaliados,
             "composicao_vigente_ate": COMPOSICAO_VIGENTE_ATE.isoformat(),
+            "resultados": resultados_dict,
         }
     )
 

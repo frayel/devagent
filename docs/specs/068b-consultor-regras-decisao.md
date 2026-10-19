@@ -1,7 +1,7 @@
 ---
 id: 068b
 titulo: Consultor · Regras de Decisão e Interface de Recomendações
-status: ready
+status: done
 esforco: G
 ---
 

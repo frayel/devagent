@@ -5,7 +5,7 @@
 ## Experiência
 
 - Última revisão de experiência: 2026-10-19
-- Painéis, seções ou telas acrescentados desde a última revisão: 1 (página Sistema, spec 082).
+- Painéis, seções ou telas acrescentados desde a última revisão: 2 (página Sistema, spec 082; Consultor, spec 068b).
 
 ## Manutenção
 
@@ -20,6 +20,11 @@
   - `app/collectors/registro_fontes.py`: resultado final de cada chamada às fontes externas, por integração.
   - `app/collectors/sistema.py`: monitor em segundo plano do GitHub, do Jules e do Render (5 min com `GITHUB_TOKEN`, 20 min sem).
   - `app/services/sistema.py` e `app/services/cron.py`: níveis de cada verificação e agendamentos perdidos.
+
+- Spec 068b (Consultor Regras de Decisão):
+  - Lógica de avaliação de regras de análise técnica.
+  - Endpoint /api/consultor com o histórico completo e cálculos executados on the fly.
+  - Interface do consultor construída agrupada por recomendações.
 
 - Spec 080 (Simplificação de Painéis de Alerta):
   - Modificado o `app/templates/index.html` para não renderizar a estrutura completa de alertas (cards e tabelas) quando a lista de alertas está vazia.

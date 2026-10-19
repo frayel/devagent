@@ -437,6 +437,61 @@ tbody td .spark svg { width: 100%; height: 100%; }
 .espacador-flex { flex-grow: 1; }
 .padding-2rem { padding: 2rem; }
 
+/* Consultor */
+.cabecalho-consultor {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.badge-confianca {
+    background: var(--superficie-2);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--raio-p);
+    font-size: var(--fs-meta);
+    color: var(--texto-2);
+}
+.accordion-regras, .accordion-sem-sinal {
+    margin-bottom: 2rem;
+    background: var(--superficie-2);
+    padding: 1rem;
+    border-radius: var(--raio);
+}
+.accordion-regras summary, .accordion-sem-sinal summary {
+    cursor: pointer;
+    font-weight: bold;
+}
+.grupo-consultor {
+    margin-bottom: 2rem;
+}
+.tabela-responsiva {
+    overflow-x: auto;
+}
+.tabela-consultor {
+    width: 100%;
+    border-collapse: collapse;
+}
+.tabela-consultor th, .tabela-consultor td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--borda);
+}
+.tabela-consultor th {
+    font-size: var(--fs-meta);
+    color: var(--texto-2);
+}
+.fonte-dado {
+    font-size: var(--fs-meta);
+    color: var(--texto-2);
+}
+@media (max-width: 768px) {
+    .cabecalho-consultor {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.5rem;
+    }
+}
+
 /* Página de sistema (spec 082). O nível vem sempre escrito no selo, além da cor. */
 .selo.ok { color: var(--alta); background: var(--alta-fundo); }
 .selo.atencao { color: var(--alerta); background: var(--alerta-fundo); }
