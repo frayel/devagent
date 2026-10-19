@@ -487,3 +487,14 @@
 | Capacidade Nova: Radar de Exaustão de Alta | Responde: Quais ativos estão perdendo força após rali intraday? Originalidade: Busca ativos que subiram forte mas recuaram deixando longa sombra superior. | yfinance | M | Baixo |
 | Capacidade Nova: Mapa de Correlação Intraday | Responde: Quem lidera e quem ignora o Ibovespa hoje? Originalidade: Calcula correlação em tempo real da última hora entre as ações de maior peso e o índice. | yfinance | M | Baixo |
 | Poda: Simplificação de Painéis de Alerta | Responde: A tela está poluída com alertas inativos? Originalidade: Funde os painéis de "Alertas Intraday" vazios em uma única linha descritiva quando não há dados. | N/A | P | Baixo |
+
+## Ideias (Passo 7 - Atual)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Saúde Técnica: Compactação de Cache | Responde: Como reduzir o inchaço do DB com registros antigos? Originalidade: Poda agressiva baseada na expiração de coletas antigas. | Banco SQLite | M | Médio |
+| Poda: Remover Ação Órfã | Responde: O painel tem gerado alertas na lista de alta liquidez? Originalidade: Poda de um painel subutilizado. | Banco SQLite | P | Baixo |
+| Experiência: Agrupamento Dinâmico de Indicadores | Responde: Como ver apenas o que está fora do normal? Originalidade: Oculta painéis com valor esperado. | N/A | M | Baixo |
+| Análise de Assimetria Risco/Retorno | Responde: Qual ativo está mais próximo do seu fundo dos últimos 30 dias? Originalidade: Substitui análise de tendência pela distância percentual entre extremos. | yfinance | P | Baixo |
+| Saúde Técnica: Otimização do instrumentacao_coleta_tempo | Responde: O histórico de tempo está inflando a DB? Originalidade: Agrupar métricas antigas. | Banco SQLite | P | Baixo |
+| Capacidade nova: Radar de Inversão de Volatilidade | Responde: A volatilidade está secando após expansão? Originalidade: Mostra quais ativos estão com range histórico encolhendo. | yfinance | M | Baixo |
