@@ -453,7 +453,17 @@
 | Experiência: Agrupamento Dinâmico de Indicadores | Responde: Como ver apenas o que está fora do normal? Originalidade: Oculta painéis cujo valor está dentro de 1 desvio padrão da média, focando a atenção apenas em anomalias. | N/A | M | Baixo |
 
 
+
 ## Ideias (Passo 7 - Atual)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Heatmap visual da Maré do Mercado | Responde: Quais ações compõem o humor da maré? Originalidade: Transforma os valores agregados em uma representação visual clara dos componentes do Ibovespa. | N/A | M | Baixo |
+| Saúde Técnica: Otimização do Collector Volume Alerts | Responde: Podemos reduzir a lentidão da busca no yfinance? Originalidade: Migra a coleta para a brapi que responde em lote com mais eficiência. | brapi | M | Médio |
+| Capacidade nova: Radar de Inversão de Volatilidade | Responde: A volatilidade está secando após expansão? Originalidade: Mostra quais ativos estão com range histórico encolhendo, antecedendo fortes movimentos. | yfinance | M | Baixo |
+| Capacidade nova: Termômetro Institucional | Responde: O lote médio está aumentando no spread intraday? Originalidade: Detecta a presença de formadores de mercado ou fundos atuando silenciosamente. | brapi | M | Alto |
+| Poda: Simplificação de Painéis de Alerta | Responde: A tela está poluída com alertas inativos? Originalidade: Funde os painéis de "Alertas Intraday" vazios em uma única linha descritiva quando não há dados. | N/A | P | Baixo |
+
 
 | Saúde Técnica: Compactação de Cache SQLite | Responde: O banco está inchando com logs obsoletos? Originalidade: Poda agressiva baseada na expiração de coletas órfãs. | Banco SQLite | M | Médio |
 | Experiência: Agrupamento Dinâmico de Indicadores | Responde: Como ver apenas o que está fora do normal? Originalidade: Oculta painéis cujo valor está dentro de 1 desvio padrão da média, focando a atenção apenas em anomalias. | N/A | M | Baixo |

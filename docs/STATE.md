@@ -4,9 +4,8 @@
 
 ## Experiência
 
-- Última revisão de experiência: 2026-10-16 (Ordem do Topo)
-- Painéis, seções ou telas acrescentados desde a última revisão: 0.
 - Última revisão de experiência: 2026-10-19
+- Painéis, seções ou telas acrescentados desde a última revisão: 0.
 
 ## Manutenção
 
