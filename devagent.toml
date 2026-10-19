@@ -34,6 +34,13 @@ verify = "make verify"
 smoke = "make smoke"
 audit = "make audit"
 
+[saude]
+# Página de saúde do produto em produção (ADR 016 do núcleo). O ciclo e o
+# workflow de auditoria a leem para saber o que está quebrado.
+caminho = "/api/sistema"
+# Usuário do HTTP Basic; a senha vem de SAUDE_SENHA (igual a CONSULTOR_SENHA).
+usuario = "consultor"
+
 [deploy]
 # Adaptador de plataforma usado pelo deploy-check.yml e pelo Passo 1.
 adaptador = "render"

@@ -31,6 +31,7 @@ PADRAO: dict[str, Any] = {
         "audit": "make audit",
     },
     "deploy": {"adaptador": "render"},
+    "saude": {"caminho": "", "usuario": ""},
 }
 
 

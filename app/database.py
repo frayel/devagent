@@ -2303,6 +2303,84 @@ def get_coletas_vazias_count(painel: str) -> int:
     return row[0] if row else 0
 
 
+def get_coletas_vazias_desde(desde: datetime) -> dict[str, int]:
+    """Painel → quantas coletas vazias desde `desde` (página /sistema, spec 082)."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT painel, COUNT(*) FROM instrumentacao_coleta_vazia "
+            "WHERE timestamp >= ? GROUP BY painel",
+            (desde.isoformat(),),
+        ).fetchall()
+    finally:
+        conn.close()
+    return {r[0]: r[1] for r in rows}
+
+
+def get_tempos_coleta_desde(desde: datetime) -> dict[str, float]:
+    """Painel → duração da coleta mais recente desde `desde`, em segundos (spec 082)."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT painel, duracao FROM instrumentacao_coleta_tempo t "
+            "WHERE timestamp >= ? AND timestamp = ("
+            "  SELECT MAX(timestamp) FROM instrumentacao_coleta_tempo u "
+            "  WHERE u.painel = t.painel)",
+            (desde.isoformat(),),
+        ).fetchall()
+    finally:
+        conn.close()
+    return {r[0]: float(r[1]) for r in rows}
+
+
+def get_rodadas_coleta_desde(desde: datetime) -> dict[str, int]:
+    """Painel → quantas coletas rodaram desde `desde` (spec 082)."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT painel, COUNT(*) FROM instrumentacao_coleta_tempo "
+            "WHERE timestamp >= ? GROUP BY painel",
+            (desde.isoformat(),),
+        ).fetchall()
+    finally:
+        conn.close()
+    return {r[0]: r[1] for r in rows}
+
+
+def diagnostico() -> dict:
+    """Tipo, tamanho e latência do banco em uso (página /sistema, spec 082)."""
+    import time
+
+    info: dict = {
+        "tipo": "SQLite",
+        "database_url": bool(os.environ.get("DATABASE_URL", "").strip()),
+    }
+    inicio = time.perf_counter()
+    try:
+        conn = get_connection()
+        try:
+            tabelas = conn.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'"
+            ).fetchone()[0]
+        finally:
+            conn.close()
+    except Exception as e:  # noqa: BLE001 - a página mostra o erro
+        info["erro"] = f"{type(e).__name__}: {e}"[:200]
+        return info
+    info["latencia_ms"] = round((time.perf_counter() - inicio) * 1000)
+    info["tabelas"] = tabelas
+    try:
+        tamanho = os.path.getsize(DB_PATH)
+        info["tamanho"] = (
+            f"{tamanho / 1_048_576:.1f} MB".replace(".", ",")
+            if tamanho >= 1_048_576
+            else f"{tamanho // 1024} KB"
+        )
+    except OSError:
+        info["tamanho"] = "?"
+    return info
+
+
 @dataclass
 class RadarAnomaliasSpreadData:
     timestamp: datetime

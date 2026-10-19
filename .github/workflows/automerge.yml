@@ -42,7 +42,7 @@ jobs:
 
           # O GitHub não fecha de forma confiável as issues citadas com
           # "Closes #N" quando o merge é feito pelo GITHUB_TOKEN. Fechamos aqui.
-          # Issues de produção (deploy-falhou, producao-incorreta) só fecham
+          # Issues de produção (deploy-falhou, producao-incorreta, sistema-com-problema) só fecham
           # quando a verificação passa: recebem um aviso e ficam abertas.
           # Procura as palavras-chave no título, no corpo e nas mensagens dos commits.
           corpo=$(gh pr view "$pr" -R "$GITHUB_REPOSITORY" --json title,body,commits \
@@ -52,7 +52,7 @@ jobs:
               -q '.state + " " + ([.labels[].name] | join(","))') \
               || { echo "::warning::Não consegui ler a issue #$n citada no PR #$pr."; continue; }
             case "$info" in
-              OPEN*deploy-falhou*|OPEN*producao-incorreta*)
+              OPEN*deploy-falhou*|OPEN*producao-incorreta*|OPEN*sistema-com-problema*)
                 gh issue comment "$n" -R "$GITHUB_REPOSITORY" --body "$(printf 'O PR #%s, que declara corrigir esta issue, foi mergeado. Ela fecha sozinha quando a verificação de produção passar; se continuar falhando, a auditoria avisa aqui.\n\n<!-- correcao-mergeada -->' "$pr")" ;;
               OPEN*)
                 gh issue close "$n" -R "$GITHUB_REPOSITORY" --comment "Fechada pelo PR #$pr, mergeado na main." ;;
