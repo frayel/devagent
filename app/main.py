@@ -163,9 +163,12 @@ def estado_do_sistema() -> dict:
         vazios = database.get_coletas_vazias_desde(
             agora - timedelta(hours=HORAS_VAZIOS)
         )
+        rodadas = database.get_rodadas_coleta_desde(
+            agora - timedelta(hours=HORAS_VAZIOS)
+        )
         tempos = database.get_tempos_coleta_desde(agora - timedelta(hours=24))
     except Exception:  # tabelas ainda não criadas: a verificação do banco acusa
-        vazios, tempos = {}, {}
+        vazios, rodadas, tempos = {}, {}, {}
     return sistema_servico.montar(
         agora=agora,
         inicio=INICIO,
@@ -177,6 +180,7 @@ def estado_do_sistema() -> dict:
         intervalo_coleta=agendador.intervalo(agora),
         vazios=vazios,
         horas_vazios=HORAS_VAZIOS,
+        rodadas=rodadas,
         tempos=tempos,
         fontes=registro_fontes.fontes(),
         pausa_mt5=mt5_coletor.pausa(),

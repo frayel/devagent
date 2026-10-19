@@ -39,6 +39,10 @@ class Fonte:
     ultimo_erro: str | None = None
     # Resultado das últimas chamadas, do mais antigo ao mais novo (True = ok).
     recentes: list[bool] = field(default_factory=list)
+    # Alinhada com `recentes`: a falha indica a fonte fora do ar (rede, 5xx,
+    # 429, chave recusada)? Um 404 é a fonte respondendo que o pedido não
+    # existe: o defeito está em quem pediu, não na integração.
+    graves: list[bool] = field(default_factory=list)
 
 
 _fontes: dict[str, Fonte] = {}
@@ -59,9 +63,16 @@ def _fonte(nome: str) -> Fonte:
     return _fontes[nome]
 
 
-def _anotar(fonte: Fonte, ok: bool) -> None:
+def _anotar(fonte: Fonte, ok: bool, grave: bool = False) -> None:
     fonte.recentes.append(ok)
+    fonte.graves.append(grave)
     del fonte.recentes[:-MAX_RECENTES]
+    del fonte.graves[:-MAX_RECENTES]
+
+
+def grave(status: int) -> bool:
+    """Falha que indica a fonte indisponível, e não um pedido errado."""
+    return status in (401, 403, 429) or status >= 500
 
 
 def sucesso(nome: str, quando: datetime | None = None) -> None:
@@ -73,14 +84,16 @@ def sucesso(nome: str, quando: datetime | None = None) -> None:
         _anotar(f, True)
 
 
-def falha(nome: str, motivo: str, quando: datetime | None = None) -> None:
+def falha(
+    nome: str, motivo: str, quando: datetime | None = None, grave: bool = True
+) -> None:
     quando = quando or datetime.now(timezone.utc)
     with _trava:
         f = _fonte(nome)
         f.falhas += 1
         f.ultima_falha = quando
         f.ultimo_erro = _SEGREDO.sub(r"\1***", motivo)[:200]
-        _anotar(f, False)
+        _anotar(f, False, grave)
 
 
 def fontes() -> dict[str, Fonte]:
@@ -95,6 +108,7 @@ def fontes() -> dict[str, Fonte]:
                 f.ultima_falha,
                 f.ultimo_erro,
                 list(f.recentes),
+                list(f.graves),
             )
             for nome, f in _fontes.items()
         }

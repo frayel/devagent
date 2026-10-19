@@ -99,7 +99,7 @@ def test_fetch_with_retry_registra_sucesso_e_falha():
         fetch_with_retry("https://brapi.dev/api/quote/VALE3?token=abc")
     brapi = registro_fontes.fontes()["brapi"]
     assert (brapi.sucessos, brapi.falhas) == (1, 1)
-    assert brapi.ultimo_erro == "HTTP 404"
+    assert brapi.ultimo_erro.startswith("HTTP 404 em")
 
 
 def test_registro_mascara_segredo_no_erro():
@@ -455,3 +455,51 @@ def test_api_sistema_cumpre_o_contrato_de_saude_do_nucleo(monkeypatch):
     assert dados["geral"]["nivel"] in {s.OK, s.ATENCAO, s.PROBLEMA}
     for p in dados["geral"]["pendentes"]:
         assert {"nivel", "grupo", "nome", "resumo", "detalhe"} <= set(p)
+
+
+def test_so_404_e_pedido_errado_e_nao_fonte_fora_do_ar():
+    f = registro_fontes.Fonte("Yahoo Finance")
+    f.recentes = [False, False, False]
+    f.graves = [False, False, False]
+    f.falhas = 3
+    f.ultima_falha = AGORA
+    f.ultimo_erro = (
+        "HTTP 404 em https://query1.finance.yahoo.com/v7/finance/spark?symbols=X"
+    )
+    item = s.verificar_integracoes({"Yahoo Finance": f}, None, {}, AGORA)[1]
+    assert item.nivel == s.ATENCAO
+    assert "spark?symbols=X" in item.detalhe
+    f.graves = [False, True, False]
+    assert (
+        s.verificar_integracoes({"Yahoo Finance": f}, None, {}, AGORA)[1].nivel
+        == s.PROBLEMA
+    )
+
+
+def test_poucas_chamadas_nao_viram_problema():
+    item = s.verificar_integracoes(
+        {"Yahoo Finance": _fonte([False, False])}, None, {}, AGORA
+    )[1]
+    assert item.nivel == s.ATENCAO
+
+
+@respx.mock
+def test_registro_guarda_url_mascarada_e_gravidade():
+    respx.get("https://brapi.dev/api/quote/X?token=abc").mock(
+        return_value=httpx.Response(404)
+    )
+    with pytest.raises(httpx.HTTPStatusError):
+        fetch_with_retry("https://brapi.dev/api/quote/X?token=abc")
+    brapi = registro_fontes.fontes()["brapi"]
+    assert brapi.ultimo_erro == "HTTP 404 em https://brapi.dev/api/quote/X?token=***"
+    assert brapi.graves == [False]
+
+
+def test_painel_vazio_em_todas_as_rodadas_e_problema():
+    item = s.verificar_paineis_vazios(
+        {"sensibilidade_juros": 4, "mare": 1}, 3, {"sensibilidade_juros": 4, "mare": 4}
+    )
+    assert item.nivel == s.PROBLEMA
+    assert "sensibilidade_juros" in item.resumo and "mare" not in item.resumo
+    oscilando = s.verificar_paineis_vazios({"mare": 1}, 3, {"mare": 4})
+    assert oscilando.nivel == s.ATENCAO

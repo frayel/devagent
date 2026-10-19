@@ -2333,6 +2333,20 @@ def get_tempos_coleta_desde(desde: datetime) -> dict[str, float]:
     return {r[0]: float(r[1]) for r in rows}
 
 
+def get_rodadas_coleta_desde(desde: datetime) -> dict[str, int]:
+    """Painel → quantas coletas rodaram desde `desde` (spec 082)."""
+    conn = get_connection()
+    try:
+        rows = conn.execute(
+            "SELECT painel, COUNT(*) FROM instrumentacao_coleta_tempo "
+            "WHERE timestamp >= ? GROUP BY painel",
+            (desde.isoformat(),),
+        ).fetchall()
+    finally:
+        conn.close()
+    return {r[0]: r[1] for r in rows}
+
+
 def diagnostico() -> dict:
     """Tipo, tamanho e latência do banco em uso (página /sistema, spec 082)."""
     import time

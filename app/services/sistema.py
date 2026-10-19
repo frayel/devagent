@@ -301,13 +301,33 @@ def verificar_agendador(
     return itens
 
 
-def verificar_paineis_vazios(vazios: dict[str, int], horas: int) -> Item:
+def verificar_paineis_vazios(
+    vazios: dict[str, int], horas: int, rodadas: dict[str, int] | None = None
+) -> Item:
     if not vazios:
         return Item(
             "Painéis sem dados", OK, f"nenhuma coleta vazia nas últimas {horas} h"
         )
+    rodadas = rodadas or {}
+    # Painel vazio em todas as rodadas da janela (ao menos 3) está quebrado,
+    # não oscilando: nenhuma fonte entregou o dado nenhuma vez.
+    quebrados = sorted(
+        p for p, n in vazios.items() if rodadas.get(p, 0) >= 3 and n >= rodadas[p]
+    )
     ordem = sorted(vazios.items(), key=lambda kv: (-kv[1], kv[0]))
-    lista = ", ".join(f"{p} ({n}×)" for p, n in ordem)
+    lista = ", ".join(
+        f"{p} ({n}×" + (f" em {rodadas[p]} rodadas)" if p in rodadas else ")")
+        for p, n in ordem
+    )
+    if quebrados:
+        return Item(
+            "Painéis sem dados",
+            PROBLEMA,
+            f"{len(quebrados)} sempre vazio{'s' if len(quebrados) > 1 else ''}: "
+            + ", ".join(quebrados),
+            f"Vazios em todas as rodadas das últimas {horas} h: o coletor não "
+            f"obtém o dado de nenhuma fonte. Todos os vazios: {lista}",
+        )
     return Item(
         "Painéis sem dados",
         ATENCAO,
@@ -374,8 +394,13 @@ def _item_da_fonte(nome: str, fonte: Any, papel: str, agora: datetime) -> Item:
     if fonte is None or not fonte.recentes:
         return Item(nome, INATIVO, "sem chamadas desde a partida", papel)
     recentes = fonte.recentes
+    graves = getattr(fonte, "graves", None) or [not r for r in recentes]
     falhas_recentes = recentes.count(False)
-    if not any(recentes[-5:]):
+    # Problema é a fonte fora do ar: as últimas chamadas (ao menos 3) falharam
+    # e alguma por rede, 5xx, 429 ou chave recusada. Só 404 e afins são pedidos
+    # que a fonte não tem: o defeito é de quem pediu, e fica em atenção.
+    ultimas = recentes[-5:]
+    if len(ultimas) >= 3 and not any(ultimas) and any(graves[-5:]):
         nivel = PROBLEMA
     elif not recentes[-1] or falhas_recentes / len(recentes) >= 0.3:
         nivel = ATENCAO
@@ -779,6 +804,7 @@ def montar(
     intervalo_coleta: timedelta,
     vazios: dict[str, int],
     horas_vazios: int,
+    rodadas: dict[str, int] | None = None,
     tempos: dict[str, float],
     fontes: dict[str, Any],
     pausa_mt5: tuple[float, str] | None,
@@ -799,7 +825,7 @@ def montar(
     coleta = verificar_agendador(
         coleta_ligada, estado_coleta, intervalo_coleta, inicio, agora
     )
-    coleta.append(verificar_paineis_vazios(vazios, horas_vazios))
+    coleta.append(verificar_paineis_vazios(vazios, horas_vazios, rodadas))
     coleta.append(verificar_tempo_coleta(tempos))
 
     integracoes = verificar_integracoes(fontes, pausa_mt5, ambiente, agora)
