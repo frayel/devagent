@@ -296,6 +296,51 @@ def cota_esgotada(sessoes: list[dict[str, Any]]) -> bool:
     return False
 
 
+# Sessão ativa sem nenhuma atualização há este tempo está morta. A mediana
+# de uma sessão até o PR é ~30 min (ADR 013).
+SESSAO_PARADA = timedelta(hours=3)
+
+
+def motivo_de_zumbi(s: dict[str, Any], agora: datetime) -> str:
+    """Por que uma sessão que a API diz ativa já não está trabalhando ("" se está).
+
+    Em 18/10 a sessão do Sentinel do PR #335 continuou "ativa" depois do
+    merge, porque a cobrança do guardião a reabriu e o Jules não a fechou.
+    Como só uma sessão que altera código roda por vez, ela travou o ciclo das
+    04h31 às 13h17 (BRT) e o Bolt perdeu o dia.
+    """
+    if s.get("state") not in ATIVOS:
+        return ""
+    url = pr_da_sessao(s)
+    if url:
+        pr = estado_do_pr(url)
+        if pr is not None and not pr["aberto"]:
+            return (
+                f"O PR {url} já foi mesclado."
+                if pr["mesclado"]
+                else f"O PR {url} foi fechado; o trabalho segue pelo próximo ciclo."
+            )
+    parada = agora - _data(s, "updateTime")
+    if parada >= SESSAO_PARADA:
+        horas = parada.total_seconds() / 3600
+        return f"A sessão está sem atualização há {horas:.1f} h e foi dada como parada."
+    return ""
+
+
+def encerrar_zumbis(sessoes: list[dict[str, Any]], agora: datetime) -> list[str]:
+    """Encerra as sessões ativas que já não trabalham e devolve os nomes."""
+    encerradas = []
+    for s in sessoes:
+        motivo = motivo_de_zumbi(s, agora)
+        if motivo:
+            print(
+                f"Sessão zumbi: {s['name']} ({s.get('title', '')}, {s.get('state')}). {motivo}"
+            )
+            encerrar(s["name"], motivo)
+            encerradas.append(s["name"])
+    return encerradas
+
+
 def iniciar(persona: str, dry_run: bool) -> int:
     p = PERSONAS[persona]
     corpo = {
@@ -316,8 +361,11 @@ def iniciar(persona: str, dry_run: bool) -> int:
     sessoes = sessoes_do_repo()
     if persona == "desenvolvedor" and cota_esgotada(sessoes):
         return 0
+    agora = datetime.now(timezone.utc)
     for s in sessoes:
         if s.get("title", "").startswith(titulos) and s.get("state") in ATIVOS:
+            if motivo_de_zumbi(s, agora):
+                continue  # a rodada encerra; não deve travar a fila
             print(f"Sessão ativa impede {persona}: {s.get('title')} ({s['state']})")
             return 0
     nova = chamar("POST", "sessions", corpo)
@@ -444,6 +492,10 @@ def rodada(espera_minutos: int) -> int:
     agora = datetime.now(timezone.utc)
     try:
         sessoes = sessoes_do_repo()
+        mortas = set(encerrar_zumbis(sessoes, agora))
+        for s in sessoes:
+            if s.get("name") in mortas:
+                s["state"] = "CANCELLED"
         persona = persona_da_vez(sessoes, agora)
         situacao, desc = situacao_dos_prs()
         if situacao == "esperar":
