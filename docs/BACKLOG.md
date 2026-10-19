@@ -42,6 +42,7 @@
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |
 |---|---|---|---|---|
+| Saúde Técnica: Divisão da Spec 068 | Responde: A spec original é muito longa para um único PR? Originalidade: Quebrar as responsabilidades em rota+coleta (068a) e regra+interface (068b) para respeitar o limite de esforço contínuo do CICLO.md. | N/A | P | Baixo |
 | Experiência: Fusão de Indicadores Globais | Responde: O Clima Global e Fator Peso Pesado estão ocupando muito espaço na primeira dobra? Originalidade: Condensar métricas globais e de peso num único painel estreito à esquerda ou direita, abrindo espaço para o painel de Ibovespa no centro. | N/A | P | Baixo |
 | Saúde Técnica: Unificação de Consultas do yfinance (spark) | Responde: Muitos coletores chamam o yfinance separadamente para as mesmas ações (ex: PETR4, VALE3) em dados diários? Originalidade: Criar um cache intermediário de spark que consolida requisições, reduzindo chamadas repetidas. Medida: contagem de chamadas duplicadas no agendador. | yfinance | M | Médio |
 | Experiência: Modo Zen (Ocultar Valores Absolutos) | Responde: O investidor fica ansioso com a pontuação variando? Originalidade: Exibir apenas as setas de variação percentual e cores, ocultando os pontos/valores absolutos até o hover. | N/A | P | Baixo |

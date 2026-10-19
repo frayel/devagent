@@ -1,7 +1,7 @@
 ---
 id: 068
 titulo: Consultor · página própria com sinais técnicos do Ibovespa
-status: ready
+status: draft
 esforco: G
 ---
 
