@@ -454,6 +454,7 @@
 
 
 
+
 ## Ideias (Passo 7 - Atual)
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |
@@ -487,6 +488,19 @@
 | Capacidade Nova: Radar de Exaustão de Alta | Responde: Quais ativos estão perdendo força após rali intraday? Originalidade: Busca ativos que subiram forte mas recuaram deixando longa sombra superior. | yfinance | M | Baixo |
 | Capacidade Nova: Mapa de Correlação Intraday | Responde: Quem lidera e quem ignora o Ibovespa hoje? Originalidade: Calcula correlação em tempo real da última hora entre as ações de maior peso e o índice. | yfinance | M | Baixo |
 | Poda: Simplificação de Painéis de Alerta | Responde: A tela está poluída com alertas inativos? Originalidade: Funde os painéis de "Alertas Intraday" vazios em uma única linha descritiva quando não há dados. | N/A | P | Baixo |
+
+
+
+## Ideias (Passo 7 - 2026-10-19-1145)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Capacidade nova: Rastreador de Correlação com Juros Futuros (DI) | Responde: O Ibovespa está ignorando os juros futuros? Originalidade: Cruza o IBOV com os contratos DI longos para apontar descolamentos de macro. | brapi/yfinance | M | Médio |
+| Experiência: Modal Dinâmico de Destaques Setoriais | Responde: O que está movendo o meu setor agora? Originalidade: Clicar num setor no Mapa de Calor abre um breakdown detalhado em tempo real sem sair da página inicial. | brapi | M | Baixo |
+| Saúde Técnica: Poda do Painel de Sentimento Neutro | Responde: O termômetro de sentimento gera alerta quando tudo está lateral? Originalidade: Oculta o termômetro se as manchetes não divergirem da média por 3 pregões. | Banco SQLite | P | Baixo |
+| Poda: Remoção de Destaque Misto | Responde: Vale manter uma tabela "Maiores Baixas" quando todo mercado subiu? Originalidade: Oculta a tabela oposta se o Ibov teve variação direcional > 2%. | N/A | P | Baixo |
+| Capacidade nova: Sentinela de Exaustão de Volume | Responde: O rally (ou pânico) perdeu o combustível institucional? Originalidade: Identifica candles consecutivos na mesma direção mas com volume intradiário decrescente. | yfinance | M | Médio |
+
 
 ## Ideias (Passo 7 - Atual)
 
