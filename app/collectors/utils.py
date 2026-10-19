@@ -96,7 +96,9 @@ def fetch_with_retry(
                     time.sleep(sleep_time)
                     continue
             registro_fontes.falha(
-                registro_fontes.nome_da_fonte(domain), f"HTTP {status_code}"
+                registro_fontes.nome_da_fonte(domain),
+                f"HTTP {status_code} em {url}",
+                grave=registro_fontes.grave(status_code),
             )
             raise  # Raise if not retryable or max retries reached
         except httpx.RequestError as e:
@@ -110,7 +112,7 @@ def fetch_with_retry(
                 time.sleep(sleep_time)
                 continue
             registro_fontes.falha(
-                registro_fontes.nome_da_fonte(domain), type(e).__name__
+                registro_fontes.nome_da_fonte(domain), f"{type(e).__name__} em {url}"
             )
             raise
 
@@ -160,7 +162,8 @@ async def async_fetch_with_retry(
                     await asyncio.sleep(sleep_time)
                     continue
                 registro_fontes.falha(
-                    registro_fontes.nome_da_fonte(domain), f"HTTP {status_code}"
+                    registro_fontes.nome_da_fonte(domain),
+                    f"HTTP {status_code} em {url}",
                 )
                 response.raise_for_status()
 
@@ -168,7 +171,9 @@ async def async_fetch_with_retry(
                 registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain))
             else:
                 registro_fontes.falha(
-                    registro_fontes.nome_da_fonte(domain), f"HTTP {status_code}"
+                    registro_fontes.nome_da_fonte(domain),
+                    f"HTTP {status_code} em {url}",
+                    grave=registro_fontes.grave(status_code),
                 )
             return response
 
@@ -183,7 +188,7 @@ async def async_fetch_with_retry(
                 await asyncio.sleep(sleep_time)
                 continue
             registro_fontes.falha(
-                registro_fontes.nome_da_fonte(domain), type(e).__name__
+                registro_fontes.nome_da_fonte(domain), f"{type(e).__name__} em {url}"
             )
             raise
 
