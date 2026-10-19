@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "componentes.html" import painel %}
+
+{#- Página de sistema (spec 082): o que está funcionando, o que pede atenção e o que quebrou. -#}
+
+{% macro checagem(item, grupo=None) %}
+<li class="checagem">
+  <span class="selo {{ item.nivel }}">{{ item.rotulo }}</span>
+  <div class="checagem-corpo">
+    <div class="checagem-linha">
+      <span class="checagem-nome">
+        {%- if grupo %}<span class="checagem-grupo">{{ grupo }} ·</span> {% endif -%}
+        {%- if item.link %}<a href="{{ item.link }}" rel="noopener" target="_blank">{{ item.nome }}</a>{% else %}{{ item.nome }}{% endif -%}
+      </span>
+      <span class="checagem-resumo num">{{ item.resumo }}</span>
+    </div>
+    {% if item.detalhe %}<div class="checagem-detalhe">{{ item.detalhe }}</div>{% endif %}
+  </div>
+</li>
+{% endmacro %}
+
+{% block content %}
+{% set geral = sistema.geral %}
+{% set metodo -%}
+Cada verificação recebe um nível: Problema (algo quebrado que trava o produto ou o agente), Atenção (degradado ou atrasado), OK ou Inativo (desligado ou sem configuração). Banco, coleta e integrações são lidos desta instância a cada visita, sem chamar nenhuma fonte; as integrações refletem as chamadas que os coletores fizeram desde que a instância subiu. GitHub, Jules e Render são lidos por um monitor em segundo plano a cada 5 min (20 min sem GITHUB_TOKEN). Agendamentos contam como perdidos quando o horário do cron passou há mais de 1 h sem execução: o GitHub atrasa ou descarta execuções agendadas quando está sobrecarregado.
+{%- endset %}
+
+{% call painel("Estado do sistema", 12, metodo, "esta instância, GitHub, Jules e Render", gerado_txt ~ " BRT", "sistema-resumo") %}
+<div class="sistema-geral">
+  <span class="selo {{ geral.nivel }}">{{ geral.rotulo }}</span>
+  <span class="sistema-frase">{{ geral.frase|capitalize }}</span>
+  <span class="sistema-contagem num">
+    {{ geral.contagem.problema }} problema{{ 's' if geral.contagem.problema != 1 }} ·
+    {{ geral.contagem.atencao }} atenç{{ 'ões' if geral.contagem.atencao != 1 else 'ão' }} ·
+    {{ geral.contagem.ok }} ok ·
+    {{ geral.contagem.inativo }} inativo{{ 's' if geral.contagem.inativo != 1 }}
+  </span>
+</div>
+{% if geral.pendentes %}
+<ul class="checagens">
+  {% for item in geral.pendentes %}{{ checagem(item, item.grupo) }}{% endfor %}
+</ul>
+{% else %}
+<p class="sub">Nada pede ação agora.</p>
+{% endif %}
+{% if not remoto_txt %}
+<p class="sub">O monitor ainda não leu o GitHub, o Jules e o Render desde que a instância subiu.</p>
+{% endif %}
+{% endcall %}
+
+{#- Três grupos curtos lado a lado; os dois longos ocupam a linha em duas colunas. -#}
+{% for grupo in sistema.grupos %}
+{% set largo = grupo.titulo in ("Fluxo de desenvolvimento", "Workflows do GitHub") %}
+{% set horario = (remoto_txt if grupo.titulo in ("Fluxo de desenvolvimento", "Workflows do GitHub") else gerado_txt) %}
+{% set fonte = ("GitHub e Jules" if grupo.titulo == "Fluxo de desenvolvimento" else "GitHub Actions" if largo else "esta instância") %}
+{% call painel(grupo.titulo, 12 if largo else 4, None, fonte, (horario ~ " BRT") if horario else None) %}
+<ul class="checagens{% if largo %} duas-colunas{% endif %}">
+  {% for item in grupo["itens"] %}{{ checagem(item) }}{% endfor %}
+</ul>
+{% endcall %}
+{% endfor %}
+{% endblock %}

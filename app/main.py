@@ -78,15 +78,25 @@ from app.database import (
     get_latest_exaustao_queda_data,
 )
 from app import agendador
+from app.collectors import mt5 as mt5_coletor
+from app.collectors import registro_fontes
+from app.collectors import sistema as monitor_sistema
+from app.services import sistema as sistema_servico
+
+# Quando esta instância subiu: o Render reinicia o processo a cada deploy e a
+# cada vez que acorda o serviço hibernado (página /sistema, spec 082).
+INICIO = datetime.now(timezone.utc)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    tarefa = None
+    tarefas = []
     if agendador.coleta_ligada():
-        tarefa = asyncio.create_task(agendador.laco_de_coleta())
+        tarefas.append(asyncio.create_task(agendador.laco_de_coleta()))
+    if monitor_sistema.monitor_ligado():
+        tarefas.append(asyncio.create_task(monitor_sistema.laco_do_monitor()))
     yield
-    if tarefa:
+    for tarefa in tarefas:
         tarefa.cancel()
 
 
@@ -141,7 +151,91 @@ def coleta():
     return {"ligada": agendador.coleta_ligada(), **agendador.estado}
 
 
+HORAS_VAZIOS = 3
+
+
+def estado_do_sistema() -> dict:
+    """Verificações da página /sistema (spec 082). Só lê: não chama fonte externa."""
+    from app import database
+
+    agora = datetime.now(timezone.utc)
+    try:
+        vazios = database.get_coletas_vazias_desde(
+            agora - timedelta(hours=HORAS_VAZIOS)
+        )
+        tempos = database.get_tempos_coleta_desde(agora - timedelta(hours=24))
+    except Exception:  # tabelas ainda não criadas: a verificação do banco acusa
+        vazios, tempos = {}, {}
+    return sistema_servico.montar(
+        agora=agora,
+        inicio=INICIO,
+        remoto=dict(monitor_sistema.retrato),
+        sha_local=monitor_sistema.commit_em_producao(),
+        banco=database.diagnostico(),
+        coleta_ligada=agendador.coleta_ligada(),
+        estado_coleta=dict(agendador.estado),
+        intervalo_coleta=agendador.intervalo(agora),
+        vazios=vazios,
+        horas_vazios=HORAS_VAZIOS,
+        tempos=tempos,
+        fontes=registro_fontes.fontes(),
+        pausa_mt5=mt5_coletor.pausa(),
+        prontas=sistema_servico.specs_prontas(),
+    )
+
+
+@app.get("/api/sistema")
+def api_sistema(request: Request):
+    exigir_senha(request)
+    return estado_do_sistema()
+
+
+@app.get("/sistema", response_class=HTMLResponse)
+def pagina_sistema(request: Request):
+    exigir_senha(request)
+    estado = estado_do_sistema()
+    return templates.TemplateResponse(
+        request=request,
+        name="sistema.html",
+        context={
+            "data": None,
+            "sistema": estado,
+            "gerado_txt": sistema_servico.hora_brt(estado["gerado_em"]),
+            "remoto_txt": sistema_servico.hora_brt(estado["remoto_em"]),
+        },
+    )
+
+
 security = HTTPBasic()
+
+
+def exigir_senha(request: Request) -> None:
+    """HTTP Basic com CONSULTOR_SENHA (usuário `consultor`); sem a variável, libera.
+
+    Protege as páginas que podem ficar privadas se o site for publicado: o
+    Consultor (ADR 005) e a página de sistema (spec 082).
+    """
+    senha_correta = os.environ.get("CONSULTOR_SENHA")
+    if not senha_correta:
+        return
+    negado = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Credenciais requeridas",
+        headers={"WWW-Authenticate": "Basic"},
+    )
+    esquema, _, param = (request.headers.get("Authorization") or "").partition(" ")
+    if esquema.lower() != "basic":
+        raise negado
+    try:
+        import base64
+
+        usuario, _, senha = base64.b64decode(param).decode("utf-8").partition(":")
+    except Exception:
+        raise negado
+    usuario_ok = secrets.compare_digest(usuario, "consultor")
+    senha_ok = secrets.compare_digest(senha, senha_correta)
+    if not (usuario_ok and senha_ok):
+        raise negado
 
 
 def verificar_credenciais(credentials: HTTPBasicCredentials = Depends(security)):
@@ -163,47 +257,7 @@ def verificar_credenciais(credentials: HTTPBasicCredentials = Depends(security))
 
 @app.get("/consultor")
 def pagina_consultor(request: Request):
-    senha_correta = os.environ.get("CONSULTOR_SENHA")
-    if senha_correta:
-        try:
-            auth_header = request.headers.get("Authorization")
-            if not auth_header:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Credenciais requeridas",
-                    headers={"WWW-Authenticate": "Basic"},
-                )
-
-            scheme, _, param = auth_header.partition(" ")
-            if scheme.lower() != "basic":
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Autenticação invalida",
-                    headers={"WWW-Authenticate": "Basic"},
-                )
-
-            import base64
-
-            decoded = base64.b64decode(param).decode("ascii")
-            username, _, password = decoded.partition(":")
-
-            is_user_ok = secrets.compare_digest(username, "consultor")
-            is_pass_ok = secrets.compare_digest(password, senha_correta)
-
-            if not (is_user_ok and is_pass_ok):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Credenciais incorretas",
-                    headers={"WWW-Authenticate": "Basic"},
-                )
-        except HTTPException:
-            raise
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials",
-                headers={"WWW-Authenticate": "Basic"},
-            )
+    exigir_senha(request)
 
     return templates.TemplateResponse(
         request=request,
@@ -217,47 +271,7 @@ def pagina_consultor(request: Request):
 
 @app.get("/api/consultor")
 def api_consultor(request: Request):
-    senha_correta = os.environ.get("CONSULTOR_SENHA")
-    if senha_correta:
-        try:
-            auth_header = request.headers.get("Authorization")
-            if not auth_header:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Credenciais requeridas",
-                    headers={"WWW-Authenticate": "Basic"},
-                )
-
-            scheme, _, param = auth_header.partition(" ")
-            if scheme.lower() != "basic":
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Autenticação invalida",
-                    headers={"WWW-Authenticate": "Basic"},
-                )
-
-            import base64
-
-            decoded = base64.b64decode(param).decode("ascii")
-            username, _, password = decoded.partition(":")
-
-            is_user_ok = secrets.compare_digest(username, "consultor")
-            is_pass_ok = secrets.compare_digest(password, senha_correta)
-
-            if not (is_user_ok and is_pass_ok):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Credenciais incorretas",
-                    headers={"WWW-Authenticate": "Basic"},
-                )
-        except HTTPException:
-            raise
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials",
-                headers={"WWW-Authenticate": "Basic"},
-            )
+    exigir_senha(request)
 
     return JSONResponse(
         content={

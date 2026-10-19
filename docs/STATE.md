@@ -5,7 +5,7 @@
 ## Experiência
 
 - Última revisão de experiência: 2026-10-19
-- Painéis, seções ou telas acrescentados desde a última revisão: 0.
+- Painéis, seções ou telas acrescentados desde a última revisão: 1 (página Sistema, spec 082).
 
 ## Manutenção
 
@@ -14,6 +14,12 @@
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
+
+- Spec 082 (Página de sistema):
+  - `/sistema` e `/api/sistema`, protegidas pela `CONSULTOR_SENHA`; link "Sistema" no cabeçalho.
+  - `app/collectors/registro_fontes.py`: resultado final de cada chamada às fontes externas, por integração.
+  - `app/collectors/sistema.py`: monitor em segundo plano do GitHub, do Jules e do Render (5 min com `GITHUB_TOKEN`, 20 min sem).
+  - `app/services/sistema.py` e `app/services/cron.py`: níveis de cada verificação e agendamentos perdidos.
 
 - Spec 080 (Simplificação de Painéis de Alerta):
   - Modificado o `app/templates/index.html` para não renderizar a estrutura completa de alertas (cards e tabelas) quando a lista de alertas está vazia.

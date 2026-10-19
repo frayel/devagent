@@ -5,6 +5,8 @@ import re
 from urllib.parse import urlparse
 import httpx
 
+from app.collectors import registro_fontes
+
 logger = logging.getLogger(__name__)
 
 # Identificável (seção 5 do PRODUTO.md) e com prefixo "Mozilla/5.0 (compatible; ...)",
@@ -79,6 +81,7 @@ def fetch_with_retry(
 
             # Raise for status to catch 4xx and 5xx errors
             response.raise_for_status()
+            registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain))
             return response
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
@@ -92,6 +95,9 @@ def fetch_with_retry(
                     )
                     time.sleep(sleep_time)
                     continue
+            registro_fontes.falha(
+                registro_fontes.nome_da_fonte(domain), f"HTTP {status_code}"
+            )
             raise  # Raise if not retryable or max retries reached
         except httpx.RequestError as e:
             if attempt < max_retries - 1:
@@ -103,6 +109,9 @@ def fetch_with_retry(
                 )
                 time.sleep(sleep_time)
                 continue
+            registro_fontes.falha(
+                registro_fontes.nome_da_fonte(domain), type(e).__name__
+            )
             raise
 
     raise RuntimeError("Unreachable")
@@ -150,8 +159,17 @@ async def async_fetch_with_retry(
                     logger.info(f"Retrying in {sleep_time} seconds...")
                     await asyncio.sleep(sleep_time)
                     continue
+                registro_fontes.falha(
+                    registro_fontes.nome_da_fonte(domain), f"HTTP {status_code}"
+                )
                 response.raise_for_status()
 
+            if status_code < 400:
+                registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain))
+            else:
+                registro_fontes.falha(
+                    registro_fontes.nome_da_fonte(domain), f"HTTP {status_code}"
+                )
             return response
 
         except httpx.RequestError as e:
@@ -164,6 +182,9 @@ async def async_fetch_with_retry(
                 logger.info(f"Retrying in {sleep_time} seconds...")
                 await asyncio.sleep(sleep_time)
                 continue
+            registro_fontes.falha(
+                registro_fontes.nome_da_fonte(domain), type(e).__name__
+            )
             raise
 
     safe_url = re.sub(r"([?&]token=)[^&\s]+", r"\1***", url)

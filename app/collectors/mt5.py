@@ -44,6 +44,8 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 import httpx
 
+from app.collectors import registro_fontes
+
 logger = logging.getLogger(__name__)
 
 FONTE = "mt5"
@@ -210,6 +212,14 @@ def _pausar_servidor(motivo: str) -> None:
     _motivo_pausa = motivo
 
 
+def pausa() -> tuple[float, str] | None:
+    """(segundos restantes, motivo) se o servidor está em pausa; None se não está."""
+    restante = _indisponivel_ate - time.time()
+    if restante <= 0:
+        return None
+    return restante, _motivo_pausa
+
+
 def _detalhe_erro(resposta: httpx.Response) -> str:
     """Texto do erro no formato RFC 7807 da mt5api, ou o começo do corpo."""
     try:
@@ -255,12 +265,14 @@ def _baixar_barras(simbolo: str, timeframe: str, quantidade: int) -> list[dict]:
         resposta = httpx.get(url, params=params, headers=headers, timeout=TIMEOUT)
     except httpx.RequestError as e:
         motivo = f"{type(e).__name__} ao conectar em {base}"
+        registro_fontes.falha(registro_fontes.MT5, f"{type(e).__name__} ao conectar")
         _pausar_servidor(motivo)
         logger.warning("MT5 fora do ar (%s); usando outras fontes", motivo)
         raise Mt5Indisponivel(motivo) from e
 
     if resposta.status_code in (401, 403):
         motivo = f"chave recusada (HTTP {resposta.status_code})"
+        registro_fontes.falha(registro_fontes.MT5, motivo)
         _pausar_servidor(motivo)
         logger.error("MT5 recusou a chave: confira MT5_API_KEY")
         raise Mt5Indisponivel(motivo)
@@ -300,6 +312,7 @@ def _baixar_barras(simbolo: str, timeframe: str, quantidade: int) -> list[dict]:
     if not lidas:
         raise Mt5Indisponivel(f"barras ilegíveis para {simbolo}")
     lidas.sort(key=lambda x: x["hora"])
+    registro_fontes.sucesso(registro_fontes.MT5)
     return lidas
 
 
