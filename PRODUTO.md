@@ -34,7 +34,7 @@ Toda recomendação exibida precisa mostrar: a fonte, a data da coleta, o métod
 | Interface | tema escuro, tokens em `app/static/tema.css`, macros em `app/templates/componentes.html` | guia em `docs/DESIGN.md` |
 | Dados de mercado | MetaTrader 5 via mt5api (preferencial), brapi.dev (API), yfinance (tickers `.SA`) | fontes estruturadas primeiro |
 | Scraping | httpx + selectolax; Playwright só se inevitável | leve por padrão |
-| Armazenamento | SQLite efêmero para caches; Postgres externo (Neon) só para o histórico do consultor, com SQLite como plano B (ADR 006) | o disco do plano gratuito se perde a cada hibernação |
+| Armazenamento | Postgres externo (Neon) por `DATABASE_URL` como banco único de produção, com snapshots por painel e pregão; SQLite só em testes e desenvolvimento local (ADRs 006 e 007; migração nas specs 073 a 076) | o disco do plano gratuito se perde a cada hibernação |
 | Extração de opiniões | Gemini por REST com `httpx`, só para extrair dados de matérias; nunca decide (ADR 005) | texto livre dos portais não se presta a regex |
 | Agendamento de coleta | laço no próprio web service (`app/agendador.py`, ADR 004) | no plano gratuito o disco é efêmero e não é compartilhado com um Cron Job |
 | Testes | pytest, respx para mockar HTTP | testes não acessam a internet |
@@ -164,7 +164,7 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `MT5_FUSO_SERVIDOR` | Render, opcional | fuso do servidor da corretora em horas; padrão `-3` |
 | `COLETA_AUTOMATICA` | Render, opcional | `0` desliga a coleta dentro do web service |
 | `DATABASE_PATH` | opcional | caminho do banco SQLite (padrão `data.db`) |
-| `DATABASE_URL` | Render, secreto | Postgres do histórico do consultor (Neon recomendado; ADR 006). Sem ele, o consultor usa SQLite e avisa que o placar é efêmero |
+| `DATABASE_URL` | Render, secreto | Postgres de produção (Neon; ADRs 006 e 007). Sem ele, a aplicação usa SQLite e avisa que os dados se perdem ao reiniciar |
 | `CONSULTOR_SENHA` | Render, secreto, opcional | protege `/consultor` e `/api/consultor` com HTTP Basic (usuário `consultor`). Sem ela, a página é pública (ADR 005) |
 | `GEMINI_API_KEY` | Render, secreto, opcional | liga a extração de opiniões de casas de análise. Sem ela, o consultor usa só sinais técnicos e mostra um aviso |
 | `GEMINI_MODELO` | Render, opcional | modelo do Gemini; padrão definido na spec 070 |
@@ -183,7 +183,7 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `docs/context/fontes-de-dados.md` | cada fonte: URL, limites, termos, confiabilidade | antes de criar ou alterar coletor |
 | `docs/context/operacao.md` | particularidades operacionais deste produto no Render | antes de mexer em deploy ou coleta |
 | `docs/skills/criar-coletor.md` | procedimento para nova fonte de dados | ao implementar coletor |
-| `docs/decisions/` | ADRs do produto: `004` coleta dentro do web service; `005` consultor (página própria, regras determinísticas, LLM só extrai); `006` persistência do consultor | antes de mudar stack ou arquitetura |
+| `docs/decisions/` | ADRs do produto: `004` coleta dentro do web service; `005` consultor (página própria, regras determinísticas, LLM só extrai); `006` persistência do consultor; `007` Postgres como banco único e snapshots por painel; `008` data de referência, congelamento após o fechamento e histórico de 5 pregões | antes de mudar stack ou arquitetura |
 | `auditoria/README.md` | o que o auditor verifica e o contrato `/api/snapshot` | ao tratar issue `producao-incorreta` e ao publicar painel novo |
 
 Ao criar um arquivo novo em `docs/context/` ou `docs/skills/`, acrescente-o a esta tabela no mesmo PR.

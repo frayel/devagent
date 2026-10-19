@@ -1,6 +1,6 @@
 # ADR 004 · Coleta dentro do web service
 
-**Data:** 2026-09-27 · **Status:** aceito
+**Data:** 2026-09-27 · **Status:** aceito; o banco efêmero e o horário de coleta são revistos pelos ADRs 007 e 008
 
 ## Contexto
 
