@@ -37,6 +37,14 @@ class SensibilidadeJurosData:
 
 
 @dataclass
+@dataclass
+class RadarAnomaliaFechamentoData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "yfinance"
+
+
+@dataclass
 class DolarCorrelationData:
     timestamp: datetime
     positivas_json: str
@@ -263,6 +271,18 @@ def get_latest_esforco_resultado_data() -> EsforcoResultadoData | None:
 def init_db() -> None:
     conn = get_connection()
     cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS radar_anomalia_fechamento_cache (
+            timestamp TEXT PRIMARY KEY,
+            alertas_json TEXT,
+            fonte TEXT
+        );
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_radar_anomalia_fechamento_timestamp ON radar_anomalia_fechamento_cache (timestamp DESC);
+    """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS divergencia_ibov_dolar_cache (
             timestamp TEXT PRIMARY KEY,
@@ -2533,4 +2553,39 @@ def get_divergencia_ibov_dolar() -> dict | None:
         conn.close()
         return res
     conn.close()
+    return None
+
+
+def save_radar_anomalia_fechamento_data(alertas_json: str, fonte: str) -> None:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        now_str = datetime.now(timezone.utc).isoformat()
+        cursor.execute(
+            "INSERT INTO radar_anomalia_fechamento_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
+            (now_str, alertas_json, fonte),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_latest_radar_anomalia_fechamento_data() -> RadarAnomaliaFechamentoData | None:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT timestamp, alertas_json, fonte FROM radar_anomalia_fechamento_cache ORDER BY timestamp DESC LIMIT 1"
+        )
+        row = cursor.fetchone()
+    except Exception:
+        return None
+    finally:
+        conn.close()
+    if row:
+        return RadarAnomaliaFechamentoData(
+            timestamp=datetime.fromisoformat(row[0]),
+            alertas_json=row[1],
+            fonte=row[2],
+        )
     return None
