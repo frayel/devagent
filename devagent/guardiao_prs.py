@@ -15,17 +15,22 @@ Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
     - PR cujo corpo diz "Substitui #N": fecha o #N.
     - Issue citada com Closes/Fixes/Resolves num PR mergeado nos últimos 7 dias: fecha.
     - Ao fechar, abre issue `tentativa-falhou` com o motivo, para o próximo ciclo aprender.
+      Exceção: se tudo o que o PR muda já chegou à main (sobram só registros de
+      execução), fecha como absorvido e não abre issue (ADR 014).
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
+import tempfile
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from devagent.conferir_pr import PADRAO_REGISTROS
 from devagent.config import VERIFICACAO
 
 MAX_TENTATIVAS = 3
@@ -93,8 +98,64 @@ def comentar(numero: int, corpo: str) -> None:
     sh("gh", "pr", "comment", str(numero), "--body", corpo)
 
 
+def pendentes_fora_da_main(ref: str, main: str = "origin/main") -> list[str]:
+    """Arquivos cuja mudança no PR nunca chegou à main.
+
+    Uma mudança conta como absorvida se o diff do arquivo (do ponto de
+    divergência até a ponta do PR) já esteve aplicado em algum commit da main
+    depois da divergência. Olhar só a ponta da main não basta: em 19/10 o #344
+    foi fechado por conflito porque o #345 mexeu de novo nos mesmos arquivos,
+    mas o conteúdo já tinha entrado pelo #343. Usa um índice temporário para
+    não tocar na árvore de trabalho.
+    """
+    base = sh("git", "merge-base", main, ref).strip()
+    arquivos = sh("git", "diff", "--name-only", base, ref).split()
+    patches = {a: sh("git", "diff", base, ref, "--", a) for a in arquivos}
+    pendentes = {a for a, p in patches.items() if p}
+    commits = sh("git", "rev-list", "--first-parent", f"{base}..{main}").split()
+    indice = os.path.join(tempfile.mkdtemp(prefix="guardiao-"), "index")
+    env = {**os.environ, "GIT_INDEX_FILE": indice}
+    for commit in commits:
+        if not pendentes:
+            break
+        subprocess.run(["git", "read-tree", commit], env=env, check=True)
+        for arq in sorted(pendentes):
+            r = subprocess.run(
+                ["git", "apply", "-R", "--check", "--cached"],
+                input=patches[arq],
+                text=True,
+                capture_output=True,
+                env=env,
+            )
+            if r.returncode == 0:
+                pendentes.discard(arq)
+    return sorted(pendentes)
+
+
+def absorvido_pela_main(branch: str) -> bool:
+    """True se só faltam na main registros de execução (docs/runs/, .jules/)."""
+    try:
+        sh("git", "fetch", "-q", "origin", "main", branch)
+        faltam = pendentes_fora_da_main(f"origin/{branch}")
+    except (RuntimeError, subprocess.CalledProcessError) as erro:
+        print(f"::warning::não deu para comparar {branch} com a main: {erro}")
+        return False
+    return all(a.startswith(PADRAO_REGISTROS) for a in faltam)
+
+
 def fechar(pr: dict[str, Any], motivo: str, detalhe: str = "") -> None:
     numero = pr["number"]
+    if pr.get("headRefName") and absorvido_pela_main(pr["headRefName"]):
+        comentar(
+            numero,
+            f"Fechando este PR: {motivo}\n\n"
+            "Nada se perde: tudo o que ele muda já está na `main` (sobram no "
+            "máximo registros de execução). Não há trabalho a refazer, então "
+            "não abro issue `tentativa-falhou`.",
+        )
+        sh("gh", "pr", "close", str(numero), "--delete-branch", check=False)
+        print(f"PR #{numero} fechado como absorvido pela main: {motivo}")
+        return
     corpo = (
         f"Fechando este PR: {motivo}\n\n"
         "O trabalho não se perde: a spec continua `ready` na `main`, e o próximo "
