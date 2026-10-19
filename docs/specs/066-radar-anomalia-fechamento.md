@@ -1,7 +1,7 @@
 ---
 id: 066
 titulo: Radar de Anomalia de Fechamento
-status: ready
+status: done
 esforco: M
 ---
 

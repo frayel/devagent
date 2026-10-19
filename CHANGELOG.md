@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- feat: implementa radar de anomalia de fechamento (spec 066)
+
 ### Added
 - Removido painel Ação Órfã (Spec 067)
 - Painel de Assimetria Risco/Retorno (Spec 065) que exibe as ações mais próximas do fundo recente e distantes do topo.

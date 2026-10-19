@@ -29,6 +29,7 @@ from app.services.concentracao import (
 )
 from app.services.apetite_risco import get_apetite_risco_view_data
 from app.services.variacao_subita import get_variacao_subita_view_data
+from app.services.radar_anomalia_fechamento import get_radar_anomalia_fechamento_view
 from app.services.rotacao_capital import get_rotacao_capital_view
 from app.services.faca_caindo import get_faca_caindo_view
 from app.services.compradores_fundo import get_compradores_fundo_view
@@ -114,6 +115,7 @@ async def add_security_headers(request: Request, call_next):
         "form-action 'self'; "
         "frame-ancestors 'none'"
     )
+
     return response
 
 
@@ -697,6 +699,10 @@ def snapshot():
     else:
         resp["paineis"]["relogio_volatilidade"] = {}
 
+    anomalia_fechamento = get_radar_anomalia_fechamento_view()
+    if anomalia_fechamento and "alertas" in anomalia_fechamento:
+        resp["paineis"]["anomalia_fechamento"] = anomalia_fechamento
+
     return resp
 
 
@@ -770,6 +776,7 @@ async def index(request: Request):
         }
 
     variacao_subita = get_variacao_subita_view_data()
+    radar_anomalia_fechamento = get_radar_anomalia_fechamento_view()
     rotacao_capital = get_rotacao_capital_view()
     faca_caindo = get_faca_caindo_view()
     compradores_fundo = get_compradores_fundo_view()
@@ -1036,6 +1043,7 @@ async def index(request: Request):
             "apetite_risco": apetite_risco,
             "concentracao_setorial": concentracao_setorial,
             "variacao_subita": variacao_subita,
+            "radar_anomalia_fechamento": radar_anomalia_fechamento,
             "rotacao_capital": rotacao_capital,
             "faca_caindo": faca_caindo,
             "compradores_fundo": compradores_fundo,

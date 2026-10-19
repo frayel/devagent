@@ -888,6 +888,26 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Altas seguidas', 'num': True}], 'sobrevivencia-semanal') }}
     {% endif %}
 {% endcall %}
+
+{% call painel("Radar de Anomalia de Fechamento", 4, "Ações que tiveram variação anormal de preço no leilão de fechamento de ontem.", radar_anomalia_fechamento.fonte if radar_anomalia_fechamento else "", radar_anomalia_fechamento.coletado_em if radar_anomalia_fechamento else "", "visao-micro alertas") %}
+    {% if not radar_anomalia_fechamento %}
+        {{ estado("indisponivel") }}
+    {% elif not radar_anomalia_fechamento.alertas %}
+        <div class="vazio">Sem anomalias no fechamento recente.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in radar_anomalia_fechamento.alertas %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': "%.2f" | format(a.preco_antes), 'num': True},
+                {'conteudo': "%.2f" | format(a.fechamento), 'num': True},
+                {'conteudo': (variacao("%.2f%%" | format(a.diferenca_pct), a.diferenca_pct)) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': '16:50', 'num': True}, {'titulo': 'Fech.', 'num': True}, {'titulo': 'Dif', 'num': True}], 'radar-anomalia') }}
+    {% endif %}
+{% endcall %}
+
 {% call painel("Radar de Inflexão", 4, "Ações que caíram muito e hoje estão subindo forte, indicando possível quebra de inércia.", radar_inflexao.fonte if radar_inflexao else "", radar_inflexao.coletado_em if radar_inflexao else "", "visao-micro alertas") %}
     {% if not radar_inflexao %}
         {{ estado("indisponivel") }}

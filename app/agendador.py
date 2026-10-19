@@ -108,6 +108,7 @@ def _coletar() -> None:
         "compradores_fundo",
         "armadilha_abertura",
         "sobrevivencia_semanal",
+        "radar_anomalia_fechamento",
         "volatilidade_silenciosa",
         "scanner_capitulacao",
         "radar_inflexao",
