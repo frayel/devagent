@@ -172,7 +172,7 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `GITHUB_TOKEN` | Render, secreto, opcional | token só de leitura (Actions, Issues, Pull requests, Contents) para a página `/sistema`; sem ele, o GitHub limita a 60 consultas por hora e o monitor relê a cada 20 min em vez de 5 |
 | `JULES_API_KEY` | Render, secreto, opcional | mostra em `/sistema` as sessões do Jules (ativas, esperando resposta, falhas e cota) |
 | `JULES_LIMITE_DIARIO` | Render, opcional | teto de sessões do Jules em 24 h, para a página acusar a cota esgotada |
-| `JULES_INTERVALO_MINUTOS` | Render, opcional | intervalo do cron-job.org entre disparos do `jules.yml`; padrão `5` |
+| `JULES_DISPARO_MINUTOS` | Render, opcional | intervalo do cron-job.org entre disparos do `jules.yml`, para `/sistema` acusar atraso; padrão `5` (não confundir com `JULES_INTERVALO_MINUTOS`, que espaça as sessões no GitHub) |
 | `RENDER_API_KEY` | Render, secreto, opcional | mostra em `/sistema` o status do último deploy (o `RENDER_SERVICE_ID` e o `RENDER_GIT_COMMIT` o Render já define) |
 | `MONITOR_SISTEMA` | opcional | `0` desliga o monitor em segundo plano da página `/sistema` |
 

@@ -181,6 +181,7 @@ def estado_do_sistema() -> dict:
         fontes=registro_fontes.fontes(),
         pausa_mt5=mt5_coletor.pausa(),
         prontas=sistema_servico.specs_prontas(),
+        monitor_ligado=monitor_sistema.monitor_ligado(),
     )
 
 

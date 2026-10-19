@@ -24,6 +24,7 @@ import urllib.request
 from datetime import datetime, timezone
 from typing import Any
 
+from devagent import saude
 from devagent.fila_specs import instrucao, specs_prontas
 
 API = "https://api.github.com"
@@ -139,11 +140,40 @@ def main() -> int:
     for i in estado["issues"]:
         print(f"  #{i['numero']} {i['labels']} {i['titulo']}")
 
+    # Saúde de produção (ADR 016): o que a página do produto acusa agora.
+    problemas_em_producao = False
+    try:
+        dados = saude.ler(espera=90)
+    except saude.Indisponivel as exc:
+        print(f"\nSaúde de produção indisponível: {exc}")
+    else:
+        print("\n" + saude.resumo(dados))
+        problemas_em_producao = bool(saude.pendentes(dados, "problema"))
+
     prontas = specs_prontas()
     print(f"\nSpecs ready na fila: {len(prontas)}")
     for p in prontas[:5]:
         print(f"  {p.name}")
 
+    bloqueada = next(
+        (
+            i
+            for i in estado["issues"]
+            if saude.LABEL in i["labels"] and "bloqueado" in i["labels"]
+        ),
+        None,
+    )
+    if problemas_em_producao and bloqueada:
+        print(
+            f"\n>> Os problemas de produção já estão na issue #{bloqueada['numero']}, "
+            "bloqueada à espera de ação humana. Não insista neles; siga o ciclo."
+        )
+    elif problemas_em_producao:
+        print(
+            "\n>> A produção acusa problema: o Passo 1 vem antes de tudo. Corrija o "
+            f"que tem causa no repositório; o que depende de configuração externa "
+            f"vai descrito na issue `{saude.LABEL}` com o label `bloqueado`."
+        )
     if agente:
         print(
             "\n>> Existe PR do agente aberto: siga o Passo 2 (destravar o PR). "

@@ -11,6 +11,8 @@ Duas gavetas saem daqui:
 
 Manutenção sem medida vira gosto, e gosto não é evidência. Antes de propor, colete números do próprio repositório e da produção. Os caminhos concretos deste projeto estão na seção de manutenção do `PRODUTO.md`.
 
+Comece pela página de saúde (`python -m devagent.saude`, ADR 016): cada item em **Atenção** é uma medida já pronta de algo degradado (integração instável, coleta lenta, painel vazio, agendamento perdido) e o primeiro candidato a virar spec de saúde técnica ou de poda.
+
 **Saúde técnica**
 
 - **Repetição.** Quantos módulos seguem o mesmo molde copiado (mesma estrutura de coletor, de cache, de rota, de teste)? Conte as linhas que só mudam de nome. Três cópias pedem uma abstração; dez pedem com urgência.

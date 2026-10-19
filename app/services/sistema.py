@@ -784,10 +784,11 @@ def montar(
     pausa_mt5: tuple[float, str] | None,
     prontas: list[str],
     ambiente: dict[str, str] | None = None,
+    monitor_ligado: bool = False,
 ) -> dict[str, Any]:
     ambiente = dict(os.environ) if ambiente is None else ambiente
     github = remoto.get("github")
-    intervalo_jules = int(ambiente.get("JULES_INTERVALO_MINUTOS", "5") or 5)
+    intervalo_jules = int(ambiente.get("JULES_DISPARO_MINUTOS", "5") or 5)
     limite_jules = ambiente.get("JULES_LIMITE_DIARIO", "").strip()
 
     aplicacao = verificar_versao(github, sha_local, agora)
@@ -836,6 +837,9 @@ def montar(
     return {
         "gerado_em": agora.isoformat(),
         "remoto_em": remoto.get("atualizado_em"),
+        # Contrato do núcleo (devagent/saude.py, ADR 016): o monitor ainda não
+        # leu GitHub, Jules e Render desde que a instância subiu.
+        "parcial": monitor_ligado and not remoto.get("atualizado_em"),
         "geral": resumo_geral(grupos),
         "grupos": grupos,
     }

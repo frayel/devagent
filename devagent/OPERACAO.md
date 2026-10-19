@@ -26,7 +26,7 @@ Todos ficam em `.github/workflows/` porque o GitHub exige. São do núcleo; o pr
 | `ci.yml` | PR e push na `main` | job `disciplina` com `python -m devagent.conferir_pr` (ADR 008); `make install` e `make verify`; job `smoke` com `make install-prod` e `make smoke` |
 | `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch; fecha as issues citadas com `Closes/Fixes/Resolves #N` no título, corpo ou commits do PR (exceto `deploy-falhou` e `producao-incorreta`) |
 | `deploy-check.yml` | após o auto-merge, a cada 6 h, manual | consulta a plataforma (`devagent/adaptadores/render_status.py`); abre ou fecha issues `deploy-falhou`; dispara a auditoria quando o deploy fica live |
-| `auditoria-producao.yml` | horários do projeto, após deploy | `make audit` contra produção; abre ou fecha issues `producao-incorreta` |
+| `auditoria-producao.yml` | horários do projeto, após deploy | `make audit` contra produção; abre ou fecha issues `producao-incorreta`. Job `saude`: lê a página de saúde do produto (`python -m devagent.saude`, ADR 016) e abre, atualiza ou fecha a issue `sistema-com-problema` |
 | `jules.yml` | `workflow_dispatch` com `acao=rodada` a cada 5 min, chamado de fora pelo cron-job.org (ADRs 010 e 012); manual | `rodada` (`devagent/adaptadores/jules.py rodada`): inicia a próxima sessão assim que o caminho estiver livre: nenhuma sessão que altera código ativa, nenhum PR do agente com CI rodando ou esperando o auto-merge, e o ritmo da cota respeitado (`JULES_LIMITE_DIARIO` ou `JULES_INTERVALO_MINUTOS`). O especialista do dia (Sentinel a partir das 03h, Bolt das 09h, Palette das 15h BRT) é o primeiro da fila até rodar; nas demais vezes, o desenvolvedor. PR do agente travado chama o desenvolvedor, nunca um especialista. Também encerra sessões zumbis (PR já mesclado ou fechado, ou 3 h sem atualização; ADR 013), aprova planos pendentes, responde perguntas paradas há 5 min e encerra. Menos de 1 min por execução. Sem `schedule`: o cron do GitHub descarta a maior parte dos disparos frequentes |
 | `auditoria-llm.yml` | horário do projeto, manual | cria a sessão do auditor LLM pela API do Jules |
 | `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | `devagent/guardiao_prs.py`: cobra `@jules` (até 3x), fecha PR sem reação em 3 h, com conflito grande (> 3 arquivos ou > 40 linhas) ou substituído (`Substitui #N`); abre issue `tentativa-falhou`, salvo se o conteúdo do PR já está na `main` (ADR 014); fecha issues citadas com `Closes #N` em PRs mergeados nos últimos 7 dias; apaga branches órfãs com mais de 24 h |
@@ -71,6 +71,7 @@ Disparos duplicados não causam dano: as execuções do `jules.yml` são seriali
 | `JULES_SOURCE` | ambiente, opcional | sobrescreve a fonte derivada de `repositorio` no `devagent.toml` |
 | `PRODUCTION_URL` | ambiente do Jules; variável (não secret) do GitHub, opcional | sobrescreve `producao_url` do `devagent.toml` |
 | `DEVAGENT_CONFIG` | ambiente, opcional | caminho de outro `devagent.toml` |
+| `SAUDE_SENHA` | secret do GitHub e ambiente do Jules, se a página de saúde pede senha | senha do HTTP Basic da página de saúde; o usuário fica em `[saude] usuario` no `devagent.toml` |
 
 ## Render: cuidados do adaptador
 
