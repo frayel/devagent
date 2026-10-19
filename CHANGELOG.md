@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Adicionado
+- Spec 068a: Consultor Rota e Coleta com autenticação HTTP Basic.
 - Condição de interface para ocultar painéis de alertas que estejam vazios, exibindo uma mensagem de "Sem alertas ativos no momento" se todos estiverem vazios (Spec 080).
 
 - feat: implementa radar de anomalia de fechamento (spec 066)
