@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Adicionado
+- Spec 082: página `/sistema` (link "Sistema" no cabeçalho) e `/api/sistema` com a saúde do produto e do fluxo de desenvolvimento: versão e deploy em produção, banco, agendador da coleta, integrações externas (pelas chamadas reais dos coletores), disparos e sessões do Jules, PRs, issues que pedem ação e workflows do GitHub, incluindo agendamentos que o GitHub deixou de rodar. GitHub, Jules e Render são lidos em segundo plano; a visita não chama fonte externa.
 - Spec 068a: Consultor Rota e Coleta com autenticação HTTP Basic.
 - Condição de interface para ocultar painéis de alertas que estejam vazios, exibindo uma mensagem de "Sem alertas ativos no momento" se todos estiverem vazios (Spec 080).
 

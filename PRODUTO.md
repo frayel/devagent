@@ -50,7 +50,7 @@ Mudanças de stack exigem um ADR em `docs/decisions/` antes do código.
 
 ```
 app/
-  main.py              # FastAPI, rotas, /healthz e /api/snapshot
+  main.py              # FastAPI, rotas, /healthz, /api/snapshot e /sistema
   agendador.py         # coleta periódica dentro do web service (ADR 004)
   collectors/          # um módulo por fonte de dados
   services/            # cálculos, indicadores, agregação de opiniões
@@ -131,7 +131,7 @@ Para `devagent/skills/rever-experiencia.md`: as capturas saem de `make telas` (p
 
 Para `devagent/skills/manutencao.md`:
 
-- **Onde medir.** Repetição: os módulos de `app/collectors/` e `app/services/`, as tabelas `*_cache` em `app/database.py` e os testes correspondentes em `tests/`. Custo de coleta: `app/agendador.py` e o diagnóstico em `GET /api/coleta` (última rodada e último erro). Partes vazias: os painéis com a classe `.escondido` nas capturas de `make telas` e as chaves sem dados em `/api/snapshot`. Fragilidade: os relatórios em `docs/runs/` e as issues `tentativa-falhou`.
+- **Onde medir.** Repetição: os módulos de `app/collectors/` e `app/services/`, as tabelas `*_cache` em `app/database.py` e os testes correspondentes em `tests/`. Custo de coleta: `app/agendador.py`, o diagnóstico em `GET /api/coleta` (última rodada e último erro) e a página `/sistema` (`GET /api/sistema`), que junta coleta, integrações, deploy e fluxo de desenvolvimento. Partes vazias: os painéis com a classe `.escondido` nas capturas de `make telas` e as chaves sem dados em `/api/snapshot`. Fragilidade: os relatórios em `docs/runs/` e as issues `tentativa-falhou`.
 - **Critério de poda.** Um painel que, numa janela de 10 pregões, ficou sem dados ou escondido em mais da metade das coletas feitas durante o pregão é candidato a poda: remover, fundir num vizinho ou mudar de forma. Enquanto o sistema não registrar esse histórico por painel, a primeira rodada de manutenção cria o registro (um contador por chave do `/api/snapshot` já basta), sem nova dependência.
 - **Ponto de atenção conhecido.** Quase todo painel tem coletor próprio, tabela de cache própria e chamadas próprias à mesma fonte externa, muitas vezes pedindo as mesmas séries. É o primeiro lugar a medir.
 
@@ -169,6 +169,12 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `GEMINI_API_KEY` | Render, secreto, opcional | liga a extração de opiniões de casas de análise. Sem ela, o consultor usa só sinais técnicos e mostra um aviso |
 | `GEMINI_MODELO` | Render, opcional | modelo do Gemini; padrão definido na spec 070 |
 | `GEMINI_MAX_CHAMADAS_DIA` | Render, opcional | teto diário de chamadas ao Gemini; padrão `200` |
+| `GITHUB_TOKEN` | Render, secreto, opcional | token só de leitura (Actions, Issues, Pull requests, Contents) para a página `/sistema`; sem ele, o GitHub limita a 60 consultas por hora e o monitor relê a cada 20 min em vez de 5 |
+| `JULES_API_KEY` | Render, secreto, opcional | mostra em `/sistema` as sessões do Jules (ativas, esperando resposta, falhas e cota) |
+| `JULES_LIMITE_DIARIO` | Render, opcional | teto de sessões do Jules em 24 h, para a página acusar a cota esgotada |
+| `JULES_INTERVALO_MINUTOS` | Render, opcional | intervalo do cron-job.org entre disparos do `jules.yml`; padrão `5` |
+| `RENDER_API_KEY` | Render, secreto, opcional | mostra em `/sistema` o status do último deploy (o `RENDER_SERVICE_ID` e o `RENDER_GIT_COMMIT` o Render já define) |
+| `MONITOR_SISTEMA` | opcional | `0` desliga o monitor em segundo plano da página `/sistema` |
 
 `render.yaml` declara um web service (`uvicorn app.main:app`), `healthCheckPath: /healthz` e `autoDeploy: true`.
 
