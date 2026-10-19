@@ -35,3 +35,26 @@ Uma entrada por fonte. Atualize ao criar ou alterar coletor (skill `criar-coleto
 - `/api/quote/{tickers}` com vários ativos na mesma chamada não serve no gratuito; uma requisição por ativo estouraria a cota (30 ativos × ~40 coletas por dia).
 - `/api/quote/list` não exige token e traz `stock`, `close`, `change` (% do dia), `volume` e `type` de todas as ações. As maiores altas e baixas usam uma única chamada: `?type=stock&sortBy=volume&sortOrder=desc&limit=100`, e o ranking sai das 100 ações mais negociadas do dia.
 - Fonte: https://brapi.dev/docs/acoes/list e https://brapi.dev/faq/tem-algum-limite
+
+## Feeds RSS de portais (opiniões de casas de análise · consultor)
+
+- **Uso**: matérias que citam recomendações, preços-alvo e carteiras de casas de análise para ações do Ibovespa (spec 070, ADR 005).
+- **Feeds verificados em 2026-10-18**: Money Times (`https://www.moneytimes.com.br/feed/`, RSS 2.0 válido, com `content:encoded`; publica carteiras semanais recomendadas) e InfoMoney (`https://www.infomoney.com.br/feed/`, RSS 2.0 válido, mistura notícias de todo tipo). O feed `https://www.infomoney.com.br/mercados/feed/` veio sem itens nessa data.
+- **Pendência**: conferir `robots.txt` e termos de uso de cada portal antes do primeiro coletor e registrar aqui.
+- **Limites**: 1 requisição a cada 2 s por domínio, coleta a cada 30 min, só o conteúdo do próprio feed (a página da matéria não é baixada).
+- **Ritmo**: não é tempo real. Algumas matérias com opinião de casa por dia, dependendo do portal.
+
+## Gemini (extração de opiniões · consultor)
+
+- **Uso**: só extrair registros estruturados das matérias pré-filtradas (ADR 005). Nunca decide a recomendação.
+- **Acesso**: REST `generateContent`, chave em `GEMINI_API_KEY`, modelo em `GEMINI_MODELO`.
+- **Limites**: a camada gratuita cobre os modelos Flash e Flash-Lite, mas o Google não publica os números na página de limites; eles aparecem no AI Studio e mudam sem aviso. O coletor respeita `GEMINI_MAX_CHAMADAS_DIA` e trata 429 como estado `cota`.
+- **Privacidade**: na camada gratuita, o conteúdo enviado pode ser usado pelo Google para melhorar produtos. Envie só texto público das matérias.
+- **Fontes**: https://ai.google.dev/gemini-api/docs/rate-limits e https://ai.google.dev/pricing
+
+## Fontes proibidas (verificado em 2026-10-18)
+
+- **Yahoo Finance `quoteSummary`** (`/v10/finance/quoteSummary`, onde ficam consenso e preço-alvo): bloqueado por `robots.txt`.
+- **Google News RSS** (`news.google.com/rss/search`): bloqueado por `robots.txt`.
+- **Relatórios de corretoras e casas de análise**: atrás de login.
+- A brapi não oferece recomendações de analistas nem preço-alvo na documentação pública.
