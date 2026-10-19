@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="span-12 padding-2rem">
+    <h2>Consultor de Investimentos</h2>
+    <p>Construindo o motor de regras...</p>
+
+    {% if desatualizada %}
+    <div class="alerta">
+        Composição do Ibovespa possivelmente desatualizada. <a href="{{ fonte }}" target="_blank">Verificar fonte</a>.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -2,6 +2,17 @@ import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+from fastapi.responses import JSONResponse
+from app.consultor.universo import (
+    composicao_esta_desatualizada,
+    FONTE_URL,
+    CARTEIRA_IBOVESPA,
+    COMPOSICAO_VIGENTE_ATE,
+)
+import secrets
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import os
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
@@ -128,6 +139,133 @@ def healthz():
 def coleta():
     """Diagnóstico da coleta automática (última rodada e último erro)."""
     return {"ligada": agendador.coleta_ligada(), **agendador.estado}
+
+
+security = HTTPBasic()
+
+
+def verificar_credenciais(credentials: HTTPBasicCredentials = Depends(security)):
+    senha_correta = os.environ.get("CONSULTOR_SENHA")
+    if not senha_correta:
+        return True
+
+    is_user_ok = secrets.compare_digest(credentials.username, "consultor")
+    is_pass_ok = secrets.compare_digest(credentials.password, senha_correta)
+
+    if not (is_user_ok and is_pass_ok):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciais incorretas",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return True
+
+
+@app.get("/consultor")
+def pagina_consultor(request: Request):
+    senha_correta = os.environ.get("CONSULTOR_SENHA")
+    if senha_correta:
+        try:
+            auth_header = request.headers.get("Authorization")
+            if not auth_header:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Credenciais requeridas",
+                    headers={"WWW-Authenticate": "Basic"},
+                )
+
+            scheme, _, param = auth_header.partition(" ")
+            if scheme.lower() != "basic":
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Autenticação invalida",
+                    headers={"WWW-Authenticate": "Basic"},
+                )
+
+            import base64
+
+            decoded = base64.b64decode(param).decode("ascii")
+            username, _, password = decoded.partition(":")
+
+            is_user_ok = secrets.compare_digest(username, "consultor")
+            is_pass_ok = secrets.compare_digest(password, senha_correta)
+
+            if not (is_user_ok and is_pass_ok):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Credenciais incorretas",
+                    headers={"WWW-Authenticate": "Basic"},
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Basic"},
+            )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="consultor.html",
+        context={
+            "desatualizada": composicao_esta_desatualizada(),
+            "fonte": FONTE_URL,
+        },
+    )
+
+
+@app.get("/api/consultor")
+def api_consultor(request: Request):
+    senha_correta = os.environ.get("CONSULTOR_SENHA")
+    if senha_correta:
+        try:
+            auth_header = request.headers.get("Authorization")
+            if not auth_header:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Credenciais requeridas",
+                    headers={"WWW-Authenticate": "Basic"},
+                )
+
+            scheme, _, param = auth_header.partition(" ")
+            if scheme.lower() != "basic":
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Autenticação invalida",
+                    headers={"WWW-Authenticate": "Basic"},
+                )
+
+            import base64
+
+            decoded = base64.b64decode(param).decode("ascii")
+            username, _, password = decoded.partition(":")
+
+            is_user_ok = secrets.compare_digest(username, "consultor")
+            is_pass_ok = secrets.compare_digest(password, senha_correta)
+
+            if not (is_user_ok and is_pass_ok):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Credenciais incorretas",
+                    headers={"WWW-Authenticate": "Basic"},
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Basic"},
+            )
+
+    return JSONResponse(
+        content={
+            "atualizado_em": datetime.now().isoformat(),
+            "ativos_avaliados": len(CARTEIRA_IBOVESPA),
+            "composicao_vigente_ate": COMPOSICAO_VIGENTE_ATE.isoformat(),
+        }
+    )
 
 
 @app.get("/api/snapshot")
@@ -702,6 +840,12 @@ def snapshot():
     anomalia_fechamento = get_radar_anomalia_fechamento_view()
     if anomalia_fechamento and "alertas" in anomalia_fechamento:
         resp["paineis"]["anomalia_fechamento"] = anomalia_fechamento
+
+    resp["consultor"] = {
+        "atualizado_em": datetime.now(timezone(timedelta(hours=-3))).isoformat(),
+        "ativos_avaliados": len(CARTEIRA_IBOVESPA),
+        "composicao_vigente_ate": COMPOSICAO_VIGENTE_ATE.isoformat(),
+    }
 
     return resp
 

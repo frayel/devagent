@@ -1,7 +1,7 @@
 ---
 id: 068a
 titulo: Consultor · Rota, Privacidade, Universo e Coleta
-status: ready
+status: done
 esforco: M
 ---
 
