@@ -1,7 +1,7 @@
 ---
 id: 080
 titulo: Poda: Simplificação de Painéis de Alerta
-status: ready
+status: done
 esforco: P
 gaveta: poda
 ---

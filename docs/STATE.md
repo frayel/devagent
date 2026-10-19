@@ -15,6 +15,10 @@
 
 ## Implementado
 
+- Spec 080 (Simplificação de Painéis de Alerta):
+  - Modificado o `app/templates/index.html` para não renderizar a estrutura completa de alertas (cards e tabelas) quando a lista de alertas está vazia.
+  - Adicionado um bloco único "Sem alertas ativos no momento" na aba de alertas.
+
 - Spec 067 (Poda do Painel Ação Órfã):
   - Removido o painel Ação Órfã da página inicial.
 
