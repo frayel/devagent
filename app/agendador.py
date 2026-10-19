@@ -114,7 +114,6 @@ def _coletar() -> None:
         "anomalia_peso",
         "radar_short_squeeze",
         "radar_congestionamento",
-        "detector_acao_orfa",
         "radar_liquidez_abertura",
         "esforco_resultado",
         "radar_divergencia_volume",
