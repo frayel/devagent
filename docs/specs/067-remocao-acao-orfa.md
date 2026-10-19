@@ -1,7 +1,7 @@
 ---
 id: 067
 titulo: Poda do Painel Ação Órfã
-status: ready
+status: done
 esforco: P
 gaveta: poda
 ---

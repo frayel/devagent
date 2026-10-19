@@ -19,6 +19,12 @@ def test_coleta_desligada_nos_testes():
 def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
     monkeypatch.setattr("app.collectors.anomalia_peso.collect_and_save", lambda: True)
     monkeypatch.setattr("app.collectors.radar_inflexao.collect_and_save", lambda: True)
+    monkeypatch.setattr(
+        "app.collectors.divergencia_ibov_dolar.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.assimetria_risco_retorno.collect_and_save", lambda: True
+    )
     monkeypatch.setattr("app.collectors.forca_relativa.collect_and_save", lambda: True)
     chamados = []
     monkeypatch.setattr("app.collectors.coesao.collect_and_save", lambda: True)
@@ -60,9 +66,6 @@ def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
     )
     monkeypatch.setattr(
         "app.collectors.falso_rompimento.collect_and_save", lambda: True
-    )
-    monkeypatch.setattr(
-        "app.collectors.detector_acao_orfa.collect_and_save", lambda: True
     )
 
     monkeypatch.setattr("app.collectors.escudo_quedas.collect_and_save", lambda: True)
@@ -147,10 +150,11 @@ def test_mascara_token_no_estado(monkeypatch):
         "volatilidade_silenciosa",
         "scanner_capitulacao",
         "radar_inflexao",
+        "divergencia_ibov_dolar",
+        "assimetria_risco_retorno",
         "anomalia_peso",
         "radar_short_squeeze",
         "radar_congestionamento",
-        "detector_acao_orfa",
         "esforco_resultado",
         "radar_divergencia_volume",
         "falso_rompimento",

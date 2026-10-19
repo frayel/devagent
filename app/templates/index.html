@@ -511,29 +511,6 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Ação Órfã", 4, "Ações que secaram drasticamente de liquidez (zero volume ou queda drástica) nos últimos 15 min.", detector_acao_orfa.fonte if detector_acao_orfa else "", detector_acao_orfa.coletado_em if detector_acao_orfa else "", "visao-micro alertas") %}
-            {% if not detector_acao_orfa %}
-                <div class="painel-vazio">Dado indisponível</div>
-            {% elif not detector_acao_orfa.alertas %}
-                <div class="painel-vazio">Nenhuma ação orfã identificada hoje.</div>
-            {% else %}
-                <div class="tabela-scroll">
-                    {% set linhas = [] %}
-                    {% for a in detector_acao_orfa.alertas %}
-                        {% set _ = linhas.append([
-                            {'tk': True, 'conteudo': a.ticker},
-                            {'conteudo': ("Zero" if a.ratio == 0 else ("%.0f%%"|format(a.ratio * 100))), 'num': True},
-                            {'conteudo': a.aviso, 'num': False}
-                        ]) %}
-                    {% endfor %}
-                    {{ tabela_ativos(linhas, [
-                        {'titulo': 'Ativo', 'num': False},
-                        {'titulo': 'Vol/Média', 'num': True},
-                        {'titulo': 'Motivo', 'num': False}
-                    ], 'rank-acao-orfa') }}
-                </div>
-            {% endif %}
-        {% endcall %}
 
         {% call painel("Radar de Congestionamento", 4, "Ações que estão operando na faixa mais estreita (menor volatilidade) dos últimos 20 dias, indicando possível rompimento.", radar_congestionamento.fonte if radar_congestionamento else "", radar_congestionamento.coletado_em if radar_congestionamento else "", "visao-micro alertas") %}
     {% if not radar_congestionamento %}

@@ -15,6 +15,9 @@
 
 ## Implementado
 
+- Spec 067 (Poda do Painel Ação Órfã):
+  - Removido o painel Ação Órfã da página inicial.
+
 - Spec 065 (Análise de Assimetria Risco/Retorno):
   - Banco de dados SQLite (`assimetria_risco_retorno_cache`).
   - Coletor com yfinance (endpoint spark 30d).
