@@ -190,3 +190,81 @@ def test_erro_na_rodada_ainda_destrava(monkeypatch, relogio):
     monkeypatch.setattr(jules, "situacao_dos_prs", falha)
     jules.rodada(espera_minutos=5)
     assert chamadas == [("destravar", "05:40")]
+
+
+def _zumbi(estado: str, atualizada: str, pr: str | None = None) -> dict[str, Any]:
+    s: dict[str, Any] = {
+        "name": "sessions/1",
+        "title": jules.PERSONAS["seguranca"]["titulo"],
+        "state": estado,
+        "createTime": "2026-10-18T06:17:00Z",
+        "updateTime": atualizada,
+    }
+    if pr:
+        s["outputs"] = [{"pullRequest": {"url": pr}}]
+    return s
+
+
+AGORA_18 = datetime(2026, 10, 18, 7, 47, tzinfo=timezone.utc)
+PR_335 = "https://github.com/frayel/devagent/pull/335"
+
+
+def test_sessao_com_pr_mesclado_e_zumbi(monkeypatch):
+    # O caso de 18/10: Sentinel "ativo" depois do merge do #335.
+    monkeypatch.setattr(
+        jules,
+        "estado_do_pr",
+        lambda url: {"aberto": False, "mesclado": True, "branch": "b"},
+    )
+    s = _zumbi("IN_PROGRESS", "2026-10-18T07:30:00Z", PR_335)
+    assert "mesclado" in jules.motivo_de_zumbi(s, AGORA_18)
+
+
+def test_sessao_com_pr_aberto_e_recente_nao_e_zumbi(monkeypatch):
+    monkeypatch.setattr(
+        jules,
+        "estado_do_pr",
+        lambda url: {"aberto": True, "mesclado": False, "branch": "b"},
+    )
+    s = _zumbi("IN_PROGRESS", "2026-10-18T07:30:00Z", PR_335)
+    assert jules.motivo_de_zumbi(s, AGORA_18) == ""
+
+
+def test_sessao_parada_ha_tres_horas_e_zumbi():
+    s = _zumbi("PAUSED", "2026-10-18T04:40:00Z")
+    assert "3.1 h" in jules.motivo_de_zumbi(s, AGORA_18)
+
+
+def test_sessao_concluida_nunca_e_zumbi():
+    s = _zumbi("COMPLETED", "2026-10-17T00:00:00Z")
+    assert jules.motivo_de_zumbi(s, AGORA_18) == ""
+
+
+def test_rodada_encerra_zumbi_e_segue_com_a_fila(monkeypatch, relogio):
+    relogio.agora = AGORA_18
+    zumbi = _zumbi("IN_PROGRESS", "2026-10-18T07:30:00Z", PR_335)
+    chamadas = _rodada(monkeypatch, relogio, [zumbi])
+    monkeypatch.setattr(
+        jules,
+        "estado_do_pr",
+        lambda url: {"aberto": False, "mesclado": True, "branch": "b"},
+    )
+    encerradas: list[str] = []
+    monkeypatch.setattr(
+        jules, "encerrar", lambda nome, motivo="": encerradas.append(nome)
+    )
+    jules.rodada(espera_minutos=5)
+    assert encerradas == ["sessions/1"]
+    assert chamadas[0] == ("iniciar", ("07:47", "desenvolvedor"))
+
+
+def test_iniciar_nao_trava_em_zumbi(monkeypatch):
+    zumbi = _zumbi("PAUSED", "2026-10-18T00:00:00Z")
+    monkeypatch.setattr(jules, "sessoes_do_repo", lambda: [zumbi])
+    criadas: list[Any] = []
+    monkeypatch.setattr(
+        jules, "chamar", lambda m, c, corpo=None: criadas.append(c) or {}
+    )
+    monkeypatch.delenv("JULES_LIMITE_DIARIO", raising=False)
+    jules.iniciar("desenvolvedor", dry_run=False)
+    assert criadas == ["sessions"]
