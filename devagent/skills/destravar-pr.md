@@ -39,11 +39,13 @@ Se o guardião colou o log da falha no PR, comece por ele. Corrija a causa, não
 Meça antes de resolver:
 
 ```bash
-git merge --no-commit --no-ff origin/main
+git -c merge.conflictStyle=diff3 merge --no-commit --no-ff origin/main
 git diff --name-only --diff-filter=U        # arquivos em conflito
 ```
 
-- **Pequeno** (até 3 arquivos e cerca de 40 linhas em conflito): resolva, rode a verificação completa da seção 2, faça commit do merge e dê push.
+Trecho cuja base (entre `|||||||` e `=======`) está vazia é só acréscimo: os dois lados inseriram blocos novos no mesmo ponto. Não conta no tamanho e se resolve mantendo os dois blocos (ADR 017).
+
+- **Pequeno** (até 3 arquivos e cerca de 40 linhas em conflito, sem contar trechos só de acréscimo): resolva, rode a verificação completa da seção 2, faça commit do merge e dê push.
 - **Grande**: `git merge --abort` e não resolva. O guardião fecha o PR na próxima varredura; a spec continua `ready` na `main` e o próximo ciclo refaz o trabalho sobre a `main` atual. Registre no relatório e encerre.
 
 Na resolução, a versão da `main` vence em tudo que não for o objetivo do seu PR. Nunca reescreva um arquivo inteiro a partir da sua cópia: isso apaga o trabalho de outros PRs.

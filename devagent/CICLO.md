@@ -118,7 +118,7 @@ A integração nativa do Jules com o Render corrige builds que falham nos PRs do
 Aplica-se quando existe um PR do agente aberto. Siga a skill `devagent/skills/destravar-pr.md`, na branch do próprio PR:
 
 - **CI falhando** (`make verify`, `make smoke` ou hook de pre-commit): reproduza localmente, corrija a causa e dê push na mesma branch. Esta é a prioridade máxima depois de produção.
-- **Conflito com a `main`:** meça. Se for pequeno (até 3 arquivos e cerca de 40 linhas), resolva, rode a verificação completa e dê push. Se for grande, não resolva: o guardião fecha o PR, a spec continua `ready` na `main` e o próximo ciclo refaz o trabalho. Registre no relatório e encerre.
+- **Conflito com a `main`:** meça. Se for pequeno (até 3 arquivos e cerca de 40 linhas, sem contar trechos só de acréscimo), resolva, rode a verificação completa e dê push. Se for grande, não resolva: o guardião fecha o PR, a spec continua `ready` na `main` e o próximo ciclo refaz o trabalho. Registre no relatório e encerre.
 - **Comentários de revisão não resolvidos:** aplique as correções ou responda explicando por que não aplicou.
 - **CI verde, sem conflito, aberto há mais de uma hora:** o auto-merge falhou. Registre o bloqueio conforme a seção 6.
 
