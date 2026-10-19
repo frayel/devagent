@@ -2,10 +2,11 @@ name: Jules
 
 # Dispara o desenvolvedor e os especialistas (Sentinel, Palette, Bolt) pela API do Jules
 # e destrava sessões paradas esperando aprovação de plano ou resposta.
-# Cada execução faz uma "rodada": inicia a persona da hora (se ainda não
-# começou nesta hora), destrava sessões paradas e encerra em menos de 1 minuto.
+# Cada execução faz uma "rodada": inicia a próxima sessão se o caminho estiver
+# livre (sem sessão ativa, sem PR esperando merge, dentro do ritmo da cota),
+# destrava sessões paradas e encerra em menos de 1 minuto (ADR 012).
 # O relógio fica fora do GitHub: o cron-job.org chama a API de
-# workflow_dispatch com acao=rodada a cada 30 min. O cron do próprio GitHub foi
+# workflow_dispatch com acao=rodada a cada 5 min. O cron do próprio GitHub foi
 # desligado porque descartava a maior parte dos disparos agendados.
 on:
   workflow_dispatch:
@@ -36,6 +37,7 @@ jobs:
     env:
       JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
       JULES_LIMITE_DIARIO: ${{ vars.JULES_LIMITE_DIARIO }}
+      JULES_INTERVALO_MINUTOS: ${{ vars.JULES_INTERVALO_MINUTOS }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4

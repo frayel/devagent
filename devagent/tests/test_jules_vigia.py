@@ -1,4 +1,4 @@
-"""O laço do vigia: persona por hora, destravar a cada volta, erros não param."""
+"""O laço do vigia e a rodada: quem começa, quando espera, erros não param."""
 
 from __future__ import annotations
 
@@ -95,20 +95,98 @@ def test_erro_numa_volta_nao_encerra_o_laco(monkeypatch, relogio):
     ]
 
 
+def _rodada(monkeypatch, relogio, sessoes, prs=("livre", "")):
+    chamadas = _registrar(monkeypatch, relogio, sessoes)
+    monkeypatch.setattr(jules, "situacao_dos_prs", lambda: prs)
+    monkeypatch.delenv("JULES_LIMITE_DIARIO", raising=False)
+    monkeypatch.delenv("JULES_INTERVALO_MINUTOS", raising=False)
+    return chamadas
+
+
+def _sessao(persona: str, criada: str, estado: str = "COMPLETED") -> dict[str, Any]:
+    return {
+        "title": jules.PERSONAS[persona]["titulo"],
+        "createTime": criada,
+        "state": estado,
+    }
+
+
 def test_rodada_inicia_persona_da_hora_destrava_e_sai(monkeypatch, relogio):
     relogio.agora = datetime(2026, 10, 1, 6, 17, tzinfo=timezone.utc)
-    chamadas = _registrar(monkeypatch, relogio, [])
+    chamadas = _rodada(monkeypatch, relogio, [])
     assert jules.rodada(espera_minutos=5) == 0
     assert chamadas == [("iniciar", ("06:17", "seguranca")), ("destravar", "06:17")]
 
 
-def test_rodada_nao_repete_persona_ja_iniciada_na_hora(monkeypatch, relogio):
-    relogio.agora = datetime(2026, 10, 1, 7, 47, tzinfo=timezone.utc)
-    sessao = {
-        "title": jules.PERSONAS["desenvolvedor"]["titulo"],
-        "createTime": "2026-10-01T07:17:05Z",
-        "state": "COMPLETED",
-    }
-    chamadas = _registrar(monkeypatch, relogio, [sessao])
-    assert jules.rodada(espera_minutos=5) == 0
-    assert chamadas == [("destravar", "07:47")]
+def test_rodada_segue_na_mesma_hora_quando_a_sessao_acabou(monkeypatch, relogio):
+    # Antes, uma sessão por hora: a que terminava em 10 min sem nada a fazer
+    # deixava o agente parado 50 min. Agora a próxima começa na volta seguinte.
+    relogio.agora = datetime(2026, 10, 1, 5, 22, tzinfo=timezone.utc)
+    sessoes = [_sessao("desenvolvedor", "2026-10-01T05:05:00Z")]
+    chamadas = _rodada(monkeypatch, relogio, sessoes)
+    jules.rodada(espera_minutos=5)
+    assert chamadas[0] == ("iniciar", ("05:22", "desenvolvedor"))
+
+
+def test_especialista_que_perdeu_a_hora_entra_depois(monkeypatch, relogio):
+    relogio.agora = datetime(2026, 10, 1, 8, 40, tzinfo=timezone.utc)
+    sessoes = [_sessao("desenvolvedor", "2026-10-01T05:50:00Z")]
+    chamadas = _rodada(monkeypatch, relogio, sessoes)
+    jules.rodada(espera_minutos=5)
+    assert chamadas[0] == ("iniciar", ("08:40", "seguranca"))
+
+
+def test_especialista_que_ja_rodou_hoje_nao_repete(monkeypatch, relogio):
+    relogio.agora = datetime(2026, 10, 1, 9, 0, tzinfo=timezone.utc)
+    sessoes = [_sessao("seguranca", "2026-10-01T06:01:00Z")]
+    chamadas = _rodada(monkeypatch, relogio, sessoes)
+    jules.rodada(espera_minutos=5)
+    assert chamadas[0] == ("iniciar", ("09:00", "desenvolvedor"))
+
+
+def test_pr_esperando_merge_segura_a_proxima_sessao(monkeypatch, relogio):
+    chamadas = _rodada(monkeypatch, relogio, [], prs=("esperar", "PR #9 (rodando)"))
+    jules.rodada(espera_minutos=5)
+    assert chamadas == [("destravar", "05:40")]
+
+
+def test_pr_travado_chama_o_desenvolvedor_e_nao_o_especialista(monkeypatch, relogio):
+    relogio.agora = datetime(2026, 10, 1, 6, 5, tzinfo=timezone.utc)
+    chamadas = _rodada(
+        monkeypatch, relogio, [], prs=("travado", "PR #9 (falhou: test)")
+    )
+    jules.rodada(espera_minutos=5)
+    assert chamadas[0] == ("iniciar", ("06:05", "desenvolvedor"))
+
+
+def test_ritmo_da_cota_espalha_o_desenvolvedor(monkeypatch, relogio):
+    sessoes = [
+        _sessao("desenvolvedor", "2026-10-01T05:00:00Z"),
+        _sessao("seguranca", "2026-10-01T06:00:00Z"),
+    ]
+    chamadas = _rodada(monkeypatch, relogio, sessoes)
+    monkeypatch.setenv("JULES_LIMITE_DIARIO", "15")  # 11 sessões em 24 h: ~131 min
+    jules.rodada(espera_minutos=5)
+    assert chamadas == [("destravar", "05:40")]
+    relogio.agora = datetime(2026, 10, 1, 7, 12, tzinfo=timezone.utc)
+    jules.rodada(espera_minutos=5)
+    assert ("iniciar", ("07:12", "desenvolvedor")) in chamadas
+
+
+def test_intervalo_fixo_tem_precedencia(monkeypatch):
+    monkeypatch.setenv("JULES_LIMITE_DIARIO", "100")
+    monkeypatch.setenv("JULES_INTERVALO_MINUTOS", "0")
+    assert jules.intervalo_do_desenvolvedor() == timedelta(0)
+    monkeypatch.delenv("JULES_INTERVALO_MINUTOS")
+    assert jules.intervalo_do_desenvolvedor() == timedelta(minutes=15)
+
+
+def test_erro_na_rodada_ainda_destrava(monkeypatch, relogio):
+    chamadas = _rodada(monkeypatch, relogio, [])
+
+    def falha():
+        raise OSError("github fora")
+
+    monkeypatch.setattr(jules, "situacao_dos_prs", falha)
+    jules.rodada(espera_minutos=5)
+    assert chamadas == [("destravar", "05:40")]

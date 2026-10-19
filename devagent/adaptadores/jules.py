@@ -11,8 +11,8 @@ Uso:
     python -m devagent.adaptadores.jules iniciar auditor
     python -m devagent.adaptadores.jules iniciar seguranca | design | performance
     python -m devagent.adaptadores.jules destravar   # aprova planos e responde perguntas
-    python -m devagent.adaptadores.jules rodada      # uma volta: persona da hora + destravar, e sai
-                                                     # (chamada a cada 30 min pelo cron-job.org, ADR 010)
+    python -m devagent.adaptadores.jules rodada      # uma volta: inicia a próxima sessão se o caminho
+                                                     # estiver livre, destrava e sai (cron-job.org, ADRs 010 e 012)
     python -m devagent.adaptadores.jules vigiar      # laço contínuo; sem uso no Actions, cobra minuto parado
     python -m devagent.adaptadores.jules listar
     python -m devagent.adaptadores.jules encerrar <id da sessão ou URL da tarefa>
@@ -23,6 +23,10 @@ Variáveis de ambiente:
     JULES_SOURCE    opcional; padrão sources/github/<repositorio do devagent.toml>
     GH_TOKEN        opcional; lê o estado do PR de cada sessão (sem ele, a API
                     pública do GitHub, com limite menor)
+    JULES_LIMITE_DIARIO      opcional; tarefas do plano por 24 h. Define a cota e
+                             o ritmo do desenvolvedor (ADR 012)
+    JULES_INTERVALO_MINUTOS  opcional; intervalo mínimo entre sessões do
+                             desenvolvedor, no lugar do ritmo calculado pela cota
 
 O nome do produto e o repositório vêm do devagent.toml; os prompts só apontam
 para os arquivos do núcleo (devagent/CICLO.md e devagent/agents/).
@@ -44,6 +48,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from devagent.config import PROJETO
+from devagent.estado_github import _get as github_get
+from devagent.estado_github import eh_do_agente, status_ci
 
 API = "https://jules.googleapis.com/v1alpha"
 SOURCE = os.environ.get("JULES_SOURCE", f"sources/github/{PROJETO['repositorio']}")
@@ -87,9 +93,11 @@ PERSONAS = {
 ESPECIALISTA = (
     "Você é {nome}, especialista em {tema} deste repositório, não o desenvolvedor. "
     "Leia e siga devagent/agents/especialistas.md: as regras comuns e a seção "
-    "{nome}. Ignore o ciclo de decisão de devagent/CICLO.md. Se já existir PR aberto "
-    "do agente, encerre sem mudanças. Entregue no máximo um PR, com título "
-    'iniciado por "{prefixo}". Não peça aprovação e não faça perguntas.'
+    "{nome}. Se já existir PR aberto do agente, encerre sem mudanças. Entregue no "
+    'máximo um PR, com título iniciado por "{prefixo}". Se não achar nada que '
+    "valha um PR, não abra PR só com o diário: siga a regra 7, que passa a sessão "
+    "para o ciclo do desenvolvedor de devagent/CICLO.md. Não peça aprovação e não "
+    "faça perguntas."
 )
 PERSONAS.update(
     {
@@ -338,33 +346,119 @@ def destravar(espera_minutos: int) -> int:
     return 0
 
 
-# Persona de cada hora (UTC) no relógio próprio. Nas demais horas, o
-# desenvolvedor. Em BRT: Sentinel 03h, Bolt 09h, Palette 15h.
+# Persona de cada hora (UTC): a partir dessa hora, o especialista do dia é o
+# primeiro da fila até rodar. Em BRT: Sentinel 03h, Bolt 09h, Palette 15h.
+# O vigia (sem uso) ainda inicia uma persona por hora cheia.
 PERSONA_DA_HORA = {6: "seguranca", 12: "performance", 18: "design"}
 
+# PR com CI verde ainda não mesclado só é "travado" depois deste tempo
+# (CICLO.md, Passo 2: o auto-merge falhou).
+PR_VERDE_TRAVADO = timedelta(minutes=60)
 
-def ja_iniciada_nesta_hora() -> bool:
-    hora_atual = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
-    titulos = tuple(PERSONAS[x]["titulo"] for x in CONSTRUTORAS)
-    return any(
-        s.get("title", "").startswith(titulos) and _data(s, "createTime") >= hora_atual
-        for s in sessoes_do_repo()
-    )
+
+def persona_da_vez(sessoes: list[dict[str, Any]], agora: datetime) -> str:
+    """O especialista do dia cuja hora já chegou e que ainda não rodou desde
+    ela; senão, o desenvolvedor. Um especialista que perde a hora porque o
+    desenvolvedor estava ocupado entra assim que a sessão terminar."""
+    for hora, persona in sorted(PERSONA_DA_HORA.items()):
+        if agora.hour < hora:
+            break
+        desde = agora.replace(hour=hora, minute=0, second=0, microsecond=0)
+        titulo = PERSONAS[persona]["titulo"]
+        if not any(
+            s.get("title", "").startswith(titulo) and _data(s, "createTime") >= desde
+            for s in sessoes
+        ):
+            return persona
+    return "desenvolvedor"
+
+
+def intervalo_do_desenvolvedor() -> timedelta:
+    """Menor espaço entre duas sessões do desenvolvedor.
+
+    JULES_INTERVALO_MINUTOS manda, se existir. Senão, com JULES_LIMITE_DIARIO,
+    a cota que sobra depois da reserva é espalhada pelas 24 h, para não ser
+    gasta numa rajada e deixar o agente parado o resto do dia. Sem nenhuma
+    das duas, não há espera: a próxima sessão começa quando a anterior acaba.
+    """
+    fixo = os.environ.get("JULES_INTERVALO_MINUTOS", "").strip()
+    if fixo.isdigit():
+        return timedelta(minutes=int(fixo))
+    limite = os.environ.get("JULES_LIMITE_DIARIO", "").strip()
+    if limite.isdigit() and int(limite) > RESERVA_DIARIA:
+        return timedelta(minutes=24 * 60 / (int(limite) - RESERVA_DIARIA))
+    return timedelta(0)
+
+
+def situacao_dos_prs() -> tuple[str, str]:
+    """('livre' | 'esperar' | 'travado', descrição) dos PRs abertos do agente.
+
+    esperar: o CI ainda roda, ou passou há pouco e o auto-merge vai mesclar.
+    Uma sessão nova agora só acharia o PR aberto e sairia sem entregar nada.
+    travado: CI falhou, ou verde há mais de PR_VERDE_TRAVADO; é trabalho do
+    desenvolvedor (Passo 2), nunca de um especialista.
+    """
+    repo = PROJETO["repositorio"]
+    agora = datetime.now(timezone.utc)
+    travado = ""
+    for pr in github_get(f"/repos/{repo}/pulls?state=open&per_page=50"):
+        if not eh_do_agente(pr):
+            continue
+        ci = status_ci(repo, pr["head"]["sha"])
+        idade = agora - _data({"createTime": pr.get("created_at")}, "createTime")
+        desc = f"PR #{pr['number']} ({ci})"
+        if ci in ("rodando", "sem_ci") or (ci == "passou" and idade < PR_VERDE_TRAVADO):
+            return "esperar", desc
+        travado = travado or desc
+    return ("travado", travado) if travado else ("livre", "")
+
+
+def motivo_para_esperar(
+    persona: str, sessoes: list[dict[str, Any]], agora: datetime
+) -> str:
+    if persona != "desenvolvedor":
+        return ""
+    intervalo = intervalo_do_desenvolvedor()
+    titulo = PERSONAS["desenvolvedor"]["titulo"]
+    datas = [
+        _data(s, "createTime") for s in sessoes if s.get("title", "").startswith(titulo)
+    ]
+    if datas and agora - max(datas) < intervalo:
+        falta = intervalo - (agora - max(datas))
+        return (
+            f"desenvolvedor: ritmo da cota, próxima sessão em "
+            f"{int(falta.total_seconds() // 60) + 1} min."
+        )
+    return ""
 
 
 def rodada(espera_minutos: int) -> int:
-    """Uma volta só: inicia a persona da hora (se ainda não foi iniciada nesta
-    hora) e destrava as sessões paradas. Leva segundos e termina, para o job
-    do Actions não ficar ligado à toa entre uma volta e outra.
+    """Uma volta só, em segundos, para o job do Actions não ficar ligado à toa.
+
+    Inicia a próxima sessão assim que o caminho estiver livre (nenhuma sessão
+    que altera código ativa, nenhum PR do agente esperando o merge, ritmo da
+    cota respeitado) e destrava as sessões paradas. Não há mais uma sessão por
+    hora: com o relógio externo chamando a cada poucos minutos, uma sessão que
+    termina sem nada a fazer é seguida pela próxima na volta seguinte (ADR 012).
     """
-    persona = PERSONA_DA_HORA.get(datetime.now(timezone.utc).hour, "desenvolvedor")
+    agora = datetime.now(timezone.utc)
     try:
-        if ja_iniciada_nesta_hora():
-            print(f"{persona}: já iniciada nesta hora.")
+        sessoes = sessoes_do_repo()
+        persona = persona_da_vez(sessoes, agora)
+        situacao, desc = situacao_dos_prs()
+        if situacao == "esperar":
+            print(f"{persona}: aguardando o merge de {desc}.")
         else:
-            iniciar(persona, dry_run=False)
+            if situacao == "travado" and persona != "desenvolvedor":
+                print(f"{persona} adiado: {desc} precisa do desenvolvedor.")
+                persona = "desenvolvedor"
+            motivo = motivo_para_esperar(persona, sessoes, agora)
+            if motivo:
+                print(motivo)
+            else:
+                iniciar(persona, dry_run=False)
     except Exception as erro:  # noqa: BLE001
-        print(f"::warning::iniciar {persona} falhou: {erro}")
+        print(f"::warning::rodada não iniciou sessão: {erro}")
     return destravar(espera_minutos)
 
 
