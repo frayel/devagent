@@ -6,6 +6,12 @@ O software construído é um painel de apoio à decisão para investidores da B3
 
 > Conteúdo informativo gerado automaticamente. Não constitui recomendação de investimento.
 
+## Ver em produção
+
+O painel está publicado no Render: **https://devagent-vb52.onrender.com/**
+
+O serviço roda no plano gratuito do Render, que desliga a instância depois de um período sem acessos. A primeira visita após essa pausa acorda o servidor e demora mais para responder. Ao subir, o processo reinicia os laços de coleta e o monitor de sistema, e os painéis podem aparecer vazios ou desatualizados por alguns minutos, até a nova coleta terminar. Se isso acontecer, aguarde um pouco e recarregue a página. A página `/sistema` mostra quando a instância subiu e o estado de cada fonte.
+
 ## Por que este experimento
 
 Agentes de código já resolvem bem tarefas isoladas: corrigir um bug, escrever uma função, abrir um PR a partir de uma issue. Quase sempre há uma pessoa em volta deles, decidindo o que fazer, revisando e consertando quando algo dá errado. O que ainda não se sabe é o que acontece quando essa pessoa sai da sala por semanas.
