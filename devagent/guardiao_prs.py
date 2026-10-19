@@ -224,12 +224,55 @@ def ci_falhou(branch: str, run_id: str) -> None:
     print(f"Cobrança {tentativas + 1} enviada ao PR #{pr['number']}")
 
 
-def medir_conflito(branch: str) -> tuple[list[str], int] | None:
-    """Faz um merge de teste da branch na main. None = sem conflito."""
-    sh("git", "fetch", "-q", "origin", "main", branch)
-    sh("git", "checkout", "-q", "--detach", "origin/main")
+def contar_conflito(texto: str) -> tuple[int, int]:
+    """Conta as linhas em conflito de um arquivo mesclado no estilo diff3.
+
+    Devolve (reais, acrescimo). Um trecho cuja base está vazia é só acréscimo:
+    os dois lados inseriram blocos novos no mesmo ponto e nenhum mexeu no que
+    já existia, então a resolução é manter os dois. É o caso típico de dois PRs
+    que acrescentam estilos no fim do `tema.css` ou entradas no `STATE.md`
+    (#362 contra #358). Esses trechos não medem o tamanho do conflito.
+    """
+    reais = acrescimo = 0
+    secao = None  # "nosso", "base", "deles"
+    lados = base = 0
+    for linha in texto.splitlines():
+        if linha.startswith("<<<<<<<"):
+            secao, lados, base = "nosso", 0, 0
+        elif secao and linha.startswith("|||||||"):
+            secao = "base"
+        elif secao and linha.startswith("======="):
+            secao = "deles"
+        elif secao and linha.startswith(">>>>>>>"):
+            if base == 0:
+                acrescimo += lados
+            else:
+                reais += lados
+            secao = None
+        elif secao == "base":
+            base += 1
+        elif secao:
+            lados += 1
+    return reais, acrescimo
+
+
+def medir_conflito_entre(base: str, ref: str) -> tuple[list[str], int, int] | None:
+    """Merge de teste de `ref` em `base`. None = sem conflito.
+
+    Devolve (arquivos, linhas reais, linhas de acréscimo dos dois lados).
+    """
+    sh("git", "checkout", "-q", "--detach", base)
     r = subprocess.run(
-        ["git", "merge", "--no-commit", "--no-ff", f"origin/{branch}"],
+        [
+            "git",
+            "-c",
+            "merge.conflictStyle=diff3",
+            "merge",
+            "--no-commit",
+            "--no-ff",
+            ref,
+        ],
+        check=False,
         capture_output=True,
         text=True,
     )
@@ -237,26 +280,29 @@ def medir_conflito(branch: str) -> tuple[list[str], int] | None:
         if r.returncode == 0:
             return None
         arquivos = sh("git", "diff", "--name-only", "--diff-filter=U").split()
-        linhas = 0
+        reais = acrescimo = 0
         for arq in arquivos:
-            dentro = False
             try:
                 with open(arq, encoding="utf-8", errors="replace") as f:
-                    for linha in f:
-                        if linha.startswith("<<<<<<<"):
-                            dentro = True
-                        elif linha.startswith(">>>>>>>"):
-                            dentro = False
-                        elif dentro and not linha.startswith("======="):
-                            linhas += 1
+                    r_arq, a_arq = contar_conflito(f.read())
+                reais += r_arq
+                acrescimo += a_arq
+                if r_arq == 0 and a_arq == 0:
+                    reais += CONFLITO_MAX_LINHAS + 1  # removido/renomeado: grande
             except OSError:
-                linhas += (
+                reais += (
                     CONFLITO_MAX_LINHAS + 1
                 )  # arquivo removido/binário: conta como grande
-        return arquivos, linhas
+        return arquivos, reais, acrescimo
     finally:
         sh("git", "merge", "--abort", check=False)
         sh("git", "reset", "-q", "--hard", check=False)
+
+
+def medir_conflito(branch: str) -> tuple[list[str], int, int] | None:
+    """Faz um merge de teste da branch na main. None = sem conflito."""
+    sh("git", "fetch", "-q", "origin", "main", branch)
+    return medir_conflito_entre("origin/main", f"origin/{branch}")
 
 
 PALAVRA_CHAVE = re.compile(
@@ -371,8 +417,13 @@ def varredura() -> None:
         conflito = medir_conflito(pr["headRefName"])
         if conflito is None:
             continue
-        arquivos, linhas = conflito
+        arquivos, linhas, acrescimo = conflito
         lista = "\n".join(f"- `{a}`" for a in arquivos)
+        if acrescimo:
+            lista += (
+                f"\n\nAlém disso, {acrescimo} linhas são só acréscimo dos dois lados "
+                "(a base do trecho está vazia): mantenha os dois blocos, sem escolher um."
+            )
         if len(arquivos) > CONFLITO_MAX_ARQUIVOS or linhas > CONFLITO_MAX_LINHAS:
             fechar(
                 pr,
