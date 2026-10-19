@@ -164,3 +164,4 @@
 - Correção: implementado redesign da interface segundo o guia visual (spec 008).
 
 - (031) Scanner de Capitulação implementado.
+- Spec 068: Motor de regras de decisão do Consultor (Comprar, Vender, Aguardar).

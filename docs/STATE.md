@@ -5,7 +5,7 @@
 ## Experiência
 
 - Última revisão de experiência: 2026-10-19
-- Painéis, seções ou telas acrescentados desde a última revisão: 0.
+- Painéis, seções ou telas acrescentados desde a última revisão: 1.
 
 ## Manutenção
 
@@ -14,6 +14,11 @@
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
+
+- Spec 068b (Consultor Regras de Decisão):
+  - Lógica de avaliação de regras de análise técnica.
+  - Endpoint /api/consultor com o histórico completo e cálculos executados on the fly.
+  - Interface do consultor construída agrupada por recomendações.
 
 - Spec 080 (Simplificação de Painéis de Alerta):
   - Modificado o `app/templates/index.html` para não renderizar a estrutura completa de alertas (cards e tabelas) quando a lista de alertas está vazia.
