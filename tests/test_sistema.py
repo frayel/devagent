@@ -445,3 +445,13 @@ def test_sistema_usa_a_senha_do_consultor(monkeypatch):
     resposta = client.get("/api/sistema", auth=("consultor", "s3nha"))
     assert resposta.status_code == 200
     assert resposta.json()["geral"]["nivel"] in {s.OK, s.ATENCAO, s.PROBLEMA}
+
+
+def test_api_sistema_cumpre_o_contrato_de_saude_do_nucleo(monkeypatch):
+    """devagent/saude.py (ADR 016) só lê `parcial` e `geral`."""
+    monkeypatch.delenv("CONSULTOR_SENHA", raising=False)
+    dados = client.get("/api/sistema").json()
+    assert dados["parcial"] is False  # monitor desligado nos testes
+    assert dados["geral"]["nivel"] in {s.OK, s.ATENCAO, s.PROBLEMA}
+    for p in dados["geral"]["pendentes"]:
+        assert {"nivel", "grupo", "nome", "resumo", "detalhe"} <= set(p)

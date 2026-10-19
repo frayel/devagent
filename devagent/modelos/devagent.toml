@@ -15,5 +15,11 @@ verify = "make verify"
 smoke = "make smoke"
 audit = "make audit"
 
+[saude]
+# Endpoint JSON de saúde do produto (contrato em devagent/saude.py). Vazio desliga.
+caminho = ""
+# Usuário do HTTP Basic, se o endpoint for protegido; a senha vem de SAUDE_SENHA.
+usuario = ""
+
 [deploy]
 adaptador = "render"

@@ -119,3 +119,61 @@ jobs:
                       -q '.[] | select(.title | startswith("Produção incorreta")) | .number'); do
             gh issue close "$n" --comment "Auditoria passou em $RUN_URL."
           done
+
+  # Página de saúde do produto (ADR 016 do núcleo): problemas viram uma issue
+  # `sistema-com-problema`, tratada no Passo 1 do CICLO.md.
+  saude:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Ler a página de saúde
+        id: saude
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+          SAUDE_SENHA: ${{ secrets.SAUDE_SENHA }}
+        run: |
+          set +e
+          chave=$(python3 -m devagent.saude --issue corpo.md)
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "chave=$chave" >> "$GITHUB_OUTPUT"
+          python3 -m devagent.saude --espera 0 >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+          if [ "$code" = "3" ]; then
+            echo "::warning::Página de saúde indisponível. Se ela pede senha, crie o secret SAUDE_SENHA."
+          fi
+          exit 0
+
+      - name: Abrir ou atualizar issue
+        if: steps.saude.outputs.code == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHAVE: ${{ steps.saude.outputs.chave }}
+        run: |
+          gh label create sistema-com-problema --color B60205 \
+            --description "A página de saúde de produção acusa problema" 2>/dev/null || true
+          existing=$(gh issue list --label sistema-com-problema --state open --json number -q '.[0].number // empty')
+          if [ -z "$existing" ]; then
+            gh issue create --title "Saúde de produção acusa problema" \
+              --label sistema-com-problema --body-file corpo.md
+            exit 0
+          fi
+          anterior=$(gh issue view "$existing" --json body -q .body | sed -n 's/.*<!-- saude: \([0-9a-f]*\) -->.*/\1/p')
+          gh issue edit "$existing" --body-file corpo.md
+          if [ "$anterior" != "$CHAVE" ]; then
+            # Problemas diferentes: o bloqueio anterior não vale para eles.
+            gh issue edit "$existing" --remove-label bloqueado 2>/dev/null || true
+            gh issue comment "$existing" --body "Os problemas mudaram. A descrição da issue foi atualizada."
+          fi
+
+      - name: Fechar issue se não há mais problema
+        if: steps.saude.outputs.code == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for n in $(gh issue list --label sistema-com-problema --state open --json number -q '.[].number'); do
+            gh issue close "$n" --comment "A página de saúde não acusa mais problema."
+          done

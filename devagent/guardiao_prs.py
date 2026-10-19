@@ -262,7 +262,7 @@ def medir_conflito(branch: str) -> tuple[list[str], int] | None:
 PALAVRA_CHAVE = re.compile(
     r"(?i)\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)[: ]+#(\d+)"
 )
-ISSUES_DE_PRODUCAO = {"deploy-falhou", "producao-incorreta"}
+ISSUES_DE_PRODUCAO = {"deploy-falhou", "producao-incorreta", "sistema-com-problema"}
 DIAS_FECHAR_CITADAS = 7
 
 
