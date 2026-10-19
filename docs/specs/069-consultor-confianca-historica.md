@@ -1,7 +1,7 @@
 ---
 id: 069
 titulo: Consultor · confiança medida pelo histórico de cada regra
-status: ready
+status: draft
 esforco: M
 ---
 
