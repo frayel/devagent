@@ -1,3 +1,8 @@
+## 2026-10-19
+- **O que fiz:** Padronizei a apresentação dos indicadores 'Apetite a Risco' e 'Rotação' no painel 'Maré do mercado' em `app/templates/index.html` para utilizarem a macro `kpi` fornecida por `app/templates/componentes.html`, substituindo a estrutura HTML manual e respeitando o design system (docs/DESIGN.md).
+- **Por que fiz:** O guia visual instrui a não escrever marcação manual (`<div class="hero num...">`, `<div class="rot...">`) se macros já fornecem essa consistência, especialmente para os painéis principais.
+- **O que aprendi:** Ao mesclar HTML gerado em Jinja e passá-lo para uma macro que aceita string segura, o uso do filtro `| safe` associado à concatenação com parênteses, bem como a atribuição de estilo (`texto-alta`, `texto-baixa`) em variáveis Jinja separadas, é essencial para manter a macro limpa e evitar injeções ou bugs visuais.
+- **O que evitar:** Deixar componentes pequenos e avulsos escaparem das macros do sistema de design; todos devem compartilhar a base padrão para garantir legibilidade.
 ## 2026-10-16
 - **O que fiz:** Refatorei os painéis 'Clima Global' e 'Motores do Índice' em `app/templates/index.html` para utilizarem a macro padrão `painel` em vez de tags HTML manuais (violava docs/DESIGN.md seção 4). Tratei os casos de ausência de dados usando `estado('indisponivel')`.
 - **O que aprendi:** Variáveis locais do Jinja (`{% set motores_span = ... %}`) são ótimas para calcular parâmetros complexos (como a largura responsiva de `span-6` vs `span-12`) antes de chamar a macro `painel`, mantendo o código da chamada mais limpo.

@@ -68,22 +68,20 @@
     {% if apetite_risco or rotacao_capital %}
     <div class="gauges-pequenos espaco-topo">
         {% if apetite_risco %}
-        <div>
-            <div class="rot texto-centro espaco-fundo-pequeno">Apetite a Risco <span class="sub bloco">(SMLL - IBOV)</span></div>
-            <div class="hero num {% if apetite_risco.estado == 'Tomando risco' %}texto-alta{% elif apetite_risco.estado == 'Defensivo' %}texto-baixa{% else %}texto-neutro{% endif %} texto-centro texto-medio">
-                {{ apetite_risco.estado }}
-            </div>
-            {{ gauge(apetite_risco.diferenca, "SMLL − IBOV hoje", -2.0, 2.0, "{:+.2f} p.p.", divergente=True, resumo="Small caps menos Ibovespa hoje", escala=False) }}
+        <div class="texto-centro">
+            {% set apetite_class = 'texto-alta' if apetite_risco.estado == 'Tomando risco' else 'texto-baixa' if apetite_risco.estado == 'Defensivo' else 'texto-neutro' %}
+            {% set apetite_valor = ('<span class="' ~ apetite_class ~ ' texto-medio">' ~ apetite_risco.estado ~ '</span>') | safe %}
+            {% set apetite_rotulo = 'Apetite a Risco <span class="sub bloco">(SMLL - IBOV)</span>' | safe %}
+            {{ kpi(apetite_valor, apetite_rotulo, gauge(apetite_risco.diferenca, "SMLL − IBOV hoje", -2.0, 2.0, "{:+.2f} p.p.", divergente=True, resumo="Small caps menos Ibovespa hoje", escala=False), True) }}
         </div>
         {% endif %}
 
         {% if rotacao_capital %}
-        <div>
-            <div class="rot texto-centro espaco-fundo-pequeno">Rotação <span class="sub bloco">(Bancos - Cmdts)</span></div>
-            <div class="hero num {% if rotacao_capital.estado == 'Para Bancos' or rotacao_capital.estado == 'Para Commodities' %}texto-alta{% else %}texto-neutro{% endif %} texto-centro texto-medio">
-                {{ rotacao_capital.estado }}
-            </div>
-            {{ gauge(rotacao_capital.diferenca, "bancos − commodities", -3.0, 3.0, "{:+.2f} p.p.", divergente=True, resumo="Variação de bancos menos commodities hoje", escala=["Para Commodities", "Para Bancos"]) }}
+        <div class="texto-centro">
+            {% set rotacao_class = 'texto-alta' if rotacao_capital.estado == 'Para Bancos' or rotacao_capital.estado == 'Para Commodities' else 'texto-neutro' %}
+            {% set rotacao_valor = ('<span class="' ~ rotacao_class ~ ' texto-medio">' ~ rotacao_capital.estado ~ '</span>') | safe %}
+            {% set rotacao_rotulo = 'Rotação <span class="sub bloco">(Bancos - Cmdts)</span>' | safe %}
+            {{ kpi(rotacao_valor, rotacao_rotulo, gauge(rotacao_capital.diferenca, "bancos − commodities", -3.0, 3.0, "{:+.2f} p.p.", divergente=True, resumo="Variação de bancos menos commodities hoje", escala=["Para Commodities", "Para Bancos"]), True) }}
         </div>
         {% endif %}
     </div>
