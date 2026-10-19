@@ -50,6 +50,7 @@ from typing import Any
 from devagent.config import PROJETO
 from devagent.estado_github import _get as github_get
 from devagent.estado_github import eh_do_agente, status_ci
+from devagent.fila_specs import instrucao, specs_prontas
 
 API = "https://jules.googleapis.com/v1alpha"
 SOURCE = os.environ.get("JULES_SOURCE", f"sources/github/{PROJETO['repositorio']}")
@@ -341,11 +342,29 @@ def encerrar_zumbis(sessoes: list[dict[str, Any]], agora: datetime) -> list[str]
     return encerradas
 
 
+def prompt_de(persona: str) -> str:
+    """Prompt da sessão; o do desenvolvedor já traz a próxima spec da fila.
+
+    A ordem do ciclo vive no CICLO.md, mas o agente já pulou o Passo 4 e
+    escreveu spec nova com doze specs ready esperando (PR #356). Dizer no
+    prompt qual spec é a próxima evita a escolha errada antes que ela aconteça
+    (ADR 015).
+    """
+    texto = PERSONAS[persona]["prompt"]
+    if persona != "desenvolvedor":
+        return texto
+    try:
+        fila = instrucao(specs_prontas())
+    except OSError:
+        fila = ""
+    return f"{texto} {fila}" if fila else texto
+
+
 def iniciar(persona: str, dry_run: bool) -> int:
     p = PERSONAS[persona]
     corpo = {
         "title": p["titulo"],
-        "prompt": p["prompt"],
+        "prompt": prompt_de(persona),
         "sourceContext": {
             "source": SOURCE,
             "githubRepoContext": {"startingBranch": "main"},

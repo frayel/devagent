@@ -24,6 +24,8 @@ import urllib.request
 from datetime import datetime, timezone
 from typing import Any
 
+from devagent.fila_specs import instrucao, specs_prontas
+
 API = "https://api.github.com"
 
 
@@ -137,11 +139,18 @@ def main() -> int:
     for i in estado["issues"]:
         print(f"  #{i['numero']} {i['labels']} {i['titulo']}")
 
+    prontas = specs_prontas()
+    print(f"\nSpecs ready na fila: {len(prontas)}")
+    for p in prontas[:5]:
+        print(f"  {p.name}")
+
     if agente:
         print(
             "\n>> Existe PR do agente aberto: siga o Passo 2 (destravar o PR). "
             "Não comece trabalho novo."
         )
+    elif prontas:
+        print(f"\n>> {instrucao(prontas)}")
     return 0
 
 
