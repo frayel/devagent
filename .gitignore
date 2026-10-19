@@ -3,3 +3,4 @@ data.db
 .venv/
 server.log
 telas/
+painel.db
