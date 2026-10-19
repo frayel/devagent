@@ -466,3 +466,13 @@
 | Saúde Técnica: Otimização do Collector Volume Alerts | Responde: Podemos reduzir a lentidão da busca no yfinance? Originalidade: Migra a coleta para a brapi que responde em lote com mais eficiência. | brapi | M | Médio |
 | Capacidade nova: Radar de Inversão de Volatilidade | Responde: A volatilidade está secando após expansão? Originalidade: Mostra quais ativos estão com range histórico encolhendo, antecedendo fortes movimentos. | yfinance | M | Baixo |
 | Capacidade nova: Termômetro Institucional | Responde: O lote médio está aumentando no spread intraday? Originalidade: Detecta a presença de formadores de mercado ou fundos atuando silenciosamente. | brapi | M | Alto |
+
+## Ideias (Passo 7 - 2026-10-19-0314)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: Mini-painel de Risco Integrado | Responde: Como está o risco agora sem rolar a página? Originalidade: Condensa dispersão, alertas e manchete num único widget fixo no topo. | N/A | M | Baixo |
+| Saúde Técnica: Pool de Conexões SQLite | Responde: O banco trava sob múltiplas leituras? Originalidade: Otimiza a abertura de conexões que atualmente é feita por módulo. | Banco SQLite | M | Médio |
+| Capacidade Nova: Radar de Exaustão de Alta | Responde: Quais ativos estão perdendo força após rali intraday? Originalidade: Busca ativos que subiram forte mas recuaram deixando longa sombra superior. | yfinance | M | Baixo |
+| Capacidade Nova: Mapa de Correlação Intraday | Responde: Quem lidera e quem ignora o Ibovespa hoje? Originalidade: Calcula correlação em tempo real da última hora entre as ações de maior peso e o índice. | yfinance | M | Baixo |
+| Poda: Simplificação de Painéis de Alerta | Responde: A tela está poluída com alertas inativos? Originalidade: Funde os painéis de "Alertas Intraday" vazios em uma única linha descritiva quando não há dados. | N/A | P | Baixo |
