@@ -23,6 +23,11 @@ Regras (mantenha em sincronia com devagent/CICLO.md, Passos 1 e 4):
        vazio, passou no CI e foi mergeado como se tivesse entregue a spec.
        Vale em `pull_request` no CI ou com `--exigir-alteracao`; num push na
        main a base é o próprio HEAD e a regra não se aplica.
+    6. PR só de registro não entra: se tudo o que muda são relatórios de
+       execução ou diários de persona, a execução não entregou nada e o PR
+       só ocupa a fila (o #326, do Sentinel, só trazia o diário). Exceção:
+       o corpo do PR fecha issues (`Closes #N`), como no Passo 6. Vale onde
+       a regra 5 vale (ADR 012).
 
 Uma regra nunca é afrouxada no mesmo PR que corrige o que ela aponta
 (README do núcleo, separação de poderes).
@@ -31,6 +36,7 @@ Uma regra nunca é afrouxada no mesmo PR que corrige o que ela aponta
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -47,6 +53,9 @@ PADRAO_DOCUMENTOS = {
     "estado": "docs/STATE.md",
     "secao_correcoes": "Correções",
 }
+# Prefixos de caminho que só registram a execução (relatório, diário).
+PADRAO_REGISTROS = ("docs/runs/", ".jules/")
+FECHA_ISSUE = re.compile(r"\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\s+#\d+", re.I)
 
 STATUS = re.compile(r"^status:\s*([\w-]+)\s*$", re.MULTILINE)
 ID = re.compile(r"^id:\s*0*(\d+)\s*$", re.MULTILINE)
@@ -64,6 +73,22 @@ class Resultado:
 
 def documentos() -> dict[str, str]:
     return {**PADRAO_DOCUMENTOS, **CONFIG.get("disciplina", {})}
+
+
+def registros() -> tuple[str, ...]:
+    return tuple(CONFIG.get("disciplina", {}).get("registros", PADRAO_REGISTROS))
+
+
+def corpo_do_pr() -> str:
+    """Corpo do PR no CI (evento pull_request); vazio fora dele."""
+    caminho = os.environ.get("GITHUB_EVENT_PATH")
+    if not caminho or not Path(caminho).is_file():
+        return ""
+    try:
+        evento = json.loads(Path(caminho).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ""
+    return str((evento.get("pull_request") or {}).get("body") or "")
 
 
 def git(*args: str, raiz: Path) -> str | None:
@@ -173,6 +198,22 @@ def conferir(
             "entrega nada: faça commit do trabalho nesta branch ou feche o PR. "
             "Se a sessão perdeu as mudanças, devolva a spec para `ready` e "
             "registre o motivo no relatório."
+        )
+
+    # Regra 6: PR só de registro.
+    prefixos = registros()
+    if (
+        exigir_alteracao
+        and alterados
+        and all(a.startswith(prefixos) for a in alterados)
+        and not FECHA_ISSUE.search(corpo_do_pr())
+    ):
+        res.falha(
+            "O PR só altera registros da execução ("
+            + ", ".join(sorted(alterados))
+            + "). Execução sem entrega não abre PR: siga para o próximo passo do "
+            "ciclo nesta mesma sessão e leve o registro no PR que ele produzir "
+            "(CICLO.md, seção 4; especialistas.md, regra 7)."
         )
 
     fechadas_novas: list[str] = []

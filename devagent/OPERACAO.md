@@ -27,7 +27,7 @@ Todos ficam em `.github/workflows/` porque o GitHub exige. São do núcleo; o pr
 | `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch; fecha as issues citadas com `Closes/Fixes/Resolves #N` no título, corpo ou commits do PR (exceto `deploy-falhou` e `producao-incorreta`) |
 | `deploy-check.yml` | após o auto-merge, a cada 6 h, manual | consulta a plataforma (`devagent/adaptadores/render_status.py`); abre ou fecha issues `deploy-falhou`; dispara a auditoria quando o deploy fica live |
 | `auditoria-producao.yml` | horários do projeto, após deploy | `make audit` contra produção; abre ou fecha issues `producao-incorreta` |
-| `jules.yml` | `workflow_dispatch` com `acao=rodada` a cada 30 min, chamado de fora pelo cron-job.org (ADR 010); manual | `rodada` (`devagent/adaptadores/jules.py rodada`): inicia a persona da hora se ainda não começou nesta hora (Sentinel 03h, Bolt 09h, Palette 15h BRT, desenvolvedor nas demais; pula se uma sessão que altera código estiver ativa ou a cota de `JULES_LIMITE_DIARIO` chegar à reserva de 4), aprova planos pendentes, responde perguntas paradas há 5 min e encerra. Menos de 1 min por execução. Sem `schedule`: o cron do GitHub descarta a maior parte dos disparos frequentes |
+| `jules.yml` | `workflow_dispatch` com `acao=rodada` a cada 5 min, chamado de fora pelo cron-job.org (ADRs 010 e 012); manual | `rodada` (`devagent/adaptadores/jules.py rodada`): inicia a próxima sessão assim que o caminho estiver livre: nenhuma sessão que altera código ativa, nenhum PR do agente com CI rodando ou esperando o auto-merge, e o ritmo da cota respeitado (`JULES_LIMITE_DIARIO` ou `JULES_INTERVALO_MINUTOS`). O especialista do dia (Sentinel a partir das 03h, Bolt das 09h, Palette das 15h BRT) é o primeiro da fila até rodar; nas demais vezes, o desenvolvedor. PR do agente travado chama o desenvolvedor, nunca um especialista. Também aprova planos pendentes, responde perguntas paradas há 5 min e encerra. Menos de 1 min por execução. Sem `schedule`: o cron do GitHub descarta a maior parte dos disparos frequentes |
 | `auditoria-llm.yml` | horário do projeto, manual | cria a sessão do auditor LLM pela API do Jules |
 | `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | `devagent/guardiao_prs.py`: cobra `@jules` (até 3x), fecha PR sem reação em 3 h, com conflito grande (> 3 arquivos ou > 40 linhas) ou substituído (`Substitui #N`); abre issue `tentativa-falhou`; fecha issues citadas com `Closes #N` em PRs mergeados nos últimos 7 dias; apaga branches órfãs com mais de 24 h |
 | `auditoria-achados.yml` | de hora em hora e após merge de PR `auditoria:` | `devagent/auditoria/achados_para_issues.py`: abre issues para os achados do auditor LLM em `docs/auditoria/achados/` |
@@ -48,7 +48,7 @@ Configuração, uma vez por repositório:
    | Campo | Valor |
    |---|---|
    | URL | `https://api.github.com/repos/<dono>/<repo>/actions/workflows/jules.yml/dispatches` |
-   | Agenda | a cada 30 min |
+   | Agenda | a cada 5 min (o repositório é público: minutos do Actions não são cobrados; ADR 012) |
    | Método | `POST` |
    | Cabeçalhos | `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`, `Content-Type: application/json`, `User-Agent: devagent-cron` |
    | Corpo | `{"ref":"main","inputs":{"acao":"rodada"}}` |
@@ -65,7 +65,8 @@ Disparos duplicados não causam dano: as execuções do `jules.yml` são seriali
 | `RENDER_SERVICE_ID` | secret do GitHub e ambiente do Jules | id `srv-...` do web service |
 | `RENDER_DEPLOY_HOOK_URL` | ambiente do Jules, opcional | disparo manual de deploy (Passo 3) |
 | `JULES_API_KEY` | secret do GitHub | criar e destravar sessões do Jules |
-| `JULES_LIMITE_DIARIO` | variável (não secret) do GitHub, opcional | tarefas do plano do Jules por 24 h (15, 100 ou 300); o desenvolvedor para ao chegar a 4 do limite, reservando a cota dos especialistas e do auditor |
+| `JULES_LIMITE_DIARIO` | variável (não secret) do GitHub, recomendada | tarefas do plano do Jules por 24 h (15, 100 ou 300); o desenvolvedor para ao chegar a 4 do limite, reservando a cota dos especialistas e do auditor, e espaça as sessões dele em 24 h / (limite − 4): ~131 min no gratuito, ~15 min no Pro, ~5 min no Ultra |
+| `JULES_INTERVALO_MINUTOS` | variável do GitHub, opcional | intervalo mínimo, em minutos, entre sessões do desenvolvedor; substitui o ritmo calculado pela cota (`0` = sem espera) |
 | token do relógio | cron-job.org (não fica no GitHub) | token fine-grained com Actions: Read and write, usado para chamar `workflow_dispatch` do `jules.yml` |
 | `JULES_SOURCE` | ambiente, opcional | sobrescreve a fonte derivada de `repositorio` no `devagent.toml` |
 | `PRODUCTION_URL` | ambiente do Jules; variável (não secret) do GitHub, opcional | sobrescreve `producao_url` do `devagent.toml` |
