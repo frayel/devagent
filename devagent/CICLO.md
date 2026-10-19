@@ -2,7 +2,7 @@
 
 > **Núcleo reaproveitável.** Este arquivo vale para qualquer projeto que use `devagent/`. Ele descreve **como** você trabalha; o **que** você constrói está no `PRODUTO.md` da raiz. Nada aqui cita o produto: o teste `devagent/tests/test_fronteira.py` garante.
 >
-> **Personas.** Se a tarefa que acionou você pede para atuar como **Auditor**, siga `devagent/agents/auditor.md` e ignore o ciclo abaixo. Se pede **Sentinel**, **Palette** ou **Bolt**, siga `devagent/agents/especialistas.md`.
+> **Personas.** Se a tarefa que acionou você pede para atuar como **Auditor**, siga `devagent/agents/auditor.md` e ignore o ciclo abaixo. Se pede **Sentinel**, **Palette** ou **Bolt**, siga `devagent/agents/especialistas.md`; se o especialista não achar nada que valha um PR, a regra 7 de lá o traz para este ciclo, na mesma sessão.
 
 ## 1. Identidade
 
@@ -69,7 +69,17 @@ git fetch origin
 python -m devagent.estado_github
 ```
 
-Se a sessão foi aberta por um comentário `@jules` num PR, você já está na branch desse PR: trate-o pelo Passo 2 e não troque de branch. O script lista os PRs abertos com o estado do CI e de conflito, e as issues abertas. Depois leia `PRODUTO.md`, `docs/STATE.md`, os três últimos relatórios em `docs/runs/` e as specs. Consulte os índices da seção 9 e do `PRODUTO.md` e leia as skills e os contextos que tocam a tarefa. Então percorra a lista abaixo **em ordem** e execute **somente o primeiro item aplicável**.
+Se a sessão foi aberta por um comentário `@jules` num PR, você já está na branch desse PR: trate-o pelo Passo 2 e não troque de branch. O script lista os PRs abertos com o estado do CI e de conflito, e as issues abertas. Depois leia `PRODUTO.md`, `docs/STATE.md`, os três últimos relatórios em `docs/runs/` e as specs. Consulte os índices da seção 9 e do `PRODUTO.md` e leia as skills e os contextos que tocam a tarefa. Então percorra a lista abaixo **em ordem** e execute **somente o primeiro item que gerar entrega**.
+
+### Execução sem entrega não existe
+
+Cada sessão custa uma tarefa da cota diária e só termina bem com um PR que muda o produto, as specs, o backlog ou o próprio agente. Por isso:
+
+- **Um passo que se aplica mas não gera mudança não encerra a execução.** As verificações do Passo 1 passaram, a publicação do Passo 3 já estava em dia, a issue escolhida já tem spec: escreva uma linha no relatório e siga para o próximo passo da lista, nesta mesma sessão.
+- **Nunca abra PR só com o relatório em `docs/runs/` ou só com um diário de `.jules/`.** O relatório vai no PR da entrega. O job `disciplina` reprova PR só de registro (regra 6 do `conferir_pr`), salvo quando o corpo fecha issues (`Closes #N`), como no Passo 6.
+- **As exceções são as paradas obrigatórias:** existe PR do agente aberto (Passo 2, onde só se mexe nele) ou você ficou bloqueado (seção 6). Nelas a execução termina sem PR novo.
+
+O relógio externo chama a rodada a cada poucos minutos e a próxima sessão começa assim que esta terminar e o PR dela for mesclado (ADR 012). Não há motivo para encerrar cedo "deixando para o próximo ciclo".
 
 ### Regra de continuidade (vale antes de qualquer passo)
 
@@ -120,7 +130,7 @@ A plataforma publica tudo que chega à `main`. Este passo se aplica quando há c
 - Se a variável `RENDER_DEPLOY_HOOK_URL` estiver disponível, chame o hook.
 - Após o deploy, confirme o health check e registre a versão em `docs/STATE.md` no próximo PR.
 
-Encerre a execução.
+Este passo não produz PR: registre no relatório e siga para o Passo 4.
 
 ### Passo 4 · Implementar uma especificação
 
@@ -153,7 +163,7 @@ Escolha **uma** issue, a mais antiga. Leia o corpo e todos os comentários. Ent�
 | Duplicada, inválida ou já resolvida | Siga `devagent/skills/fechar-issues-resolvidas.md`: PR `docs:` com o relatório da execução e, no corpo, `Closes #N` e a explicação. |
 | Ambígua | Adote a interpretação mais conservadora, registre-a na issue e siga. Se nem assim for seguro agir, aplique `bloqueado`, pergunte na issue o que falta e encerre. |
 
-Se uma issue já tem spec `ready` vinculada, o Passo 4 cuida dela. Encerre a execução.
+Se a issue mais antiga já tem spec vinculada, pule-a e escolha a seguinte. Se nenhuma sobrar, siga para o Passo 7. Depois de entregar o PR de uma issue, encerre a execução.
 
 **Como issues são fechadas.** Você não tem permissão para comentar em issues nem para fechá-las. Toda issue que você resolve fecha pelo PR: escreva `Closes #N` (uma linha por issue) no corpo do PR. Depois do merge, o `automerge.yml` fecha as issues citadas, e o guardião repete a checagem de hora em hora. Issues `deploy-falhou` e `producao-incorreta` não fecham assim: só fecham quando a verificação que as abriu passar. Não use contornos como commits vazios com "Closes": o squash merge descarta essas mensagens.
 

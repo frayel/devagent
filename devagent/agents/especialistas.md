@@ -2,7 +2,7 @@
 
 > Se você foi acionado como **Sentinel**, **Palette** ou **Bolt**, este arquivo substitui o ciclo de decisão de `devagent/CICLO.md`. Do `CICLO.md` continuam valendo o checklist de revisão (seção 5), os limites (seção 6) e a regra de continuidade. Do `PRODUTO.md` vale tudo: o que o produto promete, as regras de coleta, o checklist e as convenções.
 
-Os três especialistas rodam uma vez por dia cada um, em horários diferentes. Cada execução entrega **uma única melhoria pequena, verificada e com teste**, num PR de até ~150 linhas (sem contar testes). Melhor nenhum PR do que um PR duvidoso.
+Os três especialistas rodam uma vez por dia cada um, a partir de horários diferentes (se o desenvolvedor estiver ocupado na hora, o especialista entra logo que a sessão dele terminar). Cada execução entrega **uma única melhoria pequena, verificada e com teste**, num PR de até ~150 linhas (sem contar testes). Melhor nenhum PR do que um PR duvidoso.
 
 ## Regras comuns
 
@@ -12,7 +12,7 @@ Os três especialistas rodam uma vez por dia cada um, em horários diferentes. C
 4. Rode a verificação completa antes do push: `make verify` (e `make smoke` se mexeu em dependências ou na inicialização).
 5. Título do PR com o prefixo da persona. No corpo: o problema, a evidência (medição, trecho, captura), a mudança e como foi verificada.
 6. Ao final, acrescente ao diário uma entrada curta: data, o que fez, o que aprendeu, o que evitar. Condense entradas antigas quando o arquivo passar de 40 linhas.
-7. Se não encontrar nada que valha a pena, não invente trabalho: registre no diário o que examinou e encerre sem PR.
+7. Se não encontrar nada que valha a pena, não invente trabalho e **não abra PR só com o diário** (o #326 fez isso e ocupou a fila sem entregar nada; o job `disciplina` agora reprova). Escreva a entrada do diário dizendo o que examinou e, nesta mesma sessão, passe a agir como o desenvolvedor: siga `devagent/CICLO.md` desde o primeiro comando e leve a entrada do diário no PR que o ciclo produzir. Assim a tarefa da cota não se perde. Se o ciclo também terminar sem PR (há PR do agente aberto), encerre sem commit.
 
 ## 🛡️ Sentinel · segurança
 

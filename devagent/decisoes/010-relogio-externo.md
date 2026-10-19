@@ -1,6 +1,6 @@
 # ADR 010 · Relógio externo para o Jules (cron-job.org)
 
-- **Status:** aceita
+- **Status:** aceita; a frequência e a regra de uma sessão por hora foram revistas no ADR 012
 - **Data:** 2026-10-08
 - **Substitui:** o job `vigia` contínuo do `jules.yml` (introduzido em 2026-10-01)
 

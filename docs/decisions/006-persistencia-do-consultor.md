@@ -1,6 +1,6 @@
 # ADR 006 · Persistência do consultor em Postgres externo
 
-**Data:** 2026-10-18 · **Status:** aceito · **Origem:** pedido do dono do produto
+**Data:** 2026-10-18 · **Status:** aceito; itens 2 e 4 substituídos pelo ADR 007 · **Origem:** pedido do dono do produto
 
 ## Contexto
 

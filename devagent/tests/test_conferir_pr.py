@@ -187,3 +187,34 @@ def test_pr_vazio_so_reprova_quando_exigido(repo: Path, monkeypatch) -> None:
 def test_pr_com_alteracao_passa_mesmo_exigindo(repo: Path) -> None:
     fechar(repo)
     assert conferir(repo, "base", exigir_alteracao=True).falhas == []
+
+
+def test_pr_so_de_registro_reprova(repo: Path, monkeypatch) -> None:
+    monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
+    escrever(repo, {".jules/sentinel.md": "# Diário\n- nada a fazer\n"})
+    escrever(repo, {"docs/runs/2026-10-18-x.md": "# Relatório\n"})
+    falhas = conferir(repo, "base", exigir_alteracao=True).falhas
+    assert any("registros da execução" in f for f in falhas)
+
+
+def test_registro_junto_com_entrega_passa(repo: Path) -> None:
+    fechar(repo)
+    escrever(repo, {".jules/sentinel.md": "# Diário\n- nada a fazer\n"})
+    escrever(repo, {"docs/runs/2026-10-18-x.md": "# Relatório\n"})
+    assert conferir(repo, "base", exigir_alteracao=True).falhas == []
+
+
+def test_registro_que_fecha_issue_passa(
+    repo: Path, tmp_path_factory, monkeypatch
+) -> None:
+    evento = tmp_path_factory.mktemp("evento") / "evento.json"
+    evento.write_text('{"pull_request": {"body": "Duplicada.\\n\\nCloses #12"}}')
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(evento))
+    escrever(repo, {"docs/runs/2026-10-18-x.md": "# Relatório\n"})
+    assert conferir(repo, "base", exigir_alteracao=True).falhas == []
+
+
+def test_registro_so_reprova_quando_exigido(repo: Path, monkeypatch) -> None:
+    monkeypatch.delenv("GITHUB_EVENT_NAME", raising=False)
+    escrever(repo, {"docs/runs/2026-10-18-x.md": "# Relatório\n"})
+    assert conferir(repo, "base").falhas == []
