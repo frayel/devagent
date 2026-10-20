@@ -1,7 +1,7 @@
 ---
 id: 071
 titulo: Consultor · decisão final cruzando técnico e casas de análise
-status: ready
+status: done
 esforco: M
 ---
 

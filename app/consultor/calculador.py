@@ -2,7 +2,8 @@ import json
 from datetime import timezone, timedelta
 from app.database import get_historico_diario
 from app.consultor.universo import CARTEIRA_IBOVESPA
-from app.consultor.regras import avaliar_ativo
+from app.consultor.sintese import calcular_consenso, obter_decisao_final
+from app.consultor.regras import avaliar_ativo, calcular_mm
 from app.consultor.armazenamento import (
     get_opinioes_ativos,
     get_opinioes_recentes,
@@ -22,7 +23,13 @@ def calcular_consultor():
     ibov_data = json.loads(historicos["^BVSP"]["dados_json"])
     ibov_closes = ibov_data.get("closes", [])
 
-    resultados = {"Comprar": [], "Vender": [], "Aguardar": [], "Sem sinal": []}
+    resultados = {
+        "Comprar": [],
+        "Vender": [],
+        "Aguardar": [],
+        "No radar": [],
+        "Sem sinal": [],
+    }
 
     try:
         ts = datetime.fromisoformat(historicos["^BVSP"]["timestamp"])
@@ -112,15 +119,29 @@ def calcular_consultor():
         confianca_dados = obter_confianca(avaliacao["regra"])
 
         opinioes_ticker = opinioes_ativos.get(ticker, [])
+        consenso_dados = calcular_consenso(opinioes_ticker)
 
-        resultados[avaliacao["decisao"]].append(
+        if consenso_dados["preco_alvo_mediano"] and closes[-1] > 0:
+            consenso_dados["potencial"] = (
+                consenso_dados["preco_alvo_mediano"] / closes[-1]
+            ) - 1
+
+        mm21 = calcular_mm(closes, 21)
+        decisao_final, justificativa, gatilho_final = obter_decisao_final(
+            avaliacao, consenso_dados, closes[-1], mm21
+        )
+
+        resultados[decisao_final].append(
             {
                 "ticker": ticker,
                 "opinioes": opinioes_ticker,
+                "consenso": consenso_dados,
+                "justificativa": justificativa,
+                "decisao_tecnica": avaliacao["decisao"],
                 "fechamento": closes[-1],
                 "regra": avaliacao["regra"],
                 "motivo": avaliacao["motivo"],
-                "gatilho": avaliacao["gatilho"],
+                "gatilho": gatilho_final,
                 "fonte": "yfinance",
                 "timestamp": timestamp,
                 "confianca": confianca_dados.get(
