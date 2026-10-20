@@ -100,7 +100,7 @@
             </div>
         </div>
 
-        {% for grupo in ["Comprar", "Vender", "Aguardar"] %}
+        {% for grupo in ["Comprar", "Vender", "Aguardar", "No radar"] %}
             {% if dados.resultados[grupo] %}
             <div class="grupo-consultor">
                 <h3>{{ grupo }}</h3>
@@ -108,25 +108,43 @@
                     <table class="tabela-consultor">
                         <thead>
                             <tr>
-                                <th>Ticker</th>
-                                <th>Preço</th>
-                                <th>Regra</th>
-                                <th>{% if grupo == 'Aguardar' %}Gatilho{% else %}Invalidação{% endif %}</th>
-                                <th>Confiança Histórica</th>
-                                <th>Fonte</th>
-                                <th>Coleta</th>
+                                <th>Ticker / Preço</th>
+                                <th>Técnico</th>
+                                <th>Casas</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in dados.resultados[grupo] %}
                             <tr>
-                                <td><strong>{{ item.ticker }}</strong></td>
-                                <td>R$ {{ "%.2f"|format(item.fechamento) }}</td>
-                                <td><span title="{{ item.motivo }}">{{ item.regra }}</span></td>
-                                <td>{{ item.gatilho }}</td>
-                                <td class="fonte-dado">{{ item.mensagem_confianca }}</td>
-                                <td class="fonte-dado">{{ item.fonte }}</td>
-                                <td class="fonte-dado">{{ item.timestamp }}</td>
+                                <td>
+                                    <strong>{{ item.ticker }}</strong><br>
+                                    R$ {{ "%.2f"|format(item.fechamento) }}
+                                </td>
+                                <td>
+                                    <span title="{{ item.motivo }}">{{ item.regra }}</span><br>
+                                    {% if item.decisao_tecnica != grupo and item.justificativa %}
+                                        <em>{{ item.justificativa }}</em><br>
+                                    {% elif item.decisao_tecnica == grupo and item.justificativa %}
+                                        <em>{{ item.justificativa }}</em><br>
+                                    {% endif %}
+                                    <small>{{ item.gatilho }}</small><br>
+                                    <small class="fonte-dado">{{ item.mensagem_confianca }}</small>
+                                </td>
+                                <td>
+                                    {% if dados.opinioes_status and dados.opinioes_status.status != 'ok' %}
+                                        <small>sem opinião de casas</small>
+                                    {% elif item.consenso.consenso == 'cobertura insuficiente' %}
+                                        <small>cobertura insuficiente</small>
+                                    {% else %}
+                                        Consenso: {{ item.consenso.consenso }}<br>
+                                        {% if item.consenso.preco_alvo_mediano %}
+                                            Alvo: R$ {{ "%.2f"|format(item.consenso.preco_alvo_mediano) }}
+                                            {% if item.consenso.potencial != None %}
+                                                ({% if item.consenso.potencial > 0 %}+{% endif %}{{ "%.1f"|format(item.consenso.potencial * 100) }}%)
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
