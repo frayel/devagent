@@ -137,6 +137,14 @@ def _coletar() -> None:
         try:
             start_time = time.perf_counter()
             ok = coletor.collect_and_save()
+            if nome == "consultor_historico":
+                from app.consultor import avaliador_historico
+
+                # Avaliador não roda bloqueante no fluxo para não estourar o limite de tempo
+                import threading
+
+                threading.Thread(target=avaliador_historico.rodar_backtest).start()
+
             duracao = time.perf_counter() - start_time
             if nome == "consultor_historico":
                 from app.consultor import avaliador_historico

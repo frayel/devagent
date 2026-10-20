@@ -1,7 +1,7 @@
 ---
 id: 069b
 titulo: Consultor confiança · integração no frontend e API
-status: ready
+status: done
 esforco: P
 ---
 

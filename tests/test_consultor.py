@@ -179,6 +179,9 @@ def test_api_consultor_comprar_invalidation(monkeypatch):
                         "gatilho": "Fechamento abaixo da MM200 (R$ 30.00)",
                         "fonte": "test",
                         "timestamp": "test",
+                        "confianca": "alta",
+                        "n": 100,
+                        "mensagem_confianca": "Nas 100 vezes...",
                     }
                 ],
                 "Vender": [],

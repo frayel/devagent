@@ -166,6 +166,9 @@ def test_mascara_token_no_estado(monkeypatch):
         "concentracao_ordens",
         "exaustao_tendencia",
         "radar_anomalia_fechamento",
+        "consultor_historico",
+        "exaustao_queda",
+        "fator_mola",
     ):
         monkeypatch.setattr(f"app.collectors.{nome}.collect_and_save", lambda: True)
 

@@ -40,8 +40,8 @@
                                 <th>Ticker</th>
                                 <th>Preço</th>
                                 <th>Regra</th>
-                                <th>Motivo</th>
                                 <th>{% if grupo == 'Aguardar' %}Gatilho{% else %}Invalidação{% endif %}</th>
+                                <th>Confiança Histórica</th>
                                 <th>Fonte</th>
                                 <th>Coleta</th>
                             </tr>
@@ -51,9 +51,9 @@
                             <tr>
                                 <td><strong>{{ item.ticker }}</strong></td>
                                 <td>R$ {{ "%.2f"|format(item.fechamento) }}</td>
-                                <td>{{ item.regra }}</td>
-                                <td>{{ item.motivo }}</td>
+                                <td><span title="{{ item.motivo }}">{{ item.regra }}</span></td>
                                 <td>{{ item.gatilho }}</td>
+                                <td class="fonte-dado">{{ item.mensagem_confianca }}</td>
                                 <td class="fonte-dado">{{ item.fonte }}</td>
                                 <td class="fonte-dado">{{ item.timestamp }}</td>
                             </tr>
