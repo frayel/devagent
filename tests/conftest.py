@@ -24,6 +24,22 @@ def setup_db(monkeypatch, tmp_path):
     mt5.limpar_cache()
     mt5.reiniciar_rastreio()
 
+    # A descoberta do modelo Gemini nunca vai à rede nos testes.
+    monkeypatch.delenv("GEMINI_MODELO", raising=False)
+    from app.services import gemini_modelo
+
+    gemini_modelo.limpar()
+    monkeypatch.setattr(
+        gemini_modelo,
+        "_listar_modelos",
+        lambda api_key: [
+            {
+                "name": "models/gemini-3.5-flash-lite",
+                "supportedGenerationMethods": ["generateContent"],
+            }
+        ],
+    )
+
     yield
 
 

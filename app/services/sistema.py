@@ -358,12 +358,15 @@ def verificar_integracoes(
     pausa_mt5: tuple[float, str] | None,
     ambiente: dict[str, str],
     agora: datetime,
+    modelo_gemini: str | None = None,
 ) -> list[Item]:
     itens: list[Item] = []
     conhecidas = set()
     for nome, variavel, papel in INTEGRACOES:
         conhecidas.add(nome)
         fonte = fontes.get(nome)
+        if nome == "Gemini" and modelo_gemini:
+            papel = f"{papel}. Modelo: {modelo_gemini}"
         configurada = variavel is None or bool(ambiente.get(variavel, "").strip())
         if not configurada and fonte is None:
             itens.append(Item(nome, INATIVO, f"sem {variavel}", papel))
@@ -811,6 +814,7 @@ def montar(
     prontas: list[str],
     ambiente: dict[str, str] | None = None,
     monitor_ligado: bool = False,
+    modelo_gemini: str | None = None,
 ) -> dict[str, Any]:
     ambiente = dict(os.environ) if ambiente is None else ambiente
     github = remoto.get("github")
@@ -828,7 +832,9 @@ def montar(
     coleta.append(verificar_paineis_vazios(vazios, horas_vazios, rodadas))
     coleta.append(verificar_tempo_coleta(tempos))
 
-    integracoes = verificar_integracoes(fontes, pausa_mt5, ambiente, agora)
+    integracoes = verificar_integracoes(
+        fontes, pausa_mt5, ambiente, agora, modelo_gemini
+    )
 
     desenvolvimento = [
         verificar_github_api(

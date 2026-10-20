@@ -81,6 +81,7 @@ from app.database import (
 from app import agendador
 from app.collectors import mt5 as mt5_coletor
 from app.collectors import registro_fontes
+from app.services import gemini_modelo
 from app.collectors import sistema as monitor_sistema
 from app.services import sistema as sistema_servico
 
@@ -187,6 +188,7 @@ def estado_do_sistema() -> dict:
         pausa_mt5=mt5_coletor.pausa(),
         prontas=sistema_servico.specs_prontas(),
         monitor_ligado=monitor_sistema.monitor_ligado(),
+        modelo_gemini=gemini_modelo.descricao(),
     )
 
 
