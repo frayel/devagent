@@ -3,6 +3,11 @@ from datetime import timezone, timedelta
 from app.database import get_historico_diario
 from app.consultor.universo import CARTEIRA_IBOVESPA
 from app.consultor.regras import avaliar_ativo
+from app.consultor.armazenamento import (
+    get_opinioes_ativos,
+    get_opinioes_recentes,
+    get_opinioes_status,
+)
 from app.database import get_consultor_confianca_regras
 from datetime import datetime
 
@@ -66,6 +71,10 @@ def calcular_consultor():
             "confianca": nivel,
         }
 
+    opinioes_ativos = get_opinioes_ativos()
+    opinioes_recentes = get_opinioes_recentes()
+    opinioes_status = get_opinioes_status()
+
     for ticker in CARTEIRA_IBOVESPA:
         if ticker not in historicos:
             resultados["Sem sinal"].append(
@@ -102,9 +111,12 @@ def calcular_consultor():
         avaliacao = avaliar_ativo(ticker, closes, volumes, ibov_closes)
         confianca_dados = obter_confianca(avaliacao["regra"])
 
+        opinioes_ticker = opinioes_ativos.get(ticker, [])
+
         resultados[avaliacao["decisao"]].append(
             {
                 "ticker": ticker,
+                "opinioes": opinioes_ticker,
                 "fechamento": closes[-1],
                 "regra": avaliacao["regra"],
                 "motivo": avaliacao["motivo"],
@@ -138,4 +150,6 @@ def calcular_consultor():
         "resultados": resultados,
         "ativos_avaliados": len(CARTEIRA_IBOVESPA),
         "regras_confianca": regras_summary,
+        "opinioes_recentes": opinioes_recentes,
+        "opinioes_status": opinioes_status,
     }

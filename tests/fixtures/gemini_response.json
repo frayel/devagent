@@ -1,0 +1,13 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "[\n  {\n    \"id_materia\": \"guid1\",\n    \"ticker\": \"BBAS3\",\n    \"casa\": \"Itau BBA\",\n    \"recomendacao\": \"compra\",\n    \"preco_alvo\": \"R$ 42,00\",\n    \"resumo\": \"Itau BBA eleva recomendacao de BBAS3 para compra devido a bons dividendos.\",\n    \"trecho\": \"Itau BBA eleva recomendacao\"\n  },\n  {\n    \"id_materia\": \"guid4\",\n    \"ticker\": \"PETR4\",\n    \"casa\": \"XP\",\n    \"recomendacao\": \"neutro\",\n    \"preco_alvo\": \"\",\n    \"resumo\": \"XP mantem recomendacao neutra.\",\n    \"trecho\": \"PETR4 elevou\"\n  }\n]"
+          }
+        ]
+      }
+    }
+  ]
+}

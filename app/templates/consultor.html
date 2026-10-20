@@ -12,6 +12,11 @@
             Dados do consultor indisponíveis.
         </div>
     {% else %}
+        {% if dados.opinioes_status and dados.opinioes_status.status != 'ok' %}
+        <div class="alerta">
+            Opiniões de especialistas indisponíveis desde {{ dados.opinioes_status.desde[11:16] }} ({{ dados.opinioes_status.motivo }}). Recomendações baseadas só nos sinais técnicos.
+        </div>
+        {% endif %}
         {% if desatualizada %}
         <div class="alerta">
             Composição do Ibovespa possivelmente desatualizada. <a href="{{ fonte }}" target="_blank">Verificar fonte</a>.
@@ -59,6 +64,41 @@
                 </table>
             </div>
         </details>
+
+        <div class="grupo-consultor">
+            <h3 class="status-neutro">Opiniões Recentes</h3>
+            <div class="tabela-container">
+                <table class="tabela-consultor">
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Casa</th>
+                            <th>Recomendação</th>
+                            <th>Preço-Alvo</th>
+                            <th>Resumo</th>
+                            <th>Data</th>
+                            <th>Link</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for op in dados.opinioes_recentes %}
+                        <tr>
+                            <td><strong>{{ op.ticker }}</strong></td>
+                            <td>{{ op.casa }}</td>
+                            <td>{{ op.recomendacao }}</td>
+                            <td>{{ op.preco_alvo if op.preco_alvo else '-' }}</td>
+                            <td>{{ op.resumo }}</td>
+                            <td>{{ op.data_materia[:10] }}</td>
+                            <td><a href="{{ op.link }}" target="_blank">Ler</a></td>
+                        </tr>
+                        {% endfor %}
+                        {% if not dados.opinioes_recentes %}
+                        <tr><td colspan="7">Nenhuma opinião recente.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
         {% for grupo in ["Comprar", "Vender", "Aguardar"] %}
             {% if dados.resultados[grupo] %}

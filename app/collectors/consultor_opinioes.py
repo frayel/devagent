@@ -1,3 +1,4 @@
+from app.services.consultor_opinioes import extrair_opinioes
 import logging
 import time
 import requests
@@ -96,4 +97,5 @@ def collect_and_save() -> bool:
                         tickers,
                     )
         time.sleep(2)
+    extrair_opinioes()
     return sucesso

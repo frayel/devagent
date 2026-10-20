@@ -62,6 +62,8 @@ def test_pagina_consultor_desatualizada(monkeypatch):
                 "Aguardar": [],
                 "Sem sinal": [],
             },
+            "opinioes_recentes": [],
+            "opinioes_status": {"status": "ok", "motivo": "", "desde": ""},
             "ativos_avaliados": 10,
             "regras_limiares": {
                 "R1_QUEDAS": 999,
@@ -140,6 +142,8 @@ def test_consultor_regras_html(monkeypatch):
                 "Aguardar": [],
                 "Sem sinal": [],
             },
+            "opinioes_recentes": [],
+            "opinioes_status": {"status": "ok", "motivo": "", "desde": ""},
             "ativos_avaliados": 10,
             "regras_limiares": {
                 "R1_QUEDAS": 999,
@@ -188,6 +192,8 @@ def test_api_consultor_comprar_invalidation(monkeypatch):
                 "Aguardar": [],
                 "Sem sinal": [],
             },
+            "opinioes_recentes": [],
+            "opinioes_status": {"status": "ok", "motivo": "", "desde": ""},
             "ativos_avaliados": 1,
             "regras_limiares": {
                 "R1_QUEDAS": 999,

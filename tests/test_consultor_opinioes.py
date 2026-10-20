@@ -120,3 +120,98 @@ def test_acceptance_xml_feed(monkeypatch):
     titulos = [m["titulo"] for m in materias]
     assert "BBAS3 compra recomendada" in titulos
     assert "PETR4 elevou recomendação" in titulos
+
+
+def test_acceptance_llm_opinions(monkeypatch):
+    import json
+    from app.database import get_connection
+    from app.consultor.armazenamento import get_opinioes_recentes
+    from app.services.consultor_opinioes import extrair_opinioes
+    from app.consultor.armazenamento import save_materia
+
+    monkeypatch.setenv("GEMINI_API_KEY", "fake_key")
+
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("DELETE FROM consultor_opinioes")
+    c.execute("DELETE FROM consultor_fila_materias")
+    c.execute("DELETE FROM consultor_opinioes_status")
+    conn.commit()
+    conn.close()
+
+    # Preencher materias
+    save_materia(
+        "guid1",
+        "Itau BBA eleva recomendacao BBAS3 para compra 42,00",
+        "",
+        "",
+        "2023-01-01",
+        "http://l1",
+        ["BBAS3"],
+    )
+    save_materia(
+        "guid4",
+        "PETR4 elevou blabla R$ 42",
+        " XP ",
+        "",
+        "2023-01-01",
+        "http://l4",
+        ["PETR4"],
+    )
+
+    with open("tests/fixtures/gemini_response.json", "r") as f:
+        gemini_json = json.load(f)
+
+    class MockResponse:
+        status_code = 200
+
+        def json(self):
+            return gemini_json
+
+    def mock_post(*args, **kwargs):
+        # We can inspect kwargs["json"] here to verify it only contains materia content
+        return MockResponse()
+
+    monkeypatch.setattr("httpx.post", mock_post)
+
+    extrair_opinioes()
+
+    opinioes = get_opinioes_recentes(100)
+    assert len(opinioes) == 2
+    tickers = [op["ticker"] for op in opinioes]
+    assert "BBAS3" in tickers
+    assert "PETR4" in tickers
+
+
+def test_llm_without_key(monkeypatch):
+    from app.services.consultor_opinioes import extrair_opinioes
+    from app.consultor.armazenamento import get_opinioes_status
+
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+
+    extrair_opinioes()
+    status = get_opinioes_status()
+    assert status["status"] == "sem_chave"
+
+
+def test_llm_quota_reached(monkeypatch):
+    from app.services.consultor_opinioes import extrair_opinioes
+    from app.consultor.armazenamento import get_opinioes_status
+    from app.database import get_connection
+    from datetime import date
+
+    monkeypatch.setenv("GEMINI_API_KEY", "fake_key")
+    monkeypatch.setenv("GEMINI_MAX_CHAMADAS_DIA", "1")
+
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute(
+        "INSERT OR REPLACE INTO consultor_llm_uso (data, chamadas) VALUES (?, ?)",
+        (date.today().isoformat(), 1),
+    )
+    conn.commit()
+    conn.close()
+
+    extrair_opinioes()
+    status = get_opinioes_status()
+    assert status["status"] == "cota"
