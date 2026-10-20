@@ -305,6 +305,9 @@ def init_db() -> None:
         );
         """)
     cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_divergencia_ibov_dolar_timestamp ON divergencia_ibov_dolar_cache (timestamp DESC);
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS consultor_confianca_regras (
             regra TEXT PRIMARY KEY,
             disparos INTEGER,

@@ -59,3 +59,8 @@
 - **O que fiz:** Modifiquei o índice `idx_concentracao_vendedora_timestamp` para utilizar `timestamp DESC` na tabela `concentracao_vendedora_cache`.
 - **O que aprendi:** O SQLite com `ORDER BY timestamp DESC LIMIT 1` é otimizado usando índices na mesma direção. O índice antigo usava ASC por padrão, resultando em scans desnecessários.
 - **O que evitar:** Criar índices de timestamp sem especificar a direção apropriada (DESC) quando a query dependente requer ordenação invertida.
+## 2026-10-20
+
+- **O que fiz:** Adicionei um índice (`idx_divergencia_ibov_dolar_timestamp`) na tabela `divergencia_ibov_dolar_cache` para a coluna `timestamp DESC`.
+- **O que aprendi:** A ausência deste índice estava causando lentidão recorrente na API que busca o registro mais atual de divergência por `ORDER BY timestamp DESC LIMIT 1`. Ao adicionarmos o índice, melhoramos e estabilizamos o tempo de acesso em `get_divergencia_ibov_dolar`.
+- **O que evitar:** Omitir índices de ordenação `DESC` para tabelas de cache consultadas por data invertida, o que degrada a performance de leitura recorrente.
