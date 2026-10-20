@@ -14,6 +14,7 @@
 - feat: implementa radar de anomalia de fechamento (spec 066)
 
 ### Added
+- feat: Implementa a spec 070a sobre a fila e armazenamento de opiniões de casas de análise.
 - Removido painel Ação Órfã (Spec 067)
 - Painel de Assimetria Risco/Retorno (Spec 065) que exibe as ações mais próximas do fundo recente e distantes do topo.
 - [Spec 061] Experiência: Reorganização da ordem do topo ('Clima Global' e 'Motores do Índice' movidos para baixo do 'Ibovespa' e 'Maré') na visão geral.
