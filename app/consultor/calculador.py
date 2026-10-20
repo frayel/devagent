@@ -1,4 +1,3 @@
-import json
 from datetime import timezone, timedelta
 from app.database import get_historico_diario
 from app.consultor.universo import CARTEIRA_IBOVESPA
@@ -9,19 +8,26 @@ from app.consultor.armazenamento import (
     get_opinioes_recentes,
     get_opinioes_status,
 )
+from app.consultor.avaliador_historico import pre_processar_ativo
 from app.database import get_consultor_confianca_regras
 from datetime import datetime
+
+# O coletor consultor_historico grava a série diária de 2 anos e a renova a
+# cada hora. Quatro dias de tolerância atravessam fim de semana e feriado.
+JANELA = "2y"
+IDADE_MAXIMA_MIN = 60 * 24 * 4
 
 
 def calcular_consultor():
     ativos = CARTEIRA_IBOVESPA + ["^BVSP"]
-    historicos = get_historico_diario(ativos, "1y", "1d", max_age_minutes=15)
+    historicos = get_historico_diario(
+        ativos, JANELA, "1d", max_age_minutes=IDADE_MAXIMA_MIN
+    )
 
     if "^BVSP" not in historicos or not historicos["^BVSP"]:
         raise ValueError("Dados do Ibovespa indisponíveis")
 
-    ibov_data = json.loads(historicos["^BVSP"]["dados_json"])
-    ibov_closes = ibov_data.get("closes", [])
+    ibov_closes, _, ibov_ts = pre_processar_ativo(historicos["^BVSP"])
 
     resultados = {
         "Comprar": [],
@@ -32,7 +38,7 @@ def calcular_consultor():
     }
 
     try:
-        ts = datetime.fromisoformat(historicos["^BVSP"]["timestamp"])
+        ts = datetime.fromtimestamp(ibov_ts[-1], timezone.utc)
         timestamp = ts.astimezone(timezone(timedelta(hours=-3))).strftime(
             "%d/%m/%Y %H:%M:%S BRT"
         )
@@ -97,9 +103,7 @@ def calcular_consultor():
             )
             continue
 
-        dados_json = json.loads(historicos[ticker]["dados_json"])
-        closes = dados_json.get("closes", [])
-        volumes = dados_json.get("volumes", [])
+        closes, volumes, _ = pre_processar_ativo(historicos[ticker])
 
         if len(closes) < 220:
             resultados["Sem sinal"].append(

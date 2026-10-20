@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -101,6 +102,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     for tarefa in tarefas:
         tarefa.cancel()
 
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(lifespan=lifespan)
 templates = Jinja2Templates(directory="app/templates")
@@ -286,6 +289,7 @@ def pagina_consultor(request: Request):
                 "R5_IFR_MAX": regras_module.R5_IFR_MAX,
             }
     except Exception:
+        logger.exception("Consultor indisponível")
         dados = {"resultados": {}, "ativos_avaliados": 0}
         consultor_indisponivel = True
         regras_limiares = {}

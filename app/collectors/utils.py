@@ -251,18 +251,31 @@ def fetch_historico_diario_yfinance_spark(
     return all_results
 
 
+def simbolo_yahoo(symbol: str) -> str:
+    """Ticker da B3 ganha `.SA`; índices (`^BVSP`) e câmbio (`BRL=X`) não."""
+    if symbol.startswith("^") or "=" in symbol or "." in symbol:
+        return symbol
+    return f"{symbol}.SA"
+
+
 def fetch_historico_diario_yfinance_chart(
-    symbol: str, range_str: str, interval: str, client: httpx.Client
+    symbol: str,
+    range_str: str,
+    interval: str,
+    client: httpx.Client,
+    max_age_minutes: int = 15,
 ) -> dict | None:
     import json
     from datetime import datetime, timezone
     from app.database import get_historico_diario, save_historico_diario
 
-    cached_data = get_historico_diario([symbol], range_str, interval)
+    cached_data = get_historico_diario(
+        [symbol], range_str, interval, max_age_minutes=max_age_minutes
+    )
     if symbol in cached_data:
         return cached_data[symbol]
 
-    url = f"https://query2.finance.yahoo.com/v8/finance/chart/{symbol}.SA?range={range_str}&interval={interval}"
+    url = f"https://query2.finance.yahoo.com/v8/finance/chart/{simbolo_yahoo(symbol)}?range={range_str}&interval={interval}"
     try:
         response = fetch_with_retry(url, client=client)
         data = response.json()
