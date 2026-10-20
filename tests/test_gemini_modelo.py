@@ -133,3 +133,18 @@ def test_pagina_de_sistema_mostra_modelo():
     )
     gemini = next(i for i in itens if i.nome == "Gemini")
     assert "gemini-3.5-flash-lite (descoberto)" in gemini.detalhe
+
+
+def test_503_tenta_de_novo_no_mesmo_modelo(monkeypatch):
+    monkeypatch.setattr(consultor_opinioes, "PAUSA_5XX", 0)
+    respostas = [_Resp(503), _Resp(200)]
+    urls = []
+
+    def post(url, **kw):
+        urls.append(url)
+        return respostas.pop(0)
+
+    monkeypatch.setattr(httpx, "post", post)
+    resp = consultor_opinioes._gerar("k", {})
+    assert resp.status_code == 200
+    assert urls[0] == urls[1]

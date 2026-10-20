@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import time
 from datetime import datetime, timezone, date
 import httpx
 
@@ -16,6 +17,7 @@ GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 )
 GEMINI_MAX_CHAMADAS = 200
+PAUSA_5XX = 5.0
 
 
 def get_llm_uso_hoje() -> int:
@@ -163,8 +165,9 @@ def _gerar(api_key: str, payload: dict) -> httpx.Response:
     Um 404 quer dizer que o modelo foi aposentado: descarta, descobre outro
     e tenta mais uma vez.
     """
+    forcar = False
     for tentativa in range(2):
-        modelo = gemini_modelo.modelo_atual(api_key, forcar=tentativa > 0)
+        modelo = gemini_modelo.modelo_atual(api_key, forcar=forcar)
         resp = httpx.post(
             GEMINI_URL.format(model=modelo),
             headers={"x-goog-api-key": api_key},
@@ -179,9 +182,14 @@ def _gerar(api_key: str, payload: dict) -> httpx.Response:
             f"HTTP {resp.status_code} no modelo {modelo}",
             grave=registro_fontes.grave(resp.status_code),
         )
+        if resp.status_code >= 500 and tentativa == 0:
+            # 503 é o modelo sobrecarregado: costuma passar em segundos.
+            time.sleep(PAUSA_5XX)
+            continue
         if resp.status_code != 404 or not gemini_modelo.descartar(modelo):
             return resp
         logger.warning(f"Modelo Gemini {modelo} não existe mais; buscando outro")
+        forcar = True
     return resp
 
 
