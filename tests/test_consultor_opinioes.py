@@ -79,3 +79,44 @@ def test_collect_and_save_errors(monkeypatch):
     # Should not raise exception
     res = collect_and_save()
     assert res is False
+
+
+def test_acceptance_xml_feed(monkeypatch):
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+        <channel>
+            <item><title>BBAS3 compra recomendada</title><link>http://l1</link><guid>g1</guid><description>A</description><content:encoded>A</content:encoded><pubDate>D</pubDate></item>
+            <item><title>Apenas notícia sobre Vale</title><link>http://l2</link><guid>g2</guid><description>Vale divulga</description><content:encoded>A</content:encoded><pubDate>D</pubDate></item>
+            <item><title>Recomendação de empresa desconhecida</title><link>http://l3</link><guid>g3</guid><description>Compra XYZ</description><content:encoded>A</content:encoded><pubDate>D</pubDate></item>
+            <item><title>PETR4 elevou recomendação</title><link>http://l4</link><guid>g4</guid><description>B</description><content:encoded>B</content:encoded><pubDate>D</pubDate></item>
+            <item><title>Outra 5</title><link>http://l5</link><guid>g5</guid><description>C</description><content:encoded>C</content:encoded><pubDate>D</pubDate></item>
+            <item><title>Outra 6</title><link>http://l6</link><guid>g6</guid><description>C</description><content:encoded>C</content:encoded><pubDate>D</pubDate></item>
+            <item><title>Outra 7</title><link>http://l7</link><guid>g7</guid><description>C</description><content:encoded>C</content:encoded><pubDate>D</pubDate></item>
+            <item><title>Outra 8</title><link>http://l8</link><guid>g8</guid><description>C</description><content:encoded>C</content:encoded><pubDate>D</pubDate></item>
+            <item><title>Outra 9</title><link>http://l9</link><guid>g9</guid><description>C</description><content:encoded>C</content:encoded><pubDate>D</pubDate></item>
+            <item><title>Outra 10</title><link>http://l10</link><guid>g10</guid><description>C</description><content:encoded>C</content:encoded><pubDate>D</pubDate></item>
+        </channel>
+    </rss>
+    """
+
+    def mock_fetch(url, *args, **kwargs):
+        return xml if "moneytimes" in url else None
+
+    monkeypatch.setattr(
+        "app.collectors.consultor_opinioes.fetch_with_retry", mock_fetch
+    )
+
+    conn = get_connection()
+    c_db = conn.cursor()
+    c_db.execute("DELETE FROM consultor_fila_materias")
+    conn.commit()
+    conn.close()
+
+    collect_and_save()
+
+    materias = get_materias()
+
+    assert len(materias) == 2
+    titulos = [m["titulo"] for m in materias]
+    assert "BBAS3 compra recomendada" in titulos
+    assert "PETR4 elevou recomendação" in titulos
