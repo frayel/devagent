@@ -53,6 +53,9 @@ def _coletar_tudo(monkeypatch) -> None:
         )
     )
     yahoo_falso.instalar(monkeypatch)
+    monkeypatch.setattr(
+        "app.collectors.consultor_historico.collect_and_save", lambda: True
+    )
     agendador.coletar_tudo()
     assert agendador.estado["ultimo_erro"] is None, agendador.estado["ultimo_erro"]
 

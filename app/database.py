@@ -290,6 +290,15 @@ def init_db() -> None:
             correlacao REAL
         );
         """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS consultor_confianca_regras (
+            regra TEXT PRIMARY KEY,
+            disparos INTEGER,
+            acertos INTEGER,
+            excesso_mediano REAL,
+            atualizado_em TEXT
+        );
+    """)
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS historico_diario_cache (
@@ -2667,3 +2676,44 @@ def get_latest_radar_anomalia_fechamento_data() -> RadarAnomaliaFechamentoData |
             fonte=row[2],
         )
     return None
+
+
+def save_consultor_confianca_regra(
+    regra: str,
+    disparos: int,
+    acertos: int,
+    excesso_mediano: float,
+    atualizado_em: datetime,
+) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR REPLACE INTO consultor_confianca_regras (regra, disparos, acertos, excesso_mediano, atualizado_em) VALUES (?, ?, ?, ?, ?)",
+        (regra, disparos, acertos, excesso_mediano, atualizado_em.isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_consultor_confianca_regras() -> dict[str, dict]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT regra, disparos, acertos, excesso_mediano, atualizado_em FROM consultor_confianca_regras"
+        )
+        rows = cursor.fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    finally:
+        conn.close()
+
+    result = {}
+    for row in rows:
+        result[row[0]] = {
+            "disparos": row[1],
+            "acertos": row[2],
+            "excesso_mediano": row[3],
+            "atualizado_em": datetime.fromisoformat(row[4]),
+        }
+    return result
