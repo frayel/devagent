@@ -359,3 +359,4 @@
   - Exibição de painel e tabela de alertas via contrato `/api/snapshot`.
 
 - Spec 070 dividida em 070a e 070b.
+- Spec 070a: Implementação de pré-filtro e fila de opiniões via feed.

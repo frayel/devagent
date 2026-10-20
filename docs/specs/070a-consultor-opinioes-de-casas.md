@@ -1,7 +1,7 @@
 ---
 id: 070a
 titulo: Consultor · opiniões de casas de análise (feeds, pré-filtro e fila)
-status: ready
+status: done
 esforco: M
 ---
 
