@@ -131,6 +131,7 @@ def _coletar() -> None:
         "divergencia_ibov_dolar",
         "assimetria_risco_retorno",
         "consultor_historico",
+        "consultor_opinioes",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
         mt5.reiniciar_rastreio()

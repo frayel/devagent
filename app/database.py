@@ -854,6 +854,21 @@ def init_db() -> None:
         ON exaustao_queda_cache(timestamp DESC)
     """)
 
+    cursor.executescript("""
+        CREATE TABLE IF NOT EXISTS consultor_fila_materias (
+            guid TEXT PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            descricao TEXT NOT NULL,
+            conteudo TEXT NOT NULL,
+            data_publicacao TEXT NOT NULL,
+            link TEXT NOT NULL,
+            tickers_citados TEXT NOT NULL,
+            criado_em TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_consultor_fila_materias_criado_em
+        ON consultor_fila_materias(criado_em DESC);
+    """)
+
     conn.commit()
     conn.close()
 
