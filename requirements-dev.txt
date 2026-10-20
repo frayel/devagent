@@ -8,3 +8,5 @@ httpx
 respx
 # Capturas da interface (make telas). Só desenvolvimento.
 playwright
+
+types-psycopg2==2.9.21.20240417
