@@ -20,13 +20,44 @@
 
         <details class="accordion-regras">
             <summary>Como o consultor decide</summary>
-            <ul>
-                <li><strong>R1 Faca caindo:</strong> QUEDAS_SEGUIDAS &gt;= {{ regras_limiares.R1_QUEDAS }} -> Aguardar (gatilho: primeiro fechamento em alta com VOL_REL >= {{ regras_limiares.R1_GATILHO_VOL }})</li>
-                <li><strong>R2 Tendência de baixa:</strong> fechamento &lt; MM200, MM21 &lt; MM200 e FR20 &lt; 0 -> Vender (invalida: fechamento acima da MM200)</li>
-                <li><strong>R3 Esticada:</strong> fechamento > MM200, MM21 > MM200 e IFR14 > {{ regras_limiares.R3_IFR_MAX }} -> Aguardar (recuo até a MM21 ou IFR14 &lt; {{ regras_limiares.R3_IFR_RECUO }})</li>
-                <li><strong>R4 Rompimento pendente:</strong> fechamento até 3% abaixo da MM200 e MM21 de hoje maior que de 5 pregões atrás -> Aguardar (fechamento acima da MM200 com VOL_REL >= {{ regras_limiares.R4_GATILHO_VOL }})</li>
-                <li><strong>R5 Tendência de alta saudável:</strong> fechamento > MM200, MM21 > MM200, {{ regras_limiares.R5_IFR_MIN }} &lt;= IFR14 &lt;= {{ regras_limiares.R5_IFR_MAX }} e FR20 > 0 -> Comprar (invalida: fechamento abaixo da MM200)</li>
-            </ul>
+            <div class="tabela-responsiva">
+                <table class="tabela-consultor">
+                    <thead>
+                        <tr>
+                            <th>Regra</th>
+                            <th>Critério</th>
+                            <th>Confiança</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>R1 Faca caindo</strong></td>
+                            <td>QUEDAS_SEGUIDAS &gt;= {{ regras_limiares.R1_QUEDAS }} -> Aguardar (gatilho: primeiro fechamento em alta com VOL_REL >= {{ regras_limiares.R1_GATILHO_VOL }})</td>
+                            <td class="fonte-dado">{{ dados.regras_confianca["R1 Faca caindo"].mensagem if dados.regras_confianca else "histórico indisponível" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>R2 Tendência de baixa</strong></td>
+                            <td>fechamento &lt; MM200, MM21 &lt; MM200 e FR20 &lt; 0 -> Vender (invalida: fechamento acima da MM200)</td>
+                            <td class="fonte-dado">{{ dados.regras_confianca["R2 Tendência de baixa"].mensagem if dados.regras_confianca else "histórico indisponível" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>R3 Esticada</strong></td>
+                            <td>fechamento > MM200, MM21 > MM200 e IFR14 > {{ regras_limiares.R3_IFR_MAX }} -> Aguardar (recuo até a MM21 ou IFR14 &lt; {{ regras_limiares.R3_IFR_RECUO }})</td>
+                            <td class="fonte-dado">{{ dados.regras_confianca["R3 Esticada"].mensagem if dados.regras_confianca else "histórico indisponível" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>R4 Rompimento pendente</strong></td>
+                            <td>fechamento até 3% abaixo da MM200 e MM21 de hoje maior que de 5 pregões atrás -> Aguardar (fechamento acima da MM200 com VOL_REL >= {{ regras_limiares.R4_GATILHO_VOL }})</td>
+                            <td class="fonte-dado">{{ dados.regras_confianca["R4 Rompimento pendente"].mensagem if dados.regras_confianca else "histórico indisponível" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>R5 Tendência de alta saudável</strong></td>
+                            <td>fechamento > MM200, MM21 > MM200, {{ regras_limiares.R5_IFR_MIN }} &lt;= IFR14 &lt;= {{ regras_limiares.R5_IFR_MAX }} e FR20 > 0 -> Comprar (invalida: fechamento abaixo da MM200)</td>
+                            <td class="fonte-dado">{{ dados.regras_confianca["R5 Tendência de alta saudável"].mensagem if dados.regras_confianca else "histórico indisponível" }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </details>
 
         {% for grupo in ["Comprar", "Vender", "Aguardar"] %}

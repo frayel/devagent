@@ -61,6 +61,8 @@ def calcular_consultor():
             "n": n,
             "taxa_acerto": taxa,
             "excesso_mediano": excesso,
+            "janela_inicio": dados.get("janela_inicio", ""),
+            "janela_fim": dados.get("janela_fim", ""),
             "confianca": nivel,
         }
 
@@ -113,8 +115,27 @@ def calcular_consultor():
                     "confianca", confianca_dados.get("nivel")
                 ),
                 "n": confianca_dados.get("n", 0),
+                "taxa_acerto": confianca_dados.get("taxa_acerto", 0.0),
+                "excesso_mediano": confianca_dados.get("excesso_mediano", 0.0),
+                "janela_inicio": confianca_dados.get("janela_inicio", ""),
+                "janela_fim": confianca_dados.get("janela_fim", ""),
                 "mensagem_confianca": confianca_dados["mensagem"],
             }
         )
 
-    return {"resultados": resultados, "ativos_avaliados": len(CARTEIRA_IBOVESPA)}
+    # Extract rules confidence summary to return along with the result
+    regras_summary = {}
+    for regra in [
+        "R1 Faca caindo",
+        "R2 Tendência de baixa",
+        "R3 Esticada",
+        "R4 Rompimento pendente",
+        "R5 Tendência de alta saudável",
+    ]:
+        regras_summary[regra] = obter_confianca(regra)
+
+    return {
+        "resultados": resultados,
+        "ativos_avaliados": len(CARTEIRA_IBOVESPA),
+        "regras_confianca": regras_summary,
+    }

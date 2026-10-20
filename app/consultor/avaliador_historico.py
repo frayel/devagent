@@ -130,10 +130,24 @@ def rodar_backtest():
                 metricas_regras[regra]["excessos"].append(excesso)
 
     agora = datetime.now(timezone.utc)
+    from datetime import timedelta
+
+    janela_fim = agora - timedelta(days=7)
+    janela_inicio = janela_fim - timedelta(days=730)  # 2 years
+
+    str_janela_inicio = janela_inicio.strftime("%Y-%m-%d")
+    str_janela_fim = janela_fim.strftime("%Y-%m-%d")
+
     for regra, stats in metricas_regras.items():
         excesso_mediano = (
             statistics.median(stats["excessos"]) if stats["excessos"] else 0.0
         )
         save_consultor_confianca_regra(
-            regra, stats["disparos"], stats["acertos"], excesso_mediano, agora
+            regra,
+            stats["disparos"],
+            stats["acertos"],
+            excesso_mediano,
+            str_janela_inicio,
+            str_janela_fim,
+            agora,
         )
