@@ -249,3 +249,60 @@ def fetch_historico_diario_yfinance_spark(
             continue
 
     return all_results
+
+
+def fetch_historico_diario_yfinance_chart(
+    symbol: str, range_str: str, interval: str, client: httpx.Client
+) -> dict | None:
+    import json
+    from datetime import datetime, timezone
+    from app.database import get_historico_diario, save_historico_diario
+
+    cached_data = get_historico_diario([symbol], range_str, interval)
+    if symbol in cached_data:
+        return cached_data[symbol]
+
+    url = f"https://query2.finance.yahoo.com/v8/finance/chart/{symbol}.SA?range={range_str}&interval={interval}"
+    try:
+        response = fetch_with_retry(url, client=client)
+        data = response.json()
+        result = data.get("chart", {}).get("result", [])
+        if not result:
+            return None
+
+        item = result[0]
+
+        spark_like_item = {
+            "symbol": symbol,
+            "timestamp": item.get("timestamp", []),
+            "indicators": {
+                "quote": [
+                    {
+                        "close": item.get("indicators", {})
+                        .get("quote", [{}])[0]
+                        .get("close", []),
+                        "volume": item.get("indicators", {})
+                        .get("quote", [{}])[0]
+                        .get("volume", []),
+                        "open": item.get("indicators", {})
+                        .get("quote", [{}])[0]
+                        .get("open", []),
+                        "high": item.get("indicators", {})
+                        .get("quote", [{}])[0]
+                        .get("high", []),
+                        "low": item.get("indicators", {})
+                        .get("quote", [{}])[0]
+                        .get("low", []),
+                    }
+                ]
+            },
+        }
+
+        agora = datetime.now(timezone.utc)
+        save_historico_diario(
+            symbol, range_str, interval, json.dumps(spark_like_item), agora
+        )
+        return spark_like_item
+    except httpx.HTTPError as e:
+        logger.error(f"Error fetching chart {symbol} from yfinance: {e}")
+        return None

@@ -1,7 +1,7 @@
 ---
 id: 069a
 titulo: Consultor confiança · coleta de histórico longo e cálculos do histórico de cada regra
-status: ready
+status: done
 esforco: M
 ---
 

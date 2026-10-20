@@ -130,6 +130,7 @@ def _coletar() -> None:
         "exaustao_queda",
         "divergencia_ibov_dolar",
         "assimetria_risco_retorno",
+        "consultor_historico",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
         mt5.reiniciar_rastreio()
@@ -137,6 +138,10 @@ def _coletar() -> None:
             start_time = time.perf_counter()
             ok = coletor.collect_and_save()
             duracao = time.perf_counter() - start_time
+            if nome == "consultor_historico":
+                from app.consultor import avaliador_historico
+
+                avaliador_historico.rodar_backtest()
             try:
                 save_coleta_tempo(nome, duracao, datetime.now(timezone.utc))
             except Exception:
