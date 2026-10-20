@@ -171,3 +171,4 @@
 - Spec 068: Motor de regras de decisão do Consultor (Comprar, Vender, Aguardar).
 
 - Implementada a spec 069b.
+- Divide a especificação 070 sobre opiniões de casas de análise em 070a e 070b.

@@ -1,7 +1,7 @@
 ---
 id: 070
 titulo: Consultor · opiniões de casas de análise extraídas de notícias
-status: ready
+status: draft
 esforco: G
 ---
 

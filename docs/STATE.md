@@ -357,3 +357,5 @@
   - Coletor buscando fechamentos intraday recentes para 30 ações de alta liquidez via `yfinance`.
   - Cálculo de variação percentual na última hora > 1.5%.
   - Exibição de painel e tabela de alertas via contrato `/api/snapshot`.
+
+- Spec 070 dividida em 070a e 070b.
