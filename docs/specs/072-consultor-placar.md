@@ -1,7 +1,7 @@
 ---
 id: 072
 titulo: Consultor · diário de recomendações e placar de acertos
-status: ready
+status: draft
 esforco: M
 ---
 
