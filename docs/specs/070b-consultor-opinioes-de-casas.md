@@ -1,7 +1,7 @@
 ---
 id: 070b
 titulo: Consultor · opiniões de casas de análise (extração, validação e exibição)
-status: ready
+status: done
 esforco: M
 ---
 

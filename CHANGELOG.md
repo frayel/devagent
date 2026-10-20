@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- **Spec 070:** Extrai recomendações e opiniões de casas de análise utilizando o LLM Gemini e as exibe no painel do Consultor de Investimentos.
 - Implementa coleta de histórico extenso e avaliador do índice de acerto do consultor (spec 069a)
 
 ### Adicionado

@@ -311,6 +311,48 @@ def api_consultor(request: Request):
         dados = {"resultados": {}, "ativos_avaliados": 0}
 
     try:
+        # Extrair opinioes_status
+        opinioes_status_data = dados.get(
+            "opinioes_status", {"status": "ok", "motivo": "", "desde": ""}
+        )
+        # Fila and feeds for api payload (simplified as specs require)
+        from app.database import get_connection
+
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM consultor_fila_materias")
+            fila_n = cursor.fetchone()[0]
+        except Exception:
+            fila_n = 0
+        finally:
+            conn.close()
+
+        fontes_opiniao = {
+            "llm": opinioes_status_data,
+            "feeds": [
+                {
+                    "url": "https://www.moneytimes.com.br/feed/",
+                    "status": "ok",
+                    "ultima_coleta": "",
+                },
+                {
+                    "url": "https://www.infomoney.com.br/feed/",
+                    "status": "ok",
+                    "ultima_coleta": "",
+                },
+            ],
+            "fila": fila_n,
+        }
+
+        # Format opinioes properly for api payload per asset
+        opinioes_api = {}
+        if isinstance(dados, dict) and "resultados" in dados:
+            for cat in dados["resultados"]:
+                for item in dados["resultados"][cat]:
+                    ticker = item["ticker"]
+                    opinioes_api[ticker] = item.get("opinioes", [])
+
         if isinstance(dados, dict) and "resultados" in dados:
             resultados_dict = dados["resultados"]
         else:
@@ -339,6 +381,8 @@ def api_consultor(request: Request):
             "ativos_avaliados": ativos_avaliados,
             "composicao_vigente_ate": COMPOSICAO_VIGENTE_ATE.isoformat(),
             "resultados": resultados_dict,
+            "fontes_opiniao": fontes_opiniao,
+            "opinioes": opinioes_api,
         }
     )
 

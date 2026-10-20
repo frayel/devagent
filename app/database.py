@@ -868,6 +868,37 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_consultor_fila_materias_criado_em
         ON consultor_fila_materias(criado_em DESC);
     """)
+    try:
+        cursor.execute(
+            "ALTER TABLE consultor_fila_materias ADD COLUMN processada INTEGER DEFAULT 0"
+        )
+    except Exception:
+        pass
+    cursor.executescript("""
+        CREATE TABLE IF NOT EXISTS consultor_opinioes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            guid TEXT NOT NULL,
+            ticker TEXT NOT NULL,
+            casa TEXT NOT NULL,
+            recomendacao TEXT NOT NULL,
+            preco_alvo TEXT,
+            resumo TEXT NOT NULL,
+            trecho TEXT NOT NULL,
+            data_materia TEXT NOT NULL,
+            link TEXT NOT NULL,
+            extraida_em TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS consultor_opinioes_status (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            status TEXT NOT NULL,
+            motivo TEXT,
+            desde TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS consultor_llm_uso (
+            data TEXT PRIMARY KEY,
+            chamadas INTEGER NOT NULL
+        );
+    """)
 
     conn.commit()
     conn.close()

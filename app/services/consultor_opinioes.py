@@ -1,0 +1,308 @@
+import json
+import logging
+import os
+from datetime import datetime, timezone, date
+import httpx
+
+from app.database import get_connection
+from app.consultor.universo import CARTEIRA_IBOVESPA
+from app.consultor.pre_filtro import normalizar
+
+logger = logging.getLogger(__name__)
+
+GEMINI_URL = (
+    "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+)
+GEMINI_DEFAULT_MODEL = "gemini-1.5-flash-8b"
+GEMINI_MAX_CHAMADAS = 200
+
+
+def get_llm_uso_hoje() -> int:
+    conn = get_connection()
+    try:
+        hoje = date.today().isoformat()
+        cursor = conn.cursor()
+        cursor.execute("SELECT chamadas FROM consultor_llm_uso WHERE data = ?", (hoje,))
+        row = cursor.fetchone()
+        return row[0] if row else 0
+    finally:
+        conn.close()
+
+
+def incrementar_llm_uso() -> None:
+    conn = get_connection()
+    try:
+        hoje = date.today().isoformat()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT OR REPLACE INTO consultor_llm_uso (data, chamadas) VALUES (?, COALESCE((SELECT chamadas FROM consultor_llm_uso WHERE data = ?), 0) + 1)",
+            (hoje, hoje),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def set_opinioes_status(status: str, motivo: str = "") -> None:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        agora = datetime.now(timezone.utc).isoformat()
+        cursor.execute("DELETE FROM consultor_opinioes_status")
+        cursor.execute(
+            "INSERT INTO consultor_opinioes_status (status, motivo, desde) VALUES (?, ?, ?)",
+            (status, motivo or "", agora),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_materias_nao_processadas() -> list[dict]:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT guid, titulo, descricao, conteudo, data_publicacao, link, tickers_citados, criado_em FROM consultor_fila_materias WHERE processada = 0 ORDER BY criado_em ASC LIMIT 10"
+        )
+        rows = cursor.fetchall()
+        result = []
+        for row in rows:
+            result.append(
+                {
+                    "guid": row[0],
+                    "titulo": row[1],
+                    "descricao": row[2],
+                    "conteudo": row[3],
+                    "data_publicacao": row[4],
+                    "link": row[5],
+                    "tickers_citados": json.loads(row[6]),
+                    "criado_em": row[7],
+                }
+            )
+        return result
+    finally:
+        conn.close()
+
+
+def marcar_como_processada(guid: str) -> None:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE consultor_fila_materias SET processada = 1 WHERE guid = ?", (guid,)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def save_opiniao(
+    guid: str,
+    ticker: str,
+    casa: str,
+    recomendacao: str,
+    preco_alvo: str,
+    resumo: str,
+    trecho: str,
+    data_materia: str,
+    link: str,
+) -> None:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        # Verificar duplicata no mesmo dia
+        dia = data_materia[:10] if data_materia else ""
+        cursor.execute(
+            "SELECT id FROM consultor_opinioes WHERE ticker = ? AND casa = ? AND recomendacao = ? AND data_materia LIKE ?",
+            (ticker, casa, recomendacao, f"{dia}%"),
+        )
+        if cursor.fetchone():
+            return
+
+        agora = datetime.now(timezone.utc).isoformat()
+        cursor.execute(
+            """
+            INSERT INTO consultor_opinioes
+            (guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link, extraida_em)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                guid,
+                ticker,
+                casa,
+                recomendacao,
+                preco_alvo,
+                resumo[:120],
+                trecho,
+                data_materia,
+                link,
+                agora,
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def normalizar_recomendacao(rec: str) -> str:
+    if not rec:
+        return "neutro"
+    rec = str(rec).lower().strip()
+    if rec in ["compra", "outperform", "overweight"]:
+        return "compra"
+    if rec in ["venda", "underperform", "underweight"]:
+        return "venda"
+    return "neutro"
+
+
+def extrair_opinioes():
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        set_opinioes_status("sem_chave", "sem chave configurada")
+        return
+
+    max_calls = int(os.environ.get("GEMINI_MAX_CHAMADAS_DIA", GEMINI_MAX_CHAMADAS))
+    usos = get_llm_uso_hoje()
+    if usos >= max_calls:
+        set_opinioes_status("cota", "cota do LLM esgotada")
+        return
+
+    materias = get_materias_nao_processadas()
+    if not materias:
+        # Se estava com erro/timeout antes, mantemos. Senão, se tem feeds e tá tudo ok, não mexemos.
+        return
+
+    modelo = os.environ.get("GEMINI_MODELO", GEMINI_DEFAULT_MODEL)
+    url = GEMINI_URL.format(model=modelo)
+
+    materias_texto = []
+    for i, m in enumerate(materias):
+        materias_texto.append(
+            f"Materia {i + 1} (ID: {m['guid']}):\nTitulo: {m['titulo']}\nDescricao: {m['descricao']}\nConteudo: {m['conteudo']}\nTickers citados: {', '.join(m['tickers_citados'])}\n\n"
+        )
+
+    prompt = f"""
+    Extraia as opiniões e recomendações de casas de análise sobre os tickers informados nas seguintes matérias.
+    Só extraia opiniões para os tickers da lista: {", ".join(CARTEIRA_IBOVESPA)}. Não invente dados ou campos.
+    Responda apenas com a lista JSON seguindo o esquema.
+
+    Textos:
+    {"".join(materias_texto)}
+    """
+
+    schema = {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "id_materia": {"type": "string"},
+                "ticker": {"type": "string"},
+                "casa": {"type": "string"},
+                "recomendacao": {"type": "string"},
+                "preco_alvo": {"type": "string"},
+                "resumo": {"type": "string"},
+                "trecho": {"type": "string"},
+            },
+            "required": [
+                "id_materia",
+                "ticker",
+                "casa",
+                "recomendacao",
+                "resumo",
+                "trecho",
+            ],
+        },
+    }
+
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "responseSchema": schema,
+        },
+    }
+
+    try:
+        resp = httpx.post(
+            url, headers={"x-goog-api-key": api_key}, json=payload, timeout=30.0
+        )
+
+        if resp.status_code == 429:
+            set_opinioes_status("cota", "cota do LLM esgotada")
+            return
+        elif resp.status_code != 200:
+            set_opinioes_status("erro", f"LLM fora do ar (HTTP {resp.status_code})")
+            return
+
+        incrementar_llm_uso()
+        data = resp.json()
+
+        try:
+            content_text = data["candidates"][0]["content"]["parts"][0]["text"]
+            opinioes = json.loads(content_text)
+        except Exception:
+            set_opinioes_status("invalido", "resposta inválida do LLM")
+            return
+
+        for op in opinioes:
+            guid = op.get("id_materia")
+            materia = next((m for m in materias if m["guid"] == guid), None)
+            if not materia:
+                continue
+
+            ticker = op.get("ticker", "").upper()
+            if ticker not in CARTEIRA_IBOVESPA:
+                continue
+
+            casa = op.get("casa", "").strip()
+            if not casa:
+                continue
+
+            recomendacao = normalizar_recomendacao(op.get("recomendacao", ""))
+            preco_alvo = op.get("preco_alvo")
+            resumo = op.get("resumo", "").strip()[:120]
+            trecho = op.get("trecho", "").strip()
+
+            # Validation: preco_alvo must appear in the text if present
+            texto_completo = normalizar(
+                f"{materia['titulo']} {materia['descricao']} {materia['conteudo']}"
+            )
+
+            if preco_alvo:
+                # remove spaces or R$ to check existence roughly, or just check digits
+                import re
+
+                digitos_alvo = re.findall(r"\d+", preco_alvo)
+                if not digitos_alvo or not any(
+                    d in texto_completo for d in digitos_alvo
+                ):
+                    # For simplicity, if we can't find the numbers, it's alvo_ausente
+                    continue
+
+            if normalizar(trecho) not in texto_completo:
+                continue
+
+            save_opiniao(
+                guid=materia["guid"],
+                ticker=ticker,
+                casa=casa,
+                recomendacao=recomendacao,
+                preco_alvo=preco_alvo if preco_alvo else None,
+                resumo=resumo,
+                trecho=trecho,
+                data_materia=materia["data_publicacao"] or materia["criado_em"],
+                link=materia["link"],
+            )
+
+        # Mark all processed
+        for m in materias:
+            marcar_como_processada(m["guid"])
+
+        set_opinioes_status("ok", "")
+
+    except httpx.TimeoutException:
+        set_opinioes_status("erro", "LLM timeout")
+    except Exception as e:
+        logger.error(f"Erro ao extrair opinioes: {e}")
+        set_opinioes_status("erro", "erro interno ao consultar LLM")
