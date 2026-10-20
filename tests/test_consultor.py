@@ -27,6 +27,7 @@ def test_snapshot_consultor_metadados():
     data = response.json()
     assert "consultor" in data
     assert "ativos_avaliados" in data["consultor"]
+    assert "armazenamento" in data["consultor"]
     assert "composicao_vigente_ate" in data["consultor"]
 
 
@@ -65,6 +66,7 @@ def test_pagina_consultor_desatualizada(monkeypatch):
             },
             "opinioes_recentes": [],
             "opinioes_status": {"status": "ok", "motivo": "", "desde": ""},
+            "armazenamento": "sqlite_efemero",
             "ativos_avaliados": 10,
             "regras_limiares": {
                 "R1_QUEDAS": 999,
@@ -146,6 +148,7 @@ def test_consultor_regras_html(monkeypatch):
             },
             "opinioes_recentes": [],
             "opinioes_status": {"status": "ok", "motivo": "", "desde": ""},
+            "armazenamento": "sqlite_efemero",
             "ativos_avaliados": 10,
             "regras_limiares": {
                 "R1_QUEDAS": 999,
@@ -204,6 +207,7 @@ def test_api_consultor_comprar_invalidation(monkeypatch):
             },
             "opinioes_recentes": [],
             "opinioes_status": {"status": "ok", "motivo": "", "desde": ""},
+            "armazenamento": "sqlite_efemero",
             "ativos_avaliados": 1,
             "regras_limiares": {
                 "R1_QUEDAS": 999,

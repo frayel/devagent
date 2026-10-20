@@ -189,6 +189,14 @@ class VolatilidadeSilenciosaData:
 
 def save_volatilidade_silenciosa_data(data: VolatilidadeSilenciosaData) -> None:
     conn = get_connection()
+    try:
+        conn.execute(
+            "ALTER TABLE consultor_opinioes ADD COLUMN preco_fechamento_dia REAL"
+        )
+        conn.commit()
+    except Exception:
+        pass
+
     cursor = conn.cursor()
     cursor.execute(
         """

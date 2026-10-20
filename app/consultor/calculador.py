@@ -8,12 +8,17 @@ from app.consultor.armazenamento import (
     get_opinioes_ativos,
     get_opinioes_recentes,
     get_opinioes_status,
+    save_recomendacao,
+    get_ultima_recomendacao,
+    get_armazenamento_tipo,
+    init_armazenamento_db,
 )
 from app.database import get_consultor_confianca_regras
 from datetime import datetime
 
 
 def calcular_consultor():
+    init_armazenamento_db()
     ativos = CARTEIRA_IBOVESPA + ["^BVSP"]
     historicos = get_historico_diario(ativos, "1y", "1d", max_age_minutes=15)
 
@@ -131,6 +136,18 @@ def calcular_consultor():
             avaliacao, consenso_dados, closes[-1], mm21
         )
 
+        ultima_rec = get_ultima_recomendacao(ticker)
+        if not ultima_rec or ultima_rec.get("decisao_final") != decisao_final:
+            save_recomendacao(
+                data_hora=timestamp,
+                ticker=ticker,
+                decisao_final=decisao_final,
+                regra=avaliacao["regra"],
+                consenso=consenso_dados["consenso"],
+                preco=closes[-1],
+                gatilho=gatilho_final,
+            )
+
         resultados[decisao_final].append(
             {
                 "ticker": ticker,
@@ -167,10 +184,65 @@ def calcular_consultor():
     ]:
         regras_summary[regra] = obter_confianca(regra)
 
+    # 18h daily snapshot logic
+    hora_atual_brt = datetime.now(timezone.utc).astimezone(
+        timezone(timedelta(hours=-3))
+    )
+    if hora_atual_brt.hour >= 18:
+        data_hoje = hora_atual_brt.strftime("%Y-%m-%d")
+        # Try to get one today to see if we already saved it
+        from app.consultor.armazenamento import get_armazenamento_conn, translate_query
+
+        conn = get_armazenamento_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                translate_query(
+                    "SELECT 1 FROM consultor_recomendacoes WHERE data_hora LIKE ? LIMIT 1"
+                ),
+                (data_hoje + "%",),
+            )
+            ja_gravou_hoje = cur.fetchone() is not None
+        except Exception:
+            ja_gravou_hoje = False
+        finally:
+            conn.close()
+
+        if not ja_gravou_hoje:
+            for ticker in CARTEIRA_IBOVESPA:
+                if ticker in historicos:
+                    try:
+                        dados_json_t = json.loads(historicos[ticker]["dados_json"])
+                        closes_t = dados_json_t.get("closes", [])
+                        volumes_t = dados_json_t.get("volumes", [])
+                        if len(closes_t) >= 220:
+                            avaliacao_t = avaliar_ativo(
+                                ticker, closes_t, volumes_t, ibov_closes
+                            )
+                            opinioes_ticker_t = opinioes_ativos.get(ticker, [])
+                            consenso_dados_t = calcular_consenso(opinioes_ticker_t)
+                            mm21_t = calcular_mm(closes_t, 21)
+                            decisao_final_t, _, gatilho_final_t = obter_decisao_final(
+                                avaliacao_t, consenso_dados_t, closes_t[-1], mm21_t
+                            )
+
+                            save_recomendacao(
+                                data_hora=data_hoje + " 18:00:00 BRT",
+                                ticker=ticker,
+                                decisao_final=decisao_final_t,
+                                regra=avaliacao_t["regra"],
+                                consenso=consenso_dados_t["consenso"],
+                                preco=closes_t[-1],
+                                gatilho=gatilho_final_t,
+                            )
+                    except Exception:
+                        pass
+
     return {
         "resultados": resultados,
         "ativos_avaliados": len(CARTEIRA_IBOVESPA),
         "regras_confianca": regras_summary,
         "opinioes_recentes": opinioes_recentes,
         "opinioes_status": opinioes_status,
+        "armazenamento": get_armazenamento_tipo(),
     }

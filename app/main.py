@@ -383,6 +383,7 @@ def api_consultor(request: Request):
             "resultados": resultados_dict,
             "fontes_opiniao": fontes_opiniao,
             "opinioes": opinioes_api,
+            "armazenamento": dados.get("armazenamento", "sqlite_efemero"),
         }
     )
 
@@ -964,6 +965,9 @@ def snapshot():
         "atualizado_em": datetime.now(timezone(timedelta(hours=-3))).isoformat(),
         "ativos_avaliados": len(CARTEIRA_IBOVESPA),
         "composicao_vigente_ate": COMPOSICAO_VIGENTE_ATE.isoformat(),
+        "armazenamento": "postgres"
+        if os.environ.get("DATABASE_URL")
+        else "sqlite_efemero",
     }
 
     return resp

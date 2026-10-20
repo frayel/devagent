@@ -1,6 +1,104 @@
 import json
 from datetime import datetime, timezone, timedelta
-from app.database import get_connection
+
+import os
+
+
+def get_armazenamento_tipo() -> str:
+    return "postgres" if os.environ.get("DATABASE_URL") else "sqlite_efemero"
+
+
+def get_armazenamento_conn():
+    db_url = os.environ.get("DATABASE_URL")
+    if db_url:
+        import psycopg
+        from psycopg.rows import tuple_row
+
+        conn = psycopg.connect(db_url, row_factory=tuple_row)
+        return conn
+    from app.database import get_connection
+
+    return get_connection()
+
+
+def translate_query(query: str) -> str:
+    if os.environ.get("DATABASE_URL"):
+        return query.replace("?", "%s")
+    return query
+
+
+def init_armazenamento_db():
+    conn = get_armazenamento_conn()
+    cursor = conn.cursor()
+    try:
+        if os.environ.get("DATABASE_URL"):
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS consultor_recomendacoes (
+                    id SERIAL PRIMARY KEY,
+                    data_hora TEXT,
+                    ticker TEXT,
+                    decisao_final TEXT,
+                    regra TEXT,
+                    consenso TEXT,
+                    preco REAL,
+                    gatilho TEXT
+                )
+            """)
+        else:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS consultor_recomendacoes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    data_hora TEXT,
+                    ticker TEXT,
+                    decisao_final TEXT,
+                    regra TEXT,
+                    consenso TEXT,
+                    preco REAL,
+                    gatilho TEXT
+                )
+            """)
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def save_recomendacao(
+    data_hora: str,
+    ticker: str,
+    decisao_final: str,
+    regra: str,
+    consenso: str,
+    preco: float,
+    gatilho: str,
+):
+    conn = get_armazenamento_conn()
+    cursor = conn.cursor()
+    try:
+        q = translate_query(
+            "INSERT INTO consultor_recomendacoes (data_hora, ticker, decisao_final, regra, consenso, preco, gatilho) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        )
+        cursor.execute(
+            q, (data_hora, ticker, decisao_final, regra, consenso, preco, gatilho)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_ultima_recomendacao(ticker: str) -> dict | None:
+    conn = get_armazenamento_conn()
+    cursor = conn.cursor()
+    try:
+        q = translate_query(
+            "SELECT decisao_final FROM consultor_recomendacoes WHERE ticker = ? ORDER BY data_hora DESC LIMIT 1"
+        )
+        cursor.execute(q, (ticker,))
+        row = cursor.fetchone()
+        if row:
+            return {"decisao_final": row[0]}
+        return None
+    finally:
+        conn.close()
 
 
 def save_materia(
@@ -12,7 +110,7 @@ def save_materia(
     link: str,
     tickers_citados: list[str],
 ) -> None:
-    conn = get_connection()
+    conn = get_armazenamento_conn()
     cursor = conn.cursor()
 
     agora = datetime.now(timezone.utc).isoformat()
@@ -20,11 +118,11 @@ def save_materia(
 
     try:
         cursor.execute(
-            """
+            translate_query("""
             INSERT OR IGNORE INTO consultor_fila_materias
             (guid, titulo, descricao, conteudo, data_publicacao, link, tickers_citados, criado_em)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
+            """),
             (
                 guid,
                 titulo,
@@ -39,11 +137,13 @@ def save_materia(
 
         limite_dias = (datetime.now(timezone.utc) - timedelta(days=3)).isoformat()
         cursor.execute(
-            "DELETE FROM consultor_fila_materias WHERE criado_em < ?", (limite_dias,)
+            translate_query("DELETE FROM consultor_fila_materias WHERE criado_em < ?"),
+            (limite_dias,),
         )
 
         cursor.execute(
-            """
+            translate_query(
+                """
             DELETE FROM consultor_fila_materias
             WHERE guid NOT IN (
                 SELECT guid FROM consultor_fila_materias
@@ -51,6 +151,7 @@ def save_materia(
                 LIMIT 200
             )
             """
+            )
         )
 
         conn.commit()
@@ -59,7 +160,7 @@ def save_materia(
 
 
 def get_materias() -> list[dict]:
-    conn = get_connection()
+    conn = get_armazenamento_conn()
     cursor = conn.cursor()
     try:
         cursor.execute(
@@ -86,7 +187,7 @@ def get_materias() -> list[dict]:
 
 
 def get_opinioes_recentes(limite: int = 20) -> list[dict]:
-    conn = get_connection()
+    conn = get_armazenamento_conn()
     try:
         cursor = conn.cursor()
         cursor.execute(
@@ -118,7 +219,7 @@ def get_opinioes_recentes(limite: int = 20) -> list[dict]:
 
 
 def get_opinioes_ativos(dias: int = 30) -> dict:
-    conn = get_connection()
+    conn = get_armazenamento_conn()
     try:
         from datetime import datetime, timezone, timedelta
 
@@ -157,7 +258,7 @@ def get_opinioes_ativos(dias: int = 30) -> dict:
 
 
 def get_opinioes_status() -> dict:
-    conn = get_connection()
+    conn = get_armazenamento_conn()
     try:
         cursor = conn.cursor()
         cursor.execute(
