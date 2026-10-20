@@ -47,7 +47,7 @@ Uma entrada por fonte. Atualize ao criar ou alterar coletor (skill `criar-coleto
 ## Gemini (extração de opiniões · consultor)
 
 - **Uso**: só extrair registros estruturados das matérias pré-filtradas (ADR 005). Nunca decide a recomendação.
-- **Acesso**: REST `generateContent`, chave em `GEMINI_API_KEY`, modelo em `GEMINI_MODELO`.
+- **Acesso**: REST `generateContent`, chave em `GEMINI_API_KEY`. O modelo é descoberto pela listagem `GET /v1beta/models` (Flash-Lite estável de versão mais alta, renovado a cada 24 h ou após um 404); `GEMINI_MODELO` força um nome fixo. Ver `app/services/gemini_modelo.py`.
 - **Limites**: a camada gratuita cobre os modelos Flash e Flash-Lite, mas o Google não publica os números na página de limites; eles aparecem no AI Studio e mudam sem aviso. O coletor respeita `GEMINI_MAX_CHAMADAS_DIA` e trata 429 como estado `cota`.
 - **Privacidade**: na camada gratuita, o conteúdo enviado pode ser usado pelo Google para melhorar produtos. Envie só texto público das matérias.
 - **Fontes**: https://ai.google.dev/gemini-api/docs/rate-limits e https://ai.google.dev/pricing

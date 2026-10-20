@@ -168,7 +168,7 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `DATABASE_URL` | Render, secreto | Postgres de produção (Neon; ADRs 006 e 007). Sem ele, a aplicação usa SQLite e avisa que os dados se perdem ao reiniciar |
 | `CONSULTOR_SENHA` | Render, secreto, opcional | protege `/consultor` e `/api/consultor` com HTTP Basic (usuário `consultor`). Sem ela, a página é pública (ADR 005) |
 | `GEMINI_API_KEY` | Render, secreto, opcional | liga a extração de opiniões de casas de análise. Sem ela, o consultor usa só sinais técnicos e mostra um aviso |
-| `GEMINI_MODELO` | Render, opcional | modelo do Gemini; padrão definido na spec 070 |
+| `GEMINI_MODELO` | Render, opcional | força um modelo do Gemini; sem ela, o app descobre o Flash-Lite estável mais novo pela API |
 | `GEMINI_MAX_CHAMADAS_DIA` | Render, opcional | teto diário de chamadas ao Gemini; padrão `200` |
 | `GITHUB_TOKEN` | Render, secreto, opcional | token só de leitura (Actions, Issues, Pull requests, Contents) para a página `/sistema`; sem ele, o GitHub limita a 60 consultas por hora e o monitor relê a cada 20 min em vez de 5 |
 | `JULES_API_KEY` | Render, secreto, opcional | mostra em `/sistema` as sessões do Jules (ativas, esperando resposta, falhas e cota) |

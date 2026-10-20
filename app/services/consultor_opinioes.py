@@ -7,13 +7,14 @@ import httpx
 from app.database import get_connection
 from app.consultor.universo import CARTEIRA_IBOVESPA
 from app.consultor.pre_filtro import normalizar
+from app.collectors import registro_fontes
+from app.services import gemini_modelo
 
 logger = logging.getLogger(__name__)
 
 GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 )
-GEMINI_DEFAULT_MODEL = "gemini-1.5-flash-8b"
 GEMINI_MAX_CHAMADAS = 200
 
 
@@ -156,6 +157,34 @@ def normalizar_recomendacao(rec: str) -> str:
     return "neutro"
 
 
+def _gerar(api_key: str, payload: dict) -> httpx.Response:
+    """Chama o generateContent no modelo da vez e registra o resultado.
+
+    Um 404 quer dizer que o modelo foi aposentado: descarta, descobre outro
+    e tenta mais uma vez.
+    """
+    for tentativa in range(2):
+        modelo = gemini_modelo.modelo_atual(api_key, forcar=tentativa > 0)
+        resp = httpx.post(
+            GEMINI_URL.format(model=modelo),
+            headers={"x-goog-api-key": api_key},
+            json=payload,
+            timeout=30.0,
+        )
+        if resp.status_code == 200:
+            registro_fontes.sucesso(gemini_modelo.FONTE)
+            return resp
+        registro_fontes.falha(
+            gemini_modelo.FONTE,
+            f"HTTP {resp.status_code} no modelo {modelo}",
+            grave=registro_fontes.grave(resp.status_code),
+        )
+        if resp.status_code != 404 or not gemini_modelo.descartar(modelo):
+            return resp
+        logger.warning(f"Modelo Gemini {modelo} não existe mais; buscando outro")
+    return resp
+
+
 def extrair_opinioes():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -172,9 +201,6 @@ def extrair_opinioes():
     if not materias:
         # Se estava com erro/timeout antes, mantemos. Senão, se tem feeds e tá tudo ok, não mexemos.
         return
-
-    modelo = os.environ.get("GEMINI_MODELO", GEMINI_DEFAULT_MODEL)
-    url = GEMINI_URL.format(model=modelo)
 
     materias_texto = []
     for i, m in enumerate(materias):
@@ -224,9 +250,7 @@ def extrair_opinioes():
     }
 
     try:
-        resp = httpx.post(
-            url, headers={"x-goog-api-key": api_key}, json=payload, timeout=30.0
-        )
+        resp = _gerar(api_key, payload)
 
         if resp.status_code == 429:
             set_opinioes_status("cota", "cota do LLM esgotada")
@@ -302,7 +326,11 @@ def extrair_opinioes():
         set_opinioes_status("ok", "")
 
     except httpx.TimeoutException:
+        registro_fontes.falha(gemini_modelo.FONTE, "timeout na geração")
         set_opinioes_status("erro", "LLM timeout")
+    except httpx.RequestError as e:
+        registro_fontes.falha(gemini_modelo.FONTE, f"{type(e).__name__} na geração")
+        set_opinioes_status("erro", "LLM fora do ar (rede)")
     except Exception as e:
         logger.error(f"Erro ao extrair opinioes: {e}")
         set_opinioes_status("erro", "erro interno ao consultar LLM")
