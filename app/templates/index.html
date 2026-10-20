@@ -100,18 +100,8 @@
             {% endif %}
             <div class="destaque {{ color_class }}">{{ clima_global.status }}</div>
             <div class="kpi-group">
-                <div class="kpi">
-                    <span class="rot">S&P 500 Fut</span>
-                    <span class="var {% if clima_global.sp500_pct > 0 %}alta{% elif clima_global.sp500_pct < 0 %}baixa{% else %}neutra{% endif %}">
-                        {% if clima_global.sp500_pct > 0 %}▲{% elif clima_global.sp500_pct < 0 %}▼{% else %}■{% endif %} {{ "{:+.2f}%".format(clima_global.sp500_pct) }}
-                    </span>
-                </div>
-                <div class="kpi">
-                    <span class="rot">VIX</span>
-                    <span class="var {% if clima_global.vix_pct > 0 %}alta{% elif clima_global.vix_pct < 0 %}baixa{% else %}neutra{% endif %}">
-                        {% if clima_global.vix_pct > 0 %}▲{% elif clima_global.vix_pct < 0 %}▼{% else %}■{% endif %} {{ "{:+.2f}%".format(clima_global.vix_pct) }}
-                    </span>
-                </div>
+                {{ kpi("", "S&P 500 Fut", (variacao("{:+.2f}%".format(clima_global.sp500_pct), clima_global.sp500_pct)) | safe) }}
+                {{ kpi("", "VIX", (variacao("{:+.2f}%".format(clima_global.vix_pct), clima_global.vix_pct)) | safe) }}
             </div>
         </div>
     {% else %}
@@ -125,12 +115,7 @@
         <div class="motores-grid">
             {% for motor in motores_cards %}
             <div class="motor-card">
-                <div class="rot">{{ motor.nome }}</div>
-                <div class="kpi">
-                    <span class="var {% if motor.variacao > 0 %}alta{% elif motor.variacao < 0 %}baixa{% else %}neutra{% endif %}">
-                        {% if motor.variacao > 0 %}▲{% elif motor.variacao < 0 %}▼{% else %}■{% endif %} {{ "{:+.2f}%".format(motor.variacao) }}
-                    </span>
-                </div>
+                {{ kpi("", motor.nome, (variacao("{:+.2f}%".format(motor.variacao), motor.variacao)) | safe) }}
             </div>
             {% endfor %}
         </div>
@@ -190,20 +175,11 @@
     <div class="duas">
       {% if concentracao_setorial.variacao_media <= 0 %}
         <div class="kpi-container alinha-centro">
-          <div class="kpi">
-            <div class="valor rot texto-num">Nenhum setor em alta</div>
-          </div>
-          <p class="sub">Melhor média: {{ concentracao_setorial.setor_destaque }}, {{ ("%.2f"|format(concentracao_setorial.variacao_media)).replace('.', ',') }}%</p>
+          {{ kpi("Nenhum setor em alta", "", ('<p class="sub">Melhor média: ' ~ concentracao_setorial.setor_destaque ~ ', ' ~ ("%.2f"|format(concentracao_setorial.variacao_media)).replace('.', ',') ~ '%</p>') | safe) }}
         </div>
       {% else %}
         <div class="kpi-container alinha-centro">
-          <div class="kpi">
-            <div class="valor rot texto-num">{{ concentracao_setorial.setor_destaque }}</div>
-          </div>
-          <div class="var {% if concentracao_setorial.variacao_media > 0 %}alta{% elif concentracao_setorial.variacao_media < 0 %}baixa{% else %}neutra{% endif %}">
-            {% if concentracao_setorial.variacao_media > 0 %}▲ +{% elif concentracao_setorial.variacao_media < 0 %}▼ {% else %}■ {% endif %}{{ ("%.2f"|format(concentracao_setorial.variacao_media)).replace('.', ',') }}%
-          </div>
-          <p class="sub">Líder em alta</p>
+          {{ kpi(concentracao_setorial.setor_destaque, "", (variacao("{:+.2f}%".format(concentracao_setorial.variacao_media).replace('.', ','), concentracao_setorial.variacao_media) | safe) ~ '<p class="sub">Líder em alta</p>' | safe) }}
         </div>
       {% endif %}
 
