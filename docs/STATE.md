@@ -186,6 +186,12 @@
   - Rota protegida por senha GET /consultor e GET /api/consultor com autenticação HTTP Basic (usuário `consultor`).
   - Criação do módulo `app/consultor/universo.py` com a lista do Ibovespa.
   - Snapshot de api/snapshot atualizado.
+- Spec 069b (Consultor Confiança Exibição):
+  - Integração da confiança na resposta da API e interface UI.
+- Spec 069a (Consultor Confiança Coleta):
+  - Banco de dados SQLite (`consultor_confianca_regras`).
+  - Coletor com `yfinance` buscando dados diários com histórico de 2y.
+  - Cálculo sem viés de futuro da taxa de acerto e excesso mediano de cada regra, projetando os retornos 20 pregões à frente.
 - Spec 036 (Radar de Short Squeeze):
   - Coletor com yfinance (spark).
   - Exibe ações caindo >=10% nos últimos 10 dias com aumento anormal de volume (>2x média diária) e alta >= 4%.

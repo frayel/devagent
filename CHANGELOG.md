@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Implementa coleta de histórico extenso e avaliador do índice de acerto do consultor (spec 069a)
 
 ### Adicionado
 - fix: `/sistema` separa fonte fora do ar de pedido errado. Só 404 (ou outro 4xx que não seja 401, 403 ou 429) deixa a integração em atenção, e não em problema; o erro registrado traz a URL, com tokens mascarados. Painel vazio em todas as rodadas das últimas 3 h (ao menos 3) vira problema (spec 082).
@@ -168,3 +169,5 @@
 
 - (031) Scanner de Capitulação implementado.
 - Spec 068: Motor de regras de decisão do Consultor (Comprar, Vender, Aguardar).
+
+- Implementada a spec 069b.

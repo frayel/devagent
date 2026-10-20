@@ -3,6 +3,8 @@ from datetime import timezone, timedelta
 from app.database import get_historico_diario
 from app.consultor.universo import CARTEIRA_IBOVESPA
 from app.consultor.regras import avaliar_ativo
+from app.database import get_consultor_confianca_regras
+from datetime import datetime
 
 
 def calcular_consultor():
@@ -17,8 +19,6 @@ def calcular_consultor():
 
     resultados = {"Comprar": [], "Vender": [], "Aguardar": [], "Sem sinal": []}
 
-    from datetime import datetime
-
     try:
         ts = datetime.fromisoformat(historicos["^BVSP"]["timestamp"])
         timestamp = ts.astimezone(timezone(timedelta(hours=-3))).strftime(
@@ -26,6 +26,43 @@ def calcular_consultor():
         )
     except Exception:
         timestamp = "-"
+
+    regras_confianca = get_consultor_confianca_regras()
+
+    def obter_confianca(nome_regra):
+        if not regras_confianca or nome_regra not in regras_confianca:
+            return {"nivel": "baixa", "mensagem": "histórico indisponível"}
+
+        dados = regras_confianca[nome_regra]
+        n = dados["disparos"]
+        acertos = dados["acertos"]
+        excesso = dados["excesso_mediano"]
+
+        if n == 0:
+            return {"nivel": "baixa", "mensagem": "histórico indisponível"}
+
+        taxa = (acertos / n) * 100
+
+        if n >= 100 and taxa >= 60:
+            nivel = "alta"
+        elif n >= 30 and taxa >= 55:
+            nivel = "média"
+        elif n < 30:
+            return {"nivel": "baixa", "mensagem": f"baixa: amostra pequena (n = {n})"}
+        else:
+            nivel = "baixa"
+
+        sinal = "+" if excesso > 0 else ""
+        mensagem = f"Nas {n} vezes em que {nome_regra.split(' ')[0]} disparou em ativos do Ibovespa nos últimos 2 anos, o ativo superou o Ibovespa em {int(taxa)}% dos casos nos 20 pregões seguintes (mediana {sinal}{(excesso * 100):.1f} p.p.)."
+
+        return {
+            "nivel": nivel,
+            "mensagem": mensagem,
+            "n": n,
+            "taxa_acerto": taxa,
+            "excesso_mediano": excesso,
+            "confianca": nivel,
+        }
 
     for ticker in CARTEIRA_IBOVESPA:
         if ticker not in historicos:
@@ -61,6 +98,8 @@ def calcular_consultor():
             continue
 
         avaliacao = avaliar_ativo(ticker, closes, volumes, ibov_closes)
+        confianca_dados = obter_confianca(avaliacao["regra"])
+
         resultados[avaliacao["decisao"]].append(
             {
                 "ticker": ticker,
@@ -70,6 +109,11 @@ def calcular_consultor():
                 "gatilho": avaliacao["gatilho"],
                 "fonte": "yfinance",
                 "timestamp": timestamp,
+                "confianca": confianca_dados.get(
+                    "confianca", confianca_dados.get("nivel")
+                ),
+                "n": confianca_dados.get("n", 0),
+                "mensagem_confianca": confianca_dados["mensagem"],
             }
         )
 

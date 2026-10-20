@@ -130,12 +130,21 @@ def _coletar() -> None:
         "exaustao_queda",
         "divergencia_ibov_dolar",
         "assimetria_risco_retorno",
+        "consultor_historico",
     ):
         coletor = importlib.import_module(f"app.collectors.{nome}")
         mt5.reiniciar_rastreio()
         try:
             start_time = time.perf_counter()
             ok = coletor.collect_and_save()
+            if nome == "consultor_historico":
+                from app.consultor import avaliador_historico
+
+                # Avaliador não roda bloqueante no fluxo para não estourar o limite de tempo
+                import threading
+
+                threading.Thread(target=avaliador_historico.rodar_backtest).start()
+
             duracao = time.perf_counter() - start_time
             try:
                 save_coleta_tempo(nome, duracao, datetime.now(timezone.utc))
