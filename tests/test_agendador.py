@@ -84,6 +84,30 @@ def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
     monkeypatch.setattr(
         "app.collectors.scanner_capitulacao.collect_and_save", lambda: True
     )
+    monkeypatch.setattr(
+        "app.collectors.relogio_volatilidade.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr("app.collectors.motores_indice.collect_and_save", lambda: True)
+    monkeypatch.setattr(
+        "app.collectors.sensibilidade_juros.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_anomalias_spread.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.exaustao_tendencia.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr("app.collectors.exaustao_queda.collect_and_save", lambda: True)
+    monkeypatch.setattr(
+        "app.collectors.radar_anomalia_fechamento.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_short_squeeze.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.consultor_historico.collect_and_save", lambda: True
+    )
+
     monkeypatch.setattr("app.collectors.ibovespa.collect_and_save", quebra)
     monkeypatch.setattr("app.collectors.highlights.collect_and_save", funciona)
     monkeypatch.setattr(
