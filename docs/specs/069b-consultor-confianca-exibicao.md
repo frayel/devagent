@@ -21,6 +21,6 @@ A tabela calculada com o histórico de confiança do consultor (spec 069a) preci
 - `janela_fim` não é mais que 7 dias corridos anteriores ao atual.
 
 ## Critérios de aceite
-- [ ] O `/api/consultor` emite a chave `confianca` e metadados no dict de todas as recomendações.
-- [ ] A UI exibe corretamente a mensagem de fallback de histórico se os dados falham.
-- [ ] A tela exibe o aviso formatado sobre as métricas dos últimos X anos da regra correspondente.
+- [x] O `/api/consultor` emite a chave `confianca` e metadados no dict de todas as recomendações.
+- [x] A UI exibe corretamente a mensagem de fallback de histórico se os dados falham.
+- [x] A tela exibe o aviso formatado sobre as métricas dos últimos X anos da regra correspondente.

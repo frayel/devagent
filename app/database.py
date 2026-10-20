@@ -270,6 +270,20 @@ def get_latest_esforco_resultado_data() -> EsforcoResultadoData | None:
 
 def init_db() -> None:
     conn = get_connection()
+    try:
+        conn.execute(
+            "ALTER TABLE consultor_confianca_regras ADD COLUMN janela_inicio TEXT"
+        )
+        conn.commit()
+    except Exception:
+        pass
+    try:
+        conn.execute(
+            "ALTER TABLE consultor_confianca_regras ADD COLUMN janela_fim TEXT"
+        )
+        conn.commit()
+    except Exception:
+        pass
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -296,6 +310,8 @@ def init_db() -> None:
             disparos INTEGER,
             acertos INTEGER,
             excesso_mediano REAL,
+            janela_inicio TEXT,
+            janela_fim TEXT,
             atualizado_em TEXT
         );
     """)
@@ -2683,13 +2699,23 @@ def save_consultor_confianca_regra(
     disparos: int,
     acertos: int,
     excesso_mediano: float,
+    janela_inicio: str,
+    janela_fim: str,
     atualizado_em: datetime,
 ) -> None:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT OR REPLACE INTO consultor_confianca_regras (regra, disparos, acertos, excesso_mediano, atualizado_em) VALUES (?, ?, ?, ?, ?)",
-        (regra, disparos, acertos, excesso_mediano, atualizado_em.isoformat()),
+        "INSERT OR REPLACE INTO consultor_confianca_regras (regra, disparos, acertos, excesso_mediano, janela_inicio, janela_fim, atualizado_em) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (
+            regra,
+            disparos,
+            acertos,
+            excesso_mediano,
+            janela_inicio,
+            janela_fim,
+            atualizado_em.isoformat(),
+        ),
     )
     conn.commit()
     conn.close()
@@ -2700,7 +2726,7 @@ def get_consultor_confianca_regras() -> dict[str, dict]:
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "SELECT regra, disparos, acertos, excesso_mediano, atualizado_em FROM consultor_confianca_regras"
+            "SELECT regra, disparos, acertos, excesso_mediano, janela_inicio, janela_fim, atualizado_em FROM consultor_confianca_regras"
         )
         rows = cursor.fetchall()
     except sqlite3.OperationalError:
@@ -2714,6 +2740,8 @@ def get_consultor_confianca_regras() -> dict[str, dict]:
             "disparos": row[1],
             "acertos": row[2],
             "excesso_mediano": row[3],
-            "atualizado_em": datetime.fromisoformat(row[4]),
+            "janela_inicio": row[4],
+            "janela_fim": row[5],
+            "atualizado_em": datetime.fromisoformat(row[6]),
         }
     return result
