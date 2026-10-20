@@ -55,3 +55,8 @@
 - **Por que fiz:** O `docs/DESIGN.md` instrui o uso da macro `kpi` para apresentar métricas em destaque, eliminando a criação de layouts improvisados.
 - **O que aprendi:** A macro `kpi` é versátil o suficiente para comportar descrições textuais se passarmos o texto via `variacao_str`, dispensando marcação manual de divs.
 - **O que evitar:** Escrever HTML customizado para apresentar números e labels quando já existem macros padrão que garantem a consistência visual do projeto.
+## 2026-10-20
+- **O que fiz:** Padronizei os painéis "Clima Global", "Motores do Índice" e "Concentração Setorial" em `app/templates/index.html` para usarem a macro `kpi` em vez de estruturar o HTML manualmente com `<div class="kpi">`.
+- **Por que fiz:** O `docs/DESIGN.md` instrui o uso da macro `kpi` para apresentar métricas em destaque.
+- **O que aprendi:** Templates lidam bem com a substituição de blocos HTML longos por chamadas da macro `kpi` usando as funções `variacao` para a string de formatação. O uso de `| safe` é necessário em strings que concatenam com HTML interno.
+- **O que evitar:** Escrever `<div class="kpi">` manualmente em templates ao invés de usar a macro correspondente.
