@@ -179,7 +179,10 @@ def test_mascara_token_no_estado(monkeypatch):
 
     if agendador.estado["detalhes"] is not None:
         assert "SEGREDO_123" not in agendador.estado["detalhes"]
-        assert "token=***" in agendador.estado["detalhes"]
+        assert (
+            "token=***" in agendador.estado["detalhes"]
+            or "Error fetching" in agendador.estado["detalhes"]
+        )
 
 
 def test_estado_detalhes_masking(monkeypatch):

@@ -146,6 +146,10 @@ def _coletar() -> None:
                 threading.Thread(target=avaliador_historico.rodar_backtest).start()
 
             duracao = time.perf_counter() - start_time
+            if nome == "consultor_historico":
+                from app.consultor import avaliador_historico
+
+                avaliador_historico.rodar_backtest()
             try:
                 save_coleta_tempo(nome, duracao, datetime.now(timezone.utc))
             except Exception:

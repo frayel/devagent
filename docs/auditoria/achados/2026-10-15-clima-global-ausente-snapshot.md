@@ -2,7 +2,7 @@
 id: 2026-10-15-clima-global-ausente-snapshot
 severidade: media
 painel: clima_global
-status: aberto
+status: resolvido
 visto_em: 2026-10-15T20:50-03:00
 ---
 
