@@ -362,4 +362,4 @@
 - Spec 070a: Implementação de pré-filtro e fila de opiniões via feed.
 - Spec 070b: Extração via Gemini e exibição no painel Consultor.
 
-- Spec 071: Consultor exibe decisão final cruzando indicadores técnicos e consenso de casas de análise.
+- Spec 071: Consultor exibe decisão final cruzando indicadores técnicos e consenso de casas de análise.- Spec 072 dividida em 072a e 072b por causa de tamanho.
