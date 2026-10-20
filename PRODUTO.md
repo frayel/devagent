@@ -122,6 +122,7 @@ Complementa `devagent/skills/descobrir-ideias.md` com o território deste domín
 - Fora da B3, quando fizer sentido: câmbio, juros, commodities e bolsas estrangeiras explicam boa parte do que acontece aqui.
 - Concorrentes para testar originalidade: Status Invest, Investing, TradingView, sites de corretoras.
 - Cotação, gráfico e tabela de maiores altas todo painel já tem.
+- Pesquisa acadêmica: `docs/context/referencias-academicas.md` reúne artigos sobre regras técnicas, volume, pares e livro de ofertas, com a ideia que cada um sugere.
 
 ### Revisão de experiência neste produto
 
@@ -188,6 +189,7 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `docs/context/dominio-b3.md` | conceitos do mercado, pregão, horários, armadilhas | antes de spec ou cálculo financeiro |
 | `docs/context/fontes-de-dados.md` | cada fonte: URL, limites, termos, confiabilidade | antes de criar ou alterar coletor |
 | `docs/context/operacao.md` | particularidades operacionais deste produto no Render | antes de mexer em deploy ou coleta |
+| `docs/context/referencias-academicas.md` | artigos científicos sobre preço, volume e microestrutura, com a ideia que cada um sugere | no Passo 7 e antes de spec com sinal técnico, volume, pares ou livro |
 | `docs/skills/criar-coletor.md` | procedimento para nova fonte de dados | ao implementar coletor |
 | `docs/decisions/` | ADRs do produto: `004` coleta dentro do web service; `005` consultor (página própria, regras determinísticas, LLM só extrai); `006` persistência do consultor; `007` Postgres como banco único e snapshots por painel; `008` data de referência, congelamento após o fechamento e histórico de 5 pregões | antes de mudar stack ou arquitetura |
 | `auditoria/README.md` | o que o auditor verifica e o contrato `/api/snapshot` | ao tratar issue `producao-incorreta` e ao publicar painel novo |
