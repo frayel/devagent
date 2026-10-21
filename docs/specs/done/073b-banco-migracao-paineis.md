@@ -1,7 +1,7 @@
 ---
 id: 073b
 titulo: Banco · migração do Ibovespa, maiores altas/baixas e séries para a nova camada
-status: ready
+status: done
 esforco: G
 gaveta: saúde técnica
 ---

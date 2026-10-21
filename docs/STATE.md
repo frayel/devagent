@@ -376,3 +376,6 @@
   - Tabela `consultor_recomendacoes` e `consultor_fechamentos`.
   - Fallback local no SQLite.
   - Endpoint expõe o backend de armazenamento ativo.
+
+- Spec 073b (Banco · migração do Ibovespa, maiores altas/baixas e séries para a nova camada):
+  - Migração de tabelas de cache legadas para `snapshots_paineis` e `series_diarias` no Postgres com fallback SQLite.
