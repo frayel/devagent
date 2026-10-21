@@ -2,7 +2,7 @@
 id: 2026-10-20-detector-acao-orfa-ausente-snapshot
 severidade: media
 painel: detector_acao_orfa
-status: aberto
+status: resolvido
 visto_em: 2026-10-20T00:40:58+00:00
 ---
 
@@ -29,3 +29,5 @@ A auditoria determinística do comando `make audit` registrou em log: `⚠️ de
 
 ## Invariante proposta
 A checagem em `auditar.py` denominada `detector_acao_orfa.chave` já alerta a inexistência.
+
+**Resolução (2026-10-21):** O painel foi intencionalmente removido do produto conforme `docs/specs/067-remocao-acao-orfa.md`. A ausência da chave no `/api/snapshot` não é um defeito, mas sim o comportamento esperado. Nenhuma invariante em `auditar.py` cobra mais este dado.
