@@ -21,9 +21,13 @@ def test_cabecalho_tem_link_para_os_paineis(client, caminho):
 
 
 @pytest.mark.parametrize(
-    "caminho,rotulo", [("/", "Painéis"), ("/consultor", "Consultor"), ("/sistema", "Sistema")]
+    "caminho,rotulo",
+    [("/", "Painéis"), ("/consultor", "Consultor"), ("/sistema", "Sistema")],
 )
 def test_aba_atual_marcada(client, caminho, rotulo):
     html = client.get(caminho).text
-    assert f'href="{caminho}" class="menu-link ativo" aria-current="page">{rotulo}</a>' in html
+    assert (
+        f'href="{caminho}" class="menu-link ativo" aria-current="page">{rotulo}</a>'
+        in html
+    )
     assert html.count('aria-current="page"') == 1
