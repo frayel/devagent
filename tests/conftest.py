@@ -14,6 +14,9 @@ def setup_db(monkeypatch, tmp_path):
     monkeypatch.setattr(app.database, "DB_PATH", str(db_path))
 
     # Initialize the test database
+    import app.banco
+
+    app.banco._db_initialized = False
     app.database.init_db()
 
     # O MT5 só entra nos testes que o configuram de propósito.
