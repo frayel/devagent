@@ -1,46 +1,7 @@
-import os
 import json
 from datetime import datetime, timezone, timedelta
-from typing import Literal
 
-from app.database import get_connection as get_sqlite_connection
-
-try:
-    import psycopg
-
-    PSYCOPG_AVAILABLE = True
-except ImportError:
-    PSYCOPG_AVAILABLE = False
-
-
-def get_backend_type() -> Literal["postgres", "sqlite_efemero"]:
-    db_url = os.environ.get("DATABASE_URL")
-    if (
-        db_url
-        and (db_url.startswith("postgres://") or db_url.startswith("postgresql://"))
-        and PSYCOPG_AVAILABLE
-    ):
-        try:
-            with psycopg.connect(db_url):
-                return "postgres"
-        except Exception:
-            return "sqlite_efemero"
-    return "sqlite_efemero"
-
-
-def get_connection():
-    db_url = os.environ.get("DATABASE_URL")
-    if (
-        db_url
-        and (db_url.startswith("postgres://") or db_url.startswith("postgresql://"))
-        and PSYCOPG_AVAILABLE
-    ):
-        try:
-            conn = psycopg.connect(db_url)
-            return conn, "postgres"
-        except Exception:
-            pass
-    return get_sqlite_connection(), "sqlite_efemero"
+from app.banco import get_connection
 
 
 def init_db():

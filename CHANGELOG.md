@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 ### Added
+- **Spec 073**: Banco · camada única com Postgres e armazenamento do consultor
+### Added
 - **Consultor**: diário de recomendações com suporte ao Postgres para decisões técnicas, fechamentos e unificação de driver nas opiniões (Spec 072a).
 - Consultor: cruza os sinais técnicos com o consenso das casas de análise (spec 071).
 - **Spec 070:** Extrai recomendações e opiniões de casas de análise utilizando o LLM Gemini e as exibe no painel do Consultor de Investimentos.
