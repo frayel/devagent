@@ -1,3 +1,4 @@
+from app.banco import get_backend_type
 import asyncio
 import logging
 from collections.abc import AsyncIterator
@@ -110,6 +111,11 @@ templates = Jinja2Templates(directory="app/templates")
 # Cálculo dos gauges (spec 026): a macro só posiciona o que sai de app/gauge.py.
 templates.env.globals["gauge_dados"] = gauge.dados
 templates.env.filters["gauge_pct"] = gauge.gauge_pct
+templates.env.globals["render_no_db"] = (
+    os.environ.get("RENDER") and get_backend_type() != "postgres"
+)
+
+
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 
@@ -153,7 +159,14 @@ def healthz():
 @app.get("/api/coleta")
 def coleta():
     """Diagnóstico da coleta automática (última rodada e último erro)."""
-    return {"ligada": agendador.coleta_ligada(), **agendador.estado}
+    from app.banco import get_backend_type
+
+    res = {"ligada": agendador.coleta_ligada(), **agendador.estado}
+    backend = get_backend_type()
+    if os.environ.get("RENDER") and backend != "postgres":
+        res["aviso"] = "Banco persistente não configurado: dados se perdem ao reiniciar"
+    res["banco"] = backend
+    return res
 
 
 HORAS_VAZIOS = 3

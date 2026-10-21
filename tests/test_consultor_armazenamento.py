@@ -1,5 +1,5 @@
+from app.banco import get_backend_type
 from app.consultor.armazenamento import (
-    get_backend_type,
     save_recomendacoes,
 )
 from app.database import get_connection

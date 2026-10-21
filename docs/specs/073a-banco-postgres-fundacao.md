@@ -1,7 +1,7 @@
 ---
 id: 073a
 titulo: Banco · camada única com Postgres e armazenamento do consultor
-status: ready
+status: done
 esforco: G
 gaveta: saúde técnica
 ---

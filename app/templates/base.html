@@ -11,7 +11,14 @@
     <script src="/static/ui.js"></script>
 </head>
 <body>
+
+    {%- if render_no_db %}
+    <div class="aviso-banco-efemero">
+        Banco persistente não configurado: dados se perdem ao reiniciar
+    </div>
+    {%- endif %}
     <header>
+
         {%- set caminho = request.url.path if request is defined else "/" %}
         <a href="/" class="marca">Painel <span>B3</span></a>
         <div class="espacador-flex"></div>
