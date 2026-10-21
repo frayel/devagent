@@ -1,7 +1,7 @@
 ---
 id: 073
 titulo: Banco · camada única com Postgres e primeiros painéis migrados
-status: ready
+status: draft
 esforco: G
 gaveta: saúde técnica
 ---
