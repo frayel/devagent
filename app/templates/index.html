@@ -183,11 +183,7 @@
         </div>
       {% endif %}
 
-      <div class="kpi-container alinha-centro">
-        <div class="kpi">
-          <div class="valor rot texto-num">{{ concentracao_setorial.get('setor_lider_volume', 'N/A') or 'N/A' }}</div>
-        </div>
-        <div class="var texto-neutro num">
+      {% set volume_str %}
           {% if concentracao_setorial and concentracao_setorial.get('volume_lider', 0.0) >= 1000000000 %}
             R$ {{ ("%.2f"|format(concentracao_setorial.get('volume_lider', 0.0) / 1000000000)).replace('.', ',') }} bi
           {% elif concentracao_setorial and concentracao_setorial.get('volume_lider', 0.0) >= 1000000 %}
@@ -197,8 +193,9 @@
           {% else %}
             R$ 0,00
           {% endif %}
-        </div>
-        <p class="sub">Maior volume (R$)</p>
+      {% endset %}
+      <div class="kpi-container alinha-centro">
+        {{ kpi(concentracao_setorial.get('setor_lider_volume', 'N/A') or 'N/A', "", ((volume_str ~ '<p class="sub">Maior volume (R$)</p>') | safe)) }}
       </div>
     </div>
   {% endif %}
