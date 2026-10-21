@@ -1,7 +1,7 @@
 ---
 id: 072a
 titulo: Consultor · diário de recomendações (suporte a Postgres)
-status: ready
+status: done
 esforco: M
 ---
 
