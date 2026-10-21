@@ -1194,170 +1194,103 @@ def get_latest_escudo_quedas_data() -> EscudoQuedasData | None:
 
 
 def save_coesao_data(data: CoesaoData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            """
-            INSERT INTO coesao_cache (timestamp, concordantes, total, fonte)
-            VALUES (?, ?, ?, ?)
-            """,
-            (data.timestamp.isoformat(), data.concordantes, data.total, data.fonte),
-        )
-        conn.commit()
-    except sqlite3.OperationalError:
-        pass
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("coesao", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_coesao_data() -> CoesaoData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    row = None
-    try:
-        cursor.execute("""
-            SELECT timestamp, concordantes, total, fonte
-            FROM coesao_cache
-            ORDER BY timestamp DESC
-            LIMIT 1
-        """)
-        row = cursor.fetchone()
-    except sqlite3.OperationalError:
-        pass
-    conn.close()
-    if row:
-        return CoesaoData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            concordantes=row["concordantes"],
-            total=row["total"],
-            fonte=row["fonte"],
-        )
-    return None
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("coesao")
+    if not payload:
+        return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return CoesaoData(**payload_copy)
 
 
 def save_atrasadas_rally_data(data: AtrasadasRallyData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO atrasadas_rally_cache (timestamp, rally_valido, top3_json, fonte)
-        VALUES (?, ?, ?, ?)
-        """,
-        (
-            data.timestamp.isoformat(),
-            1 if data.rally_valido else 0,
-            data.top3_json,
-            data.fonte,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("atrasadas_rally", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_atrasadas_rally_data() -> AtrasadasRallyData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-            SELECT timestamp, rally_valido, top3_json, fonte
-            FROM atrasadas_rally_cache
-            ORDER BY timestamp DESC
-            LIMIT 1
-        """)
-        row = cursor.fetchone()
-    except sqlite3.OperationalError:
-        row = None
-    conn.close()
-    if row:
-        return AtrasadasRallyData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            rally_valido=bool(row["rally_valido"]),
-            top3_json=row["top3_json"],
-            fonte=row["fonte"],
-        )
-    return None
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("atrasadas_rally")
+    if not payload:
+        return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return AtrasadasRallyData(**payload_copy)
 
 
 def save_concentracao_data(data: ConcentracaoData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO concentracao_cache (timestamp, resumo_json, top3_json, fonte)
-        VALUES (?, ?, ?, ?)
-        """,
-        (
-            data.timestamp.isoformat(),
-            data.resumo_json,
-            data.top3_json,
-            data.fonte,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("concentracao", hoje, "ao_vivo", data.fonte, payload)
 
 
 def save_concentracao_vendedora_data(data: ConcentracaoData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO concentracao_vendedora_cache (timestamp, resumo_json, top3_json, fonte)
-        VALUES (?, ?, ?, ?)
-        """,
-        (
-            data.timestamp.isoformat(),
-            data.resumo_json,
-            data.top3_json,
-            data.fonte,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("concentracao_vendedora", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_concentracao_vendedora_data() -> ConcentracaoData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT timestamp, resumo_json, top3_json, fonte
-        FROM concentracao_vendedora_cache
-        ORDER BY timestamp DESC LIMIT 1
-        """
-    )
-    row = cursor.fetchone()
-    conn.close()
-    if row:
-        return ConcentracaoData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            resumo_json=row["resumo_json"],
-            top3_json=row["top3_json"],
-            fonte=row["fonte"],
-        )
-    return None
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("concentracao_vendedora")
+    if not payload:
+        return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return ConcentracaoData(**payload_copy)
 
 
 def get_latest_concentracao_data() -> ConcentracaoData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        SELECT timestamp, resumo_json, top3_json, fonte
-        FROM concentracao_cache
-        ORDER BY timestamp DESC LIMIT 1
-        """
-    )
-    row = cursor.fetchone()
-    conn.close()
-    if row:
-        return ConcentracaoData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            resumo_json=row["resumo_json"],
-            top3_json=row["top3_json"],
-            fonte=row["fonte"],
-        )
-    return None
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("concentracao")
+    if not payload:
+        return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return ConcentracaoData(**payload_copy)
 
 
 def save_variacao_subita_data(data: VariacaoSubitaData) -> None:
@@ -1400,97 +1333,53 @@ def get_latest_variacao_subita_data() -> VariacaoSubitaData | None:
 
 
 def save_concentracao_setorial_data(data: ConcentracaoSetorialData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO concentracao_setorial_cache (timestamp, setor_destaque, variacao_media, fonte, setor_lider_volume, volume_lider)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """,
-        (
-            data.timestamp.isoformat(),
-            data.setor_destaque,
-            data.variacao_media,
-            data.fonte,
-            data.setor_lider_volume,
-            data.volume_lider,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("concentracao_setorial", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_concentracao_setorial_data() -> ConcentracaoSetorialData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-            SELECT * FROM concentracao_setorial_cache
-            ORDER BY timestamp DESC
-            LIMIT 1
-        """)
-        row = cursor.fetchone()
-    except sqlite3.OperationalError:
-        row = None
-    finally:
-        conn.close()
-    if row:
-        return ConcentracaoSetorialData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            setor_destaque=row["setor_destaque"],
-            variacao_media=float(row["variacao_media"]),
-            fonte=row["fonte"],
-            setor_lider_volume=row["setor_lider_volume"]
-            if "setor_lider_volume" in row.keys()
-            else "",
-            volume_lider=float(row["volume_lider"])
-            if "volume_lider" in row.keys() and row["volume_lider"] is not None
-            else 0.0,
-        )
-    return None
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("concentracao_setorial")
+    if not payload:
+        return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return ConcentracaoSetorialData(**payload_copy)
 
 
 def save_apetite_risco_data(data: ApetiteRiscoData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO apetite_risco_cache (timestamp, estado, diferenca, fonte)
-        VALUES (?, ?, ?, ?)
-        """,
-        (
-            data.timestamp.isoformat(),
-            data.estado,
-            data.diferenca,
-            data.fonte,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("apetite_risco", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_apetite_risco_data() -> ApetiteRiscoData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-            SELECT timestamp, estado, diferenca, fonte
-            FROM apetite_risco_cache
-            ORDER BY timestamp DESC
-            LIMIT 1
-        """)
-        row = cursor.fetchone()
-    except sqlite3.OperationalError:
-        row = None
-    conn.close()
-    if row:
-        return ApetiteRiscoData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            estado=row["estado"],
-            diferenca=row["diferenca"],
-            fonte=row["fonte"],
-        )
-    return None
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("apetite_risco")
+    if not payload:
+        return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return ApetiteRiscoData(**payload_copy)
 
 
 def save_rotacao_capital_data(data: RotacaoCapitalData) -> None:
@@ -1592,44 +1481,28 @@ class CompradoresFundoData:
 
 
 def save_compradores_fundo_data(data: CompradoresFundoData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO compradores_fundo_cache (timestamp, alertas_json, fonte)
-        VALUES (?, ?, ?)
-        """,
-        (
-            data.timestamp.isoformat(),
-            data.alertas_json,
-            data.fonte,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("compradores_fundo", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_compradores_fundo_data() -> CompradoresFundoData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-            SELECT timestamp, alertas_json, fonte
-            FROM compradores_fundo_cache
-            ORDER BY timestamp DESC
-            LIMIT 1
-        """)
-        row = cursor.fetchone()
-    except sqlite3.OperationalError:
-        row = None
-    conn.close()
-    if row:
-        return CompradoresFundoData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            alertas_json=row["alertas_json"],
-            fonte=row["fonte"],
-        )
-    return None
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("compradores_fundo")
+    if not payload:
+        return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return CompradoresFundoData(**payload_copy)
 
 
 @dataclass
@@ -1640,46 +1513,28 @@ class ArmadilhaAberturaData:
 
 
 def save_armadilha_abertura_data(data: ArmadilhaAberturaData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO armadilha_abertura_cache (timestamp, alertas_json, fonte)
-        VALUES (?, ?, ?)
-        """,
-        (
-            data.timestamp.isoformat(),
-            data.alertas_json,
-            data.fonte,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("armadilha_abertura", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_armadilha_abertura_data() -> ArmadilhaAberturaData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-            SELECT timestamp, alertas_json, fonte
-            FROM armadilha_abertura_cache
-            ORDER BY timestamp DESC
-            LIMIT 1
-        """)
-        row = cursor.fetchone()
-    except sqlite3.OperationalError:
-        return None
-    finally:
-        conn.close()
+    from app.banco import ler_snapshot
+    from datetime import datetime
 
-    if row:
-        return ArmadilhaAberturaData(
-            timestamp=datetime.fromisoformat(row[0]),
-            alertas_json=row[1],
-            fonte=row[2],
-        )
-    return None
+    payload = ler_snapshot("armadilha_abertura")
+    if not payload:
+        return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return ArmadilhaAberturaData(**payload_copy)
 
 
 @dataclass
@@ -1795,33 +1650,28 @@ class AnomaliaPesoData:
 
 
 def save_anomalia_peso_data(data: AnomaliaPesoData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """INSERT INTO anomalia_peso_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)""",
-        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("anomalia_peso", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_anomalia_peso_data() -> AnomaliaPesoData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            """SELECT timestamp, alertas_json, fonte FROM anomalia_peso_cache ORDER BY timestamp DESC LIMIT 1"""
-        )
-        row = cursor.fetchone()
-    finally:
-        conn.close()
-    if row:
-        return AnomaliaPesoData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            alertas_json=row["alertas_json"],
-            fonte=row["fonte"],
-        )
-    return None
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("anomalia_peso")
+    if not payload:
+        return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return AnomaliaPesoData(**payload_copy)
 
 
 @dataclass
@@ -2268,43 +2118,28 @@ class ClimaGlobalData:
 
 
 def save_clima_global_data(data: ClimaGlobalData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO clima_global_cache (timestamp, sp500_pct, vix_pct, status, fonte) VALUES (?, ?, ?, ?, ?)",
-        (
-            data.timestamp.isoformat(),
-            data.sp500_pct,
-            data.vix_pct,
-            data.status,
-            data.fonte,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("clima_global", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_clima_global_data() -> ClimaGlobalData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "SELECT timestamp, sp500_pct, vix_pct, status, fonte FROM clima_global_cache ORDER BY timestamp DESC LIMIT 1"
-        )
-        row = cursor.fetchone()
-    except sqlite3.OperationalError:
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("clima_global")
+    if not payload:
         return None
-    finally:
-        conn.close()
-    if row:
-        return ClimaGlobalData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            sp500_pct=row["sp500_pct"],
-            vix_pct=row["vix_pct"],
-            status=row["status"],
-            fonte=row["fonte"],
-        )
-    return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return ClimaGlobalData(**payload_copy)
 
 
 def get_latest_relogio_volatilidade_data() -> RelogioVolatilidadeData | None:
@@ -2454,59 +2289,53 @@ class RadarAnomaliasSpreadData:
 
 
 def save_radar_anomalias_spread_data(data: RadarAnomaliasSpreadData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO anomalias_spread_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
-        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("anomalias_spread", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_radar_anomalias_spread_data() -> RadarAnomaliasSpreadData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "SELECT timestamp, alertas_json, fonte FROM anomalias_spread_cache ORDER BY timestamp DESC LIMIT 1"
-        )
-        row = cursor.fetchone()
-    except Exception:
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("anomalias_spread")
+    if not payload:
         return None
-    finally:
-        conn.close()
-    if row:
-        return RadarAnomaliasSpreadData(
-            timestamp=datetime.fromisoformat(row[0]), alertas_json=row[1], fonte=row[2]
-        )
-    return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return RadarAnomaliasSpreadData(**payload_copy)
 
 
 def save_concentracao_ordens_data(data: ConcentracaoOrdensData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO concentracao_ordens_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
-        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("concentracao_ordens", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_concentracao_ordens_data() -> ConcentracaoOrdensData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT timestamp, alertas_json, fonte FROM concentracao_ordens_cache ORDER BY timestamp DESC LIMIT 1"
-    )
-    row = cursor.fetchone()
-    conn.close()
-    if row:
-        return ConcentracaoOrdensData(
-            timestamp=datetime.fromisoformat(row[0]), alertas_json=row[1], fonte=row[2]
-        )
-    return None
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("concentracao_ordens")
+    if not payload:
+        return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return ConcentracaoOrdensData(**payload_copy)
 
 
 @dataclass
@@ -2590,33 +2419,28 @@ class AssimetriaRiscoRetornoData:
 
 
 def save_assimetria_risco_retorno_data(data: AssimetriaRiscoRetornoData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO assimetria_risco_retorno_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
-        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("assimetria_risco_retorno", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_assimetria_risco_retorno_data() -> AssimetriaRiscoRetornoData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "SELECT timestamp, alertas_json, fonte FROM assimetria_risco_retorno_cache ORDER BY timestamp DESC LIMIT 1"
-        )
-        row = cursor.fetchone()
-    except Exception:
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("assimetria_risco_retorno")
+    if not payload:
         return None
-    finally:
-        conn.close()
-    if row:
-        return AssimetriaRiscoRetornoData(
-            timestamp=datetime.fromisoformat(row[0]), alertas_json=row[1], fonte=row[2]
-        )
-    return None
+
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+
+    return AssimetriaRiscoRetornoData(**payload_copy)
 
 
 def get_historico_diario(
