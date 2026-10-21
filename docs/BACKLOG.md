@@ -2,6 +2,7 @@
 
 ## Correções (prioridade sobre qualquer feature)
 
+- Chamadas à brapi com vários ativos são recusadas pelo plano Gratuito (68 bloqueios no ciclo, aviso da brapi em 20/10/2026). Implementar a spec 083 (`docs/specs/083-brapi-fonte-secundaria.md`): brapi como fonte secundária, uma chamada por ativo, orçamento de requisições e disjuntor para 403/429. Fechar a spec no mesmo PR `fix:` que remove esta entrada.
 
 ## Features
 
