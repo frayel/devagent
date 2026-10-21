@@ -180,3 +180,4 @@
 - Implementada a spec 069b.
 - Divide a especificação 070 sobre opiniões de casas de análise em 070a e 070b.
 - Divide a especificação 072 sobre consultor placar em 072a e 072b.
+- Spec 72: Consultor · placar de acertos e avaliações na UI.

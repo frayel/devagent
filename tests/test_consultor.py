@@ -264,3 +264,120 @@ def test_regras_1_ao_4_fixture():
     av_r4 = avaliar_ativo("TICK4", closes_r4, volumes, ibov_closes)
     assert av_r4["regra"] == "R4 Rompimento pendente"
     assert av_r4["decisao"] == "Aguardar"
+
+
+def test_consultor_placar(monkeypatch):
+    from app.consultor.armazenamento import init_db, get_connection
+
+    init_db()
+    conn, _ = get_connection()
+    c = conn.cursor()
+    c.execute("DELETE FROM consultor_recomendacoes")
+    c.execute("DELETE FROM consultor_fechamentos")
+    c.execute("DELETE FROM consultor_opinioes")
+
+    for i in range(10):
+        c.execute(
+            "INSERT INTO consultor_recomendacoes (timestamp, ticker, decisao_final, regra_tecnica, consenso, preco, gatilho) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ("2023-10-01 18:00:00 BRT", "TICK1", "Comprar", "R1", "", 10.0, "-"),
+        )
+        c.execute(
+            "INSERT INTO consultor_recomendacoes (timestamp, ticker, decisao_final, regra_tecnica, consenso, preco, gatilho) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ("2023-10-01 18:00:00 BRT", "TICK2", "Vender", "R2", "", 10.0, "-"),
+        )
+        c.execute(
+            "INSERT INTO consultor_recomendacoes (timestamp, ticker, decisao_final, regra_tecnica, consenso, preco, gatilho) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ("2023-10-01 18:00:00 BRT", "TICK3", "Aguardar", "R3", "", 10.0, "15.0"),
+        )
+
+    for ticker in ("TICK1", "TICK2", "TICK3", "^BVSP"):
+        c.execute(
+            "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+            ("2023-10-01", ticker, 10.0 if ticker != "^BVSP" else 100.0),
+        )
+
+    # Add dummy days 02..20
+    for d in range(2, 21):
+        c.execute(
+            "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+            (f"2023-10-{d:02d}", "TICK1", 10.0),
+        )
+        c.execute(
+            "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+            (f"2023-10-{d:02d}", "^BVSP", 100.0),
+        )
+        c.execute(
+            "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+            (f"2023-10-{d:02d}", "TICK3", 10.0),
+        )
+
+    c.execute(
+        "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+        ("2023-10-06", "TICK1", 12.0),
+    )
+    c.execute(
+        "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+        ("2023-10-06", "TICK2", 8.0),
+    )
+
+    # offset 20 -> 2023-10-21
+    c.execute(
+        "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+        ("2023-10-21", "TICK1", 14.0),
+    )  # TICK1 return = 40%, BVSP = 10%. Excesso = 30% = 0.3
+    c.execute(
+        "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+        ("2023-10-21", "TICK2", 6.0),
+    )  # TICK2 return = -40%, BVSP = 10%. Excesso = -50% = -0.5
+    c.execute(
+        "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+        ("2023-10-21", "TICK3", 15.0),
+    )  # TICK3 return = 50%. crossed gatilho
+    c.execute(
+        "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+        ("2023-10-21", "^BVSP", 110.0),
+    )
+
+    for d in range(22, 32):
+        c.execute(
+            "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+            (f"2023-10-{d:02d}", "TICK3", 15.0),
+        )
+        c.execute(
+            "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+            (f"2023-10-{d:02d}", "^BVSP", 110.0),
+        )
+    for d in range(1, 10):
+        c.execute(
+            "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+            (f"2023-11-{d:02d}", "TICK3", 15.0),
+        )
+        c.execute(
+            "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+            (f"2023-11-{d:02d}", "^BVSP", 110.0),
+        )
+
+    # offset 20 for Aguardar hit (2023-11-10)
+    c.execute(
+        "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+        ("2023-11-10", "TICK3", 21.0),
+    )  # returned 40% after gatilho
+    c.execute(
+        "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
+        ("2023-11-10", "^BVSP", 121.0),
+    )  # returned 10% after gatilho
+
+    conn.commit()
+
+    from app.consultor.placar import calcular_placar
+
+    placar = calcular_placar()
+
+    assert placar["consultor"]["Comprar"]["tx20"] == 100.0
+    assert abs(placar["consultor"]["Comprar"]["med20"] - 0.3) < 0.01
+
+    assert placar["consultor"]["Vender"]["tx20"] == 100.0
+    assert abs(placar["consultor"]["Vender"]["med20"] - (-0.5)) < 0.01
+
+    assert placar["consultor"]["Aguardar"]["pct_gatilho"] == 100.0
+    assert abs(placar["consultor"]["Aguardar"]["med_gatilho20"] - 0.3) < 0.01
