@@ -269,6 +269,9 @@ def get_latest_esforco_resultado_data() -> EsforcoResultadoData | None:
 
 
 def init_db() -> None:
+    from app.banco import init_db as init_banco
+
+    init_banco()
     conn = get_connection()
     try:
         conn.execute(
@@ -905,95 +908,71 @@ def init_db() -> None:
 
 
 def save_ibovespa_data(data: IbovespaData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO ibovespa_cache (timestamp, current_price, previous_close, history_json, fonte, mm21, mm200)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """,
-        (
-            data.timestamp.isoformat(),
-            data.current_price,
-            data.previous_close,
-            data.history_json,
-            data.fonte,
-            data.mm21,
-            data.mm200,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = {
+        "timestamp": data.timestamp.isoformat(),
+        "current_price": data.current_price,
+        "previous_close": data.previous_close,
+        "history_json": data.history_json,
+        "fonte": data.fonte,
+        "mm21": data.mm21,
+        "mm200": data.mm200,
+    }
+    gravar_snapshot("ibovespa", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_ibovespa_data() -> IbovespaData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT timestamp, current_price, previous_close, history_json, fonte, mm21, mm200
-        FROM ibovespa_cache
-        ORDER BY timestamp DESC
-        LIMIT 1
-    """)
-    row = cursor.fetchone()
-    conn.close()
+    from app.banco import ler_snapshot
+    from datetime import datetime
 
-    if row:
+    payload = ler_snapshot("ibovespa")
+    if payload:
         return IbovespaData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            current_price=row["current_price"],
-            previous_close=row["previous_close"],
-            history_json=row["history_json"],
-            fonte=row["fonte"],
-            mm21=row["mm21"],
-            mm200=row["mm200"],
+            timestamp=datetime.fromisoformat(payload["timestamp"]),
+            current_price=payload["current_price"],
+            previous_close=payload["previous_close"],
+            history_json=payload["history_json"],
+            fonte=payload["fonte"],
+            mm21=payload.get("mm21"),
+            mm200=payload.get("mm200"),
         )
     return None
 
 
 def save_highlights_data(data: HighlightsData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO highlights_cache (timestamp, highs_json, lows_json, fonte, up_count, down_count, total_count)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """,
-        (
-            data.timestamp.isoformat(),
-            data.highs_json,
-            data.lows_json,
-            data.fonte,
-            data.up_count,
-            data.down_count,
-            data.total_count,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = {
+        "timestamp": data.timestamp.isoformat(),
+        "highs_json": data.highs_json,
+        "lows_json": data.lows_json,
+        "fonte": data.fonte,
+        "up_count": data.up_count,
+        "down_count": data.down_count,
+        "total_count": data.total_count,
+    }
+    gravar_snapshot("maiores_altas_baixas", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_highlights_data() -> HighlightsData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT timestamp, highs_json, lows_json, fonte, up_count, down_count, total_count
-        FROM highlights_cache
-        ORDER BY timestamp DESC
-        LIMIT 1
-    """)
-    row = cursor.fetchone()
-    conn.close()
+    from app.banco import ler_snapshot
+    from datetime import datetime
 
-    if row:
+    payload = ler_snapshot("maiores_altas_baixas")
+    if payload:
         return HighlightsData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            highs_json=row["highs_json"],
-            lows_json=row["lows_json"],
-            fonte=row["fonte"],
-            up_count=row["up_count"],
-            down_count=row["down_count"],
-            total_count=row["total_count"],
+            timestamp=datetime.fromisoformat(payload["timestamp"]),
+            highs_json=payload["highs_json"],
+            lows_json=payload["lows_json"],
+            fonte=payload["fonte"],
+            up_count=payload.get("up_count"),
+            down_count=payload.get("down_count"),
+            total_count=payload.get("total_count"),
         )
     return None
 
@@ -2346,79 +2325,91 @@ def get_latest_relogio_volatilidade_data() -> RelogioVolatilidadeData | None:
 
 
 def save_coleta_tempo(painel: str, duracao: float, timestamp: datetime) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO instrumentacao_coleta_tempo (painel, duracao, timestamp) VALUES (?, ?, ?)",
-        (painel, duracao, timestamp.isoformat()),
-    )
-    conn.commit()
+    from app.banco import ler_snapshot, gravar_snapshot
+    from datetime import timezone
+
+    hoje = timestamp.astimezone(timezone.utc).date()
+
+    payload = ler_snapshot("instrumentacao", hoje) or {
+        "tempos": {},
+        "vazias": {},
+        "rodadas": {},
+    }
+    if "tempos" not in payload:
+        payload["tempos"] = {}
+    if "rodadas" not in payload:
+        payload["rodadas"] = {}
+
+    payload["tempos"][painel] = duracao
+    payload["rodadas"][painel] = payload["rodadas"].get(painel, 0) + 1
+
+    gravar_snapshot("instrumentacao", hoje, "ao_vivo", "sistema", payload)
 
 
 def save_coleta_vazia(painel: str, timestamp: datetime) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO instrumentacao_coleta_vazia (painel, timestamp) VALUES (?, ?)",
-        (painel, timestamp.isoformat()),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import ler_snapshot, gravar_snapshot
+    from datetime import timezone
+
+    hoje = timestamp.astimezone(timezone.utc).date()
+
+    payload = ler_snapshot("instrumentacao", hoje) or {
+        "tempos": {},
+        "vazias": {},
+        "rodadas": {},
+    }
+    if "vazias" not in payload:
+        payload["vazias"] = {}
+
+    payload["vazias"][painel] = payload["vazias"].get(painel, 0) + 1
+
+    gravar_snapshot("instrumentacao", hoje, "ao_vivo", "sistema", payload)
 
 
 def get_coletas_vazias_count(painel: str) -> int:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT COUNT(*) FROM instrumentacao_coleta_vazia WHERE painel = ?", (painel,)
-    )
-    row = cursor.fetchone()
-    conn.close()
-    return row[0] if row else 0
+    from app.banco import ler_snapshot
+    from datetime import timezone, datetime as dt
+
+    hoje = dt.now(timezone.utc).astimezone().date()
+    payload = ler_snapshot("instrumentacao", hoje)
+    if payload and "vazias" in payload:
+        return payload["vazias"].get(painel, 0)
+    return 0
 
 
 def get_coletas_vazias_desde(desde: datetime) -> dict[str, int]:
     """Painel → quantas coletas vazias desde `desde` (página /sistema, spec 082)."""
-    conn = get_connection()
-    try:
-        rows = conn.execute(
-            "SELECT painel, COUNT(*) FROM instrumentacao_coleta_vazia "
-            "WHERE timestamp >= ? GROUP BY painel",
-            (desde.isoformat(),),
-        ).fetchall()
-    finally:
-        conn.close()
-    return {r[0]: r[1] for r in rows}
+    from app.banco import ler_snapshot
+    from datetime import timezone, datetime as dt
+
+    hoje = dt.now(timezone.utc).astimezone().date()
+    payload = ler_snapshot("instrumentacao", hoje)
+    if payload and "vazias" in payload:
+        return payload["vazias"]
+    return {}
 
 
 def get_tempos_coleta_desde(desde: datetime) -> dict[str, float]:
     """Painel → duração da coleta mais recente desde `desde`, em segundos (spec 082)."""
-    conn = get_connection()
-    try:
-        rows = conn.execute(
-            "SELECT painel, duracao FROM instrumentacao_coleta_tempo t "
-            "WHERE timestamp >= ? AND timestamp = ("
-            "  SELECT MAX(timestamp) FROM instrumentacao_coleta_tempo u "
-            "  WHERE u.painel = t.painel)",
-            (desde.isoformat(),),
-        ).fetchall()
-    finally:
-        conn.close()
-    return {r[0]: float(r[1]) for r in rows}
+    from app.banco import ler_snapshot
+    from datetime import timezone, datetime as dt
+
+    hoje = dt.now(timezone.utc).astimezone().date()
+    payload = ler_snapshot("instrumentacao", hoje)
+    if payload and "tempos" in payload:
+        return payload["tempos"]
+    return {}
 
 
 def get_rodadas_coleta_desde(desde: datetime) -> dict[str, int]:
     """Painel → quantas coletas rodaram desde `desde` (spec 082)."""
-    conn = get_connection()
-    try:
-        rows = conn.execute(
-            "SELECT painel, COUNT(*) FROM instrumentacao_coleta_tempo "
-            "WHERE timestamp >= ? GROUP BY painel",
-            (desde.isoformat(),),
-        ).fetchall()
-    finally:
-        conn.close()
-    return {r[0]: r[1] for r in rows}
+    from app.banco import ler_snapshot
+    from datetime import timezone, datetime as dt
+
+    hoje = dt.now(timezone.utc).astimezone().date()
+    payload = ler_snapshot("instrumentacao", hoje)
+    if payload and "rodadas" in payload:
+        return payload["rodadas"]
+    return {}
 
 
 def diagnostico() -> dict:
@@ -2631,40 +2622,67 @@ def get_latest_assimetria_risco_retorno_data() -> AssimetriaRiscoRetornoData | N
 def get_historico_diario(
     tickers: list[str], range_str: str, interval: str, max_age_minutes: int = 15
 ) -> dict[str, dict]:
-    conn = get_connection()
-    cursor = conn.cursor()
-    placeholders = ",".join(["?"] * len(tickers))
-    try:
-        cursor.execute(
-            f"SELECT ticker, dados_json, timestamp FROM historico_diario_cache WHERE ticker IN ({placeholders}) AND range_str = ? AND interval = ?",
-            (*tickers, range_str, interval),
-        )
-        rows = cursor.fetchall()
-    except sqlite3.OperationalError:
-        return {}
-    finally:
-        conn.close()
+    from app.banco import ler_serie
+    from datetime import date, timedelta
 
-    agora = datetime.now(timezone.utc)
     result = {}
-    for row in rows:
-        ts = datetime.fromisoformat(row[2])
-        if (agora - ts).total_seconds() <= max_age_minutes * 60:
-            result[row[0]] = json.loads(row[1])
+    hoje = date.today()
+    inicio = hoje - timedelta(days=365 * 2)  # max
+
+    for ticker in tickers:
+        barras = ler_serie(ticker, inicio, hoje)
+        if barras:
+            closes = [b.get("close") for b in barras]
+            quote_dict = {"close": closes}
+            if "open" in barras[0]:
+                quote_dict["open"] = [b.get("open", 0) for b in barras]
+                quote_dict["high"] = [b.get("high", 0) for b in barras]
+                quote_dict["low"] = [b.get("low", 0) for b in barras]
+                quote_dict["volume"] = [b.get("volume", 0) for b in barras]
+
+            spark_like_item = {
+                "symbol": ticker,
+                "timestamp": [1] * len(closes),
+                "indicators": {"quote": [quote_dict]},
+            }
+            result[ticker] = spark_like_item
+
     return result
 
 
 def save_historico_diario(
     ticker: str, range_str: str, interval: str, dados_json: str, timestamp: datetime
 ) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT OR REPLACE INTO historico_diario_cache (ticker, range_str, interval, dados_json, timestamp) VALUES (?, ?, ?, ?, ?)",
-        (ticker, range_str, interval, dados_json, timestamp.isoformat()),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_serie
+    import json
+
+    try:
+        dados = json.loads(dados_json)
+        quote = dados.get("indicators", {}).get("quote", [{}])[0]
+        closes = quote.get("close", [])
+
+        times = dados.get("timestamp", [])
+        if not closes or not times:
+            return
+
+        from datetime import datetime as dt, timezone
+
+        barras = []
+        for i in range(len(closes)):
+            if closes[i] is None:
+                continue
+            data = dt.fromtimestamp(times[i], tz=timezone.utc).strftime("%Y-%m-%d")
+            barra = {"data": data, "close": closes[i]}
+            if "open" in quote and quote["open"][i] is not None:
+                barra["open"] = quote["open"][i]
+                barra["high"] = quote["high"][i]
+                barra["low"] = quote["low"][i]
+                barra["volume"] = quote["volume"][i]
+            barras.append(barra)
+
+        gravar_serie(ticker, barras)
+    except Exception:
+        pass
 
 
 def save_divergencia_ibov_dolar(

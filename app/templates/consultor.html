@@ -101,7 +101,7 @@
         </div>
 
         {% for grupo in ["Comprar", "Vender", "Aguardar", "No radar"] %}
-            {% if dados.resultados[grupo] %}
+            {% if dados.resultados and dados.resultados[grupo] %}
             <div class="grupo-consultor">
                 <h3>{{ grupo }}</h3>
                 <div class="tabela-responsiva">
@@ -154,7 +154,7 @@
             {% endif %}
         {% endfor %}
 
-        {% if dados.resultados["Sem sinal"] %}
+        {% if dados.resultados and dados.resultados["Sem sinal"] %}
         <details class="accordion-sem-sinal">
             <summary>Sem sinal ({{ dados.resultados["Sem sinal"]|length }} ativos)</summary>
             <div class="tabela-responsiva">

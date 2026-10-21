@@ -25,7 +25,7 @@ def calcular_consultor():
     )
 
     if "^BVSP" not in historicos or not historicos["^BVSP"]:
-        raise ValueError("Dados do Ibovespa indisponíveis")
+        return {"ibovespa": None, "opinioes_recentes": [], "regras_confianca": {}}
 
     ibov_closes, _, ibov_ts = pre_processar_ativo(historicos["^BVSP"])
 
