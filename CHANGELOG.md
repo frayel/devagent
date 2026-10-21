@@ -8,6 +8,7 @@
 - Implementa coleta de histórico extenso e avaliador do índice de acerto do consultor (spec 069a)
 
 ### Adicionado
+- fix: o cabeçalho leva de volta aos painéis a partir do Consultor e do Sistema. "Painel B3" vira link para `/`, a navegação ganha a aba "Painéis" e a aba da página atual fica marcada.
 - fix: a auditoria deixa de exigir a chave `detector_acao_orfa` no `/api/snapshot`. O painel foi removido de propósito pela spec 067, e a checagem que ficou para trás gerava alarme falso (issue #370).
 - fix: `/sistema` separa fonte fora do ar de pedido errado. Só 404 (ou outro 4xx que não seja 401, 403 ou 429) deixa a integração em atenção, e não em problema; o erro registrado traz a URL, com tokens mascarados. Painel vazio em todas as rodadas das últimas 3 h (ao menos 3) vira problema (spec 082).
 - agent: o ciclo lê a página de saúde de produção (ADR 016). `python -m devagent.saude` lê o JSON configurado em `[saude]`; o `estado_github` mostra o resumo no início de toda execução; o job `saude` do `auditoria-producao.yml` abre, atualiza ou fecha a issue `sistema-com-problema`, que o Passo 1 trata como produção quebrada (o que depende de ajuste externo fica `bloqueado`). `/api/sistema` ganha o campo `parcial`, e a variável do intervalo do cron-job.org na página passa a ser `JULES_DISPARO_MINUTOS`.

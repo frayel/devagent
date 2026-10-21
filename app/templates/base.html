@@ -12,10 +12,14 @@
 </head>
 <body>
     <header>
-        <div class="marca">Painel <span>B3</span></div>
+        {%- set caminho = request.url.path if request is defined else "/" %}
+        <a href="/" class="marca">Painel <span>B3</span></a>
         <div class="espacador-flex"></div>
-        <a href="/consultor" class="menu-link">Consultor</a>
-        <a href="/sistema" class="menu-link">Sistema</a>
+        <nav class="menu" aria-label="Seções">
+            {%- for href, rotulo in [("/", "Painéis"), ("/consultor", "Consultor"), ("/sistema", "Sistema")] %}
+            <a href="{{ href }}" class="menu-link{% if caminho == href %} ativo{% endif %}"{% if caminho == href %} aria-current="page"{% endif %}>{{ rotulo }}</a>
+            {%- endfor %}
+        </nav>
         <div class="pregao">Pregão</div>
         <div class="hora">{{ data.time if data else '' }}</div>
     </header>
