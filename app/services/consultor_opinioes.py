@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timezone, date
 import httpx
 
-from app.database import get_connection
+from app.consultor.armazenamento import get_connection
 from app.consultor.universo import CARTEIRA_IBOVESPA
 from app.consultor.pre_filtro import normalizar
 from app.collectors import registro_fontes
@@ -21,50 +21,66 @@ PAUSA_5XX = 5.0
 
 
 def get_llm_uso_hoje() -> int:
-    conn = get_connection()
+    conn, backend = get_connection()
     try:
         hoje = date.today().isoformat()
-        cursor = conn.cursor()
+        cursor = conn.cursor() if backend == "postgres" else conn.cursor()
         cursor.execute("SELECT chamadas FROM consultor_llm_uso WHERE data = ?", (hoje,))
         row = cursor.fetchone()
         return row[0] if row else 0
     finally:
-        conn.close()
+        if backend == "postgres":
+            conn.close()
+        else:
+            conn.close()
 
 
 def incrementar_llm_uso() -> None:
-    conn = get_connection()
+    conn, backend = get_connection()
     try:
         hoje = date.today().isoformat()
-        cursor = conn.cursor()
+        cursor = conn.cursor() if backend == "postgres" else conn.cursor()
         cursor.execute(
             "INSERT OR REPLACE INTO consultor_llm_uso (data, chamadas) VALUES (?, COALESCE((SELECT chamadas FROM consultor_llm_uso WHERE data = ?), 0) + 1)",
             (hoje, hoje),
         )
         conn.commit()
     finally:
-        conn.close()
+        if backend == "postgres":
+            conn.close()
+        else:
+            conn.close()
 
 
 def set_opinioes_status(status: str, motivo: str = "") -> None:
-    conn = get_connection()
+    conn, backend = get_connection()
     try:
-        cursor = conn.cursor()
         agora = datetime.now(timezone.utc).isoformat()
-        cursor.execute("DELETE FROM consultor_opinioes_status")
-        cursor.execute(
-            "INSERT INTO consultor_opinioes_status (status, motivo, desde) VALUES (?, ?, ?)",
-            (status, motivo or "", agora),
-        )
-        conn.commit()
+        cur = conn.cursor()
+        if True:
+            cur.execute("DELETE FROM consultor_opinioes_status")
+            if backend == "postgres":
+                cur.execute(
+                    "INSERT INTO consultor_opinioes_status (status, motivo, desde) VALUES (%s, %s, %s)",
+                    (status, motivo, agora),
+                )
+            else:
+                cur.execute(
+                    "INSERT INTO consultor_opinioes_status (status, motivo, desde) VALUES (?, ?, ?)",
+                    (status, motivo, agora),
+                )
+            conn.commit()
     finally:
-        conn.close()
+        if backend == "postgres":
+            conn.close()
+        else:
+            conn.close()
 
 
 def get_materias_nao_processadas() -> list[dict]:
-    conn = get_connection()
+    conn, backend = get_connection()
     try:
-        cursor = conn.cursor()
+        cursor = conn.cursor() if backend == "postgres" else conn.cursor()
         cursor.execute(
             "SELECT guid, titulo, descricao, conteudo, data_publicacao, link, tickers_citados, criado_em FROM consultor_fila_materias WHERE processada = 0 ORDER BY criado_em ASC LIMIT 10"
         )
@@ -85,19 +101,25 @@ def get_materias_nao_processadas() -> list[dict]:
             )
         return result
     finally:
-        conn.close()
+        if backend == "postgres":
+            conn.close()
+        else:
+            conn.close()
 
 
 def marcar_como_processada(guid: str) -> None:
-    conn = get_connection()
+    conn, backend = get_connection()
     try:
-        cursor = conn.cursor()
+        cursor = conn.cursor() if backend == "postgres" else conn.cursor()
         cursor.execute(
             "UPDATE consultor_fila_materias SET processada = 1 WHERE guid = ?", (guid,)
         )
         conn.commit()
     finally:
-        conn.close()
+        if backend == "postgres":
+            conn.close()
+        else:
+            conn.close()
 
 
 def save_opiniao(
@@ -105,45 +127,70 @@ def save_opiniao(
     ticker: str,
     casa: str,
     recomendacao: str,
-    preco_alvo: str,
+    preco_alvo: float | None,
     resumo: str,
     trecho: str,
     data_materia: str,
     link: str,
 ) -> None:
-    conn = get_connection()
+    conn, backend = get_connection()
     try:
-        cursor = conn.cursor()
-        # Verificar duplicata no mesmo dia
-        dia = data_materia[:10] if data_materia else ""
-        cursor.execute(
-            "SELECT id FROM consultor_opinioes WHERE ticker = ? AND casa = ? AND recomendacao = ? AND data_materia LIKE ?",
-            (ticker, casa, recomendacao, f"{dia}%"),
-        )
-        if cursor.fetchone():
+        cur = conn.cursor()
+        if backend == "postgres":
+            cur.execute(
+                "SELECT id FROM consultor_opinioes WHERE ticker = %s AND casa = %s AND recomendacao = %s AND data_materia LIKE %s",
+                (ticker, casa, recomendacao, f"{data_materia[:10]}%"),
+            )
+        else:
+            cur.execute(
+                "SELECT id FROM consultor_opinioes WHERE ticker = ? AND casa = ? AND recomendacao = ? AND data_materia LIKE ?",
+                (ticker, casa, recomendacao, f"{data_materia[:10]}%"),
+            )
+        if cur.fetchone():
             return
 
-        agora = datetime.now(timezone.utc).isoformat()
-        cursor.execute(
-            """
-            INSERT INTO consultor_opinioes
-            (guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link, extraida_em)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                guid,
-                ticker,
-                casa,
-                recomendacao,
-                preco_alvo,
-                resumo[:120],
-                trecho,
-                data_materia,
-                link,
-                agora,
-            ),
-        )
+        if backend == "postgres":
+            cur.execute(
+                """
+                INSERT INTO consultor_opinioes
+                (guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (ticker, casa, recomendacao, data_materia) DO NOTHING
+                """,
+                (
+                    guid,
+                    ticker,
+                    casa,
+                    recomendacao,
+                    str(preco_alvo) if preco_alvo else "",
+                    resumo,
+                    trecho,
+                    data_materia,
+                    link,
+                ),
+            )
+        else:
+            cur.execute(
+                """
+                INSERT OR IGNORE INTO consultor_opinioes
+                (guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    guid,
+                    ticker,
+                    casa,
+                    recomendacao,
+                    str(preco_alvo) if preco_alvo else "",
+                    resumo,
+                    trecho,
+                    data_materia,
+                    link,
+                ),
+            )
         conn.commit()
+    except Exception as e:
+        print(f"Error in save_opiniao: {e}")
     finally:
         conn.close()
 

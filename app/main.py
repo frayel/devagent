@@ -290,7 +290,11 @@ def pagina_consultor(request: Request):
             }
     except Exception:
         logger.exception("Consultor indisponível")
-        dados = {"resultados": {}, "ativos_avaliados": 0}
+        dados = {
+            "resultados": {},
+            "ativos_avaliados": 0,
+            "armazenamento": "sqlite_efemero",
+        }
         consultor_indisponivel = True
         regras_limiares = {}
 
@@ -314,7 +318,11 @@ def api_consultor(request: Request):
     try:
         dados = calcular_consultor()
     except Exception:
-        dados = {"resultados": {}, "ativos_avaliados": 0}
+        dados = {
+            "resultados": {},
+            "ativos_avaliados": 0,
+            "armazenamento": "sqlite_efemero",
+        }
 
     try:
         # Extrair opinioes_status

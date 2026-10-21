@@ -171,10 +171,35 @@ def calcular_consultor():
     ]:
         regras_summary[regra] = obter_confianca(regra)
 
-    return {
+    res_dict = {
         "resultados": resultados,
         "ativos_avaliados": len(CARTEIRA_IBOVESPA),
         "regras_confianca": regras_summary,
         "opinioes_recentes": opinioes_recentes,
         "opinioes_status": opinioes_status,
     }
+
+    # Trigger saves for recomendacoes & fechamentos
+    try:
+        from app.consultor.armazenamento import save_recomendacoes, save_fechamentos
+
+        flat_resultados = []
+        for group_name, items in resultados.items():
+            for item in items:
+                flat_resultados.append(
+                    {
+                        "ticker": item["ticker"],
+                        "timestamp": item["timestamp"],
+                        "decisao": group_name,
+                        "regra": item["regra"],
+                        "consenso": str(item.get("consenso", "")),
+                        "preco": item.get("fechamento", 0.0),
+                        "gatilho": str(item.get("gatilho", "-")),
+                    }
+                )
+        save_recomendacoes(flat_resultados)
+        save_fechamentos(flat_resultados)
+    except Exception:
+        pass
+
+    return res_dict
