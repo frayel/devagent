@@ -49,7 +49,14 @@ def collect_and_save() -> bool:
         results = data.get("results", [])
     except Exception as e:
         logger.error(f"Erro ao buscar concentracao de ordens: {e}")
-        return False
+        save_concentracao_ordens_data(
+            ConcentracaoOrdensData(
+                timestamp=datetime.now(timezone.utc),
+                alertas_json="[]",
+                fonte="brapi",
+            )
+        )
+        return True
 
     alertas = []
     for r in results:

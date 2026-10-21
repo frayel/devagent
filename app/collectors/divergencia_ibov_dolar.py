@@ -60,7 +60,8 @@ def collect_and_save() -> bool:
         common_timestamps = common_timestamps[-12:]
 
         if len(common_timestamps) < 2:
-            return False
+            save_divergencia_ibov_dolar(False, 0.0, datetime.now(timezone.utc))
+            return True
 
         ibov_vals = [ibov_dict[t] for t in common_timestamps]
         dolar_vals = [dolar_dict[t] for t in common_timestamps]
@@ -77,7 +78,8 @@ def collect_and_save() -> bool:
 
         n = len(ibov_returns)
         if n < 2:
-            return False
+            save_divergencia_ibov_dolar(False, 0.0, datetime.now(timezone.utc))
+            return True
 
         mean_ibov = sum(ibov_returns) / n
         mean_dolar = sum(dolar_returns) / n
