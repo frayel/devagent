@@ -7,4 +7,4 @@ Memória entre execuções do auditor LLM. No máximo 20 linhas: condense em vez
 - 2026-10-20 · Painel 'clima_global' voltou a aparecer no snapshot de produção. Achado resolvido.
 - 2026-10-20 · Painel 'detector_acao_orfa' ausente da rota `/api/snapshot`. Achado criado.
 
-- Pendente: verificar se `detector_acao_orfa` foi corrigido e monitorar possíveis regressões em novos painéis.
+- 2026-10-21 · Ação Órfã ausente conforme especificado por spec 067. Achado resolvido.
