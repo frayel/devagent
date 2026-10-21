@@ -379,3 +379,6 @@
 
 - Spec 073b (Banco · migração do Ibovespa, maiores altas/baixas e séries para a nova camada):
   - Migração de tabelas de cache legadas para `snapshots_paineis` e `series_diarias` no Postgres com fallback SQLite.
+- Spec 074 (Migração dos painéis para snapshots - lote 1):
+  - Migração das tabelas anomalia_peso, anomalias_spread, apetite_risco, armadilha_abertura, assimetria_risco_retorno, atrasadas_rally, clima_global, coesao, compradores_fundo, concentracao, concentracao_ordens, concentracao_setorial, concentracao_vendedora para snapshots_paineis.
+  - Remoção de tabelas e getters específicos em `app/database.py`.

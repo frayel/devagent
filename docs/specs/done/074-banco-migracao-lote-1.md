@@ -1,7 +1,7 @@
 ---
 id: 074
 titulo: Banco · migração dos painéis para snapshots (primeiro lote)
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 ---
