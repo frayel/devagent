@@ -60,3 +60,8 @@
 - **Por que fiz:** O `docs/DESIGN.md` instrui o uso da macro `kpi` para apresentar métricas em destaque.
 - **O que aprendi:** Templates lidam bem com a substituição de blocos HTML longos por chamadas da macro `kpi` usando as funções `variacao` para a string de formatação. O uso de `| safe` é necessário em strings que concatenam com HTML interno.
 - **O que evitar:** Escrever `<div class="kpi">` manualmente em templates ao invés de usar a macro correspondente.
+## 2026-10-21
+- **O que fiz:** Padronizei o painel "Concentração Setorial" em `app/templates/index.html` para usar a macro `kpi` no "Maior volume", substituindo a marcação manual HTML.
+- **Por que fiz:** A diretriz visual do sistema exige o uso da macro `kpi` em vez de tags `<div class="kpi">` customizadas.
+- **O que aprendi:** Ao encapsular strings HTML complexas na macro `kpi`, aplicar corretamente o filtro `| safe` a toda a expressão englobada por parênteses evita que a estrutura `<p class="sub">` vaze como texto bruto na página.
+- **O que evitar:** Construir painéis híbridos onde metade usa macros padronizadas e a outra metade utiliza marcação HTML manual.
