@@ -1,7 +1,7 @@
 ---
 id: 072b
 titulo: Consultor · placar de acertos e avaliações na UI
-status: ready
+status: done
 esforco: M
 ---
 
