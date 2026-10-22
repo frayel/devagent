@@ -7,14 +7,19 @@ import respx
 from fastapi.testclient import TestClient
 
 from app.database import get_connection, save_variacao_subita_data, VariacaoSubitaData
+import app.banco
 from app.collectors import variacao_subita
 from app.main import app
 
 
 @pytest.fixture(autouse=True)
 def _limpar_banco():
+    import app.banco as app_banco
+
+    app_banco._db_initialized = False
+    app_banco.init_db()
     conn = get_connection()
-    conn.execute("DELETE FROM variacao_subita_cache")
+    conn.execute("DELETE FROM snapshots_paineis WHERE painel = 'variacao_subita'")
     conn.commit()
     conn.close()
 
@@ -60,14 +65,19 @@ def test_coletor_com_alertas():
 
     assert variacao_subita.collect_and_save() is True
 
+    import app.banco as app_banco
+
+    app_banco._db_initialized = False
+    app_banco.init_db()
     conn = get_connection()
     row = conn.execute(
-        "SELECT alertas_json FROM variacao_subita_cache ORDER BY timestamp DESC LIMIT 1"
+        "SELECT payload FROM snapshots_paineis WHERE painel = 'variacao_subita' ORDER BY data_referencia DESC LIMIT 1"
     ).fetchone()
     conn.close()
 
     assert row is not None
-    alertas = json.loads(row["alertas_json"])
+    payload = json.loads(row["payload"])
+    alertas = json.loads(payload["alertas_json"])
     assert len(alertas) == 1
     assert alertas[0]["ticker"] == "PETR4"
     assert alertas[0]["change_percent"] == 5.0  # (10.5 - 10.0) / 10.0
@@ -88,14 +98,19 @@ def test_coletor_sem_alertas():
 
     assert variacao_subita.collect_and_save() is True
 
+    import app.banco as app_banco
+
+    app_banco._db_initialized = False
+    app_banco.init_db()
     conn = get_connection()
     row = conn.execute(
-        "SELECT alertas_json FROM variacao_subita_cache ORDER BY timestamp DESC LIMIT 1"
+        "SELECT payload FROM snapshots_paineis WHERE painel = 'variacao_subita' ORDER BY data_referencia DESC LIMIT 1"
     ).fetchone()
     conn.close()
 
     assert row is not None
-    alertas = json.loads(row["alertas_json"])
+    payload = json.loads(row["payload"])
+    alertas = json.loads(payload["alertas_json"])
     assert len(alertas) == 0
 
 
