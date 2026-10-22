@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
+- Refatoração: migração de painéis (lote 2 parte b) para usar snapshots_paineis, removendo tabelas SQLite. (Spec 075b)
 - Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - **Spec 073**: Banco · camada única com Postgres e armazenamento do consultor
 ### Added

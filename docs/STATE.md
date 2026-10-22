@@ -386,3 +386,5 @@
   - Migração das tabelas anomalia_peso, anomalias_spread, apetite_risco, armadilha_abertura, assimetria_risco_retorno, atrasadas_rally, clima_global, coesao, compradores_fundo, concentracao, concentracao_ordens, concentracao_setorial, concentracao_vendedora para snapshots_paineis.
   - As funções `save_*`/`get_latest_*` continuam como fachada e gravam/leem em `snapshots_paineis`. Os `CREATE TABLE` que tinham ficado para trás no `init_db` saíram em 22/10, junto com o teste de aceite `tests/test_aceite_migracao_snapshots.py`.
 - Specs 075 e 076 divididas em 075a, 075b, 076a e 076b (issue #404), seguindo o padrão de fachada da 074.
+- Spec 075b (Banco · migração dos painéis para snapshots - lote 2 parte b):
+  - Migração de 6 tabelas (`falso_rompimento_cache`, `fator_mola_cache`, `fator_peso_pesado_cache`, `forca_relativa_cache`, `liquidez_abertura_cache`, `mare_cache`) para `snapshots_paineis`.

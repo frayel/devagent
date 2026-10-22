@@ -1,6 +1,6 @@
 import pytest
 from app.collectors import fator_peso_pesado
-from app.database import get_connection, init_db
+from app.database import init_db
 
 
 @pytest.fixture
@@ -69,13 +69,12 @@ def test_fator_peso_pesado_sucesso(mock_yfinance, setup_db):
     result = fator_peso_pesado.collect_and_save()
     assert result is True
 
-    conn = get_connection()
-    row = conn.execute("SELECT * FROM fator_peso_pesado_cache").fetchone()
-    conn.close()
+    from app.database import get_latest_fator_peso_pesado_data
 
-    assert row is not None
-    assert row["mercado_lateral"] == 0
-    assert abs(row["proporcao"] - 80.0) < 0.1  # Should be close to 80%
+    data = get_latest_fator_peso_pesado_data()
+    assert data is not None
+    assert data.mercado_lateral is False
+    assert abs(data.proporcao - 80.0) < 0.1  # Should be close to 80%
 
 
 def test_fator_peso_pesado_mercado_lateral(mock_yfinance, setup_db):
@@ -87,10 +86,9 @@ def test_fator_peso_pesado_mercado_lateral(mock_yfinance, setup_db):
     result = fator_peso_pesado.collect_and_save()
     assert result is True
 
-    conn = get_connection()
-    row = conn.execute("SELECT * FROM fator_peso_pesado_cache").fetchone()
-    conn.close()
+    from app.database import get_latest_fator_peso_pesado_data
 
-    assert row is not None
-    assert row["mercado_lateral"] == 1
-    assert row["proporcao"] == 0.0
+    data = get_latest_fator_peso_pesado_data()
+    assert data is not None
+    assert data.mercado_lateral is True
+    assert data.proporcao == 0.0
