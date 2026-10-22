@@ -14,10 +14,12 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 from devagent.conferir_pr import documentos, status_de
 
 NUMERO = re.compile(r"0*(\d+)([a-z]*)")
+LABEL_TENTATIVA = "tentativa-falhou"
 
 
 def chave(caminho: Path) -> tuple[int, str, str]:
@@ -42,8 +44,37 @@ def specs_prontas(raiz: Path | None = None) -> list[Path]:
     return sorted(prontas, key=chave)
 
 
-def instrucao(prontas: list[Path], raiz: Path | None = None) -> str:
-    """Frase que manda a sessão para o Passo 4; vazia se a fila está vazia."""
+def tentativas_da_spec(spec: Path, issues: list[dict[str, Any]]) -> list[int]:
+    """Issues `tentativa-falhou` abertas que citam a spec (ADR 018).
+
+    Cada issue é um dict com `numero`, `titulo`, `labels` e, se houver, `corpo`.
+    A spec 075 casa com "spec 075" e "075", mas não com "075a" nem com "#75".
+    """
+    m = NUMERO.match(spec.name)
+    if not m:
+        return []
+    padrao = re.compile(
+        rf"(?<![#\w])0*{m.group(1)}{m.group(2)}(?![a-z0-9])", re.IGNORECASE
+    )
+    return [
+        i["numero"]
+        for i in issues
+        if LABEL_TENTATIVA in i.get("labels", [])
+        and padrao.search(f"{i.get('titulo', '')}\n{i.get('corpo') or ''}")
+    ]
+
+
+def instrucao(
+    prontas: list[Path],
+    raiz: Path | None = None,
+    issues: list[dict[str, Any]] | None = None,
+) -> str:
+    """Frase que manda a sessão para o Passo 4; vazia se a fila está vazia.
+
+    Se a próxima spec já tem tentativa fechada pelo guardião, a sessão não a
+    implementa de novo: divide. Repetir a mesma spec do mesmo tamanho foi o
+    laço de 21 e 22/10 (spec 075, PRs #402 e #403).
+    """
     if not prontas:
         return ""
     raiz = raiz or Path.cwd()
@@ -51,6 +82,17 @@ def instrucao(prontas: list[Path], raiz: Path | None = None) -> str:
         proxima = prontas[0].relative_to(raiz)
     except ValueError:
         proxima = prontas[0]
+    falhas = tentativas_da_spec(prontas[0], issues or [])
+    if falhas:
+        citadas = ", ".join(f"#{n}" for n in falhas)
+        return (
+            f"A próxima spec da fila é {proxima.as_posix()}, mas ela já teve "
+            f"tentativa fechada pelo guardião ({citadas}). Não a implemente de novo "
+            "do mesmo tamanho: depois dos Passos 1 e 2, leia a issue, divida a spec "
+            "em specs menores pelo Passo 4 (contando os testes que serão tocados), "
+            "marque a original como `draft`, ponha `Closes` para essa issue no PR e "
+            "encerre. A implementação fica para a próxima sessão."
+        )
     return (
         f"A fila tem {len(prontas)} spec(s) com status ready; a próxima é "
         f"{proxima.as_posix()}. Depois do Passo 1 (produção quebrada, correções, "

@@ -4,6 +4,8 @@ titulo: Banco · migração dos painéis para snapshots (primeiro lote)
 status: done
 esforco: M
 gaveta: saúde técnica
+aceite: tests/test_aceite_migracao_snapshots.py
+tabelas_legadas: anomalia_peso_cache, anomalias_spread_cache, apetite_risco_cache, armadilha_abertura_cache, assimetria_risco_retorno_cache, atrasadas_rally_cache, clima_global_cache, coesao_cache, compradores_fundo_cache, concentracao_cache, concentracao_ordens_cache, concentracao_setorial_cache, concentracao_vendedora_cache
 ---
 
 ## Problema

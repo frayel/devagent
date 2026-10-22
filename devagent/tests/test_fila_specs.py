@@ -14,6 +14,11 @@ def _spec(pasta: Path, nome: str, status: str) -> None:
     (pasta / nome).write_text(f"---\nid: 1\nstatus: {status}\n---\n", encoding="utf-8")
 
 
+@pytest.fixture(autouse=True)
+def sem_github(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(jules, "issues_de_tentativa", lambda: [])
+
+
 @pytest.fixture
 def raiz(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     pasta = tmp_path / "docs" / "specs"
@@ -64,3 +69,46 @@ def test_prompt_sem_fila_e_o_fixo(
 
 def test_auditor_nao_recebe_a_fila(raiz: Path) -> None:
     assert jules.prompt_de("auditor") == jules.PERSONAS["auditor"]["prompt"]
+
+
+def _tentativa(numero: int, titulo: str, corpo: str = "") -> dict[str, object]:
+    return {
+        "numero": numero,
+        "titulo": titulo,
+        "labels": ["tentativa-falhou"],
+        "corpo": corpo,
+    }
+
+
+def test_spec_com_tentativa_fechada_manda_dividir(raiz: Path) -> None:
+    issues = [_tentativa(404, "Tentativa fechada: spec 068b perdeu o código")]
+    texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, issues)
+    assert "docs/specs/068b-regras.md" in texto
+    assert "#404" in texto
+    assert "divida a spec" in texto
+
+
+def test_tentativa_de_outra_spec_nao_desvia(raiz: Path) -> None:
+    issues = [
+        _tentativa(1, "Tentativa fechada: feat: spec 068 original"),
+        _tentativa(2, "Tentativa fechada", "Closes #68b? não: cita #068b"),
+        {"numero": 3, "titulo": "spec 068b", "labels": ["outro"]},
+    ]
+    texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, issues)
+    assert "divida a spec" not in texto
+
+
+def test_tentativa_citada_no_corpo(raiz: Path) -> None:
+    issues = [_tentativa(7, "Tentativa fechada: feat: regras", "Implementa a 068b.")]
+    assert fila_specs.tentativas_da_spec(fila_specs.specs_prontas(raiz)[0], issues) == [
+        7
+    ]
+
+
+def test_prompt_do_desenvolvedor_manda_dividir(
+    raiz: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        jules, "issues_de_tentativa", lambda: [_tentativa(9, "spec 068b falhou")]
+    )
+    assert "divida a spec" in jules.prompt_de("desenvolvedor")

@@ -1,10 +1,12 @@
 ---
 id: 075
 titulo: Banco · migração dos painéis para snapshots (segundo lote)
-status: ready
+status: draft
 esforco: M
 gaveta: saúde técnica
 ---
+
+> **Dividida em 075a e 075b** (22/10, issue #404). Esta versão fica como registro; a fila segue pelas partes.
 
 ## Problema
 Continuação da spec 073 (ADR 007). Enquanto um painel guardar dados na tabela própria do SQLite, ele aparece vazio a cada reinício do Render. Esta fatia migra o segundo lote de painéis para `snapshots_paineis`.

@@ -28,6 +28,10 @@ Regras (mantenha em sincronia com devagent/CICLO.md, Passos 1 e 4):
        só ocupa a fila (o #326, do Sentinel, só trazia o diário). Exceção:
        o corpo do PR fecha issues (`Closes #N`), como no Passo 6. Vale onde
        a regra 5 vale (ADR 012).
+    7. Spec que vira `done` com o campo `aceite:` traz os testes listados ali,
+       e o CI os roda. Specs a partir de `aceite_obrigatorio_desde` (seção
+       [disciplina] do devagent.toml) precisam do campo. A 074 foi fechada sem
+       remover nenhuma das tabelas que prometia (ADR 018).
 
 Uma regra nunca é afrouxada no mesmo PR que corrige o que ela aponta
 (README do núcleo, separação de poderes).
@@ -60,6 +64,13 @@ FECHA_ISSUE = re.compile(r"\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\s+#\d+", re.I
 STATUS = re.compile(r"^status:\s*([\w-]+)\s*$", re.MULTILINE)
 ID = re.compile(r"^id:\s*0*(\d+)\s*$", re.MULTILINE)
 TESTE = re.compile(r"(^test_.*|.*_test)\.py$")
+ACEITE = re.compile(r"^aceite:\s*(.*?)\s*$", re.MULTILINE)
+ORDEM = re.compile(r"0*(\d+)([a-z]*)")
+
+
+def ordem_de(spec_id: str) -> tuple[int, str]:
+    m = ORDEM.search(spec_id.lower())
+    return (int(m.group(1)), m.group(2)) if m else (0, "")
 
 
 @dataclass
@@ -273,6 +284,40 @@ def conferir(
                 f"{pendentes[0][:120]}... Correções vêm antes de specs (CICLO.md, "
                 "Passo 1, item 6). Trate a primeira entrada e remova-a no mesmo PR."
             )
+
+    # Regra 7: aceite executável. Olha também as subpastas (done/), para onde
+    # algumas specs são movidas ao fechar.
+    desde = str(CONFIG.get("disciplina", {}).get("aceite_obrigatorio_desde", ""))
+    if pasta_specs.is_dir():
+        for p in sorted(pasta_specs.rglob("*.md")):
+            texto = p.read_text(encoding="utf-8")
+            if status_de(texto) != "done":
+                continue
+            rel = p.relative_to(raiz).as_posix()
+            antes = status_de(git("show", f"{mb}:{rel}", raiz=raiz))
+            if antes is None:
+                topo = f"{doc['specs']}/{p.name}"
+                antes = status_de(git("show", f"{mb}:{topo}", raiz=raiz))
+            if antes == "done":
+                continue
+            m = ACEITE.search(texto)
+            listados = re.split(r"[,\s]+", m.group(1)) if m else []
+            listados = [a for a in listados if a]
+            numero = p.name.split("-")[0]
+            if not listados:
+                if desde and ordem_de(numero) >= ordem_de(desde):
+                    res.falha(
+                        f"{rel} virou `done` sem o campo `aceite:`. Specs a partir "
+                        f"da {desde} listam ali o teste que prova a entrega."
+                    )
+                continue
+            for arquivo in listados:
+                if not (raiz / arquivo.split("::")[0]).is_file():
+                    res.falha(
+                        f"{rel} virou `done`, mas o teste de aceite `{arquivo}` não "
+                        "existe. Escreva o teste (ele é a prova da entrega) ou "
+                        "devolva a spec para `ready`."
+                    )
     return res
 
 

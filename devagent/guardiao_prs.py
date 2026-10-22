@@ -9,6 +9,10 @@ Modos:
 
 Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
     - CI falhou: comenta @jules com o log, até MAX_TENTATIVAS. Depois fecha o PR.
+    - Falha irrecuperável: PR vazio ou só com registros de execução não tem
+      nada a corrigir na branch (a sessão perdeu o trabalho). Fecha na hora,
+      sem cobrar o agente, e abre `tentativa-falhou` (ADR 018). Cobrar só
+      gerava sessões filhas com PRs vazios (#402 e #403, em 22/10).
     - Sem reação: se o guardião cobrou e não houve commit novo em SEM_REACAO_HORAS, fecha.
     - Conflito pequeno (<= CONFLITO_MAX_ARQUIVOS e <= CONFLITO_MAX_LINHAS): pede ao Jules
       para resolver. Conflito grande: fecha o PR; o próximo ciclo refaz a partir da main.
@@ -30,7 +34,7 @@ import tempfile
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from devagent.conferir_pr import PADRAO_REGISTROS
+from devagent.conferir_pr import FECHA_ISSUE, PADRAO_REGISTROS
 from devagent.config import VERIFICACAO
 
 MAX_TENTATIVAS = 3
@@ -143,9 +147,54 @@ def absorvido_pela_main(branch: str) -> bool:
     return all(a.startswith(PADRAO_REGISTROS) for a in faltam)
 
 
-def fechar(pr: dict[str, Any], motivo: str, detalhe: str = "") -> None:
+def arquivos_do_pr(numero: int) -> list[str] | None:
+    """Arquivos alterados pelo PR, pela API REST. None se não deu para ler."""
+    try:
+        dados = gh_json(
+            "api", f"repos/{{owner}}/{{repo}}/pulls/{numero}/files?per_page=100"
+        )
+    except (RuntimeError, json.JSONDecodeError):
+        return None
+    return [d["filename"] for d in dados]
+
+
+def motivo_irrecuperavel(arquivos: list[str] | None, corpo: str = "") -> str:
+    """Motivo para fechar sem cobrar, ou "" se o PR tem trabalho a corrigir.
+
+    PR vazio ou só com registros de execução não tem código na branch: a
+    sessão perdeu o que fez. Cobrar o agente não traz o trabalho de volta.
+    Exceção, como na regra 6 do conferir_pr: PR só de registro que fecha
+    issues (`Closes #N`) é entrega legítima.
+    """
+    if arquivos is None:
+        return ""
+    if not arquivos:
+        return (
+            "o PR não altera nenhum arquivo. Não há nada a corrigir na branch; "
+            "a sessão que o abriu não tinha o trabalho."
+        )
+    if all(a.startswith(PADRAO_REGISTROS) for a in arquivos) and not FECHA_ISSUE.search(
+        corpo
+    ):
+        return (
+            "o PR só traz registros de execução ("
+            + ", ".join(sorted(arquivos))
+            + "). O código descrito neles não chegou à branch: a sessão perdeu o "
+            "trabalho. Se a spec for grande, a próxima tentativa deve dividi-la."
+        )
+    return ""
+
+
+def fechar(
+    pr: dict[str, Any], motivo: str, detalhe: str = "", registrar: bool = False
+) -> None:
+    """Fecha o PR. `registrar` abre a issue mesmo se a main já tem tudo."""
     numero = pr["number"]
-    if pr.get("headRefName") and absorvido_pela_main(pr["headRefName"]):
+    if (
+        not registrar
+        and pr.get("headRefName")
+        and absorvido_pela_main(pr["headRefName"])
+    ):
         comentar(
             numero,
             f"Fechando este PR: {motivo}\n\n"
@@ -205,9 +254,15 @@ def ci_falhou(branch: str, run_id: str) -> None:
     if not pr:
         print(f"Nenhum PR do agente aberto para {branch}")
         return
-    tentativas = sum(MARCA_CI in c["body"] for c in comentarios(pr["number"]))
     log = sh("gh", "run", "view", run_id, "--log-failed", check=False)
     log = "\n".join(log.splitlines()[-120:])
+    irrecuperavel = motivo_irrecuperavel(
+        arquivos_do_pr(pr["number"]), pr.get("body") or ""
+    )
+    if irrecuperavel:
+        fechar(pr, irrecuperavel, log, registrar=True)
+        return
+    tentativas = sum(MARCA_CI in c["body"] for c in comentarios(pr["number"]))
     if tentativas >= MAX_TENTATIVAS:
         fechar(pr, f"o CI falhou {tentativas + 1} vezes seguidas.", log)
         return
@@ -392,6 +447,12 @@ def varredura() -> None:
 
     for pr in prs:
         if pr["number"] in fechados:
+            continue
+        irrecuperavel = motivo_irrecuperavel(
+            arquivos_do_pr(pr["number"]), pr.get("body") or ""
+        )
+        if irrecuperavel:
+            fechar(pr, irrecuperavel, registrar=True)
             continue
         coms = comentarios(pr["number"])
         ultimo_commit = data_ultimo_commit(pr["number"])

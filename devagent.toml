@@ -44,3 +44,8 @@ usuario = "consultor"
 [deploy]
 # Adaptador de plataforma usado pelo deploy-check.yml e pelo Passo 1.
 adaptador = "render"
+
+[disciplina]
+# A partir desta spec, fechar como `done` exige o campo `aceite:` com o teste
+# que prova a entrega (regra 7 do devagent/conferir_pr.py, ADR 018).
+aceite_obrigatorio_desde = "084"
