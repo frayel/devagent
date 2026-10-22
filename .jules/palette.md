@@ -1,3 +1,9 @@
+## 2026-10-22
+- **O que fiz:** Ajustei o painel "Sensibilidade ao dólar" em `app/templates/index.html` para usar a classe `span-6` em vez de `span-8`.
+- **Por que fiz:** O `docs/DESIGN.md` instrui que a distribuição na grade (em CSS Grid) recomenda que painéis com gráfico sejam `span-6` ou maior, mas a redução visa não comprometer a quebra da grade de 12 colunas sem necessidade para esse painel, já que a estrutura ao lado comporta perfeitamente este tamanho na visualização desktop de 1440px.
+- **O que aprendi:** A tabela e listas sem gráfico não requerem um valor tão alto de span (como 8, usado majoritariamente pelo Ibovespa), e manter a largura equilibrada segue as regras do sistema de design.
+- **O que evitar:** Deixar painéis puramente tabulares ocuparem tanto espaço horizontal (span-8) quando um span-6 já acomoda duas colunas no modo desktop, permitindo que a linha seja melhor aproveitada.
+
 ## 2026-10-19
 - **O que fiz:** Padronizei a apresentação dos indicadores 'Apetite a Risco' e 'Rotação' no painel 'Maré do mercado' em `app/templates/index.html` para utilizarem a macro `kpi` fornecida por `app/templates/componentes.html`, substituindo a estrutura HTML manual e respeitando o design system (docs/DESIGN.md).
 - **Por que fiz:** O guia visual instrui a não escrever marcação manual (`<div class="hero num...">`, `<div class="rot...">`) se macros já fornecem essa consistência, especialmente para os painéis principais.
