@@ -381,4 +381,5 @@
   - Migração de tabelas de cache legadas para `snapshots_paineis` e `series_diarias` no Postgres com fallback SQLite.
 - Spec 074 (Migração dos painéis para snapshots - lote 1):
   - Migração das tabelas anomalia_peso, anomalias_spread, apetite_risco, armadilha_abertura, assimetria_risco_retorno, atrasadas_rally, clima_global, coesao, compradores_fundo, concentracao, concentracao_ordens, concentracao_setorial, concentracao_vendedora para snapshots_paineis.
-  - Remoção de tabelas e getters específicos em `app/database.py`.
+  - As funções `save_*`/`get_latest_*` continuam como fachada e gravam/leem em `snapshots_paineis`. Os `CREATE TABLE` que tinham ficado para trás no `init_db` saíram em 22/10, junto com o teste de aceite `tests/test_aceite_migracao_snapshots.py`.
+- Specs 075 e 076 divididas em 075a, 075b, 076a e 076b (issue #404), seguindo o padrão de fachada da 074.

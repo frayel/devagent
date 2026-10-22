@@ -50,7 +50,7 @@ from typing import Any
 from devagent.config import PROJETO
 from devagent.estado_github import _get as github_get
 from devagent.estado_github import eh_do_agente, status_ci
-from devagent.fila_specs import instrucao, specs_prontas
+from devagent.fila_specs import LABEL_TENTATIVA, instrucao, specs_prontas
 
 API = "https://jules.googleapis.com/v1alpha"
 SOURCE = os.environ.get("JULES_SOURCE", f"sources/github/{PROJETO['repositorio']}")
@@ -342,6 +342,30 @@ def encerrar_zumbis(sessoes: list[dict[str, Any]], agora: datetime) -> list[str]
     return encerradas
 
 
+def issues_de_tentativa() -> list[dict[str, Any]]:
+    """Issues `tentativa-falhou` abertas, no formato do estado_github (ADR 018).
+
+    Sem acesso ao GitHub, devolve lista vazia: a fila segue sem o desvio.
+    """
+    try:
+        brutas = github_get(
+            f"/repos/{PROJETO['repositorio']}/issues"
+            f"?state=open&labels={LABEL_TENTATIVA}&per_page=100"
+        )
+    except (urllib.error.URLError, OSError, ValueError):
+        return []
+    return [
+        {
+            "numero": i["number"],
+            "titulo": i["title"],
+            "labels": [lbl["name"] for lbl in i["labels"]],
+            "corpo": i.get("body") or "",
+        }
+        for i in brutas
+        if "pull_request" not in i
+    ]
+
+
 def prompt_de(persona: str) -> str:
     """Prompt da sessão; o do desenvolvedor já traz a próxima spec da fila.
 
@@ -354,7 +378,7 @@ def prompt_de(persona: str) -> str:
     if persona != "desenvolvedor":
         return texto
     try:
-        fila = instrucao(specs_prontas())
+        fila = instrucao(specs_prontas(), issues=issues_de_tentativa())
     except OSError:
         fila = ""
     return f"{texto} {fila}" if fila else texto

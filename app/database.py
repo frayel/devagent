@@ -335,18 +335,6 @@ def init_db() -> None:
     )
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS assimetria_risco_retorno_cache (
-            timestamp TEXT PRIMARY KEY,
-            alertas_json TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        )
-        """
-    )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_assimetria_risco_retorno_cache_timestamp ON assimetria_risco_retorno_cache (timestamp DESC)"
-    )
-    cursor.execute(
-        """
         CREATE TABLE IF NOT EXISTS exaustao_tendencia_cache (
             timestamp TEXT PRIMARY KEY,
             alertas_json TEXT NOT NULL,
@@ -356,30 +344,6 @@ def init_db() -> None:
     )
     cursor.execute(
         "CREATE INDEX IF NOT EXISTS idx_exaustao_tendencia_timestamp ON exaustao_tendencia_cache (timestamp DESC)"
-    )
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS concentracao_ordens_cache (
-            timestamp TEXT PRIMARY KEY,
-            alertas_json TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        )
-        """
-    )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_concentracao_ordens_cache_timestamp ON concentracao_ordens_cache (timestamp DESC)"
-    )
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS anomalias_spread_cache (
-            timestamp TEXT PRIMARY KEY,
-            alertas_json TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        )
-        """
-    )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_anomalias_spread_cache_timestamp ON anomalias_spread_cache (timestamp DESC)"
     )
 
     cursor.executescript("""
@@ -406,14 +370,6 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_instrumentacao_coleta_tempo_timestamp ON instrumentacao_coleta_tempo(timestamp DESC);
 
 
-        CREATE TABLE IF NOT EXISTS clima_global_cache (
-            timestamp TEXT NOT NULL,
-            sp500_pct REAL NOT NULL,
-            vix_pct REAL NOT NULL,
-            status TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_clima_global_cache_timestamp ON clima_global_cache(timestamp DESC);
 
 
         CREATE TABLE IF NOT EXISTS falso_rompimento_cache (
@@ -504,16 +460,6 @@ def init_db() -> None:
         """)
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS armadilha_abertura_cache (
-            timestamp TEXT,
-            alertas_json TEXT,
-            fonte TEXT
-        )
-        """)
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_armadilha_abertura_timestamp ON armadilha_abertura_cache (timestamp DESC)
-        """)
-    cursor.execute("""
         CREATE TABLE IF NOT EXISTS sobrevivencia_semanal_cache (
             timestamp TEXT,
             alertas_json TEXT,
@@ -524,16 +470,6 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_sobrevivencia_semanal_timestamp ON sobrevivencia_semanal_cache (timestamp DESC)
         """)
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS compradores_fundo_cache (
-            timestamp TEXT,
-            alertas_json TEXT,
-            fonte TEXT
-        )
-        """)
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_compradores_fundo_timestamp ON compradores_fundo_cache (timestamp DESC)
-        """)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS faca_caindo_cache (
             timestamp TEXT,
@@ -597,29 +533,6 @@ def init_db() -> None:
         "CREATE INDEX IF NOT EXISTS idx_rotacao_capital_timestamp ON rotacao_capital_cache(timestamp DESC)"
     )
 
-    cursor.executescript("""
-
-        CREATE TABLE IF NOT EXISTS concentracao_vendedora_cache (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT NOT NULL,
-            resumo_json TEXT NOT NULL,
-            top3_json TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_concentracao_vendedora_timestamp ON concentracao_vendedora_cache (timestamp DESC);
-
-        CREATE TABLE IF NOT EXISTS concentracao_cache (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp DATETIME NOT NULL,
-            resumo_json TEXT NOT NULL,
-            top3_json TEXT NOT NULL,
-            fonte TEXT NOT NULL DEFAULT 'yfinance'
-        )
-    """)
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_concentracao_cache_timestamp
-        ON concentracao_cache(timestamp DESC)
-    """)
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS highlights_cache (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -729,58 +642,6 @@ def init_db() -> None:
     """)
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS coesao_cache (
-            timestamp TEXT PRIMARY KEY,
-            concordantes INTEGER NOT NULL,
-            total INTEGER NOT NULL,
-            fonte TEXT NOT NULL
-        )
-    """)
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_coesao_cache_timestamp
-        ON coesao_cache(timestamp DESC)
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS atrasadas_rally_cache (
-            timestamp TEXT PRIMARY KEY,
-            rally_valido INTEGER NOT NULL,
-            top3_json TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        )
-    """)
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_atrasadas_rally_cache_timestamp
-        ON atrasadas_rally_cache(timestamp DESC)
-    """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS concentracao_setorial_cache (
-            timestamp TEXT PRIMARY KEY,
-            setor_destaque TEXT NOT NULL,
-            variacao_media REAL NOT NULL,
-            fonte TEXT NOT NULL,
-            setor_lider_volume TEXT NOT NULL DEFAULT "",
-            volume_lider REAL NOT NULL DEFAULT 0.0
-        )
-    """)
-    # Migrar a tabela antiga caso exista e não tenha as colunas de volume
-    try:
-        cursor.execute(
-            "SELECT setor_lider_volume FROM concentracao_setorial_cache LIMIT 1"
-        )
-    except sqlite3.OperationalError:
-        cursor.execute(
-            "ALTER TABLE concentracao_setorial_cache ADD COLUMN setor_lider_volume TEXT NOT NULL DEFAULT ''"
-        )
-        cursor.execute(
-            "ALTER TABLE concentracao_setorial_cache ADD COLUMN volume_lider REAL NOT NULL DEFAULT 0.0"
-        )
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_concentracao_setorial_cache_timestamp
-        ON concentracao_setorial_cache(timestamp DESC)
-    """)
-
-    cursor.execute("""
         CREATE TABLE IF NOT EXISTS mare_cache (
             timestamp TEXT PRIMARY KEY,
             valor INTEGER NOT NULL,
@@ -796,21 +657,6 @@ def init_db() -> None:
         ON mare_cache(timestamp DESC)
     """)
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS apetite_risco_cache (
-            timestamp TEXT PRIMARY KEY,
-            estado TEXT NOT NULL,
-            diferenca REAL NOT NULL,
-            fonte TEXT NOT NULL
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS anomalia_peso_cache (
-            timestamp TEXT PRIMARY KEY,
-            alertas_json TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        )
-    """)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS radar_inflexao_cache (
             timestamp TEXT PRIMARY KEY,
@@ -824,15 +670,6 @@ def init_db() -> None:
             alertas_json TEXT NOT NULL,
             fonte TEXT NOT NULL
         )
-    """)
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_apetite_risco_cache_timestamp
-        ON apetite_risco_cache(timestamp DESC)
-    """)
-
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_anomalia_peso_cache_timestamp
-        ON anomalia_peso_cache(timestamp DESC)
     """)
 
     cursor.execute("""

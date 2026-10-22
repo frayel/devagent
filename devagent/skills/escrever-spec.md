@@ -5,6 +5,8 @@ Use no Passo 7, ao transformar uma issue em spec (Passo 6) e ao dividir uma spec
 - **Ideia grande, entrega pequena.** Uma ideia ousada pode mudar o produto, mas a spec descreve só a primeira fatia visível dela. O resto da visão vai para o backlog, com link na seção *Fora do escopo*.
 - **Uma pergunta do usuário por spec.** Se o título precisa de "e", provavelmente são duas.
 - **Cabe em um PR de ~400 linhas** (sem testes e fixtures). Se não couber, divida antes de marcar `ready`.
+- **Conte os testes que a spec vai tocar.** Migração, remoção ou renomeação de API espalha mudança pelos testes. Se mais de ~15 arquivos referenciam o que muda, divida: uma spec por unidade independente.
+- **Aceite executável.** Liste no campo `aceite:` o arquivo de teste que prova a spec. Para que o teste exista antes do código, use `devagent.aceite.exigir_spec_done("NNN")`: ele pula enquanto a spec não é `done` e passa a valer quando ela fecha.
 - **Critérios de aceite testáveis sem internet.** "Mostra a variação em %" vira "dado o fixture X, a página contém `+1,23%`".
 - **Fontes com plano B.** Toda fonte tem reserva ou degradação explícita ("se falhar, o painel mostra 'dado indisponível' e o resto da página funciona").
 - **Números com contexto.** Toda probabilidade ou recomendação especifica tamanho de amostra, janela e método.
@@ -20,6 +22,7 @@ id: NNN
 titulo: ...
 status: draft | ready | done
 esforco: P | M | G
+aceite: tests/test_aceite_NNN.py
 ---
 
 ## Problema

@@ -101,6 +101,7 @@ def coletar() -> dict[str, Any]:
             "titulo": i["title"],
             "labels": [lbl["name"] for lbl in i["labels"]],
             "idade_horas": _horas(i["created_at"]),
+            "corpo": i.get("body") or "",
         }
         for i in _get(f"/repos/{repo}/issues?state=open&per_page=100")
         if "pull_request" not in i
@@ -119,6 +120,8 @@ def main() -> int:
         return 3
 
     if args.json:
+        for i in estado["issues"]:
+            i.pop("corpo", None)
         print(json.dumps(estado, ensure_ascii=False, indent=2))
         return 0
 
@@ -180,7 +183,7 @@ def main() -> int:
             "Não comece trabalho novo."
         )
     elif prontas:
-        print(f"\n>> {instrucao(prontas)}")
+        print(f"\n>> {instrucao(prontas, issues=estado['issues'])}")
     return 0
 
 
