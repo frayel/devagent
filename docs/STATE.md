@@ -390,3 +390,6 @@
   - Migração de 6 tabelas (`falso_rompimento_cache`, `fator_mola_cache`, `fator_peso_pesado_cache`, `forca_relativa_cache`, `liquidez_abertura_cache`, `mare_cache`) para `snapshots_paineis`.
 - Spec 076a (Banco · migração dos painéis para snapshots - lote 3 parte a):
   - Migração de 7 tabelas (`motores_indice_cache`, `radar_absorcao_cruzada_cache`, `radar_congestionamento_cache`, `radar_divergencia_volume_cache`, `radar_inflexao_cache`, `radar_short_squeeze_cache`, `relogio_volatilidade_cache`) para `snapshots_paineis`.
+
+- Spec 076b (Banco · migração dos painéis para snapshots - lote 3 parte b):
+  - Migração de 7 tabelas (`rotacao_capital_cache`, `scanner_capitulacao_cache`, `sensibilidade_juros_cache`, `sobrevivencia_semanal_cache`, `variacao_subita_cache`, `volatilidade_silenciosa_cache`, `volume_alerts_cache`) para `snapshots_paineis`.

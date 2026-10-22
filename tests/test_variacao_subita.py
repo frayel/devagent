@@ -2,21 +2,12 @@ import re
 import json
 from datetime import datetime, timezone
 import httpx
-import pytest
 import respx
 from fastapi.testclient import TestClient
 
-from app.database import get_connection, save_variacao_subita_data, VariacaoSubitaData
+from app.database import save_variacao_subita_data, VariacaoSubitaData
 from app.collectors import variacao_subita
 from app.main import app
-
-
-@pytest.fixture(autouse=True)
-def _limpar_banco():
-    conn = get_connection()
-    conn.execute("DELETE FROM variacao_subita_cache")
-    conn.commit()
-    conn.close()
 
 
 def mock_yfinance_response(with_alerts=True):
@@ -60,14 +51,11 @@ def test_coletor_com_alertas():
 
     assert variacao_subita.collect_and_save() is True
 
-    conn = get_connection()
-    row = conn.execute(
-        "SELECT alertas_json FROM variacao_subita_cache ORDER BY timestamp DESC LIMIT 1"
-    ).fetchone()
-    conn.close()
+    from app.database import get_latest_variacao_subita_data
 
-    assert row is not None
-    alertas = json.loads(row["alertas_json"])
+    data = get_latest_variacao_subita_data()
+    assert data is not None
+    alertas = json.loads(data.alertas_json)
     assert len(alertas) == 1
     assert alertas[0]["ticker"] == "PETR4"
     assert alertas[0]["change_percent"] == 5.0  # (10.5 - 10.0) / 10.0
@@ -88,14 +76,11 @@ def test_coletor_sem_alertas():
 
     assert variacao_subita.collect_and_save() is True
 
-    conn = get_connection()
-    row = conn.execute(
-        "SELECT alertas_json FROM variacao_subita_cache ORDER BY timestamp DESC LIMIT 1"
-    ).fetchone()
-    conn.close()
+    from app.database import get_latest_variacao_subita_data
 
-    assert row is not None
-    alertas = json.loads(row["alertas_json"])
+    data = get_latest_variacao_subita_data()
+    assert data is not None
+    alertas = json.loads(data.alertas_json)
     assert len(alertas) == 0
 
 

@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+- [Spec 076b] Concluída a migração final de caches de painéis (lote 3b) para armazenamento via PostgreSQL (`snapshots_paineis`), finalizando a adoção do backend de persistência relacional.
 ### Added
 - Refatoração: migração de painéis (lote 3 parte a) para usar snapshots_paineis, removendo tabelas SQLite. (Spec 076a)
 - Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
