@@ -45,6 +45,9 @@ def init_db():
                         gatilho TEXT NOT NULL
                     );
                 """)
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_consultor_recomendacoes_timestamp ON consultor_recomendacoes(timestamp DESC);"
+                )
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS consultor_fechamentos (
                         id SERIAL PRIMARY KEY,
@@ -107,6 +110,9 @@ def init_db():
                     gatilho TEXT NOT NULL
                 );
             """)
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_consultor_recomendacoes_timestamp ON consultor_recomendacoes(timestamp DESC)"
+            )
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS consultor_fechamentos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,

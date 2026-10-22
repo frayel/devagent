@@ -64,3 +64,8 @@
 - **O que fiz:** Adicionei um índice (`idx_divergencia_ibov_dolar_timestamp`) na tabela `divergencia_ibov_dolar_cache` para a coluna `timestamp DESC`.
 - **O que aprendi:** A ausência deste índice estava causando lentidão recorrente na API que busca o registro mais atual de divergência por `ORDER BY timestamp DESC LIMIT 1`. Ao adicionarmos o índice, melhoramos e estabilizamos o tempo de acesso em `get_divergencia_ibov_dolar`.
 - **O que evitar:** Omitir índices de ordenação `DESC` para tabelas de cache consultadas por data invertida, o que degrada a performance de leitura recorrente.
+## 2026-10-22
+
+- **O que fiz:** Adicionei os índices (`idx_consultor_recomendacoes_timestamp`) na tabela `consultor_recomendacoes` para a coluna `timestamp DESC`.
+- **O que aprendi:** A ausência deste índice na tabela `consultor_recomendacoes` estava causando lentidão na função `save_recomendacoes` (no backend `app/consultor/armazenamento.py`) que usa a query `ORDER BY timestamp DESC LIMIT 1` em loop para cada ticker salvo. Com o índice, os checks evitam o scan completo de tabela (table scan) para cada iteração do salvamento, otimizando o processo que é chamado recorrentemente a cada rodada.
+- **O que evitar:** Omitir índices de ordenação `DESC` para tabelas lidas em laços com clausula de timestamp invertida com LIMIT, degradando a performance de escrita recorrente por leituras lentas.
