@@ -79,6 +79,9 @@ def test_view_le_os_campos_que_o_coletor_grava(monkeypatch):
     from app.main import app as fastapi_app
     from app.database import init_db, save_faca_caindo_data
 
+    import app.banco
+
+    app.banco._db_initialized = False
     init_db()
 
     data = faca_caindo.FacaCaindoData(

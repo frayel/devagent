@@ -1,7 +1,7 @@
 ---
 id: 075a
 titulo: Banco · migração dos painéis para snapshots (segundo lote, parte a)
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_migracao_snapshots.py

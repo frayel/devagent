@@ -379,6 +379,9 @@
 
 - Spec 073b (Banco · migração do Ibovespa, maiores altas/baixas e séries para a nova camada):
   - Migração de tabelas de cache legadas para `snapshots_paineis` e `series_diarias` no Postgres com fallback SQLite.
+- Spec 075a (Banco · migração dos painéis para snapshots - lote 2 parte a):
+  - Migração das tabelas divergencia_ibov_dolar_cache, dolar_correlation_cache, escudo_quedas_cache, esforco_resultado_cache, exaustao_queda_cache, exaustao_tendencia_cache, faca_caindo_cache para snapshots_paineis.
+  - As funções continuam como fachada e gravam/leem em `snapshots_paineis`. Os `CREATE TABLE` saíram em 22/10.
 - Spec 074 (Migração dos painéis para snapshots - lote 1):
   - Migração das tabelas anomalia_peso, anomalias_spread, apetite_risco, armadilha_abertura, assimetria_risco_retorno, atrasadas_rally, clima_global, coesao, compradores_fundo, concentracao, concentracao_ordens, concentracao_setorial, concentracao_vendedora para snapshots_paineis.
   - As funções `save_*`/`get_latest_*` continuam como fachada e gravam/leem em `snapshots_paineis`. Os `CREATE TABLE` que tinham ficado para trás no `init_db` saíram em 22/10, junto com o teste de aceite `tests/test_aceite_migracao_snapshots.py`.

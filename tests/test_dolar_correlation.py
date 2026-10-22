@@ -10,6 +10,10 @@ def isolated_db(tmp_path, monkeypatch):
     db_file = tmp_path / "test_dolar.db"
     monkeypatch.setenv("DATABASE_PATH", str(db_file))
     monkeypatch.setattr("app.database.DB_PATH", str(db_file))
+    import app.banco
+
+    app.banco._db_initialized = False
+
     init_db()
     yield
 
