@@ -3,7 +3,6 @@ import logging
 from datetime import datetime, timezone
 import httpx
 
-from app.database import get_connection
 from app.collectors.highlights import TICKERS
 from app.collectors.utils import fetch_with_retry
 from app.collectors import mt5
@@ -67,27 +66,13 @@ def collect_and_save() -> bool:
     parsed_results.sort(key=lambda x: x["retorno_acumulado"])
     top_5 = parsed_results[:5]
 
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS radar_inflexao_cache (
-            timestamp TEXT PRIMARY KEY,
-            alertas_json TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        )
-    """)
-    cursor.execute(
-        """
-        INSERT INTO radar_inflexao_cache (timestamp, alertas_json, fonte)
-        VALUES (?, ?, ?)
-    """,
-        (
-            datetime.now(timezone.utc).isoformat(),
-            json.dumps(top_5),
-            mt5.fonte_efetiva("yfinance"),
-        ),
+    from app.database import save_radar_inflexao_data, RadarInflexaoData
+
+    data = RadarInflexaoData(
+        timestamp=datetime.now(timezone.utc),
+        alertas_json=json.dumps(top_5),
+        fonte=mt5.fonte_efetiva("yfinance"),
     )
-    conn.commit()
-    conn.close()
+    save_radar_inflexao_data(data)
 
     return True

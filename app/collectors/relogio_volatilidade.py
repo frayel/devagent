@@ -2,7 +2,6 @@ import json
 import logging
 from datetime import datetime, timezone
 
-from app.database import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -60,17 +59,16 @@ def collect_and_save() -> bool:
             "pico_horario": peak_timestamp,
         }
 
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM relogio_volatilidade_cache")
-        cursor.execute(
-            """
-            INSERT INTO relogio_volatilidade_cache (timestamp, alertas_json, fonte)
-            VALUES (?, ?, ?)
-            """,
-            (datetime.now(timezone.utc), json.dumps(alertas), "yfinance"),
+        from app.database import save_relogio_volatilidade_data, RelogioVolatilidadeData
+
+        relogio_data = RelogioVolatilidadeData(
+            id=0,
+            timestamp=datetime.now(timezone.utc),
+            alertas_json=json.dumps(alertas),
+            fonte="yfinance",
         )
-        conn.commit()
+        save_relogio_volatilidade_data(relogio_data)
+
         return True
     except Exception as e:
         logger.error(f"Error collecting relogio_volatilidade: {e}")

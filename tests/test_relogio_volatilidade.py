@@ -3,7 +3,6 @@ import json
 import respx
 from httpx import Response
 from app.collectors.relogio_volatilidade import collect_and_save
-from app.database import get_connection
 
 
 def test_relogio_volatilidade_sucesso(setup_db):
@@ -45,13 +44,12 @@ def test_relogio_volatilidade_sucesso(setup_db):
         result = collect_and_save()
         assert result is True
 
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM relogio_volatilidade_cache")
-        row = cursor.fetchone()
+        from app.database import get_latest_relogio_volatilidade_data
 
-        assert row is not None
-        alertas = json.loads(row[2])
+        data = get_latest_relogio_volatilidade_data()
+
+        assert data is not None
+        alertas = json.loads(data.alertas_json)
         assert alertas["ticker"] == "^BVSP"
         assert alertas["variacao"] == 1000
         assert (

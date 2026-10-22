@@ -324,13 +324,6 @@ def init_db() -> None:
 
     cursor.executescript("""
 
-        CREATE TABLE IF NOT EXISTS relogio_volatilidade_cache (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp DATETIME NOT NULL,
-            alertas_json TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_relogio_volatilidade_timestamp ON relogio_volatilidade_cache(timestamp DESC);
         CREATE TABLE IF NOT EXISTS instrumentacao_coleta_vazia (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             painel TEXT NOT NULL,
@@ -353,38 +346,12 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_sensibilidade_juros_cache_timestamp ON sensibilidade_juros_cache(timestamp DESC);
 
 
-        CREATE TABLE IF NOT EXISTS radar_absorcao_cruzada_cache (
-            timestamp TEXT NOT NULL,
-            alertas_json TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_radar_absorcao_cruzada_cache_timestamp ON radar_absorcao_cruzada_cache(timestamp DESC);
 
-        CREATE TABLE IF NOT EXISTS radar_divergencia_volume_cache (
-            timestamp TEXT NOT NULL,
-            alertas_json TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_radar_divergencia_volume_cache_timestamp ON radar_divergencia_volume_cache(timestamp DESC);
-        ;
+                ;
 
 
-        CREATE TABLE IF NOT EXISTS radar_congestionamento_cache (
-            timestamp TEXT,
-            alertas_json TEXT,
-            fonte TEXT
-        );
 
-        CREATE TABLE IF NOT EXISTS motores_indice_cache (
-            timestamp TEXT PRIMARY KEY,
-            motores_json TEXT NOT NULL,
-            fonte TEXT DEFAULT 'yfinance'
-        );
-        CREATE INDEX IF NOT EXISTS idx_motores_indice_cache_timestamp ON motores_indice_cache(timestamp DESC);
-""")
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_radar_congestionamento_timestamp ON radar_congestionamento_cache (timestamp DESC)
-    """)
+        """)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS scanner_capitulacao_cache (
@@ -522,31 +489,6 @@ def init_db() -> None:
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_volume_alerts_cache_timestamp
         ON volume_alerts_cache(timestamp DESC)
-    """)
-
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS radar_inflexao_cache (
-            timestamp TEXT PRIMARY KEY,
-            alertas_json TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS radar_short_squeeze_cache (
-            timestamp TEXT PRIMARY KEY,
-            alertas_json TEXT NOT NULL,
-            fonte TEXT NOT NULL
-        )
-    """)
-
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_radar_inflexao_cache_timestamp
-        ON radar_inflexao_cache(timestamp DESC)
-    """)
-
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_radar_short_squeeze_cache_timestamp
-        ON radar_short_squeeze_cache(timestamp DESC)
     """)
 
     cursor.executescript("""
@@ -1287,46 +1229,26 @@ class RadarShortSqueezeData:
 
 
 def save_radar_inflexao_data(data: RadarInflexaoData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO radar_inflexao_cache (timestamp, alertas_json, fonte)
-        VALUES (?, ?, ?)
-        """,
-        (
-            data.timestamp.isoformat(),
-            data.alertas_json,
-            data.fonte,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("radar_inflexao", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_radar_inflexao_data() -> RadarInflexaoData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-            SELECT timestamp, alertas_json, fonte
-            FROM radar_inflexao_cache
-            ORDER BY timestamp DESC
-            LIMIT 1
-        """)
-        row = cursor.fetchone()
-    except sqlite3.OperationalError:
-        return None
-    finally:
-        conn.close()
+    from app.banco import ler_snapshot
+    from datetime import datetime
 
-    if row:
-        return RadarInflexaoData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            alertas_json=row["alertas_json"],
-            fonte=row["fonte"],
-        )
-    return None
+    payload = ler_snapshot("radar_inflexao")
+    if not payload:
+        return None
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+    return RadarInflexaoData(**payload_copy)
 
 
 @dataclass
@@ -1360,83 +1282,54 @@ class RadarCongestionamentoData:
 
 
 def save_radar_congestionamento_data(alertas: list[dict], fonte: str) -> None:
-    from datetime import timezone
+    from app.banco import gravar_snapshot
+    from datetime import timezone, datetime
+    import json
 
-    conn = get_connection()
-    cursor = conn.cursor()
-    now = datetime.now(timezone.utc).isoformat()
-    cursor.execute(
-        "INSERT INTO radar_congestionamento_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
-        (now, json.dumps(alertas), fonte),
-    )
-    conn.commit()
-    conn.close()
+    now = datetime.now(timezone.utc)
+    hoje = now.date()
+    payload = {
+        "timestamp": now.isoformat(),
+        "alertas_json": json.dumps(alertas),
+        "fonte": fonte,
+    }
+    gravar_snapshot("radar_congestionamento", hoje, "ao_vivo", fonte, payload)
 
 
 def get_latest_radar_congestionamento_data() -> RadarCongestionamentoData | None:
-    conn = get_connection()
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "SELECT timestamp, alertas_json, fonte FROM radar_congestionamento_cache ORDER BY timestamp DESC LIMIT 1"
-        )
-        row = cursor.fetchone()
-    except sqlite3.OperationalError:
-        return None
-    finally:
-        conn.close()
+    from app.banco import ler_snapshot
+    from datetime import datetime
 
-    if row:
-        return RadarCongestionamentoData(
-            alertas_json=row["alertas_json"],
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            fonte=row["fonte"],
-        )
-    return None
+    payload = ler_snapshot("radar_congestionamento")
+    if not payload:
+        return None
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+    return RadarCongestionamentoData(**payload_copy)
 
 
 def save_radar_short_squeeze_data(data: RadarShortSqueezeData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO radar_short_squeeze_cache (timestamp, alertas_json, fonte)
-        VALUES (?, ?, ?)
-        """,
-        (
-            data.timestamp.isoformat(),
-            data.alertas_json,
-            data.fonte,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("radar_short_squeeze", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_radar_short_squeeze_data() -> RadarShortSqueezeData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-            SELECT timestamp, alertas_json, fonte
-            FROM radar_short_squeeze_cache
-            ORDER BY timestamp DESC
-            LIMIT 1
-        """)
-        row = cursor.fetchone()
-    except sqlite3.OperationalError:
-        return None
-    finally:
-        conn.close()
+    from app.banco import ler_snapshot
+    from datetime import datetime
 
-    if row:
-        return RadarShortSqueezeData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            alertas_json=row["alertas_json"],
-            fonte=row["fonte"],
-        )
-    return None
+    payload = ler_snapshot("radar_short_squeeze")
+    if not payload:
+        return None
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+    return RadarShortSqueezeData(**payload_copy)
 
 
 @dataclass
@@ -1476,31 +1369,26 @@ class RadarAbsorcaoCruzadaData:
 
 
 def save_radar_absorcao_cruzada_data(data: RadarAbsorcaoCruzadaData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO radar_absorcao_cruzada_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
-        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("radar_absorcao_cruzada", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_radar_absorcao_cruzada_data() -> RadarAbsorcaoCruzadaData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT timestamp, alertas_json, fonte FROM radar_absorcao_cruzada_cache ORDER BY timestamp DESC LIMIT 1"
-    )
-    row = cursor.fetchone()
-    conn.close()
-    if row:
-        return RadarAbsorcaoCruzadaData(
-            timestamp=datetime.fromisoformat(row[0]),
-            alertas_json=row[1],
-            fonte=row[2],
-        )
-    return None
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("radar_absorcao_cruzada")
+    if not payload:
+        return None
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+    return RadarAbsorcaoCruzadaData(**payload_copy)
 
 
 @dataclass
@@ -1556,35 +1444,26 @@ def get_latest_liquidez_abertura_data() -> LiquidezAberturaData | None:
 
 
 def save_radar_divergencia_volume_data(data: RadarDivergenciaVolumeData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO radar_divergencia_volume_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
-        (data.timestamp.isoformat(), data.alertas_json, data.fonte),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("radar_divergencia_volume", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_radar_divergencia_volume_data() -> RadarDivergenciaVolumeData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "SELECT timestamp, alertas_json, fonte FROM radar_divergencia_volume_cache ORDER BY timestamp DESC LIMIT 1"
-        )
-        row = cursor.fetchone()
-    except sqlite3.OperationalError:
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("radar_divergencia_volume")
+    if not payload:
         return None
-    finally:
-        conn.close()
-    if row:
-        return RadarDivergenciaVolumeData(
-            timestamp=datetime.fromisoformat(row[0]),
-            alertas_json=row[1],
-            fonte=row[2],
-        )
-    return None
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+    return RadarDivergenciaVolumeData(**payload_copy)
 
 
 def save_sensibilidade_juros_data(data: SensibilidadeJurosData) -> None:
@@ -1642,38 +1521,26 @@ def get_latest_fator_peso_pesado_data() -> FatorPesoPesadoData | None:
 
 
 def save_motores_indice_data(data: MotoresIndiceData) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO motores_indice_cache (timestamp, motores_json, fonte)
-        VALUES (?, ?, ?)
-    """,
-        (data.timestamp.isoformat(), data.motores_json, data.fonte),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("motores_indice", hoje, "ao_vivo", data.fonte, payload)
 
 
 def get_latest_motores_indice_data() -> MotoresIndiceData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT timestamp, motores_json, fonte
-        FROM motores_indice_cache
-        ORDER BY timestamp DESC
-        LIMIT 1
-    """)
-    row = cursor.fetchone()
-    conn.close()
+    from app.banco import ler_snapshot
+    from datetime import datetime
 
-    if row:
-        return MotoresIndiceData(
-            timestamp=datetime.fromisoformat(row["timestamp"]),
-            motores_json=row["motores_json"],
-            fonte=row["fonte"],
-        )
-    return None
+    payload = ler_snapshot("motores_indice")
+    if not payload:
+        return None
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+    return MotoresIndiceData(**payload_copy)
 
 
 @dataclass
@@ -1711,20 +1578,28 @@ def get_latest_clima_global_data() -> ClimaGlobalData | None:
 
 
 def get_latest_relogio_volatilidade_data() -> RelogioVolatilidadeData | None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT * FROM relogio_volatilidade_cache ORDER BY timestamp DESC LIMIT 1"
-    )
-    row = cursor.fetchone()
-    if row:
-        return RelogioVolatilidadeData(
-            id=row[0],
-            timestamp=datetime.fromisoformat(row[1]),
-            alertas_json=row[2],
-            fonte=row[3],
-        )
-    return None
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("relogio_volatilidade")
+    if not payload:
+        return None
+    payload_copy = payload.copy()
+    if "id" not in payload_copy:
+        payload_copy["id"] = 0
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+    return RelogioVolatilidadeData(**payload_copy)
+
+
+def save_relogio_volatilidade_data(data: RelogioVolatilidadeData) -> None:
+    from app.banco import gravar_snapshot
+    from datetime import timezone
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("relogio_volatilidade", hoje, "ao_vivo", data.fonte, payload)
 
 
 def save_coleta_tempo(painel: str, duracao: float, timestamp: datetime) -> None:
