@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- Refatoração: migração de painéis (lote 3 parte a) para usar snapshots_paineis, removendo tabelas SQLite. (Spec 076a)
 - Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - Refatoração: migração de painéis (lote 2 parte b) para usar snapshots_paineis, removendo tabelas SQLite. (Spec 075b)
 - Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
