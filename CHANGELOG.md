@@ -2,8 +2,11 @@
 
 ## [Unreleased]
 ### Added
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - **Spec 073**: Banco · camada única com Postgres e armazenamento do consultor
 ### Added
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - **Consultor**: diário de recomendações com suporte ao Postgres para decisões técnicas, fechamentos e unificação de driver nas opiniões (Spec 072a).
 - Consultor: cruza os sinais técnicos com o consenso das casas de análise (spec 071).
 - **Spec 070:** Extrai recomendações e opiniões de casas de análise utilizando o LLM Gemini e as exibe no painel do Consultor de Investimentos.
@@ -22,6 +25,7 @@
 - feat: implementa radar de anomalia de fechamento (spec 066)
 
 ### Added
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - feat: Implementa a spec 070a sobre a fila e armazenamento de opiniões de casas de análise.
 - Removido painel Ação Órfã (Spec 067)
 - Painel de Assimetria Risco/Retorno (Spec 065) que exibe as ações mais próximas do fundo recente e distantes do topo.
@@ -52,6 +56,7 @@
 - Consolidação de medidores de Apetite a Risco e Rotação de Capital na Maré do Mercado (Spec 049).
 - Entrega a Spec 048, adicionando cards dos Motores do Índice.
 ### Added
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - Radar de Exaustão de Queda (Spec 060) exibe ações que caem há 3 dias com recuperação intraday acima da abertura.
 - `instrumentacao_coleta_vazia`: tabela e rotina para registrar quando a coleta de um painel retorna vazia (Spec 056, saúde técnica).
 - Spec 047: Adicionado o painel Concentração de Força Vendedora (visoão macro) calculando a contribuição negativa dos piores 5 ativos quando o Ibovespa cai.
@@ -83,17 +88,20 @@
 - Integrados os gauges de Tendência ao card principal do Ibovespa (Spec 035).
 - núcleo: o Jules passa a ser acordado por um relógio externo (ADR 010). O job `vigia`, que ficava ligado 24 h por dia no Actions, dá lugar à ação `rodada` (inicia a persona da hora, destrava e sai em segundos); o `jules.yml` perde o `schedule` e é chamado a cada 30 min pelo cron-job.org via `workflow_dispatch`, porque o cron do GitHub descarta a maior parte dos disparos frequentes. Configuração em `devagent/OPERACAO.md`.
 ### Added
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - Radar de Exaustão de Queda (Spec 060) exibe ações que caem há 3 dias com recuperação intraday acima da abertura.
 - `instrumentacao_coleta_vazia`: tabela e rotina para registrar quando a coleta de um painel retorna vazia (Spec 056, saúde técnica).
 - Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - docs: atualiza estado das specs 029 e 030
 ### Added
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - Radar de Exaustão de Queda (Spec 060) exibe ações que caem há 3 dias com recuperação intraday acima da abertura.
 - `instrumentacao_coleta_vazia`: tabela e rotina para registrar quando a coleta de um painel retorna vazia (Spec 056, saúde técnica).
 - Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - feat: Implementa Abas de Navegação Contextual (Spec 030). Substitui os botões de filtro por abas no topo que organizam a interface em Visão Geral, Sentimento & Risco, Rankings & Destaques e Alertas Intraday, ocultando os painéis via JS sem recarregar a página. O filtro "Só Sinais" foi incorporado nas abas.
 - feat: Adiciona Sparklines nos rankings (Spec 029). Adiciona um minigráfico (SVG) nas tabelas "Maiores altas", "Maiores baixas" e "Força Relativa", ilustrando a performance dos últimos 10 pregões com base em histórico do Yahoo Finance.
 ### Added
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - Radar de Exaustão de Queda (Spec 060) exibe ações que caem há 3 dias com recuperação intraday acima da abertura.
 - `instrumentacao_coleta_vazia`: tabela e rotina para registrar quando a coleta de um painel retorna vazia (Spec 056, saúde técnica).
 - Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
@@ -105,6 +113,7 @@
 - fix: a Calma da Maré do mercado (Spec 027) passa a medir só a volatilidade de queda (semidesvio com alvo zero). Com o desvio-padrão comum, a alta de 7,42% do Ibovespa em 05/10/2026 zerava a Calma e deixava a Maré em Medo (25) no dia seguinte a uma alta histórica.
 - fix: gráfico do Ibovespa com 200px de altura (antes ficava com a altura padrão do Plotly, 450px) e eixo Y a partir de 2% abaixo do mínimo do período, em vez de zero.
 ### Added
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - Radar de Exaustão de Queda (Spec 060) exibe ações que caem há 3 dias com recuperação intraday acima da abertura.
 - `instrumentacao_coleta_vazia`: tabela e rotina para registrar quando a coleta de um painel retorna vazia (Spec 056, saúde técnica).
 - Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
@@ -112,6 +121,7 @@
 ### Fixed
 - agent: PR vazio não entra mais. O #171 ("Spec 027a") chegou sem nenhum arquivo, passou no CI e foi mergeado; a Maré do mercado continua sem implementação e a spec 027 segue `ready` na seção Correções. Regra 5 em `devagent/conferir_pr.py` (reprova PR sem alteração em `pull_request` ou com `--exigir-alteracao`) e segunda trava no `automerge.yml`, que fecha o PR vazio sem merge.
 ### Added
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - Radar de Exaustão de Queda (Spec 060) exibe ações que caem há 3 dias com recuperação intraday acima da abertura.
 - `instrumentacao_coleta_vazia`: tabela e rotina para registrar quando a coleta de um painel retorna vazia (Spec 056, saúde técnica).
 - Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
@@ -132,6 +142,7 @@
 
 
 ### Added
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - Radar de Exaustão de Queda (Spec 060) exibe ações que caem há 3 dias com recuperação intraday acima da abertura.
 - `instrumentacao_coleta_vazia`: tabela e rotina para registrar quando a coleta de um painel retorna vazia (Spec 056, saúde técnica).
 - Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
@@ -139,6 +150,7 @@
 - Inclusão do 'fator_mola' no payload JSON do `/api/snapshot`.
 
 ### Added
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - Radar de Exaustão de Queda (Spec 060) exibe ações que caem há 3 dias com recuperação intraday acima da abertura.
 - `instrumentacao_coleta_vazia`: tabela e rotina para registrar quando a coleta de um painel retorna vazia (Spec 056, saúde técnica).
 - Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
@@ -162,6 +174,7 @@
 - fix(coletor): Yahoo Finance fallback agora extrai a variação diária corretamente pelo penúltimo candle (ou `meta.previousClose`) em vez de basear o cálculo do candle do mês passado.
 - CI: `ruff` fixado em 0.15.22; a versão 0.16 ampliou as regras padrão e deixou o lint vermelho na `main`, travando o auto-merge.
 ### Added
+- Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - Radar de Exaustão de Queda (Spec 060) exibe ações que caem há 3 dias com recuperação intraday acima da abertura.
 - `instrumentacao_coleta_vazia`: tabela e rotina para registrar quando a coleta de um painel retorna vazia (Spec 056, saúde técnica).
 - Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
