@@ -12,7 +12,7 @@ Use ao implementar uma spec que traga uma fonte nova.
 - Um módulo por fonte em `app/collectors/`, com uma função pública que devolve um objeto tipado ou `None`.
 - `httpx` com `timeout` explícito, retry com backoff (no máximo 3 tentativas) e `User-Agent` identificável do projeto.
 - No máximo 1 requisição a cada 2 segundos por domínio.
-- O coletor grava no banco; a página só lê do banco. Nunca colete durante uma requisição do usuário.
+- O coletor grava no banco usando a camada genérica (`app/banco.py` com `gravar_snapshot`); a página só lê do banco via `ler_snapshot`. Nunca colete durante uma requisição do usuário.
 - Toda linha gravada carrega `fonte` e `coletado_em` (UTC).
 - Ponto de entrada executável (`python -m app.collectors.<nome>`) para o Cron Job do Render.
 
