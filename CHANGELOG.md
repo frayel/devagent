@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Spec 077a: Resíduos do SQLite depois da migração
 - **Spec 077:** Congelamento de dados e data de referência no pós-pregão, melhorando o carregamento intradiário
 ### Added
 - Refatoração: migração de painéis (lote 3 parte a) para usar snapshots_paineis, removendo tabelas SQLite. (Spec 076a)

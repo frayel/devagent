@@ -396,3 +396,8 @@
   - Congelamento e alteração de estados da coleta configurados em `app/agendador.py` e `app/database.py`.
   - Feriados da B3 e lógica de pregão implantados em `app/calendario.py` e `test_calendario.py`.
   - UI exibe horários do fechamento ou atualizado em tempo real dependendo do estado do mercado.
+
+- Spec 077a (Resíduos do SQLite depois da migração):
+  - Consultor ajustado para rodar nativamente no Postgres usando `sql_para` e `ON CONFLICT`, consertando consultas na produção.
+  - Diagnóstico do banco movido para `app/banco.py`, capturando o tamanho usando `pg_database_size`.
+  - Migradas as tabelas de cache efêmero restantes (`radar_anomalia_fechamento_cache` e `consultor_confianca_regras`) para snapshots.
