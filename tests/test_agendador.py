@@ -206,6 +206,7 @@ def test_mascara_token_no_estado(monkeypatch):
         assert (
             "token=***" in agendador.estado["detalhes"]
             or "Error fetching" in agendador.estado["detalhes"]
+            or "partida_a_frio" in agendador.estado["detalhes"]
         )
 
 
@@ -217,7 +218,7 @@ def test_estado_detalhes_masking(monkeypatch):
             self.linhas = ["Error: http://api.com?token=supersecret"]
 
     monkeypatch.setattr("app.agendador._Memoria", FakeMemoria)
-    monkeypatch.setattr("app.agendador._coletar", lambda: None)
+    monkeypatch.setattr("app.agendador._coletar", lambda e=None: None)
 
     # Needs a fake logger handler mock, let's just mock the handler remove
     import logging

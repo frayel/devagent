@@ -27,8 +27,19 @@
             <a href="{{ href }}" class="menu-link{% if caminho == href %} ativo{% endif %}"{% if caminho == href %} aria-current="page"{% endif %}>{{ rotulo }}</a>
             {%- endfor %}
         </nav>
-        <div class="pregao">Pregão</div>
-        <div class="hora">{{ data.time if data else '' }}</div>
+                <div class="pregao">
+            {% set estado_mercado = estado_mercado|default('fechado', true) %}
+            {% if estado_mercado == 'aberto' %}
+                Ao vivo &middot; atualizado às {{ data.time if data else '' }}
+            {% else %}
+                {% if data_referencia %}
+                Fechamento de {{ data_referencia.strftime('%d/%m/%Y') }} &middot; dados congelados
+                {% else %}
+                Pregão Fechado
+                {% endif %}
+            {% endif %}
+        </div>
+
     </header>
 
     <main class="grade">

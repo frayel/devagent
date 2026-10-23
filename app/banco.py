@@ -1,3 +1,4 @@
+import contextvars
 import json
 import os
 import time
@@ -140,9 +141,21 @@ def init_db():
         conn.close()
 
 
+_estado_snapshot = contextvars.ContextVar("estado_snapshot", default="ao_vivo")
+_data_referencia_snapshot: contextvars.ContextVar[date | None] = contextvars.ContextVar(
+    "data_referencia_snapshot", default=None
+)
+
+
 def gravar_snapshot(
     painel: str, data_referencia: date, estado: str, fonte: str, payload: dict
 ):
+    estado_override = _estado_snapshot.get()
+    if estado_override and estado_override != "ao_vivo":
+        estado = estado_override
+    data_override = _data_referencia_snapshot.get()
+    if data_override:
+        data_referencia = data_override
     init_db()
     conn, backend = get_connection()
     payload_str = serialize_json(payload)
