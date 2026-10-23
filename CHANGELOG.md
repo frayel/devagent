@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- refatoração: implementação da spec 077c, removendo resíduos do SQLite na lógica de diagnóstico do banco de dados na página /sistema.
 - refatoração: implementação da spec 077b-banco-residuos-consultor.md, removendo resíduos do SQLite na lógica do Consultor.
 - refatoração: implementação da spec 077b-banco-residuos-consultor.md, removendo resíduos do SQLite na lógica do Consultor.
 - Spec 077a: Resíduos do SQLite depois da migração

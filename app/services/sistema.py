@@ -234,9 +234,9 @@ def verificar_banco(info: dict[str, Any]) -> Item:
             "Banco de dados",
             ATENCAO,
             resumo,
-            "DATABASE_URL está configurado, mas a aplicação ainda grava no SQLite "
-            "local, que se perde quando o Render reinicia. A troca para o Postgres "
-            "está nas specs 073 a 076.",
+            "DATABASE_URL está configurado, mas o Postgres não respondeu quando a instância subiu; "
+            "a aplicação está gravando no SQLite local, que se perde quando o Render reinicia. "
+            "Reinicie o serviço depois de conferir o Neon.",
         )
     return Item("Banco de dados", OK, resumo, f"{info.get('tabelas', 0)} tabelas")
 

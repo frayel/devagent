@@ -403,3 +403,6 @@
   - Migradas as tabelas de cache efêmero restantes (`radar_anomalia_fechamento_cache` e `consultor_confianca_regras`) para snapshots.
 - Spec 077b (Resíduos do SQLite depois da migração - Consultor no Postgres):
   - Lógica do SQLite convertida para usar `sql_para` no Postgres na lógica do Consultor (tabela `consultor_llm_uso`, `consultor_opinioes_status`, `consultor_opinioes`).
+- Spec 077c (Diagnóstico do Banco):
+  - Lógica de diagnóstico do banco movida para `app/banco.py` e integrada ao postgres.
+  - Atualizada a página /sistema para exibir os dados reais do Postgres.
