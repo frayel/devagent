@@ -189,7 +189,6 @@ class VolatilidadeSilenciosaData:
 
 def save_volatilidade_silenciosa_data(data: VolatilidadeSilenciosaData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -221,7 +220,6 @@ class EsforcoResultadoData:
 
 def save_esforco_resultado_data(data: EsforcoResultadoData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -255,43 +253,7 @@ def init_db() -> None:
 
     init_banco()
     conn = get_connection()
-    try:
-        conn.execute(
-            "ALTER TABLE consultor_confianca_regras ADD COLUMN janela_inicio TEXT"
-        )
-        conn.commit()
-    except Exception:
-        pass
-    try:
-        conn.execute(
-            "ALTER TABLE consultor_confianca_regras ADD COLUMN janela_fim TEXT"
-        )
-        conn.commit()
-    except Exception:
-        pass
     cursor = conn.cursor()
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS radar_anomalia_fechamento_cache (
-            timestamp TEXT PRIMARY KEY,
-            alertas_json TEXT,
-            fonte TEXT
-        );
-    """)
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_radar_anomalia_fechamento_timestamp ON radar_anomalia_fechamento_cache (timestamp DESC);
-    """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS consultor_confianca_regras (
-            regra TEXT PRIMARY KEY,
-            disparos INTEGER,
-            acertos INTEGER,
-            excesso_mediano REAL,
-            janela_inicio TEXT,
-            janela_fim TEXT,
-            atualizado_em TEXT
-        );
-    """)
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS historico_diario_cache (
@@ -448,7 +410,6 @@ def init_db() -> None:
 
 def save_ibovespa_data(data: IbovespaData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = {
@@ -483,7 +444,6 @@ def get_latest_ibovespa_data() -> IbovespaData | None:
 
 def save_highlights_data(data: HighlightsData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = {
@@ -518,7 +478,6 @@ def get_latest_highlights_data() -> HighlightsData | None:
 
 def save_volume_alerts_data(data: VolumeAlertsData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -543,7 +502,6 @@ def get_latest_volume_alerts_data() -> VolumeAlertsData | None:
 
 def save_dolar_correlation_data(data: DolarCorrelationData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -597,7 +555,6 @@ init_db()
 
 def save_scanner_capitulacao_data(data: ScannerCapitulacaoData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -644,7 +601,6 @@ def get_latest_forca_relativa_data() -> ForcaRelativaData | None:
 
 def save_escudo_quedas_data(data: EscudoQuedasData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -671,7 +627,6 @@ def get_latest_escudo_quedas_data() -> EscudoQuedasData | None:
 
 def save_coesao_data(data: CoesaoData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -696,7 +651,6 @@ def get_latest_coesao_data() -> CoesaoData | None:
 
 def save_atrasadas_rally_data(data: AtrasadasRallyData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -721,7 +675,6 @@ def get_latest_atrasadas_rally_data() -> AtrasadasRallyData | None:
 
 def save_concentracao_data(data: ConcentracaoData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -731,7 +684,6 @@ def save_concentracao_data(data: ConcentracaoData) -> None:
 
 def save_concentracao_vendedora_data(data: ConcentracaoData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -771,7 +723,6 @@ def get_latest_concentracao_data() -> ConcentracaoData | None:
 
 def save_variacao_subita_data(data: VariacaoSubitaData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -796,7 +747,6 @@ def get_latest_variacao_subita_data() -> VariacaoSubitaData | None:
 
 def save_concentracao_setorial_data(data: ConcentracaoSetorialData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -821,7 +771,6 @@ def get_latest_concentracao_setorial_data() -> ConcentracaoSetorialData | None:
 
 def save_apetite_risco_data(data: ApetiteRiscoData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -846,7 +795,6 @@ def get_latest_apetite_risco_data() -> ApetiteRiscoData | None:
 
 def save_rotacao_capital_data(data: RotacaoCapitalData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -878,7 +826,6 @@ class FacaCaindoData:
 
 def save_faca_caindo_data(data: FacaCaindoData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -912,7 +859,6 @@ class CompradoresFundoData:
 
 def save_compradores_fundo_data(data: CompradoresFundoData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -944,7 +890,6 @@ class ArmadilhaAberturaData:
 
 def save_armadilha_abertura_data(data: ArmadilhaAberturaData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -976,7 +921,6 @@ class SobrevivenciaSemanalData:
 
 def save_sobrevivencia_semanal_data(data: SobrevivenciaSemanalData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1028,7 +972,6 @@ class AnomaliaPesoData:
 
 def save_anomalia_peso_data(data: AnomaliaPesoData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1067,7 +1010,6 @@ class RadarShortSqueezeData:
 
 def save_radar_inflexao_data(data: RadarInflexaoData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1112,7 +1054,6 @@ class RadarCongestionamentoData:
 
     @property
     def coletado_em(self) -> str:
-        from datetime import timezone
 
         BRT = timezone(timedelta(hours=-3))
         return self.timestamp.astimezone(BRT).strftime("%d/%m/%Y %H:%M:%S BRT")
@@ -1120,7 +1061,7 @@ class RadarCongestionamentoData:
 
 def save_radar_congestionamento_data(alertas: list[dict], fonte: str) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone, datetime
+    from datetime import datetime
     import json
 
     now = datetime.now(timezone.utc)
@@ -1148,7 +1089,6 @@ def get_latest_radar_congestionamento_data() -> RadarCongestionamentoData | None
 
 def save_radar_short_squeeze_data(data: RadarShortSqueezeData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1207,7 +1147,6 @@ class RadarAbsorcaoCruzadaData:
 
 def save_radar_absorcao_cruzada_data(data: RadarAbsorcaoCruzadaData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1282,7 +1221,6 @@ def get_latest_liquidez_abertura_data() -> LiquidezAberturaData | None:
 
 def save_radar_divergencia_volume_data(data: RadarDivergenciaVolumeData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1305,7 +1243,6 @@ def get_latest_radar_divergencia_volume_data() -> RadarDivergenciaVolumeData | N
 
 def save_sensibilidade_juros_data(data: SensibilidadeJurosData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1352,7 +1289,6 @@ def get_latest_fator_peso_pesado_data() -> FatorPesoPesadoData | None:
 
 def save_motores_indice_data(data: MotoresIndiceData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1384,7 +1320,6 @@ class ClimaGlobalData:
 
 def save_clima_global_data(data: ClimaGlobalData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1424,7 +1359,6 @@ def get_latest_relogio_volatilidade_data() -> RelogioVolatilidadeData | None:
 
 def save_relogio_volatilidade_data(data: RelogioVolatilidadeData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1434,7 +1368,6 @@ def save_relogio_volatilidade_data(data: RelogioVolatilidadeData) -> None:
 
 def save_coleta_tempo(painel: str, duracao: float, timestamp: datetime) -> None:
     from app.banco import ler_snapshot, gravar_snapshot
-    from datetime import timezone
 
     hoje = timestamp.astimezone(timezone.utc).date()
 
@@ -1456,7 +1389,6 @@ def save_coleta_tempo(painel: str, duracao: float, timestamp: datetime) -> None:
 
 def save_coleta_vazia(painel: str, timestamp: datetime) -> None:
     from app.banco import ler_snapshot, gravar_snapshot
-    from datetime import timezone
 
     hoje = timestamp.astimezone(timezone.utc).date()
 
@@ -1475,7 +1407,7 @@ def save_coleta_vazia(painel: str, timestamp: datetime) -> None:
 
 def get_coletas_vazias_count(painel: str) -> int:
     from app.banco import ler_snapshot
-    from datetime import timezone, datetime as dt
+    from datetime import datetime as dt
 
     hoje = dt.now(timezone.utc).astimezone().date()
     payload = ler_snapshot("instrumentacao", hoje)
@@ -1487,7 +1419,7 @@ def get_coletas_vazias_count(painel: str) -> int:
 def get_coletas_vazias_desde(desde: datetime) -> dict[str, int]:
     """Painel → quantas coletas vazias desde `desde` (página /sistema, spec 082)."""
     from app.banco import ler_snapshot
-    from datetime import timezone, datetime as dt
+    from datetime import datetime as dt
 
     hoje = dt.now(timezone.utc).astimezone().date()
     payload = ler_snapshot("instrumentacao", hoje)
@@ -1499,7 +1431,7 @@ def get_coletas_vazias_desde(desde: datetime) -> dict[str, int]:
 def get_tempos_coleta_desde(desde: datetime) -> dict[str, float]:
     """Painel → duração da coleta mais recente desde `desde`, em segundos (spec 082)."""
     from app.banco import ler_snapshot
-    from datetime import timezone, datetime as dt
+    from datetime import datetime as dt
 
     hoje = dt.now(timezone.utc).astimezone().date()
     payload = ler_snapshot("instrumentacao", hoje)
@@ -1511,7 +1443,7 @@ def get_tempos_coleta_desde(desde: datetime) -> dict[str, float]:
 def get_rodadas_coleta_desde(desde: datetime) -> dict[str, int]:
     """Painel → quantas coletas rodaram desde `desde` (spec 082)."""
     from app.banco import ler_snapshot
-    from datetime import timezone, datetime as dt
+    from datetime import datetime as dt
 
     hoje = dt.now(timezone.utc).astimezone().date()
     payload = ler_snapshot("instrumentacao", hoje)
@@ -1529,7 +1461,6 @@ class RadarAnomaliasSpreadData:
 
 def save_radar_anomalias_spread_data(data: RadarAnomaliasSpreadData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1554,7 +1485,6 @@ def get_latest_radar_anomalias_spread_data() -> RadarAnomaliasSpreadData | None:
 
 def save_concentracao_ordens_data(data: ConcentracaoOrdensData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1593,7 +1523,6 @@ class ExaustaoTendenciaData:
 
 def save_exaustao_queda_data(data: ExaustaoQuedaData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1620,7 +1549,6 @@ def get_latest_exaustao_queda_data() -> ExaustaoQuedaData | None:
 
 def save_exaustao_tendencia_data(data: ExaustaoTendenciaData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1658,7 +1586,6 @@ class AssimetriaRiscoRetornoData:
 
 def save_assimetria_risco_retorno_data(data: AssimetriaRiscoRetornoData) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = data.timestamp.astimezone(timezone.utc).date()
     payload = data.__dict__.copy()
@@ -1751,7 +1678,6 @@ def save_divergencia_ibov_dolar(
     divergencia_detectada: bool, correlacao: float, timestamp: datetime
 ) -> None:
     from app.banco import gravar_snapshot
-    from datetime import timezone
 
     hoje = timestamp.astimezone(timezone.utc).date()
     payload = {
@@ -1769,41 +1695,42 @@ def get_divergencia_ibov_dolar() -> dict | None:
 
 
 def save_radar_anomalia_fechamento_data(alertas_json: str, fonte: str) -> None:
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        now_str = datetime.now(timezone.utc).isoformat()
-        cursor.execute(
-            "INSERT INTO radar_anomalia_fechamento_cache (timestamp, alertas_json, fonte) VALUES (?, ?, ?)",
-            (now_str, alertas_json, fonte),
-        )
-        conn.commit()
-    finally:
-        conn.close()
+    from app.banco import gravar_snapshot
+    from app.calendario import pregao_corrente
+    from datetime import datetime, timezone as tz
+
+    agora = datetime.now(tz.utc)
+    hoje = pregao_corrente(agora)
+    payload = {
+        "alertas_json": alertas_json,
+        "fonte": fonte,
+        "timestamp": agora.isoformat(),
+    }
+    gravar_snapshot("radar_anomalia_fechamento", hoje, "ao_vivo", fonte, payload)
 
 
 def get_latest_radar_anomalia_fechamento_data() -> RadarAnomaliaFechamentoData | None:
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT timestamp, alertas_json, fonte FROM radar_anomalia_fechamento_cache ORDER BY timestamp DESC LIMIT 1"
-        )
-        row = cursor.fetchone()
-    except Exception:
+    from app.banco import ler_snapshot
+    from datetime import datetime, timezone as tz
+
+    snapshot = ler_snapshot("radar_anomalia_fechamento")
+    if not snapshot:
         return None
-    finally:
-        conn.close()
-    if row:
-        return RadarAnomaliaFechamentoData(
-            timestamp=datetime.fromisoformat(row[0]),
-            alertas_json=row[1],
-            fonte=row[2],
-        )
-    return None
+
+    ts_str = snapshot.get("timestamp")
+    if ts_str:
+        ts = datetime.fromisoformat(ts_str)
+    else:
+        ts = datetime.now(tz.utc)
+
+    return RadarAnomaliaFechamentoData(
+        timestamp=ts,
+        alertas_json=snapshot.get("alertas_json", "[]"),
+        fonte=snapshot.get("fonte", ""),
+    )
 
 
-def save_consultor_confianca_regra(
+def save_consultor_confianca(
     regra: str,
     disparos: int,
     acertos: int,
@@ -1812,45 +1739,35 @@ def save_consultor_confianca_regra(
     janela_fim: str,
     atualizado_em: datetime,
 ) -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT OR REPLACE INTO consultor_confianca_regras (regra, disparos, acertos, excesso_mediano, janela_inicio, janela_fim, atualizado_em) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (
-            regra,
-            disparos,
-            acertos,
-            excesso_mediano,
-            janela_inicio,
-            janela_fim,
-            atualizado_em.isoformat(),
-        ),
-    )
-    conn.commit()
-    conn.close()
+    from app.banco import ler_snapshot, gravar_snapshot
+    from app.calendario import pregao_corrente
+    from datetime import datetime, timezone as tz
+
+    agora = datetime.now(tz.utc)
+    hoje = pregao_corrente(agora)
+    snapshot = ler_snapshot("consultor_confianca")
+    payload = snapshot if snapshot else {}
+    payload[regra] = {
+        "disparos": disparos,
+        "acertos": acertos,
+        "excesso_mediano": excesso_mediano,
+        "janela_inicio": janela_inicio,
+        "janela_fim": janela_fim,
+        "atualizado_em": atualizado_em.isoformat(),
+    }
+    gravar_snapshot("consultor_confianca", hoje, "ao_vivo", "sistema", payload)
 
 
-def get_consultor_confianca_regras() -> dict[str, dict]:
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "SELECT regra, disparos, acertos, excesso_mediano, janela_inicio, janela_fim, atualizado_em FROM consultor_confianca_regras"
-        )
-        rows = cursor.fetchall()
-    except sqlite3.OperationalError:
+def get_consultor_confianca() -> dict[str, dict]:
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    snapshot = ler_snapshot("consultor_confianca")
+    if not snapshot:
         return {}
-    finally:
-        conn.close()
 
-    result = {}
-    for row in rows:
-        result[row[0]] = {
-            "disparos": row[1],
-            "acertos": row[2],
-            "excesso_mediano": row[3],
-            "janela_inicio": row[4],
-            "janela_fim": row[5],
-            "atualizado_em": datetime.fromisoformat(row[6]),
-        }
-    return result
+    for k, v in snapshot.items():
+        if "atualizado_em" in v and isinstance(v["atualizado_em"], str):
+            v["atualizado_em"] = datetime.fromisoformat(v["atualizado_em"])
+
+    return snapshot
