@@ -32,6 +32,9 @@ def init_db():
                         UNIQUE (ticker, casa, recomendacao, data_materia)
                     );
                 """)
+                cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_consultor_opinioes_extraida_em ON consultor_opinioes(extraida_em DESC);"
+                )
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS consultor_opinioes_status (
                         id SERIAL PRIMARY KEY,
@@ -97,6 +100,9 @@ def init_db():
                     UNIQUE(ticker, casa, recomendacao, data_materia)
                 );
             """)
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_consultor_opinioes_extraida_em ON consultor_opinioes(extraida_em DESC)"
+            )
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS consultor_opinioes_status (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
