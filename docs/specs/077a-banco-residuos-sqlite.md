@@ -1,7 +1,7 @@
 ---
 id: 077a
 titulo: Resíduos do SQLite depois da migração (consultor, diagnóstico do banco e dois painéis)
-status: ready
+status: draft
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_077a.py, tests/test_aceite_migracao_snapshots.py
