@@ -65,3 +65,52 @@ def test_ci_falhou_fecha_sem_cobrar(monkeypatch: pytest.MonkeyPatch) -> None:
     guardiao_prs.ci_falhou("jules-1", "1")
     assert chamadas["fechou"] == (402, True)
     assert "comentou" not in chamadas
+
+
+# ADR 019: varredura limpa de especialista não é trabalho perdido (#406, #407).
+SENTINEL = {"number": 406, "title": "🛡️ Sentinel: repasse de sessão limpo", "body": ""}
+
+
+def test_especialista_so_com_diario_e_sem_achado() -> None:
+    arquivos = [".jules/sentinel.md", "docs/runs/2026-10-22-0704.md"]
+    assert guardiao_prs.sem_achado_de_especialista(SENTINEL, arquivos)
+
+
+def test_desenvolvedor_so_com_relatorio_nao_e_sem_achado() -> None:
+    pr = {"title": "Implementa spec 075", "body": ""}
+    assert not guardiao_prs.sem_achado_de_especialista(pr, ["docs/runs/a.md"])
+
+
+def test_especialista_com_codigo_nao_e_sem_achado() -> None:
+    pr = {"title": "⚡ Bolt: índice novo", "body": ""}
+    assert not guardiao_prs.sem_achado_de_especialista(
+        pr, ["app/x.py", ".jules/bolt.md"]
+    )
+
+
+def test_especialista_vazio_continua_irrecuperavel() -> None:
+    assert not guardiao_prs.sem_achado_de_especialista(SENTINEL, [])
+
+
+def test_ci_falhou_de_especialista_sem_achado_nao_abre_issue(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pr = {**SENTINEL, "headRefName": "sentinel-1", "url": "u"}
+    chamadas: list[Any] = []
+    monkeypatch.setattr(guardiao_prs, "prs_do_agente", lambda: [pr])
+    monkeypatch.setattr(
+        guardiao_prs, "arquivos_do_pr", lambda n: [".jules/sentinel.md"]
+    )
+    monkeypatch.setattr(guardiao_prs, "sh", lambda *a, **k: chamadas.append(a) or "log")
+    monkeypatch.setattr(
+        guardiao_prs, "comentar", lambda n, c: chamadas.append(("comentar", n))
+    )
+
+    def fechar(*a: Any, **k: Any) -> None:
+        raise AssertionError("não deveria abrir tentativa-falhou")
+
+    monkeypatch.setattr(guardiao_prs, "fechar", fechar)
+    guardiao_prs.ci_falhou("sentinel-1", "1")
+    assert ("comentar", 406) in chamadas
+    assert any(a[:3] == ("gh", "pr", "close") for a in chamadas if isinstance(a, tuple))
+    assert not any("issue" in a for a in chamadas if isinstance(a, tuple))
