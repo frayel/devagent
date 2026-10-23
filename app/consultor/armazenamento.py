@@ -4,6 +4,13 @@ from datetime import datetime, timezone, timedelta
 from app.banco import get_connection
 
 
+def sql_para(backend: str, sqlite_sql: str) -> str:
+    """Substitui `?` por `%s` se for postgres, senao mantem."""
+    if backend == "postgres":
+        return sqlite_sql.replace("?", "%s")
+    return sqlite_sql
+
+
 def init_db():
     conn, backend = get_connection()
     try:
@@ -236,18 +243,11 @@ def get_materias() -> list[dict]:
     init_db()
     conn, backend = get_connection()
     try:
-        if backend == "postgres":
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "SELECT guid, titulo, descricao, conteudo, data_publicacao, link, tickers_citados, criado_em FROM consultor_fila_materias ORDER BY criado_em DESC"
-                )
-                rows = cursor.fetchall()
-        else:
-            cursor = conn.cursor()
-            cursor.execute(
-                "SELECT guid, titulo, descricao, conteudo, data_publicacao, link, tickers_citados, criado_em FROM consultor_fila_materias ORDER BY criado_em DESC"
-            )
-            rows = cursor.fetchall()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT guid, titulo, descricao, conteudo, data_publicacao, link, tickers_citados, criado_em FROM consultor_fila_materias ORDER BY criado_em DESC"
+        )
+        rows = cursor.fetchall()
 
         result = []
         for row in rows:
@@ -272,22 +272,16 @@ def get_opinioes_recentes(limite: int = 20) -> list[dict]:
     init_db()
     conn, backend = get_connection()
     try:
-        if backend == "postgres":
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "SELECT id, guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link, extraida_em "
-                    "FROM consultor_opinioes ORDER BY extraida_em DESC LIMIT %s",
-                    (limite,),
-                )
-                rows = cursor.fetchall()
-        else:
-            cursor = conn.cursor()
-            cursor.execute(
+        cursor = conn.cursor()
+        cursor.execute(
+            sql_para(
+                backend,
                 "SELECT id, guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link, extraida_em "
                 "FROM consultor_opinioes ORDER BY extraida_em DESC LIMIT ?",
-                (limite,),
-            )
-            rows = cursor.fetchall()
+            ),
+            (limite,),
+        )
+        rows = cursor.fetchall()
 
         result = []
         for row in rows:
@@ -316,22 +310,16 @@ def get_opinioes_ativos(dias: int = 30) -> dict:
     conn, backend = get_connection()
     try:
         limite_data = (datetime.now(timezone.utc) - timedelta(days=dias)).isoformat()
-        if backend == "postgres":
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "SELECT id, guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link, extraida_em "
-                    "FROM consultor_opinioes WHERE extraida_em >= %s ORDER BY extraida_em DESC",
-                    (limite_data,),
-                )
-                rows = cursor.fetchall()
-        else:
-            cursor = conn.cursor()
-            cursor.execute(
+        cursor = conn.cursor()
+        cursor.execute(
+            sql_para(
+                backend,
                 "SELECT id, guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link, extraida_em "
                 "FROM consultor_opinioes WHERE extraida_em >= ? ORDER BY extraida_em DESC",
-                (limite_data,),
-            )
-            rows = cursor.fetchall()
+            ),
+            (limite_data,),
+        )
+        rows = cursor.fetchall()
 
         result: dict[str, list[dict]] = {}
         for row in rows:
@@ -362,18 +350,11 @@ def get_opinioes_status() -> dict:
     init_db()
     conn, backend = get_connection()
     try:
-        if backend == "postgres":
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "SELECT status, motivo, desde FROM consultor_opinioes_status LIMIT 1"
-                )
-                row = cursor.fetchone()
-        else:
-            cursor = conn.cursor()
-            cursor.execute(
-                "SELECT status, motivo, desde FROM consultor_opinioes_status LIMIT 1"
-            )
-            row = cursor.fetchone()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT status, motivo, desde FROM consultor_opinioes_status LIMIT 1"
+        )
+        row = cursor.fetchone()
 
         if row:
             return {"status": row[0], "motivo": row[1], "desde": row[2]}
@@ -389,54 +370,33 @@ def save_recomendacoes(resultados_list: list[dict]):
 
     conn, backend = get_connection()
     try:
-        if backend == "postgres":
-            with conn.cursor() as cursor:
-                for res in resultados_list:
-                    cursor.execute(
-                        "SELECT decisao_final, regra_tecnica FROM consultor_recomendacoes WHERE ticker = %s ORDER BY timestamp DESC LIMIT 1",
-                        (res["ticker"],),
-                    )
-                    last = cursor.fetchone()
-                    if last is None or (
-                        last[0] != res["decisao"] or last[1] != res["regra"]
-                    ):
-                        cursor.execute(
-                            "INSERT INTO consultor_recomendacoes (timestamp, ticker, decisao_final, regra_tecnica, consenso, preco, gatilho) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                            (
-                                res["timestamp"],
-                                res["ticker"],
-                                res["decisao"],
-                                res["regra"],
-                                res["consenso"],
-                                res["preco"],
-                                res["gatilho"],
-                            ),
-                        )
-            conn.commit()
-        else:
-            cursor = conn.cursor()
-            for res in resultados_list:
-                cursor.execute(
+        cursor = conn.cursor()
+        for res in resultados_list:
+            cursor.execute(
+                sql_para(
+                    backend,
                     "SELECT decisao_final, regra_tecnica FROM consultor_recomendacoes WHERE ticker = ? ORDER BY timestamp DESC LIMIT 1",
-                    (res["ticker"],),
-                )
-                last = cursor.fetchone()
-                if last is None or (
-                    last[0] != res["decisao"] or last[1] != res["regra"]
-                ):
-                    cursor.execute(
+                ),
+                (res["ticker"],),
+            )
+            last = cursor.fetchone()
+            if last is None or (last[0] != res["decisao"] or last[1] != res["regra"]):
+                cursor.execute(
+                    sql_para(
+                        backend,
                         "INSERT INTO consultor_recomendacoes (timestamp, ticker, decisao_final, regra_tecnica, consenso, preco, gatilho) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                        (
-                            res["timestamp"],
-                            res["ticker"],
-                            res["decisao"],
-                            res["regra"],
-                            res["consenso"],
-                            res["preco"],
-                            res["gatilho"],
-                        ),
-                    )
-            conn.commit()
+                    ),
+                    (
+                        res["timestamp"],
+                        res["ticker"],
+                        res["decisao"],
+                        res["regra"],
+                        res["consenso"],
+                        res["preco"],
+                        res["gatilho"],
+                    ),
+                )
+        conn.commit()
     finally:
         conn.close()
 
@@ -455,21 +415,18 @@ def save_fechamentos(resultados_list: list[dict]):
 
     conn, backend = get_connection()
     try:
-        if backend == "postgres":
-            with conn.cursor() as cursor:
-                for res in resultados_list:
-                    cursor.execute(
-                        "INSERT INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (%s, %s, %s) ON CONFLICT (data_pregao, ticker) DO NOTHING",
-                        (data_pregao, res["ticker"], res["preco"]),
-                    )
-            conn.commit()
-        else:
-            cursor = conn.cursor()
-            for res in resultados_list:
+        cursor = conn.cursor()
+        for res in resultados_list:
+            if backend == "postgres":
+                cursor.execute(
+                    "INSERT INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (%s, %s, %s) ON CONFLICT (data_pregao, ticker) DO NOTHING",
+                    (data_pregao, res["ticker"], res["preco"]),
+                )
+            else:
                 cursor.execute(
                     "INSERT OR IGNORE INTO consultor_fechamentos (data_pregao, ticker, preco_fechamento) VALUES (?, ?, ?)",
                     (data_pregao, res["ticker"], res["preco"]),
                 )
-            conn.commit()
+        conn.commit()
     finally:
         conn.close()
