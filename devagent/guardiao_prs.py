@@ -40,6 +40,7 @@ from typing import Any
 
 from devagent.conferir_pr import FECHA_ISSUE, PADRAO_REGISTROS, documentos, status_de
 from devagent.config import VERIFICACAO
+from devagent.raias import do_desenvolvimento
 
 MAX_TENTATIVAS = 3
 SEM_REACAO_HORAS = 3
@@ -282,6 +283,19 @@ def fechar(
         )
         sh("gh", "pr", "close", str(numero), "--delete-branch", check=False)
         print(f"PR #{numero} fechado como absorvido pela main: {motivo}")
+        return
+    if not do_desenvolvimento(pr.get("title") or ""):
+        # Raia paralela (ADR 021): não há spec a dividir nem trabalho que o
+        # desenvolvimento deva refazer. A própria raia recomeça na próxima
+        # rodada, a partir da main atualizada.
+        comentar(
+            numero,
+            f"Fechando este PR: {motivo}\n\n"
+            "Ele é de uma raia paralela; a próxima rodada abre uma sessão nova "
+            "dessa raia a partir da `main` atualizada. Sem issue `tentativa-falhou`.",
+        )
+        sh("gh", "pr", "close", str(numero), "--delete-branch", check=False)
+        print(f"PR #{numero} da raia paralela fechado: {motivo}")
         return
     corpo = (
         f"Fechando este PR: {motivo}\n\n"

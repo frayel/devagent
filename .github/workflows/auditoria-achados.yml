@@ -1,9 +1,11 @@
 name: Achados da auditoria
 
 # Abre issues para os achados que o auditor LLM (Jules) registrou em
-# docs/auditoria/achados/. Merges feitos pelo GITHUB_TOKEN não disparam
+# docs/auditoria/achados/ e o verificador geral em docs/verificacao/achados/
+# (raia de verificação, ADR 021). Merges feitos pelo GITHUB_TOKEN não disparam
 # eventos de push, por isso o automerge.yml chama este workflow depois de
-# fazer merge de um PR `auditoria:`, e ele também roda de hora em hora.
+# fazer merge de um PR `auditoria:` ou `verificação:`, e ele também roda de
+# hora em hora.
 on:
   schedule:
     - cron: "53 * * * *"
@@ -26,4 +28,6 @@ jobs:
       - name: Abrir issues
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python -m devagent.auditoria.achados_para_issues
+        run: |
+          python -m devagent.auditoria.achados_para_issues --origem auditoria
+          python -m devagent.auditoria.achados_para_issues --origem verificacao

@@ -5,6 +5,11 @@ prompt da sessão e o `estado_github` a repete no primeiro comando, para que
 nenhuma sessão escreva spec nova (Passo 7) enquanto a fila não estiver vazia
 (ADR 015).
 
+Com as raias (ADR 021), a fila tem duas metades. Spec a partir de
+`revisao_obrigatoria_desde` ([disciplina] do devagent.toml) só vai para o
+desenvolvimento depois que o revisor a marca com `revisada:`; antes disso ela
+é trabalho da raia de revisão. Assim as duas raias nunca mexem na mesma spec.
+
 Uso:
     python -m devagent.fila_specs     # lista as specs `ready` em ordem
 """
@@ -16,7 +21,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from devagent.conferir_pr import documentos, status_de
+from devagent.conferir_pr import documentos, ordem_de, status_de
+from devagent.config import CONFIG
+from devagent.raias import revisada
 
 NUMERO = re.compile(r"0*(\d+)([a-z]*)")
 LABEL_TENTATIVA = "tentativa-falhou"
@@ -43,6 +50,47 @@ def specs_prontas(raiz: Path | None = None) -> list[Path]:
         if status_de(p.read_text(encoding="utf-8")) == "ready"
     ]
     return sorted(prontas, key=chave)
+
+
+def revisao_desde() -> str:
+    return str(CONFIG.get("disciplina", {}).get("revisao_obrigatoria_desde", ""))
+
+
+def precisa_revisao(spec: Path, desde: str | None = None) -> bool:
+    """Spec `ready` que ainda espera o revisor antes de ser implementada."""
+    desde = revisao_desde() if desde is None else desde
+    if not desde or ordem_de(spec.name.split("-")[0]) < ordem_de(desde):
+        return False
+    return not revisada(spec.read_text(encoding="utf-8"))
+
+
+def fila_do_desenvolvimento(
+    prontas: list[Path], desde: str | None = None
+) -> list[Path]:
+    return [p for p in prontas if not precisa_revisao(p, desde)]
+
+
+def fila_da_revisao(prontas: list[Path], desde: str | None = None) -> list[Path]:
+    return [p for p in prontas if precisa_revisao(p, desde)]
+
+
+def proximo_numero(raiz: Path | None = None, ocupados: set[int] | None = None) -> str:
+    """Próximo número de spec livre, contando as subpastas e os já reservados.
+
+    Duas raias que escrevem spec ao mesmo tempo (a de especificação no Passo 7
+    e o desenvolvimento ao transformar uma issue em spec) recebem números
+    diferentes no prompt, para os arquivos nunca colidirem (ADR 021).
+    """
+    raiz = raiz or Path.cwd()
+    pasta = raiz / documentos()["specs"]
+    usados = set(ocupados or set())
+    if pasta.is_dir():
+        for p in pasta.rglob("*.md"):
+            m = NUMERO.match(p.name)
+            if m:
+                usados.add(int(m.group(1)))
+    n = max(usados, default=0) + 1
+    return f"{n:03d}"
 
 
 def tentativas_da_spec(spec: Path, issues: list[dict[str, Any]]) -> list[int]:
@@ -109,6 +157,16 @@ def instrucao(
         )
     if not prontas:
         return ""
+    em_revisao = fila_da_revisao(prontas)
+    prontas = fila_do_desenvolvimento(prontas)
+    if not prontas:
+        return (
+            f"As {len(em_revisao)} spec(s) ready da fila ainda esperam a raia de "
+            f"revisão (a próxima é {em_revisao[0].name}). Não as implemente nem "
+            "as edite, e não escreva spec nova pelo Passo 7: esse passo é da raia "
+            "de especificação. Depois dos Passos 1 e 2, siga para os Passos 5 e 6; "
+            "se nenhum gerar entrega, encerre sem PR."
+        )
     raiz = raiz or Path.cwd()
     try:
         proxima = prontas[0].relative_to(raiz)
@@ -126,12 +184,12 @@ def instrucao(
             "encerre. A implementação fica para a próxima sessão."
         )
     return (
-        f"A fila tem {len(prontas)} spec(s) com status ready; a próxima é "
+        f"A fila tem {len(prontas)} spec(s) ready e revisada(s); a próxima é "
         f"{proxima.as_posix()}. Depois do Passo 1 (produção quebrada, correções, "
         "issue prioridade) e do Passo 2 (PR aberto do agente), o trabalho desta "
-        "sessão é implementar essa spec pelo Passo 4. Enquanto houver spec ready, "
-        "não escreva spec nova nem rode o Passo 7. Se a spec for grande demais, "
-        "divida-a como manda o Passo 4."
+        "sessão é implementar essa spec pelo Passo 4: não escreva spec nova pelo "
+        "Passo 7 (é da raia de especificação) e não edite specs que ainda esperam "
+        "revisão. Se a spec for grande demais, divida-a como manda o Passo 4."
     )
 
 

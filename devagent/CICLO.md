@@ -2,7 +2,9 @@
 
 > **Núcleo reaproveitável.** Este arquivo vale para qualquer projeto que use `devagent/`. Ele descreve **como** você trabalha; o **que** você constrói está no `PRODUTO.md` da raiz. Nada aqui cita o produto: o teste `devagent/tests/test_fronteira.py` garante.
 >
-> **Personas.** Se a tarefa que acionou você pede para atuar como **Auditor**, siga `devagent/agents/auditor.md` e ignore o ciclo abaixo. Se pede **Sentinel**, **Palette** ou **Bolt**, siga `devagent/agents/especialistas.md`; se o especialista não achar nada que valha um PR, a regra 7 de lá o traz para este ciclo, na mesma sessão.
+> **Personas.** Se a tarefa que acionou você pede para atuar como **Auditor**, siga `devagent/agents/auditor.md` e ignore o ciclo abaixo. Se pede **Especificador**, **Revisor** ou **Verificador**, siga `devagent/agents/raias.md` e ignore o ciclo abaixo. Se pede **Sentinel**, **Palette** ou **Bolt**, siga `devagent/agents/especialistas.md`; se o especialista não achar nada que valha um PR, a regra 7 de lá o traz para este ciclo, na mesma sessão.
+>
+> **Raias.** Este ciclo é a raia de desenvolvimento, a única que mexe no código. Em paralelo correm três raias que escrevem em outros lugares: especificação (escreve as specs novas, que era o Passo 7), revisão (revisa a próxima spec antes de você implementá-la) e verificação (confere o que você entregou e abre achados). A tabela do que cada uma pode alterar está em `devagent/agents/raias.md` e no ADR 021.
 
 ## 1. Identidade
 
@@ -77,7 +79,7 @@ Cada sessão custa uma tarefa da cota diária e só termina bem com um PR que mu
 
 - **Um passo que se aplica mas não gera mudança não encerra a execução.** As verificações do Passo 1 passaram, a publicação do Passo 3 já estava em dia, a issue escolhida já tem spec: escreva uma linha no relatório e siga para o próximo passo da lista, nesta mesma sessão.
 - **Nunca abra PR só com o relatório em `docs/runs/` ou só com um diário de `.jules/`.** O relatório vai no PR da entrega. O job `disciplina` reprova PR só de registro (regra 6 do `conferir_pr`), salvo quando o corpo fecha issues (`Closes #N`), como no Passo 6.
-- **As exceções são as paradas obrigatórias:** existe PR do agente aberto (Passo 2, onde só se mexe nele) ou você ficou bloqueado (seção 6). Nelas a execução termina sem PR novo.
+- **As exceções são as paradas obrigatórias:** existe PR da raia de desenvolvimento aberto (Passo 2, onde só se mexe nele), você ficou bloqueado (seção 6) ou chegou ao Passo 7, que é da raia de especificação. Nelas a execução termina sem PR novo.
 
 O relógio externo chama a rodada a cada poucos minutos e a próxima sessão começa assim que esta terminar e o PR dela for mesclado (ADR 012). Não há motivo para encerrar cedo "deixando para o próximo ciclo".
 
@@ -85,12 +87,12 @@ O relógio externo chama a rodada a cada poucos minutos e a próxima sessão com
 
 O merge não é feito por você. Ele é feito pelo workflow `automerge.yml`, que faz squash merge de todo PR assim que o CI passa. PR que não passa no CI fica parado e trava o ciclo inteiro. Por isso:
 
-- PRs com título iniciado por `auditoria:` não são seus: não os revise, não os feche, não faça commits neles e não os conte na regra abaixo.
-- **Só pode existir um PR aberto do agente por vez.** Se `estado_github` mostrar um, o único trabalho permitido é destravá-lo (Passo 2), depois de garantir que produção não está quebrada (Passo 1). Novos commits vão para a branch desse PR, nunca para um PR novo.
+- PRs com título iniciado por `auditoria:`, `spec:`, `revisão:` ou `verificação:` não são seus: são do auditor e das raias paralelas. Não os revise, não os feche, não faça commits neles e não os conte na regra abaixo.
+- **Só pode existir um PR aberto da raia de desenvolvimento por vez.** Se `estado_github` mostrar um, o único trabalho permitido é destravá-lo (Passo 2), depois de garantir que produção não está quebrada (Passo 1). Novos commits vão para a branch desse PR, nunca para um PR novo.
 - **Todo trabalho parte da `main` atual.** Antes de dar push, traga a `main` (`git fetch origin && git merge origin/main`). Nunca reescreva um arquivo inteiro a partir de uma cópia antiga: isso desfaz o trabalho de outros PRs.
 - O estado verdadeiro do projeto é a `main`. Trabalho que não chegou à `main` ainda não existe para o ciclo.
 - O workflow `pr-guardiao.yml` vigia os PRs: cobra o Jules quando o CI falha, fecha PRs sem reação ou com conflito grande e registra o motivo numa issue `tentativa-falhou`.
-- Se o repositório ainda não tem código de aplicação (o `make verify` não tem o que verificar), o Passo 1 não se aplica: vá direto ao Passo 4, ao Passo 6 ou ao Passo 7.
+- Se o repositório ainda não tem código de aplicação (o `make verify` não tem o que verificar), o Passo 1 não se aplica: vá direto ao Passo 4 ou ao Passo 6 (o Passo 7 é da raia de especificação).
 
 ### Passo 1 · Verificar e corrigir
 
@@ -135,7 +137,7 @@ Este passo não produz PR: registre no relatório e siga para o Passo 4.
 
 ### Passo 4 · Implementar uma especificação
 
-Escolha a spec com `status: ready` de menor número, na ordem natural (068a, 068b, 069, ..., 080). O `estado_github` e o prompt da sessão já dizem qual é (ADR 015): siga essa indicação. Antes de começar, procure issues abertas com label `tentativa-falhou` sobre ela: leia o motivo da tentativa anterior, evite repetir o erro e inclua `Closes #N` no PR. Implemente, escreva os testes, atualize `docs/STATE.md` (inclusive os contadores das cadências do Passo 7: o de experiência, se a spec acrescenta um painel, seção ou tela, e o de manutenção, se a spec não é ela mesma de manutenção) e `CHANGELOG.md`, marque a spec como `done` no mesmo PR e abra o PR com prefixo `feat:` (ou `refactor:`, se a spec é das gavetas *Saúde técnica* ou *Poda*). O status vai de `ready` direto para `done`: **nunca faça commit com `in-progress`**, nem num primeiro push "para salvar o progresso", porque o PR é aberto no primeiro push e já nasce reprovado. Faça o primeiro commit só quando a spec, os testes, o `CHANGELOG.md` e o `docs/STATE.md` estiverem prontos. Antes de abrir, rode `python -m devagent.conferir_pr --exigir-alteracao`: o job `disciplina` do CI reprova PR vazio (sem nenhum arquivo alterado, como o #171, que dizia entregar a 027a e não trazia código), PR com spec `in-progress`, script de teste fora de `tests/`, spec `done` sem `CHANGELOG.md` citando o número ou sem `docs/STATE.md`, e spec nova fechada enquanto a seção *Correções* tem entrada pendente.
+Escolha a spec com `status: ready` de menor número, na ordem natural (068a, 068b, 069, ..., 080), entre as que já passaram pela raia de revisão: a partir de `revisao_obrigatoria_desde` (`[disciplina]` do `devagent.toml`), spec sem o campo `revisada:` no cabeçalho ainda é do Revisor, e você não a implementa nem a edita (ADR 021). O `estado_github` e o prompt da sessão já dizem qual é (ADR 015): siga essa indicação. Antes de começar, procure issues abertas com label `tentativa-falhou` sobre ela: leia o motivo da tentativa anterior, evite repetir o erro e inclua `Closes #N` no PR. Implemente, escreva os testes, atualize `docs/STATE.md` (inclusive os contadores das cadências do Passo 7: o de experiência, se a spec acrescenta um painel, seção ou tela, e o de manutenção, se a spec não é ela mesma de manutenção) e `CHANGELOG.md`, marque a spec como `done` no mesmo PR e abra o PR com prefixo `feat:` (ou `refactor:`, se a spec é das gavetas *Saúde técnica* ou *Poda*). O status vai de `ready` direto para `done`: **nunca faça commit com `in-progress`**, nem num primeiro push "para salvar o progresso", porque o PR é aberto no primeiro push e já nasce reprovado. Faça o primeiro commit só quando a spec, os testes, o `CHANGELOG.md` e o `docs/STATE.md` estiverem prontos. Antes de abrir, rode `python -m devagent.conferir_pr --exigir-alteracao`: o job `disciplina` do CI reprova PR vazio (sem nenhum arquivo alterado, como o #171, que dizia entregar a 027a e não trazia código), PR com spec `in-progress`, script de teste fora de `tests/`, spec `done` sem `CHANGELOG.md` citando o número ou sem `docs/STATE.md`, e spec nova fechada enquanto a seção *Correções* tem entrada pendente.
 
 Se a spec for grande demais para um PR de até ~400 linhas alteradas (excluindo testes e fixtures), divida-a em specs menores, marque a original como `draft` e encerre. A implementação fica para a próxima execução. **Meça antes de começar, contando os testes:** quando a spec remove ou renomeia funções, classes ou tabelas, procure quantos arquivos as referenciam (`grep -rl <símbolo> <código> tests`). Mais de ~15 arquivos tocados, somando código e testes, é grande demais para uma sessão, mesmo que o código novo seja pequeno: o custo de adaptar testes não aparece na contagem de linhas. Antes de dividir, veja se dá para manter a interface pública e trocar só a implementação: preservar as assinaturas costuma reduzir o alcance a um arquivo (a 074 migrou 13 painéis mexendo só no `database.py`; a 075 tentou apagar as funções e tocou ~100 arquivos). Se mesmo assim passar do limite, divida em uma spec por unidade independente (um painel, um módulo, uma tabela).
 
@@ -164,19 +166,19 @@ Escolha **uma** issue, a mais antiga. Leia o corpo e todos os comentários. Ent�
 | Tipo | Ação |
 |---|---|
 | Bug ou erro | Reproduza, escreva um teste que falhe, corrija. PR `fix:` com `Closes #N`. |
-| Pedido de feature ou melhoria | Transforme em spec `ready` seguindo `devagent/skills/escrever-spec.md`, com link para a issue. PR `docs:` que referencia a issue sem fechá-la. A implementação vem pelo Passo 4, e o PR `feat:` fecha a issue com `Closes #N`. |
+| Pedido de feature ou melhoria | Transforme em spec `ready` seguindo `devagent/skills/escrever-spec.md`, com link para a issue e o número que o prompt reservou. PR `docs:` que referencia a issue sem fechá-la. A spec passa pelo Revisor antes de voltar a você pelo Passo 4, e o PR `feat:` fecha a issue com `Closes #N`. |
 | Mudança de instruções, documentação ou processo | Siga `devagent/skills/auto-melhoria.md`. PR `agent:` ou `docs:` com `Closes #N`. |
 | Pergunta | Responda no corpo de um PR `docs:` com `Closes #N`, com base no código e nos documentos. Aproveite o PR para acrescentar a resposta à documentação. |
 | Duplicada, inválida ou já resolvida | Siga `devagent/skills/fechar-issues-resolvidas.md`: PR `docs:` com o relatório da execução e, no corpo, `Closes #N` e a explicação. |
 | Ambígua | Adote a interpretação mais conservadora, registre-a na issue e siga. Se nem assim for seguro agir, aplique `bloqueado`, pergunte na issue o que falta e encerre. |
 
-Se a issue mais antiga já tem spec vinculada, pule-a e escolha a seguinte. Se nenhuma sobrar, siga para o Passo 7. Depois de entregar o PR de uma issue, encerre a execução.
+Se a issue mais antiga já tem spec vinculada, pule-a e escolha a seguinte. Se nenhuma sobrar, encerre sem PR: o Passo 7 é da raia de especificação. Depois de entregar o PR de uma issue, encerre a execução.
 
 **Como issues são fechadas.** Você não tem permissão para comentar em issues nem para fechá-las. Toda issue que você resolve fecha pelo PR: escreva `Closes #N` (uma linha por issue) no corpo do PR. Depois do merge, o `automerge.yml` fecha as issues citadas, e o guardião repete a checagem de hora em hora. Issues `deploy-falhou` e `producao-incorreta` não fecham assim: só fecham quando a verificação que as abriu passar. Não use contornos como commits vazios com "Closes": o squash merge descarta essas mensagens.
 
 ### Passo 7 · Descobrir e imaginar
 
-Só se aplica quando não há produção quebrada, PR aberto, spec `ready`, pendência de documentação nem issue tratável. **Com qualquer spec `ready` na `main`, não escreva spec nova:** volte ao Passo 4. O relatório de uma execução do Passo 7 registra que a fila estava vazia.
+**Este passo é da raia de especificação** (ADR 021). O desenvolvimento não o executa: se você chegou aqui como desenvolvedor, não há nada para você nesta volta. Encerre sem PR; o Especificador já foi ou será chamado quando a fila de specs `ready` chegar a uma. O que segue é o roteiro que ele segue, com as diferenças de `devagent/agents/raias.md` (número reservado no prompt, só os arquivos da raia, PR `spec:`).
 
 Esta é a fase criativa do ciclo. Aqui você não é executor de backlog: é quem decide o que o sistema deve se tornar. Siga a skill `devagent/skills/descobrir-ideias.md`.
 
@@ -203,7 +205,7 @@ Se as duas vencerem juntas, a manutenção vai primeiro: reorganizar a tela é m
 3. Para cada ideia, registre: a gaveta, a pergunta que ela responde, por que é original, fonte de dados ou evidência, esforço (P/M/G) e risco (legal, técnico, de confiabilidade).
 4. Adicione as ideias ao backlog e escolha a próxima pelo critério que julgar mais relevante: valor, originalidade, aprendizado ou potencial de mudar o produto. Registre a gaveta e o critério no relatório. Não é obrigatório escolher a de menor esforço, nem a gaveta *Capacidade nova*.
 5. Se a ideia escolhida for grande, a spec descreve a **primeira fatia visível** dela, que cabe num PR, e o backlog guarda o resto da visão.
-6. Transforme a escolhida em spec `ready` (modelo em `devagent/skills/escrever-spec.md`) e abra um PR com prefixo `docs:`. Uma spec de manutenção declara `gaveta: saúde técnica` ou `gaveta: poda` no cabeçalho, para o contador saber que não deve contá-la.
+6. Transforme a escolhida em spec `ready` (modelo em `devagent/skills/escrever-spec.md`), sem o campo `revisada:`, e abra um PR com prefixo `spec:`. Uma spec de manutenção declara `gaveta: saúde técnica` ou `gaveta: poda` no cabeçalho, para o contador saber que não deve contá-la.
 
 Encerre a execução.
 
@@ -224,7 +226,7 @@ Vale para todo PR. O `PRODUTO.md` acrescenta o checklist do produto.
 ## 6. Limites do agente
 
 - Nunca faça push direto em `main`. Todo trabalho passa por PR.
-- Nunca abra um PR novo enquanto houver outro PR do agente aberto (veja a regra de continuidade).
+- Nunca abra um PR novo enquanto houver outro PR da sua raia aberto (veja a regra de continuidade).
 - Não peça aprovação de plano nem faça perguntas. Diante de ambiguidade, escolha a opção mais conservadora, registre a decisão no relatório e siga.
 - Nunca apague dados de produção, specs `done` ou relatórios em `docs/runs/`.
 - Nunca adicione dependência sem justificar no PR.
@@ -275,12 +277,12 @@ O núcleo mora neste mesmo repositório justamente para você poder aprimorá-lo
 | `devagent/skills/destravar-pr.md` | CI falhando, conflito ou revisão num PR aberto | Passo 2 |
 | `devagent/skills/auto-melhoria.md` | como alterar instruções, skills e contextos, e onde cada lição mora | Passo 5 |
 | `devagent/skills/fechar-issues-resolvidas.md` | como fechar issues já resolvidas usando um PR válido | Passo 6 |
-| `devagent/skills/escrever-spec.md` | como escrever uma boa spec e o modelo | Passo 7, ao transformar issue em spec e ao dividir specs |
+| `devagent/skills/escrever-spec.md` | como escrever uma boa spec e o modelo | Passo 7, ao transformar issue em spec, ao revisar e ao dividir specs |
 | `devagent/skills/descobrir-ideias.md` | como gerar ideias originais e escolher a próxima | Passo 7 |
 | `devagent/skills/rever-experiencia.md` | como rever a tela inteira a partir das capturas e transformar problemas em ideias | Passo 7, em toda rodada e obrigatoriamente na cadência de experiência |
 | `devagent/skills/manutencao.md` | como medir a saúde técnica, decidir o que podar e transformar isso em spec | Passo 7, em toda rodada e obrigatoriamente na cadência de manutenção |
-| `devagent/decisoes/` | ADRs do núcleo: `001` guardião e Passo 2, `002` correções no Passo 1, `003` escopo aberto, `005` núcleo separado do projeto, `006` revisão de experiência, `007` sem revisão humana, `008` disciplina conferida no CI, `009` retomada depois de ambiente reiniciado, `010` relógio externo, `011` cadência de manutenção e poda, `015` próxima spec no prompt da sessão | antes de mudar o ciclo de decisão |
-| `devagent/agents/` | personas do auditor e dos especialistas | quando acionado como uma delas |
+| `devagent/decisoes/` | ADRs do núcleo: `001` guardião e Passo 2, `002` correções no Passo 1, `003` escopo aberto, `005` núcleo separado do projeto, `006` revisão de experiência, `007` sem revisão humana, `008` disciplina conferida no CI, `009` retomada depois de ambiente reiniciado, `010` relógio externo, `011` cadência de manutenção e poda, `015` próxima spec no prompt da sessão, `021` raias paralelas | antes de mudar o ciclo de decisão |
+| `devagent/agents/` | personas do auditor, dos especialistas e das raias paralelas (`raias.md`) | quando acionado como uma delas |
 
 O índice do projeto está no `PRODUTO.md`. Ao criar um arquivo novo em `devagent/skills/`, acrescente-o a esta tabela no mesmo PR; em `docs/skills/` ou `docs/context/`, à tabela do `PRODUTO.md`.
 
@@ -296,7 +298,7 @@ O índice do projeto está no `PRODUTO.md`. Ao criar um arquivo novo em `devagen
 Você pode reescrever qualquer parte deste arquivo, **exceto enfraquecer** estes itens, que só podem ser mantidos ou reforçados:
 
 - os limites do agente (seção 6);
-- a regra de continuidade (um PR aberto por vez; merge só pelo workflow; destravar antes de criar);
+- a regra de continuidade (um PR aberto por raia; merge só pelo workflow; destravar antes de criar);
 - a proibição de apagar testes, specs `done` e relatórios;
 - a independência do auditor: você não afrouxa uma checagem para esconder uma falha, não imita na aplicação o que ela procura e não edita `docs/auditoria/`;
 - a fronteira do núcleo: `devagent/` não cita o produto e o teste de fronteira não é removido nem afrouxado;
