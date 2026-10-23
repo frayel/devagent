@@ -342,6 +342,174 @@ def encerrar_zumbis(sessoes: list[dict[str, Any]], agora: datetime) -> list[str]
     return encerradas
 
 
+# Sessão que termina em FAILED (ADR 019). Em 21 e 22/10 as sessões das specs
+# 074 e 076a pararam numa pergunta e o Jules encerrou a tarefa na mesma
+# mensagem. O destravar só responde AWAITING_USER_FEEDBACK, então a resposta
+# nunca chegava e a rodada seguinte abria outra sessão do zero, sem saber por
+# que a anterior caiu.
+JANELA_FALHA = timedelta(hours=6)
+ESPERA_RETOMADA = timedelta(minutes=15)
+MARCA_RETOMADA = "[retomada automática]"
+RETOMADA_DE_FALHA = (
+    f"{MARCA_RETOMADA} A tarefa parou numa pergunta e foi encerrada. Não há "
+    "humano acompanhando esta sessão e ninguém vai responder: a resposta é sim. "
+    "Siga com o que você mesmo propôs (se apresentou opções, fique com a que "
+    "recomendou ou com a mais conservadora), registre a decisão no relatório e "
+    "continue até abrir o PR. Não peça confirmação de novo."
+)
+MARCA_SESSAO = "<!-- jules-sessao: {nome} -->"
+SPEC_DO_PROMPT = re.compile(r"próxima é (\S+?\.md)")
+
+
+def atividades(nome: str) -> list[dict[str, Any]]:
+    """Atividades da sessão, da mais antiga para a mais recente."""
+    todas: list[dict[str, Any]] = []
+    token = ""
+    for _ in range(5):
+        caminho = f"{nome}/activities?pageSize=100" + (
+            f"&pageToken={token}" if token else ""
+        )
+        resp = chamar("GET", caminho)
+        todas += resp.get("activities", [])
+        token = resp.get("nextPageToken", "")
+        if not token:
+            break
+    return sorted(todas, key=lambda a: a.get("createTime", ""))
+
+
+def ultima_fala_do_agente(acts: list[dict[str, Any]]) -> str:
+    for a in reversed(acts):
+        texto = (a.get("agentMessaged") or {}).get("agentMessage")
+        if texto:
+            return str(texto)
+    return ""
+
+
+def motivo_da_falha(acts: list[dict[str, Any]]) -> str:
+    for a in reversed(acts):
+        if "sessionFailed" in a:
+            return str((a.get("sessionFailed") or {}).get("reason") or "")
+    return ""
+
+
+def retomada_enviada_em(acts: list[dict[str, Any]]) -> datetime | None:
+    for a in reversed(acts):
+        texto = (a.get("userMessaged") or {}).get("userMessage") or ""
+        if MARCA_RETOMADA in texto:
+            return _data(a, "createTime")
+    return None
+
+
+def falha_registrada(nome: str) -> bool:
+    """Já existe issue `tentativa-falhou` (aberta ou fechada) desta sessão."""
+    marca = MARCA_SESSAO.format(nome=nome)
+    brutas = github_get(
+        f"/repos/{PROJETO['repositorio']}/issues"
+        f"?state=all&labels={LABEL_TENTATIVA}&per_page=100"
+    )
+    return any(marca in (i.get("body") or "") for i in brutas)
+
+
+def github_post(caminho: str, corpo: dict[str, Any]) -> Any:
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if not token:
+        raise OSError("GH_TOKEN ausente: não dá para abrir issue")
+    req = urllib.request.Request(
+        f"https://api.github.com{caminho}",
+        data=json.dumps(corpo).encode(),
+        method="POST",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read().decode() or "{}")
+
+
+def corpo_da_falha(s: dict[str, Any], acts: list[dict[str, Any]]) -> tuple[str, str]:
+    """Título e corpo da issue `tentativa-falhou` de uma sessão que falhou."""
+    nome = s["name"]
+    ident = nome.rsplit("/", 1)[-1]
+    m = SPEC_DO_PROMPT.search(s.get("prompt") or "")
+    spec = m.group(1) if m else ""
+    rotulo = spec.rsplit("/", 1)[-1].split("-", 1)[0] if spec else ""
+    titulo = f"Tentativa falhou no Jules: {s.get('title', 'sessão')}" + (
+        f" (spec {rotulo})" if rotulo else ""
+    )
+    fala = ultima_fala_do_agente(acts) or "(sem mensagem do agente)"
+    motivo = motivo_da_falha(acts)
+    corpo = (
+        f"{MARCA_SESSAO.format(nome=nome)}\n"
+        f"A sessão https://jules.google.com/session/{ident} terminou em `FAILED`"
+        + (f" quando trabalhava em `{spec}`" if spec else "")
+        + ". A retomada automática não a trouxe de volta.\n\n"
+        + (f"**Motivo informado pelo Jules:** {motivo}\n\n" if motivo else "")
+        + "**Última mensagem do agente:**\n\n"
+        + "\n".join(f"> {linha}" for linha in fala[-4000:].splitlines())
+        + "\n\nAntes de refazer este trabalho, leia a mensagem acima: ela diz onde "
+        "a sessão travou e o que pretendia fazer. Não repita o caminho que falhou. "
+        "O PR que concluir o trabalho deve conter `Closes` para esta issue."
+    )
+    return titulo, corpo
+
+
+def registrar_falha(s: dict[str, Any], acts: list[dict[str, Any]]) -> None:
+    if falha_registrada(s["name"]):
+        return
+    titulo, corpo = corpo_da_falha(s, acts)
+    issue = github_post(
+        f"/repos/{PROJETO['repositorio']}/issues",
+        {"title": titulo, "body": corpo, "labels": [LABEL_TENTATIVA]},
+    )
+    print(f"Falha registrada: {s['name']} -> issue #{issue.get('number', '?')}")
+
+
+def tratar_falhas(sessoes: list[dict[str, Any]], agora: datetime) -> bool:
+    """Retoma ou registra as sessões nossas que falharam há pouco.
+
+    Primeiro manda a resposta que a sessão não recebeu. Se ela continuar em
+    FAILED depois de ESPERA_RETOMADA, ou se o Jules recusar a mensagem, abre a
+    issue `tentativa-falhou` com a última fala do agente, só para sessões do
+    desenvolvedor (as dos especialistas não têm spec a dividir).
+
+    Devolve True enquanto alguma retomada está dentro do prazo: a rodada não
+    inicia sessão nova para não competir com a que pode voltar.
+    """
+    nossas = tuple(p["titulo"] for p in PERSONAS.values())
+    dev = PERSONAS["desenvolvedor"]["titulo"]
+    aguardar = False
+    for s in sessoes:
+        if s.get("state") != "FAILED" or not s.get("title", "").startswith(nossas):
+            continue
+        if agora - _data(s, "updateTime") > JANELA_FALHA:
+            continue
+        nome = s["name"]
+        acts = atividades(nome)
+        enviada = retomada_enviada_em(acts)
+        recusada = False
+        if enviada is None:
+            try:
+                chamar("POST", f"{nome}:sendMessage", {"prompt": RETOMADA_DE_FALHA})
+                print(
+                    f"Retomada enviada à sessão que falhou: {nome} ({s.get('title')})"
+                )
+                aguardar = True
+                continue
+            except urllib.error.HTTPError as erro:
+                print(f"Retomada recusada em {nome}: HTTP {erro.code}")
+                recusada = True
+        elif agora - enviada < ESPERA_RETOMADA:
+            aguardar = True
+            continue
+        if s.get("title", "").startswith(dev):
+            registrar_falha(s, acts)
+        elif not recusada:
+            print(f"Sessão de especialista não voltou: {nome}")
+    return aguardar
+
+
 def issues_de_tentativa() -> list[dict[str, Any]]:
     """Issues `tentativa-falhou` abertas, no formato do estado_github (ADR 018).
 
@@ -481,13 +649,30 @@ def intervalo_do_desenvolvedor() -> timedelta:
     return timedelta(0)
 
 
+# PR com CI vermelho e atividade recente está sendo corrigido pela própria
+# sessão (o CI Fixer do Jules ou a resposta à cobrança do guardião). Em 22/10
+# a rodada abriu outra sessão para "destravar" o #414 às 18h; ela reimplementou
+# a spec 076b do zero e abriu o #415 quando o #414 já tinha sido mesclado.
+PR_EM_CORRECAO = timedelta(minutes=60)
+
+
+def em_correcao(pr: dict[str, Any], agora: datetime) -> bool:
+    atualizado = pr.get("updated_at")
+    if not atualizado:
+        return False
+    return agora - _data({"createTime": atualizado}, "createTime") < PR_EM_CORRECAO
+
+
 def situacao_dos_prs() -> tuple[str, str]:
     """('livre' | 'esperar' | 'travado', descrição) dos PRs abertos do agente.
 
     esperar: o CI ainda roda, ou passou há pouco e o auto-merge vai mesclar.
     Uma sessão nova agora só acharia o PR aberto e sairia sem entregar nada.
-    travado: CI falhou, ou verde há mais de PR_VERDE_TRAVADO; é trabalho do
-    desenvolvedor (Passo 2), nunca de um especialista.
+    Também espera o PR com CI vermelho que teve atividade (push, cobrança do
+    guardião) há menos de PR_EM_CORRECAO: a sessão dona dele está corrigindo.
+    travado: CI falhou sem atividade recente, ou verde há mais de
+    PR_VERDE_TRAVADO; é trabalho do desenvolvedor (Passo 2), nunca de um
+    especialista.
     """
     repo = PROJETO["repositorio"]
     agora = datetime.now(timezone.utc)
@@ -500,6 +685,8 @@ def situacao_dos_prs() -> tuple[str, str]:
         desc = f"PR #{pr['number']} ({ci})"
         if ci in ("rodando", "sem_ci") or (ci == "passou" and idade < PR_VERDE_TRAVADO):
             return "esperar", desc
+        if ci.startswith("falhou") and em_correcao(pr, agora):
+            return "esperar", f"{desc}, em correção"
         travado = travado or desc
     return ("travado", travado) if travado else ("livre", "")
 
@@ -539,6 +726,12 @@ def rodada(espera_minutos: int) -> int:
         for s in sessoes:
             if s.get("name") in mortas:
                 s["state"] = "CANCELLED"
+        try:
+            if tratar_falhas(sessoes, agora):
+                print("Aguardando a retomada de uma sessão que falhou.")
+                return destravar(espera_minutos)
+        except Exception as erro:  # noqa: BLE001
+            print(f"::warning::tratar_falhas falhou: {erro}")
         persona = persona_da_vez(sessoes, agora)
         situacao, desc = situacao_dos_prs()
         if situacao == "esperar":

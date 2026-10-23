@@ -9,6 +9,8 @@ Modos:
 
 Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
     - CI falhou: comenta @jules com o log, até MAX_TENTATIVAS. Depois fecha o PR.
+    - Especialista sem achado: PR de Sentinel, Palette ou Bolt só com o diário
+      fecha sem issue; não é trabalho perdido (ADR 019).
     - Falha irrecuperável: PR vazio ou só com registros de execução não tem
       nada a corrigir na branch (a sessão perdeu o trabalho). Fecha na hora,
       sem cobrar o agente, e abre `tentativa-falhou` (ADR 018). Cobrar só
@@ -185,6 +187,39 @@ def motivo_irrecuperavel(arquivos: list[str] | None, corpo: str = "") -> str:
     return ""
 
 
+# Título dos PRs dos especialistas (devagent/agents/especialistas.md).
+ESPECIALISTA = re.compile(r"(?:^|\s)(Sentinel|Palette|Bolt):")
+
+
+def sem_achado_de_especialista(pr: dict[str, Any], arquivos: list[str] | None) -> bool:
+    """PR de especialista que só traz o diário: a varredura não achou nada.
+
+    Não é sessão que perdeu o trabalho. Em 22/10 o #406 (Sentinel, varredura
+    limpa) foi fechado como trabalho perdido e a issue #407 mandou "dividir a
+    spec" de uma tarefa que não tem spec (ADR 019). Fecha sem abrir
+    `tentativa-falhou`; a regra 7 dos especialistas já diz para não abrir esse PR.
+    """
+    if not arquivos or not ESPECIALISTA.search(pr.get("title") or ""):
+        return False
+    if FECHA_ISSUE.search(pr.get("body") or ""):
+        return False
+    return all(a.startswith(PADRAO_REGISTROS) for a in arquivos)
+
+
+def fechar_sem_achado(pr: dict[str, Any]) -> None:
+    numero = pr["number"]
+    comentar(
+        numero,
+        "Fechando este PR: a varredura do especialista não achou nada a mudar e "
+        "o PR só traz o diário. Não há trabalho perdido nem spec a refazer, então "
+        "não abro issue `tentativa-falhou`. Pela regra 7 de "
+        "`devagent/agents/especialistas.md`, sem achado a sessão segue para o "
+        "ciclo do desenvolvedor em vez de abrir PR.",
+    )
+    sh("gh", "pr", "close", str(numero), "--delete-branch", check=False)
+    print(f"PR #{numero} fechado: especialista sem achado")
+
+
 def fechar(
     pr: dict[str, Any], motivo: str, detalhe: str = "", registrar: bool = False
 ) -> None:
@@ -256,9 +291,11 @@ def ci_falhou(branch: str, run_id: str) -> None:
         return
     log = sh("gh", "run", "view", run_id, "--log-failed", check=False)
     log = "\n".join(log.splitlines()[-120:])
-    irrecuperavel = motivo_irrecuperavel(
-        arquivos_do_pr(pr["number"]), pr.get("body") or ""
-    )
+    arquivos = arquivos_do_pr(pr["number"])
+    if sem_achado_de_especialista(pr, arquivos):
+        fechar_sem_achado(pr)
+        return
+    irrecuperavel = motivo_irrecuperavel(arquivos, pr.get("body") or "")
     if irrecuperavel:
         fechar(pr, irrecuperavel, log, registrar=True)
         return
@@ -448,9 +485,11 @@ def varredura() -> None:
     for pr in prs:
         if pr["number"] in fechados:
             continue
-        irrecuperavel = motivo_irrecuperavel(
-            arquivos_do_pr(pr["number"]), pr.get("body") or ""
-        )
+        arquivos = arquivos_do_pr(pr["number"])
+        if sem_achado_de_especialista(pr, arquivos):
+            fechar_sem_achado(pr)
+            continue
+        irrecuperavel = motivo_irrecuperavel(arquivos, pr.get("body") or "")
         if irrecuperavel:
             fechar(pr, irrecuperavel, registrar=True)
             continue

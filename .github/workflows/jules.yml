@@ -31,6 +31,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      # Sessão que falha e não volta com a retomada vira issue tentativa-falhou (ADR 019).
+      issues: write
     concurrency:
       group: jules
       cancel-in-progress: false

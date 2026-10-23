@@ -15,6 +15,7 @@
 - Implementa coleta de histórico extenso e avaliador do índice de acerto do consultor (spec 069a)
 
 ### Adicionado
+- fix(núcleo): sessão que falha no Jules é retomada e ensina (ADR 019). A rodada responde as sessões do ciclo que terminaram em `FAILED` com uma pergunta no ar e, se não voltarem em 15 min, abre `tentativa-falhou` com a spec e a última fala do agente; PR com CI vermelho e atividade na última hora espera a própria sessão corrigir em vez de chamar outra (caso #414/#415); o guardião fecha sem issue o PR de especialista que só traz o diário (caso #406/#407).
 - fix(núcleo): o ciclo se recupera de tentativa perdida (ADR 018). O guardião fecha na hora PR vazio ou só de relatório, sem cobrar o agente; spec com `tentativa-falhou` aberta é dividida antes de nova tentativa; o tamanho de spec passa a contar os testes tocados; specs ganham `aceite:` e a regra 7 da disciplina exige o teste ao fechar. A 074 perde os `CREATE TABLE` que deixou para trás, e as specs 075 e 076 viram 075a, 075b, 076a e 076b (issue #404).
 - fix: o cabeçalho leva de volta aos painéis a partir do Consultor e do Sistema. "Painel B3" vira link para `/`, a navegação ganha a aba "Painéis" e a aba da página atual fica marcada.
 - fix: a auditoria deixa de exigir a chave `detector_acao_orfa` no `/api/snapshot`. O painel foi removido de propósito pela spec 067, e a checagem que ficou para trás gerava alarme falso (issue #370).
