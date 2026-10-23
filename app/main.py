@@ -17,6 +17,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import os
 from fastapi import FastAPI, Request
+from app import calendario
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
 
@@ -416,7 +417,21 @@ def api_consultor(request: Request):
 
 @app.get("/api/snapshot")
 def snapshot():
-    resp = {"gerado_em": datetime.now(timezone.utc).isoformat(), "paineis": {}}
+    agora = datetime.now(timezone.utc)
+    mercado_aberto = calendario.mercado_aberto(agora)
+    estado_mercado = "aberto" if mercado_aberto else "fechado"
+    data_ref = (
+        calendario.ultimo_pregao_fechado(agora)
+        if not mercado_aberto
+        else calendario.pregao_corrente(agora)
+    )
+
+    resp = {
+        "gerado_em": agora.isoformat(),
+        "estado_mercado": estado_mercado,
+        "data_referencia": data_ref.isoformat(),
+        "paineis": {},
+    }
 
     divergencia = get_divergencia_ibov_dolar()
     if divergencia:
@@ -998,6 +1013,15 @@ def snapshot():
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
+    agora = datetime.now(timezone.utc)
+    mercado_aberto = calendario.mercado_aberto(agora)
+    estado_mercado = "aberto" if mercado_aberto else "fechado"
+    data_ref = (
+        calendario.ultimo_pregao_fechado(agora)
+        if not mercado_aberto
+        else calendario.pregao_corrente(agora)
+    )
+
     motores_data = get_latest_motores_indice_data()
     motores_cards = json.loads(motores_data.motores_json) if motores_data else None
 
@@ -1318,6 +1342,9 @@ async def index(request: Request):
         request=request,
         name="index.html",
         context={
+            "estado_mercado": estado_mercado,
+            "data_referencia": data_ref,
+            "mercado_aberto": mercado_aberto,
             "manchete": manchete,
             "data": data,
             "highlights": highlights,

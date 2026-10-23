@@ -10,7 +10,7 @@
 ## Manutenção
 
 - Última rodada de manutenção: 2026-10-17, spec 063. Medidas: unificação de histórico diário (cache).
-- Specs entregues desde a última rodada (exceto as de manutenção): 1.
+- Specs entregues desde a última rodada (exceto as de manutenção): 2.
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
@@ -392,3 +392,7 @@
   - Migração de 7 tabelas (`motores_indice_cache`, `radar_absorcao_cruzada_cache`, `radar_congestionamento_cache`, `radar_divergencia_volume_cache`, `radar_inflexao_cache`, `radar_short_squeeze_cache`, `relogio_volatilidade_cache`) para `snapshots_paineis`.
 - Spec 076b (Banco · migração dos painéis para snapshots - lote 3 parte b):
   - Migração de 7 tabelas (`rotacao_capital_cache`, `scanner_capitulacao_cache`, `sensibilidade_juros_cache`, `sobrevivencia_semanal_cache`, `variacao_subita_cache`, `volatilidade_silenciosa_cache`, `volume_alerts_cache`) para `snapshots_paineis`.
+- Spec 077 (Data de referência e congelamento dos dados após o fechamento):
+  - Congelamento e alteração de estados da coleta configurados em `app/agendador.py` e `app/database.py`.
+  - Feriados da B3 e lógica de pregão implantados em `app/calendario.py` e `test_calendario.py`.
+  - UI exibe horários do fechamento ou atualizado em tempo real dependendo do estado do mercado.

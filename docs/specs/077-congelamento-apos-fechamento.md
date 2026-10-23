@@ -1,7 +1,7 @@
 ---
 id: 077
 titulo: Data de referência e congelamento dos dados após o fechamento
-status: ready
+status: done
 esforco: M
 ---
 

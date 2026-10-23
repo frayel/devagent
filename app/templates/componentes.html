@@ -16,9 +16,16 @@
 </section>
 {% endmacro %}
 
-{% macro kpi(valor, rotulo, variacao_str, is_hero=False) %}
+{% macro kpi(valor, rotulo, variacao_str, is_hero=False, estado_mercado='fechado', intradiario=False) %}
 <div class="kpi-container">
-  {% if rotulo %}<div class="rot">{{ rotulo }}</div>{% endif %}
+  {% if rotulo %}
+    <div class="rot">
+        {{ rotulo }}
+        {% if intradiario and estado_mercado == 'fechado' %}
+        <span class="situacao-fechamento" >(situação no fechamento)</span>
+        {% endif %}
+    </div>
+  {% endif %}
   <div class="{% if is_hero %}hero{% else %}kpi{% endif %}">
     <div class="valor num">{{ valor }}</div>
   </div>
