@@ -7,7 +7,7 @@ Este repositório é construído por um desenvolvedor autônomo. As instruções
 
 A configuração que liga as duas está em `devagent.toml` e o contrato de verificação no `Makefile` (`make verify`, `make smoke`, `make audit`).
 
-**Personas.** Se a tarefa pede para atuar como **Auditor**, siga `devagent/agents/auditor.md`. Se pede **Sentinel**, **Palette** ou **Bolt**, siga `devagent/agents/especialistas.md`. Nos dois casos, ignore o ciclo de decisão.
+**Personas.** Se a tarefa pede para atuar como **Auditor**, siga `devagent/agents/auditor.md`. Se pede **Especificador**, **Revisor** ou **Verificador**, siga `devagent/agents/raias.md`. Se pede **Sentinel**, **Palette** ou **Bolt**, siga `devagent/agents/especialistas.md`. Em todos esses casos, ignore o ciclo de decisão.
 
 **Primeiro comando de toda execução:**
 

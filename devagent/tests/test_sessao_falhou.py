@@ -185,6 +185,7 @@ def test_rodada_nao_inicia_enquanto_espera_retomada(
     chamadas: list[str] = []
     monkeypatch.setattr(jules, "sessoes_do_repo", lambda: [])
     monkeypatch.setattr(jules, "tratar_falhas", lambda s, a: True)
+    monkeypatch.setattr(jules, "rodada_das_raias", lambda s, a: None)
     monkeypatch.setattr(jules, "iniciar", lambda p, dry_run: chamadas.append(p) or 0)
     monkeypatch.setattr(jules, "destravar", lambda e: chamadas.append("destravar") or 0)
     jules.rodada(espera_minutos=5)

@@ -10,6 +10,7 @@ Uso:
     python -m devagent.adaptadores.jules iniciar desenvolvedor
     python -m devagent.adaptadores.jules iniciar auditor
     python -m devagent.adaptadores.jules iniciar seguranca | design | performance
+    python -m devagent.adaptadores.jules iniciar especificador | revisor | verificador
     python -m devagent.adaptadores.jules destravar   # aprova planos e responde perguntas
     python -m devagent.adaptadores.jules rodada      # uma volta: inicia a próxima sessão se o caminho
                                                      # estiver livre, destrava e sai (cron-job.org, ADRs 010 e 012)
@@ -45,17 +46,22 @@ import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
+from devagent.conferir_pr import documentos
 from devagent.config import PROJETO
 from devagent.estado_github import _get as github_get
 from devagent.estado_github import eh_do_agente, status_ci
 from devagent.fila_specs import (
     LABEL_PRIORIDADE,
     LABEL_TENTATIVA,
+    fila_da_revisao,
     instrucao,
+    proximo_numero,
     specs_prontas,
 )
+from devagent.raias import DESENVOLVIMENTO, raia_do_titulo
 
 API = "https://jules.googleapis.com/v1alpha"
 SOURCE = os.environ.get("JULES_SOURCE", f"sources/github/{PROJETO['repositorio']}")
@@ -127,6 +133,37 @@ PERSONAS.update(
         },
     }
 )
+# Raias paralelas (ADR 021): cada uma tem no máximo uma sessão ativa e um PR
+# aberto, e escreve só na sua faixa (devagent/raias.py). Correm ao lado do
+# desenvolvimento sem disputar arquivos com ele.
+RAIA_PARALELA = (
+    "Você é o {nome} deste repositório, não o desenvolvedor. Leia e siga a seção "
+    "{nome} de devagent/agents/raias.md, do começo ao fim. Ignore o ciclo de "
+    "decisão de devagent/CICLO.md. Altere só o que a sua raia pode alterar e "
+    'entregue no máximo um PR, com título iniciado por "{prefixo}". Não peça '
+    "aprovação e não faça perguntas."
+)
+PERSONAS.update(
+    {
+        "especificador": {
+            "titulo": "Especificador · spec",
+            "prompt": RAIA_PARALELA.format(nome="Especificador", prefixo="spec:"),
+            "raia": "especificacao",
+        },
+        "revisor": {
+            "titulo": "Revisor · spec",
+            "prompt": RAIA_PARALELA.format(nome="Revisor", prefixo="revisão:"),
+            "raia": "revisao",
+        },
+        "verificador": {
+            "titulo": "Verificador · geral",
+            "prompt": RAIA_PARALELA.format(nome="Verificador", prefixo="verificação:"),
+            "raia": "verificacao",
+        },
+    }
+)
+PARALELAS = ("especificador", "revisor", "verificador")
+
 # Personas que alteram o código. Só uma delas trabalha por vez, para não
 # abrirem PRs concorrentes (a regra de um PR aberto do agente por vez).
 CONSTRUTORAS = {"desenvolvedor", "seguranca", "design", "performance"}
@@ -484,6 +521,9 @@ def tratar_falhas(sessoes: list[dict[str, Any]], agora: datetime) -> bool:
     """
     nossas = tuple(p["titulo"] for p in PERSONAS.values())
     dev = PERSONAS["desenvolvedor"]["titulo"]
+    # Só a retomada de quem altera código segura a próxima sessão dele; a de
+    # uma raia paralela não trava o desenvolvimento (ADR 021).
+    construtoras = tuple(PERSONAS[x]["titulo"] for x in CONSTRUTORAS)
     aguardar = False
     for s in sessoes:
         if s.get("state") != "FAILED" or not s.get("title", "").startswith(nossas):
@@ -500,13 +540,13 @@ def tratar_falhas(sessoes: list[dict[str, Any]], agora: datetime) -> bool:
                 print(
                     f"Retomada enviada à sessão que falhou: {nome} ({s.get('title')})"
                 )
-                aguardar = True
+                aguardar = aguardar or s.get("title", "").startswith(construtoras)
                 continue
             except urllib.error.HTTPError as erro:
                 print(f"Retomada recusada em {nome}: HTTP {erro.code}")
                 recusada = True
         elif agora - enviada < ESPERA_RETOMADA:
-            aguardar = True
+            aguardar = aguardar or s.get("title", "").startswith(construtoras)
             continue
         if s.get("title", "").startswith(dev):
             registrar_falha(s, acts)
@@ -556,6 +596,9 @@ def prompt_de(persona: str) -> str:
     (ADR 015).
     """
     texto = PERSONAS[persona]["prompt"]
+    if persona in PARALELAS:
+        extra = complemento_da_raia(persona)
+        return f"{texto} {extra}" if extra else texto
     if persona != "desenvolvedor":
         return texto
     try:
@@ -563,7 +606,90 @@ def prompt_de(persona: str) -> str:
         fila = instrucao(specs_prontas(), issues=issues)
     except OSError:
         fila = ""
-    return f"{texto} {fila}" if fila else texto
+    reserva = frase_do_numero(numero_para_spec_nova())
+    return " ".join(t for t in (texto, fila, reserva) if t)
+
+
+# "use o número 084" no prompt: o número de spec nova reservado para a sessão.
+NUMERO_RESERVADO = re.compile(r"use o número (\d{3,4})\b")
+# Reserva vale enquanto a sessão pode ter PR aberto com a spec nova.
+JANELA_RESERVA = timedelta(hours=12)
+
+
+def frase_do_numero(numero: str) -> str:
+    if not numero:
+        return ""
+    return (
+        f"Se esta sessão escrever uma spec nova, use o número {numero}: ele está "
+        "reservado para ela, e outra raia pode estar escrevendo spec agora (ADR 021)."
+    )
+
+
+def numeros_reservados(sessoes: list[dict[str, Any]], agora: datetime) -> set[int]:
+    """Números de spec prometidos a sessões recentes que ainda podem usá-los."""
+    reservados: set[int] = set()
+    for s in sessoes:
+        if agora - _data(s, "createTime") > JANELA_RESERVA:
+            continue
+        for m in NUMERO_RESERVADO.finditer(s.get("prompt") or ""):
+            reservados.add(int(m.group(1)))
+    return reservados
+
+
+def numero_para_spec_nova(sessoes: list[dict[str, Any]] | None = None) -> str:
+    """Próximo número livre na main, pulando os reservados a outras sessões.
+
+    Sem a pasta de specs (projeto que ainda não as tem), não há reserva e o
+    prompt fica no texto fixo, como no ADR 015.
+    """
+    if not (Path.cwd() / documentos()["specs"]).is_dir():
+        return ""
+    ocupados: set[int] = set()
+    try:
+        if sessoes is None and os.environ.get("JULES_API_KEY"):
+            sessoes = sessoes_do_repo()
+        ocupados = numeros_reservados(sessoes or [], datetime.now(timezone.utc))
+    except (urllib.error.URLError, OSError, ValueError):
+        pass
+    try:
+        return proximo_numero(ocupados=ocupados)
+    except OSError:
+        return ""
+
+
+def complemento_da_raia(persona: str) -> str:
+    """O alvo concreto da sessão de uma raia paralela, decidido antes dela."""
+    if persona == "especificador":
+        numero = numero_para_spec_nova()
+        if not numero:
+            return ""
+        return (
+            f"Para a spec nova desta sessão, use o número {numero}: ele está "
+            "reservado para ela."
+        )
+    if persona == "revisor":
+        try:
+            fila = fila_da_revisao(specs_prontas())
+        except OSError:
+            fila = []
+        if not fila:
+            return ""
+        alvo = fila[0]
+        try:
+            alvo = alvo.relative_to(Path.cwd())
+        except ValueError:
+            pass
+        return (
+            f"A spec a revisar nesta sessão é {alvo.as_posix()}. Não toque em "
+            "nenhuma outra spec."
+        )
+    if persona == "verificador":
+        merges = merges_do_desenvolvimento(desde=ultima_verificacao())
+        if not merges:
+            return ""
+        lista = ", ".join(f"#{pr['number']} ({pr['title']})" for pr in merges[:15])
+        return f"Verifique o que estes PRs levaram à main: {lista}."
+    return ""
 
 
 def iniciar(persona: str, dry_run: bool) -> int:
@@ -584,7 +710,7 @@ def iniciar(persona: str, dry_run: bool) -> int:
     grupo = CONSTRUTORAS if persona in CONSTRUTORAS else {persona}
     titulos = tuple(PERSONAS[x]["titulo"] for x in grupo)
     sessoes = sessoes_do_repo()
-    if persona == "desenvolvedor" and cota_esgotada(sessoes):
+    if (persona == "desenvolvedor" or persona in PARALELAS) and cota_esgotada(sessoes):
         return 0
     agora = datetime.now(timezone.utc)
     for s in sessoes:
@@ -724,6 +850,117 @@ def motivo_para_esperar(
     return ""
 
 
+# --- Raias paralelas (ADR 021) -------------------------------------------
+
+# O verificador olha o que o desenvolvimento entregou; uma volta por merge
+# seria gastar a cota em diffs de uma linha. Junta o que chegou neste intervalo.
+INTERVALO_VERIFICADOR = timedelta(minutes=90)
+# Sem verificação anterior, olha só o que chegou à main neste período.
+JANELA_PRIMEIRA_VERIFICACAO = timedelta(hours=24)
+# Com a fila neste tamanho ou menor, o especificador prepara a próxima spec:
+# a que sobra é a que o desenvolvimento está implementando.
+FILA_PARA_ESPECIFICAR = 1
+
+
+def ultima_sessao(persona: str, sessoes: list[dict[str, Any]]) -> datetime | None:
+    titulo = PERSONAS[persona]["titulo"]
+    datas = [
+        _data(s, "createTime") for s in sessoes if s.get("title", "").startswith(titulo)
+    ]
+    return max(datas) if datas else None
+
+
+def ultima_verificacao(sessoes: list[dict[str, Any]] | None = None) -> datetime:
+    try:
+        if sessoes is None and os.environ.get("JULES_API_KEY"):
+            sessoes = sessoes_do_repo()
+    except (urllib.error.URLError, OSError, ValueError):
+        sessoes = None
+    ultima = ultima_sessao("verificador", sessoes or [])
+    return ultima or datetime.now(timezone.utc) - JANELA_PRIMEIRA_VERIFICACAO
+
+
+def merges_do_desenvolvimento(desde: datetime) -> list[dict[str, Any]]:
+    """PRs da raia de desenvolvimento mesclados depois de `desde`, mais novos antes."""
+    try:
+        prs = github_get(
+            f"/repos/{PROJETO['repositorio']}/pulls"
+            "?state=closed&sort=updated&direction=desc&per_page=50"
+        )
+    except (urllib.error.URLError, OSError, ValueError):
+        return []
+    return [
+        pr
+        for pr in prs
+        if pr.get("merged_at")
+        and _data({"createTime": pr["merged_at"]}, "createTime") > desde
+        and raia_do_titulo(pr.get("title") or "") == DESENVOLVIMENTO
+    ]
+
+
+def raias_com_pr_aberto() -> set[str]:
+    """Raias que já têm PR aberto: a sessão nova só acharia trabalho em curso."""
+    abertos = github_get(
+        f"/repos/{PROJETO['repositorio']}/pulls?state=open&per_page=50"
+    )
+    return {raia_do_titulo(pr.get("title") or "") for pr in abertos}
+
+
+def raias_a_iniciar(
+    sessoes: list[dict[str, Any]],
+    agora: datetime,
+    prontas: list[Path],
+    em_revisao: list[Path],
+    com_pr: set[str],
+    merges_novos: int,
+) -> list[str]:
+    """Quais raias paralelas abrem sessão nesta volta (decisão pura, testável).
+
+    Cada raia tem no máximo uma sessão ativa e um PR aberto. Além disso:
+    - especificador: a fila de specs ready chegou a FILA_PARA_ESPECIFICAR;
+    - revisor: há spec ready esperando revisão;
+    - verificador: o desenvolvimento mesclou algo desde a última verificação,
+      e ela foi há pelo menos INTERVALO_VERIFICADOR.
+    """
+    escolhidas = []
+    for persona in PARALELAS:
+        p = PERSONAS[persona]
+        if p["raia"] in com_pr:
+            continue
+        if any(
+            s.get("title", "").startswith(p["titulo"])
+            and s.get("state") in ATIVOS
+            and not motivo_de_zumbi(s, agora)
+            for s in sessoes
+        ):
+            continue
+        if persona == "especificador" and len(prontas) > FILA_PARA_ESPECIFICAR:
+            continue
+        if persona == "revisor" and not em_revisao:
+            continue
+        if persona == "verificador":
+            ultima = ultima_sessao("verificador", sessoes)
+            if not merges_novos or (ultima and agora - ultima < INTERVALO_VERIFICADOR):
+                continue
+        escolhidas.append(persona)
+    return escolhidas
+
+
+def rodada_das_raias(sessoes: list[dict[str, Any]], agora: datetime) -> None:
+    """Abre as sessões das raias paralelas que têm trabalho e caminho livre."""
+    prontas = specs_prontas()
+    em_revisao = fila_da_revisao(prontas)
+    com_pr = raias_com_pr_aberto()
+    ultima = ultima_sessao("verificador", sessoes)
+    desde = ultima or agora - JANELA_PRIMEIRA_VERIFICACAO
+    merges = len(merges_do_desenvolvimento(desde))
+    for persona in raias_a_iniciar(sessoes, agora, prontas, em_revisao, com_pr, merges):
+        try:
+            iniciar(persona, dry_run=False)
+        except Exception as erro:  # noqa: BLE001
+            print(f"::warning::iniciar {persona} falhou: {erro}")
+
+
 def rodada(espera_minutos: int) -> int:
     """Uma volta só, em segundos, para o job do Actions não ficar ligado à toa.
 
@@ -732,36 +969,51 @@ def rodada(espera_minutos: int) -> int:
     cota respeitado) e destrava as sessões paradas. Não há mais uma sessão por
     hora: com o relógio externo chamando a cada poucos minutos, uma sessão que
     termina sem nada a fazer é seguida pela próxima na volta seguinte (ADR 012).
+    Na mesma volta, cada raia paralela com trabalho e caminho livre ganha a
+    sua sessão (ADR 021).
     """
     agora = datetime.now(timezone.utc)
+    sessoes: list[dict[str, Any]] | None = None
     try:
         sessoes = sessoes_do_repo()
         mortas = set(encerrar_zumbis(sessoes, agora))
         for s in sessoes:
             if s.get("name") in mortas:
                 s["state"] = "CANCELLED"
-        try:
-            if tratar_falhas(sessoes, agora):
-                print("Aguardando a retomada de uma sessão que falhou.")
-                return destravar(espera_minutos)
-        except Exception as erro:  # noqa: BLE001
-            print(f"::warning::tratar_falhas falhou: {erro}")
-        persona = persona_da_vez(sessoes, agora)
-        situacao, desc = situacao_dos_prs()
-        if situacao == "esperar":
-            print(f"{persona}: aguardando o merge de {desc}.")
-        else:
-            if situacao == "travado" and persona != "desenvolvedor":
-                print(f"{persona} adiado: {desc} precisa do desenvolvedor.")
-                persona = "desenvolvedor"
-            motivo = motivo_para_esperar(persona, sessoes, agora)
-            if motivo:
-                print(motivo)
-            else:
-                iniciar(persona, dry_run=False)
+        rodada_do_desenvolvimento(sessoes, agora)
     except Exception as erro:  # noqa: BLE001
         print(f"::warning::rodada não iniciou sessão: {erro}")
+    # As raias paralelas não dependem do PR do desenvolvimento nem da retomada
+    # dele: correm na mesma volta, cada uma com a sua trava (ADR 021).
+    if sessoes is not None:
+        try:
+            rodada_das_raias(sessoes, agora)
+        except Exception as erro:  # noqa: BLE001
+            print(f"::warning::raias paralelas não iniciadas: {erro}")
     return destravar(espera_minutos)
+
+
+def rodada_do_desenvolvimento(sessoes: list[dict[str, Any]], agora: datetime) -> None:
+    """A vez do desenvolvedor ou do especialista do dia, se o caminho estiver livre."""
+    try:
+        if tratar_falhas(sessoes, agora):
+            print("Aguardando a retomada de uma sessão que falhou.")
+            return
+    except Exception as erro:  # noqa: BLE001
+        print(f"::warning::tratar_falhas falhou: {erro}")
+    persona = persona_da_vez(sessoes, agora)
+    situacao, desc = situacao_dos_prs()
+    if situacao == "esperar":
+        print(f"{persona}: aguardando o merge de {desc}.")
+    else:
+        if situacao == "travado" and persona != "desenvolvedor":
+            print(f"{persona} adiado: {desc} precisa do desenvolvedor.")
+            persona = "desenvolvedor"
+        motivo = motivo_para_esperar(persona, sessoes, agora)
+        if motivo:
+            print(motivo)
+        else:
+            iniciar(persona, dry_run=False)
 
 
 def vigiar(duracao_minutos: int, intervalo_minutos: int, espera_minutos: int) -> int:

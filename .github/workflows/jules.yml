@@ -1,6 +1,7 @@
 name: Jules
 
-# Dispara o desenvolvedor e os especialistas (Sentinel, Palette, Bolt) pela API do Jules
+# Dispara o desenvolvedor e os especialistas (Sentinel, Palette, Bolt) pela API do Jules,
+# as raias paralelas (especificador, revisor de spec, verificador geral; ADR 021)
 # e destrava sessões paradas esperando aprovação de plano ou resposta.
 # Cada execução faz uma "rodada": inicia a próxima sessão se o caminho estiver
 # livre (sem sessão ativa, sem PR esperando merge, dentro do ritmo da cota),
@@ -14,7 +15,7 @@ on:
       acao:
         description: "O que fazer"
         type: choice
-        options: [rodada, desenvolvedor, seguranca, design, performance, auditor, destravar, listar, encerrar]
+        options: [rodada, desenvolvedor, especificador, revisor, verificador, seguranca, design, performance, auditor, destravar, listar, encerrar]
         default: rodada
       sessao:
         description: "Só para encerrar: id da sessão ou URL da tarefa no Jules"

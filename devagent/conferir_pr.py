@@ -32,6 +32,11 @@ Regras (mantenha em sincronia com devagent/CICLO.md, Passos 1 e 4):
        e o CI os roda. Specs a partir de `aceite_obrigatorio_desde` (seção
        [disciplina] do devagent.toml) precisam do campo. A 074 foi fechada sem
        remover nenhuma das tabelas que prometia (ADR 018).
+    8. Cada raia escreve só na sua faixa (ADR 021). A raia sai do prefixo do
+       título do PR (`spec:`, `revisão:`, `verificação:`; o resto é
+       desenvolvimento) e devagent/raias.py diz o que cada uma pode tocar.
+       É o que deixa as raias correrem em paralelo sem conflito. Vale no CI,
+       onde o título do PR existe.
 
 Uma regra nunca é afrouxada no mesmo PR que corrige o que ela aponta
 (README do núcleo, separação de poderes).
@@ -49,6 +54,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from devagent.config import CONFIG
+from devagent.raias import DESENVOLVIMENTO, fora_da_raia, raia_do_titulo
 
 PADRAO_DOCUMENTOS = {
     "specs": "docs/specs",
@@ -90,8 +96,7 @@ def registros() -> tuple[str, ...]:
     return tuple(CONFIG.get("disciplina", {}).get("registros", PADRAO_REGISTROS))
 
 
-def corpo_do_pr() -> str:
-    """Corpo do PR no CI (evento pull_request); vazio fora dele."""
+def _campo_do_pr(campo: str) -> str:
     caminho = os.environ.get("GITHUB_EVENT_PATH")
     if not caminho or not Path(caminho).is_file():
         return ""
@@ -99,7 +104,17 @@ def corpo_do_pr() -> str:
         evento = json.loads(Path(caminho).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return ""
-    return str((evento.get("pull_request") or {}).get("body") or "")
+    return str((evento.get("pull_request") or {}).get(campo) or "")
+
+
+def corpo_do_pr() -> str:
+    """Corpo do PR no CI (evento pull_request); vazio fora dele."""
+    return _campo_do_pr("body")
+
+
+def titulo_do_pr() -> str:
+    """Título do PR no CI (evento pull_request); vazio fora dele."""
+    return _campo_do_pr("title")
 
 
 def git(*args: str, raiz: Path) -> str | None:
@@ -159,7 +174,10 @@ def resolver_base(raiz: Path, base: str | None) -> str | None:
 
 
 def conferir(
-    raiz: Path, base: str | None = None, exigir_alteracao: bool | None = None
+    raiz: Path,
+    base: str | None = None,
+    exigir_alteracao: bool | None = None,
+    titulo: str | None = None,
 ) -> Resultado:
     if exigir_alteracao is None:
         exigir_alteracao = os.environ.get("GITHUB_EVENT_NAME") == "pull_request"
@@ -226,6 +244,23 @@ def conferir(
             "ciclo nesta mesma sessão e leve o registro no PR que ele produzir "
             "(CICLO.md, seção 4; especialistas.md, regra 7)."
         )
+
+    # Regra 8: cada raia escreve só na sua faixa.
+    titulo = titulo_do_pr() if titulo is None else titulo
+    if titulo and alterados:
+        raia = raia_do_titulo(titulo)
+        invasoes = fora_da_raia(raia, alterados)
+        if invasoes:
+            onde = (
+                "pertencem a outra raia"
+                if raia == DESENVOLVIMENTO
+                else "estão fora do que a raia pode alterar"
+            )
+            res.falha(
+                f"O título coloca este PR na raia de {raia}, e estes arquivos "
+                f"{onde}: {', '.join(invasoes)}. Tire-os do PR ou corrija o "
+                "prefixo do título (devagent/raias.py, ADR 021)."
+            )
 
     fechadas_novas: list[str] = []
     fechadas: list[tuple[str, str]] = []

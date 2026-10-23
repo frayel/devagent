@@ -98,6 +98,8 @@ def test_erro_numa_volta_nao_encerra_o_laco(monkeypatch, relogio):
 def _rodada(monkeypatch, relogio, sessoes, prs=("livre", "")):
     chamadas = _registrar(monkeypatch, relogio, sessoes)
     monkeypatch.setattr(jules, "situacao_dos_prs", lambda: prs)
+    # As raias paralelas têm testes próprios (test_raias.py).
+    monkeypatch.setattr(jules, "rodada_das_raias", lambda s, a: None)
     monkeypatch.delenv("JULES_LIMITE_DIARIO", raising=False)
     monkeypatch.delenv("JULES_INTERVALO_MINUTOS", raising=False)
     return chamadas

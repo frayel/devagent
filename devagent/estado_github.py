@@ -25,7 +25,8 @@ from datetime import datetime, timezone
 from typing import Any
 
 from devagent import saude
-from devagent.fila_specs import instrucao, specs_prontas
+from devagent.fila_specs import fila_da_revisao, instrucao, specs_prontas
+from devagent.raias import AUDITORIA, DESENVOLVIMENTO, raia_do_titulo
 
 API = "https://api.github.com"
 
@@ -59,7 +60,12 @@ def _horas(iso: str) -> float:
 
 
 def eh_do_agente(pr: dict[str, Any]) -> bool:
-    return not pr["title"].startswith("auditoria:")
+    """PR da raia de desenvolvimento: o que trava a próxima sessão dela.
+
+    PRs das raias auxiliares (spec, revisão, verificação) e do auditor correm
+    em paralelo e não contam na regra de um PR aberto por vez (ADR 021).
+    """
+    return raia_do_titulo(pr["title"]) == DESENVOLVIMENTO
 
 
 def status_ci(repo: str, sha: str) -> str:
@@ -86,6 +92,7 @@ def coletar() -> dict[str, Any]:
                 "titulo": pr["title"],
                 "branch": pr["head"]["ref"],
                 "do_agente": eh_do_agente(pr),
+                "raia": raia_do_titulo(pr["title"]),
                 "labels": [lbl["name"] for lbl in pr["labels"]],
                 "idade_horas": _horas(pr["created_at"]),
                 "ci": status_ci(repo, pr["head"]["sha"]),
@@ -127,16 +134,24 @@ def main() -> int:
 
     print(f"Repositório: {estado['repo']}\n")
     agente = [p for p in estado["prs"] if p["do_agente"]]
-    print(f"PRs abertos do agente: {len(agente)}")
+    print(f"PRs abertos do agente (raia de desenvolvimento): {len(agente)}")
     for p in agente:
         print(
             f"  #{p['numero']} [{p['branch']}] {p['titulo']}\n"
             f"      CI: {p['ci']} · merge: {p['merge']} · "
             f"{p['idade_horas']} h · comentários: {p['comentarios']}"
         )
-    outros = [p for p in estado["prs"] if not p["do_agente"]]
+    raias = [p for p in estado["prs"] if not p["do_agente"] and p["raia"] != AUDITORIA]
+    if raias:
+        print(
+            f"\nPRs das raias paralelas (spec, revisão, verificação): {len(raias)}. "
+            "Só a sessão da raia mexe no PR dela."
+        )
+        for p in raias:
+            print(f"  #{p['numero']} [{p['raia']}] {p['titulo']} · CI: {p['ci']}")
+    outros = [p for p in estado["prs"] if p["raia"] == AUDITORIA]
     if outros:
-        print(f"\nPRs que não são seus (ignore): {len(outros)}")
+        print(f"\nPRs do auditor (ignore): {len(outros)}")
         for p in outros:
             print(f"  #{p['numero']} {p['titulo']} {p['labels']}")
     print(f"\nIssues abertas: {len(estado['issues'])}")
@@ -154,9 +169,11 @@ def main() -> int:
         problemas_em_producao = bool(saude.pendentes(dados, "problema"))
 
     prontas = specs_prontas()
+    em_revisao = {p.name for p in fila_da_revisao(prontas)}
     print(f"\nSpecs ready na fila: {len(prontas)}")
     for p in prontas[:5]:
-        print(f"  {p.name}")
+        marca = " (esperando revisão)" if p.name in em_revisao else ""
+        print(f"  {p.name}{marca}")
 
     bloqueada = next(
         (

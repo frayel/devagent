@@ -10,7 +10,12 @@ devagent/CICLO.md. Média e baixa ganham `prioridade` e entram no Passo 1.6,
 antes da fila de specs: no Passo 6 elas esperavam a fila esvaziar, o que não
 acontece enquanto o agente escreve specs (ADR 020).
 
-Uso: python -m devagent.auditoria.achados_para_issues [--dry-run]
+O verificador geral (raia de verificação, ADR 021) usa o mesmo caminho com
+`--origem verificacao`: achados em docs/verificacao/achados/, label
+`verificacao`. Severidade alta e média ganham `prioridade`; baixa fica para o
+Passo 6, sem furar a fila.
+
+Uso: python -m devagent.auditoria.achados_para_issues [--origem auditoria|verificacao] [--dry-run]
 Precisa do gh autenticado (GH_TOKEN).
 """
 
@@ -22,9 +27,11 @@ import re
 import subprocess
 from pathlib import Path
 
-PASTA = Path(__file__).resolve().parents[2] / "docs" / "auditoria" / "achados"
+RAIZ = Path(__file__).resolve().parents[2]
+PASTA = RAIZ / "docs" / "auditoria" / "achados"
 LABELS = {
     "auditoria": ("5319E7", "Achado do auditor de produção"),
+    "verificacao": ("1D76DB", "Achado do verificador geral (raia de verificação)"),
     "producao-incorreta": ("D93F0B", "Produção exibe dado errado ou está fora do ar"),
     "bug": ("D73A4A", "Algo não funciona como deveria"),
     "prioridade": ("B60205", "Correção que passa na frente da fila de specs"),
@@ -57,10 +64,33 @@ def gh(*args: str) -> str:
     ).stdout
 
 
-def ids_com_issue() -> set[str]:
+ORIGENS = {
+    "auditoria": {
+        "relativo": "docs/auditoria/achados",
+        "rotulo": "auditor LLM",
+        "titulo": "[auditoria]",
+    },
+    "verificacao": {
+        "relativo": "docs/verificacao/achados",
+        "rotulo": "verificador geral",
+        "titulo": "[verificação]",
+    },
+}
+
+
+def labels_do_achado(origem: str, severidade: str) -> list[str]:
+    labels = [origem, "bug"]
+    if origem == "auditoria":
+        labels.append("producao-incorreta" if severidade == "alta" else "prioridade")
+    elif severidade in ("alta", "media"):
+        labels.append("prioridade")
+    return labels
+
+
+def ids_com_issue(origem: str = "auditoria") -> set[str]:
     # Lê os corpos direto, sem depender do índice de busca do GitHub.
     saida = gh(
-        "issue", "list", "--state", "all", "--label", "auditoria",
+        "issue", "list", "--state", "all", "--label", origem,
         "--limit", "1000", "--json", "body",
     )  # fmt: skip
     ids: set[str] = set()
@@ -72,7 +102,11 @@ def ids_com_issue() -> set[str]:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--origem", choices=sorted(ORIGENS), default="auditoria")
     args = ap.parse_args(argv)
+    origem = ORIGENS[args.origem]
+    # PASTA é lida aqui, e não na tabela, para os testes poderem trocá-la.
+    pasta = PASTA if args.origem == "auditoria" else RAIZ / origem["relativo"]
 
     if not args.dry_run:
         for nome, (cor, desc) in LABELS.items():
@@ -81,8 +115,8 @@ def main(argv: list[str] | None = None) -> int:
                 capture_output=True,
             )
 
-    existentes = set() if args.dry_run else ids_com_issue()
-    for arq in sorted(PASTA.glob("*.md")):
+    existentes = set() if args.dry_run else ids_com_issue(args.origem)
+    for arq in sorted(pasta.glob("*.md")):
         if arq.name.lower() == "readme.md":
             continue
         a = ler_achado(arq)
@@ -90,17 +124,15 @@ def main(argv: list[str] | None = None) -> int:
             continue
         if a["id"] in existentes:
             continue
-        labels = ["auditoria", "bug"]
-        labels.append(
-            "producao-incorreta" if a.get("severidade") == "alta" else "prioridade"
-        )
+        labels = labels_do_achado(args.origem, a.get("severidade", ""))
+        relativo = origem["relativo"]
         corpo = (
-            f"{a['corpo']}\n\n---\nAchado `{a['id']}` do auditor LLM em "
-            f"`docs/auditoria/achados/{a['arquivo']}` · severidade "
+            f"{a['corpo']}\n\n---\nAchado `{a['id']}` do {origem['rotulo']} em "
+            f"`{relativo}/{a['arquivo']}` · severidade "
             f"**{a.get('severidade', '?')}** · painel `{a.get('painel', '?')}`\n\n"
             f"<!-- achado: {a['id']} -->"
         )
-        titulo = f"[auditoria] {a['titulo']}"
+        titulo = f"{origem['titulo']} {a['titulo']}"
         if args.dry_run:
             print(f"abriria: {titulo} {labels}")
             continue
