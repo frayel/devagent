@@ -9,7 +9,7 @@ from app.consultor.armazenamento import (
     get_opinioes_status,
 )
 from app.consultor.avaliador_historico import pre_processar_ativo
-from app.database import get_consultor_confianca_regras
+from app.database import get_consultor_confianca
 from datetime import datetime
 
 # O coletor consultor_historico grava a série diária de 2 anos e a renova a
@@ -45,7 +45,7 @@ def calcular_consultor():
     except Exception:
         timestamp = "-"
 
-    regras_confianca = get_consultor_confianca_regras()
+    regras_confianca = get_consultor_confianca()
 
     def obter_confianca(nome_regra):
         if not regras_confianca or nome_regra not in regras_confianca:

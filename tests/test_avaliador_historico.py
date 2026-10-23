@@ -8,7 +8,7 @@ def setup_mock_data():
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM historico_diario_cache")
-    cursor.execute("DELETE FROM consultor_confianca_regras")
+    cursor.execute("DELETE FROM snapshots_paineis WHERE painel = 'consultor_confianca'")
     conn.commit()
     conn.close()
 
@@ -59,7 +59,7 @@ def test_avaliador_historico(monkeypatch):
 
     avaliador_historico.rodar_backtest()
 
-    from app.database import get_consultor_confianca_regras
+    from app.database import get_consultor_confianca
 
-    regras = get_consultor_confianca_regras()
+    regras = get_consultor_confianca()
     assert len(regras) >= 0

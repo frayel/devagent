@@ -1,5 +1,5 @@
 from app.collectors.radar_anomalia_fechamento import collect_and_save
-from app.database import get_latest_radar_anomalia_fechamento_data, get_connection
+from app.database import get_latest_radar_anomalia_fechamento_data
 from app.services.radar_anomalia_fechamento import get_radar_anomalia_fechamento_view
 import json
 
@@ -49,9 +49,13 @@ def test_radar_anomalia_fechamento_sucesso(monkeypatch):
 
 
 def test_radar_anomalia_fechamento_vazio():
-    conn = get_connection()
+    from app.banco import get_connection as get_banco_connection
+
+    conn, _ = get_banco_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM radar_anomalia_fechamento_cache")
+    cursor.execute(
+        "DELETE FROM snapshots_paineis WHERE painel = 'radar_anomalia_fechamento'"
+    )
     conn.commit()
     conn.close()
     view = get_radar_anomalia_fechamento_view()

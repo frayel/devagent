@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Spec 077d: Resíduos do SQLite depois da migração - remoção das tabelas `radar_anomalia_fechamento_cache` e `consultor_confianca_regras`.
 - refatoração: implementação da spec 077c, removendo resíduos do SQLite na lógica de diagnóstico do banco de dados na página /sistema.
 - refatoração: implementação da spec 077b-banco-residuos-consultor.md, removendo resíduos do SQLite na lógica do Consultor.
 - refatoração: implementação da spec 077b-banco-residuos-consultor.md, removendo resíduos do SQLite na lógica do Consultor.

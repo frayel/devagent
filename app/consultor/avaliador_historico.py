@@ -1,7 +1,7 @@
 import json
 import statistics
 from datetime import datetime, timezone
-from app.database import get_historico_diario, save_consultor_confianca_regra
+from app.database import get_historico_diario, save_consultor_confianca
 from app.consultor.universo import CARTEIRA_IBOVESPA
 from app.consultor.regras import avaliar_ativo
 
@@ -142,7 +142,7 @@ def rodar_backtest():
         excesso_mediano = (
             statistics.median(stats["excessos"]) if stats["excessos"] else 0.0
         )
-        save_consultor_confianca_regra(
+        save_consultor_confianca(
             regra,
             stats["disparos"],
             stats["acertos"],

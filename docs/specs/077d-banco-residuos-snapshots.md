@@ -1,7 +1,7 @@
 ---
 id: 077d
 titulo: Resíduos do SQLite depois da migração (Dois painéis em snapshots)
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_077d.py
@@ -20,4 +20,4 @@ O Radar de Anomalia no Fechamento e a confiança histórica das regras do consul
 - As duas tabelas saem do `init_db` do SQLite e de todo `app/` (campo `tabelas_legadas` acima).
 
 ## Critérios de aceite
-- [ ] `tests/test_aceite_077d.py` passa: `radar_anomalia_fechamento_cache` e `consultor_confianca_regras` não aparecem mais em `app/`.
+- [x] `tests/test_aceite_077d.py` passa: `radar_anomalia_fechamento_cache` e `consultor_confianca_regras` não aparecem mais em `app/`.
