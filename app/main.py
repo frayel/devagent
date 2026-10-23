@@ -598,7 +598,7 @@ def snapshot():
         resp["paineis"]["clima_global"] = {
             "coletado_em": clima_global_data.timestamp.astimezone(
                 timezone(timedelta(hours=-3))
-            ).strftime("%d/%m %H:%M BRT"),
+            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
             "sp500_pct": clima_global_data.sp500_pct,
             "vix_pct": clima_global_data.vix_pct,
             "status": clima_global_data.status,
@@ -1032,7 +1032,7 @@ async def index(request: Request):
         clima_global = {
             "coletado_em": clima_global_data.timestamp.astimezone(
                 timezone(timedelta(hours=-3))
-            ).strftime("%d/%m %H:%M BRT"),
+            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
             "timestamp": clima_global_data.timestamp.astimezone(
                 timezone(timedelta(hours=-3))
             ),
@@ -1159,7 +1159,7 @@ async def index(request: Request):
             alertas = []
 
         def formatar_data(t):
-            return t.strftime("%H:%M BRT")
+            return t.strftime("%d/%m/%Y %H:%M:%S BRT")
 
         concentracao_ordens = {
             "alertas": alertas,
@@ -1222,7 +1222,7 @@ async def index(request: Request):
             "mercado_lateral": fator_peso_pesado_data_raw.mercado_lateral,
             "coletado_em": fator_peso_pesado_data_raw.timestamp.astimezone(
                 timezone(timedelta(hours=-3))
-            ).strftime("%d/%m %H:%M BRT"),
+            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
             "fonte": fator_peso_pesado_data_raw.fonte,
         }
 
@@ -1292,7 +1292,7 @@ async def index(request: Request):
                 "alertas": alertas,
                 "coletado_em": anomalias_spread_data.timestamp.astimezone(
                     timezone(timedelta(hours=-3))
-                ).strftime("%d/%m %H:%M BRT"),
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                 "fonte": anomalias_spread_data.fonte,
             }
         except Exception:
@@ -1307,7 +1307,7 @@ async def index(request: Request):
                 "alertas": alertas,
                 "coletado_em": anomalias_spread_data.timestamp.astimezone(
                     timezone(timedelta(hours=-3))
-                ).strftime("%d/%m %H:%M BRT"),
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                 "fonte": anomalias_spread_data.fonte,
             }
         except Exception:

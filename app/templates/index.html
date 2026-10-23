@@ -89,7 +89,7 @@
 
 {% endcall %}
 
-{% call painel("Clima Global", 6, "", clima_global.fonte if clima_global else "", clima_global.timestamp.strftime('%d/%m %H:%M BRT') if clima_global else "", "painel-clima-global visao-geral escondido" if not clima_global else "painel-clima-global visao-geral") %}
+{% call painel("Clima Global", 6, "", clima_global.fonte if clima_global else "", clima_global.timestamp.strftime('%d/%m/%Y %H:%M:%S BRT') if clima_global else "", "painel-clima-global visao-geral escondido" if not clima_global else "painel-clima-global visao-geral") %}
     {% if clima_global %}
         <div class="conteudo-centralizado">
             {% set color_class = 'neutra' %}

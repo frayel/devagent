@@ -80,7 +80,7 @@ def hora_brt(valor: str | datetime | None, com_data: bool = True) -> str:
     if d is None:
         return ""
     local = d.astimezone(BRT)
-    return local.strftime("%d/%m %H:%M" if com_data else "%H:%M")
+    return local.strftime("%d/%m/%Y %H:%M:%S" if com_data else "%H:%M:%S")
 
 
 def ha_quanto(valor: str | datetime | None, agora: datetime) -> str:

@@ -364,7 +364,7 @@ def view(dado: Any) -> dict[str, Any] | None:
         ),
         "comparacao": comparacao,
         "fonte": dado.fonte,
-        "time": dado.timestamp.astimezone(BRT).strftime("%d/%m/%Y %H:%M BRT"),
+        "time": dado.timestamp.astimezone(BRT).strftime("%d/%m/%Y %H:%M:%S BRT"),
     }
 
 
