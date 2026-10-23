@@ -1,7 +1,7 @@
 ---
 id: 077b
 titulo: Resíduos do SQLite depois da migração (Consultor no Postgres)
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_077b.py
@@ -25,4 +25,4 @@ As specs 073a a 076b levaram os painéis para o Postgres, e a produção está n
 Nenhuma nova.
 
 ## Critérios de aceite
-- [ ] `tests/test_aceite_077b.py` passa com esta spec `done`: com uma conexão Postgres falsa, `get_llm_uso_hoje`, `incrementar_llm_uso`, `set_opinioes_status`, `get_materias_nao_processadas`, `marcar_como_processada` e `save_opiniao` não mandam `?` nem `INSERT OR`, e o número de `%s` bate com o de parâmetros.
+- [x] `tests/test_aceite_077b.py` passa com esta spec `done`: com uma conexão Postgres falsa, `get_llm_uso_hoje`, `incrementar_llm_uso`, `set_opinioes_status`, `get_materias_nao_processadas`, `marcar_como_processada` e `save_opiniao` não mandam `?` nem `INSERT OR`, e o número de `%s` bate com o de parâmetros.

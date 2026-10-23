@@ -20,36 +20,45 @@ GEMINI_MAX_CHAMADAS = 200
 PAUSA_5XX = 5.0
 
 
+def sql_para(backend: str, sqlite_sql: str) -> str:
+    if backend == "postgres":
+        return sqlite_sql.replace("?", "%s")
+    return sqlite_sql
+
+
 def get_llm_uso_hoje() -> int:
     conn, backend = get_connection()
     try:
         hoje = date.today().isoformat()
-        cursor = conn.cursor() if backend == "postgres" else conn.cursor()
-        cursor.execute("SELECT chamadas FROM consultor_llm_uso WHERE data = ?", (hoje,))
+        cursor = conn.cursor()
+        cursor.execute(
+            sql_para(backend, "SELECT chamadas FROM consultor_llm_uso WHERE data = ?"),
+            (hoje,),
+        )
         row = cursor.fetchone()
         return row[0] if row else 0
     finally:
-        if backend == "postgres":
-            conn.close()
-        else:
-            conn.close()
+        conn.close()
 
 
 def incrementar_llm_uso() -> None:
     conn, backend = get_connection()
     try:
         hoje = date.today().isoformat()
-        cursor = conn.cursor() if backend == "postgres" else conn.cursor()
-        cursor.execute(
-            "INSERT OR REPLACE INTO consultor_llm_uso (data, chamadas) VALUES (?, COALESCE((SELECT chamadas FROM consultor_llm_uso WHERE data = ?), 0) + 1)",
-            (hoje, hoje),
-        )
+        cursor = conn.cursor()
+        if backend == "postgres":
+            cursor.execute(
+                "INSERT INTO consultor_llm_uso (data, chamadas) VALUES (%s, 1) ON CONFLICT (data) DO UPDATE SET chamadas = consultor_llm_uso.chamadas + 1",
+                (hoje,),
+            )
+        else:
+            cursor.execute(
+                "INSERT OR REPLACE INTO consultor_llm_uso (data, chamadas) VALUES (?, COALESCE((SELECT chamadas FROM consultor_llm_uso WHERE data = ?), 0) + 1)",
+                (hoje, hoje),
+            )
         conn.commit()
     finally:
-        if backend == "postgres":
-            conn.close()
-        else:
-            conn.close()
+        conn.close()
 
 
 def set_opinioes_status(status: str, motivo: str = "") -> None:
@@ -57,30 +66,23 @@ def set_opinioes_status(status: str, motivo: str = "") -> None:
     try:
         agora = datetime.now(timezone.utc).isoformat()
         cur = conn.cursor()
-        if True:
-            cur.execute("DELETE FROM consultor_opinioes_status")
-            if backend == "postgres":
-                cur.execute(
-                    "INSERT INTO consultor_opinioes_status (status, motivo, desde) VALUES (%s, %s, %s)",
-                    (status, motivo, agora),
-                )
-            else:
-                cur.execute(
-                    "INSERT INTO consultor_opinioes_status (status, motivo, desde) VALUES (?, ?, ?)",
-                    (status, motivo, agora),
-                )
-            conn.commit()
+        cur.execute("DELETE FROM consultor_opinioes_status")
+        cur.execute(
+            sql_para(
+                backend,
+                "INSERT INTO consultor_opinioes_status (status, motivo, desde) VALUES (?, ?, ?)",
+            ),
+            (status, motivo, agora),
+        )
+        conn.commit()
     finally:
-        if backend == "postgres":
-            conn.close()
-        else:
-            conn.close()
+        conn.close()
 
 
 def get_materias_nao_processadas() -> list[dict]:
     conn, backend = get_connection()
     try:
-        cursor = conn.cursor() if backend == "postgres" else conn.cursor()
+        cursor = conn.cursor()
         cursor.execute(
             "SELECT guid, titulo, descricao, conteudo, data_publicacao, link, tickers_citados, criado_em FROM consultor_fila_materias WHERE processada = 0 ORDER BY criado_em ASC LIMIT 10"
         )
@@ -101,25 +103,23 @@ def get_materias_nao_processadas() -> list[dict]:
             )
         return result
     finally:
-        if backend == "postgres":
-            conn.close()
-        else:
-            conn.close()
+        conn.close()
 
 
 def marcar_como_processada(guid: str) -> None:
     conn, backend = get_connection()
     try:
-        cursor = conn.cursor() if backend == "postgres" else conn.cursor()
+        cursor = conn.cursor()
         cursor.execute(
-            "UPDATE consultor_fila_materias SET processada = 1 WHERE guid = ?", (guid,)
+            sql_para(
+                backend,
+                "UPDATE consultor_fila_materias SET processada = 1 WHERE guid = ?",
+            ),
+            (guid,),
         )
         conn.commit()
     finally:
-        if backend == "postgres":
-            conn.close()
-        else:
-            conn.close()
+        conn.close()
 
 
 def save_opiniao(
@@ -136,16 +136,13 @@ def save_opiniao(
     conn, backend = get_connection()
     try:
         cur = conn.cursor()
-        if backend == "postgres":
-            cur.execute(
-                "SELECT id FROM consultor_opinioes WHERE ticker = %s AND casa = %s AND recomendacao = %s AND data_materia LIKE %s",
-                (ticker, casa, recomendacao, f"{data_materia[:10]}%"),
-            )
-        else:
-            cur.execute(
+        cur.execute(
+            sql_para(
+                backend,
                 "SELECT id FROM consultor_opinioes WHERE ticker = ? AND casa = ? AND recomendacao = ? AND data_materia LIKE ?",
-                (ticker, casa, recomendacao, f"{data_materia[:10]}%"),
-            )
+            ),
+            (ticker, casa, recomendacao, f"{data_materia[:10]}%"),
+        )
         if cur.fetchone():
             return
 

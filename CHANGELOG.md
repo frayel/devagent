@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+- refatoração: implementação da spec 077b-banco-residuos-consultor.md, removendo resíduos do SQLite na lógica do Consultor.
+- refatoração: implementação da spec 077b-banco-residuos-consultor.md, removendo resíduos do SQLite na lógica do Consultor.
 - Spec 077a: Resíduos do SQLite depois da migração
 - **Spec 077:** Congelamento de dados e data de referência no pós-pregão, melhorando o carregamento intradiário
 ### Added

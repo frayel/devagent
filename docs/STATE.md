@@ -401,3 +401,5 @@
   - Consultor ajustado para rodar nativamente no Postgres usando `sql_para` e `ON CONFLICT`, consertando consultas na produção.
   - Diagnóstico do banco movido para `app/banco.py`, capturando o tamanho usando `pg_database_size`.
   - Migradas as tabelas de cache efêmero restantes (`radar_anomalia_fechamento_cache` e `consultor_confianca_regras`) para snapshots.
+- Spec 077b (Resíduos do SQLite depois da migração - Consultor no Postgres):
+  - Lógica do SQLite convertida para usar `sql_para` no Postgres na lógica do Consultor (tabela `consultor_llm_uso`, `consultor_opinioes_status`, `consultor_opinioes`).
