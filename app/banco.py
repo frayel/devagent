@@ -98,6 +98,9 @@ def init_db():
                     """
                 )
                 cursor.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_snapshots_paineis_data_referencia ON snapshots_paineis(data_referencia DESC);"
+                )
+                cursor.execute(
                     """
                     CREATE TABLE IF NOT EXISTS series_diarias (
                         ticker VARCHAR(50),
@@ -123,6 +126,9 @@ def init_db():
                     PRIMARY KEY (painel, data_referencia)
                 )
                 """
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_snapshots_paineis_data_referencia ON snapshots_paineis(data_referencia DESC)"
             )
             cursor.execute(
                 """

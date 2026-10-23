@@ -69,3 +69,8 @@
 - **O que fiz:** Adicionei os índices (`idx_consultor_recomendacoes_timestamp`) na tabela `consultor_recomendacoes` para a coluna `timestamp DESC`.
 - **O que aprendi:** A ausência deste índice na tabela `consultor_recomendacoes` estava causando lentidão na função `save_recomendacoes` (no backend `app/consultor/armazenamento.py`) que usa a query `ORDER BY timestamp DESC LIMIT 1` em loop para cada ticker salvo. Com o índice, os checks evitam o scan completo de tabela (table scan) para cada iteração do salvamento, otimizando o processo que é chamado recorrentemente a cada rodada.
 - **O que evitar:** Omitir índices de ordenação `DESC` para tabelas lidas em laços com clausula de timestamp invertida com LIMIT, degradando a performance de escrita recorrente por leituras lentas.
+## 2026-10-23
+
+- **O que fiz:** Adicionei os índices (`idx_snapshots_paineis_data_referencia`) na tabela `snapshots_paineis` para a coluna `data_referencia DESC` (em `app/banco.py`) e (`idx_consultor_opinioes_extraida_em`) na tabela `consultor_opinioes` para a coluna `extraida_em DESC` (em `app/consultor/armazenamento.py`).
+- **O que aprendi:** A falta desses índices estava causando lentidão recorrente na API ao buscar os relatórios e opiniões mais recentes com `ORDER BY data_referencia DESC` e `ORDER BY extraida_em DESC` com `LIMIT`. Ao adicionar os índices em ordem descendente (DESC), passamos a usar "INDEX SCAN" em vez de "TABLE SCAN + TEMP B-TREE", melhorando sensivelmente a latência em requisições de leitura repetidas no banco populado.
+- **O que evitar:** Omitir índices de ordenação `DESC` para tabelas consultadas por data invertida limitadas a X registros recentes, especialmente ao introduzir novas arquiteturas de dados como o banco unificado (`snapshots_paineis`).
