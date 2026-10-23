@@ -71,3 +71,8 @@
 - **Por que fiz:** A diretriz visual do sistema exige o uso da macro `kpi` em vez de tags `<div class="kpi">` customizadas.
 - **O que aprendi:** Ao encapsular strings HTML complexas na macro `kpi`, aplicar corretamente o filtro `| safe` a toda a expressão englobada por parênteses evita que a estrutura `<p class="sub">` vaze como texto bruto na página.
 - **O que evitar:** Construir painéis híbridos onde metade usa macros padronizadas e a outra metade utiliza marcação HTML manual.
+## 2026-10-23
+- **O que fiz:** Adicionei os atributos `role="img"` e `aria-label` à macro `sparkline` em `app/templates/componentes.html` (e apliquei nas chamadas em `index.html`), permitindo que as minisséries temporais tenham resumo textual audível ("Evolução de [TICKER]").
+- **Por que fiz:** O `docs/DESIGN.md` (seção 5) dita que todo gráfico precisa ter um `aria-label` com o resumo da série em texto para a acessibilidade.
+- **O que aprendi:** A macro `sparkline` estava utilizando apenas `aria-hidden="true"`, o que inviabilizava a compreensão do contexto desse elemento por leitores de tela em tabelas de ranking.
+- **O que evitar:** Deixar elementos visuais de dados (ainda que secundários ou miniaturas) sem a devida descrição para acessibilidade (Screen Readers).

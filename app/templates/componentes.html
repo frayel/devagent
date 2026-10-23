@@ -114,10 +114,10 @@
 {% endmacro %}
 
 
-{% macro sparkline(spark_dict) %}
+{% macro sparkline(spark_dict, resumo='') %}
 {% if spark_dict %}
-<div class="spark" aria-hidden="true">
-  <svg viewBox="0 0 200 48" preserveAspectRatio="none">
+<div class="spark"{% if resumo %} role="img" aria-label="{{ resumo }}"{% else %} aria-hidden="true"{% endif %}>
+  <svg viewBox="0 0 200 48" preserveAspectRatio="none" aria-hidden="true" focusable="false">
     <path class="spark-linha" d="M {{ spark_dict.pontos }}"/>
   </svg>
 </div>

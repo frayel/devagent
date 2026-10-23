@@ -249,7 +249,7 @@
                 {'tk': True, 'conteudo': a.ticker},
                 {'num': True, 'conteudo': a.price_formatted},
                 {'num': True, 'barra': True, 'valor_barra': a.change_percent, 'conteudo': variacao(a.change_percent_formatted, a.change_percent)},
-                {'conteudo': sparkline(a.sparkline)}
+                {'conteudo': sparkline(a.sparkline, "Evolução de " ~ a.ticker)}
             ] %}
             {% set _ = linhas.append(celulas) %}
         {% endfor %}
@@ -267,7 +267,7 @@
                 {'tk': True, 'conteudo': a.ticker},
                 {'num': True, 'conteudo': a.price_formatted},
                 {'num': True, 'barra': True, 'valor_barra': (a.change_percent * -1) if a.change_percent < 0 else a.change_percent, 'conteudo': variacao(a.change_percent_formatted, a.change_percent)},
-                {'conteudo': sparkline(a.sparkline)}
+                {'conteudo': sparkline(a.sparkline, "Evolução de " ~ a.ticker)}
             ] %}
             {% set _ = linhas.append(celulas) %}
         {% endfor %}
@@ -284,13 +284,13 @@
         {% set linha_maior = [
             {'tk': True, 'conteudo': forca_relativa.maior.ticker},
             {'num': True, 'barra': True, 'valor_barra': forca_relativa.maior.forca_relativa * 100, 'conteudo': variacao((("%.2f" | format(forca_relativa.maior.forca_relativa * 100)).replace('.', ',') ~ "%"), forca_relativa.maior.forca_relativa)},
-            {'conteudo': sparkline(forca_relativa.maior.sparkline_svg)}
+            {'conteudo': sparkline(forca_relativa.maior.sparkline_svg, "Evolução de " ~ forca_relativa.maior.ticker)}
         ] %}
         {% set _ = linhas.append(linha_maior) %}
         {% set linha_menor = [
             {'tk': True, 'conteudo': forca_relativa.menor.ticker},
             {'num': True, 'barra': True, 'valor_barra': forca_relativa.menor.forca_relativa * 100, 'conteudo': variacao((("%.2f" | format(forca_relativa.menor.forca_relativa * 100)).replace('.', ',') ~ "%"), forca_relativa.menor.forca_relativa)},
-            {'conteudo': sparkline(forca_relativa.menor.sparkline_svg)}
+            {'conteudo': sparkline(forca_relativa.menor.sparkline_svg, "Evolução de " ~ forca_relativa.menor.ticker)}
         ] %}
         {% set _ = linhas.append(linha_menor) %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'vs IBOV', 'num': True}, {'titulo': '10d'}], 'forca-relativa') }}
@@ -500,7 +500,7 @@
             {% set celulas = [
                 {'tk': True, 'conteudo': a.ticker},
                 {'num': True, 'conteudo': ("%.2f%%" | format(a.bandwidth * 100)).replace('.', ',')},
-                {'conteudo': sparkline({"pontos": a.sparkline_path})}
+                {'conteudo': sparkline({"pontos": a.sparkline_path}, "Evolução de " ~ a.ticker)}
             ] %}
             {% set _ = linhas.append(celulas) %}
         {% endfor %}
