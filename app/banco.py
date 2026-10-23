@@ -330,3 +330,55 @@ def ler_serie(ticker: str, inicio: date, fim: date) -> list[dict]:
             return result
     finally:
         conn.close()
+
+
+def diagnostico() -> dict:
+    import time
+    import os
+    from app.database import DB_PATH
+
+    tipo = get_backend_type()
+
+    info: dict = {
+        "tipo": "Postgres" if tipo == "postgres" else "SQLite",
+        "database_url": bool(os.environ.get("DATABASE_URL", "").strip()),
+    }
+    inicio = time.perf_counter()
+    try:
+        conn, backend = get_connection()
+        try:
+            if backend == "postgres":
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'"
+                    )
+                    tabelas = cursor.fetchone()[0]
+                    cursor.execute("SELECT pg_database_size(current_database())")
+                    tamanho = cursor.fetchone()[0]
+                    info["tamanho"] = (
+                        f"{tamanho / 1_048_576:.1f} MB".replace(".", ",")
+                        if tamanho >= 1_048_576
+                        else f"{tamanho // 1024} KB"
+                    )
+            else:
+                cursor = conn.cursor()
+                tabelas = cursor.execute(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'"
+                ).fetchone()[0]
+                try:
+                    tamanho = os.path.getsize(DB_PATH)
+                    info["tamanho"] = (
+                        f"{tamanho / 1_048_576:.1f} MB".replace(".", ",")
+                        if tamanho >= 1_048_576
+                        else f"{tamanho // 1024} KB"
+                    )
+                except OSError:
+                    info["tamanho"] = "?"
+        finally:
+            conn.close()
+    except Exception as e:
+        info["erro"] = f"{type(e).__name__}: {e}"[:200]
+        return info
+    info["latencia_ms"] = round((time.perf_counter() - inicio) * 1000)
+    info["tabelas"] = tabelas
+    return info

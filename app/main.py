@@ -176,6 +176,7 @@ HORAS_VAZIOS = 3
 def estado_do_sistema() -> dict:
     """Verificações da página /sistema (spec 082). Só lê: não chama fonte externa."""
     from app import database
+    from app import banco as banco_module
 
     agora = datetime.now(timezone.utc)
     try:
@@ -193,7 +194,7 @@ def estado_do_sistema() -> dict:
         inicio=INICIO,
         remoto=dict(monitor_sistema.retrato),
         sha_local=monitor_sistema.commit_em_producao(),
-        banco=database.diagnostico(),
+        banco=banco_module.diagnostico(),
         coleta_ligada=agendador.coleta_ligada(),
         estado_coleta=dict(agendador.estado),
         intervalo_coleta=agendador.intervalo(agora),

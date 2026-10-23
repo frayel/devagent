@@ -1520,40 +1520,6 @@ def get_rodadas_coleta_desde(desde: datetime) -> dict[str, int]:
     return {}
 
 
-def diagnostico() -> dict:
-    """Tipo, tamanho e latência do banco em uso (página /sistema, spec 082)."""
-    import time
-
-    info: dict = {
-        "tipo": "SQLite",
-        "database_url": bool(os.environ.get("DATABASE_URL", "").strip()),
-    }
-    inicio = time.perf_counter()
-    try:
-        conn = get_connection()
-        try:
-            tabelas = conn.execute(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'"
-            ).fetchone()[0]
-        finally:
-            conn.close()
-    except Exception as e:  # noqa: BLE001 - a página mostra o erro
-        info["erro"] = f"{type(e).__name__}: {e}"[:200]
-        return info
-    info["latencia_ms"] = round((time.perf_counter() - inicio) * 1000)
-    info["tabelas"] = tabelas
-    try:
-        tamanho = os.path.getsize(DB_PATH)
-        info["tamanho"] = (
-            f"{tamanho / 1_048_576:.1f} MB".replace(".", ",")
-            if tamanho >= 1_048_576
-            else f"{tamanho // 1024} KB"
-        )
-    except OSError:
-        info["tamanho"] = "?"
-    return info
-
-
 @dataclass
 class RadarAnomaliasSpreadData:
     timestamp: datetime
