@@ -1,0 +1,6 @@
+implement(spec): banco residuos consultor postgres
+
+- 077b: Consultor de Opiniões adaptado para execução completa no Postgres com ON CONFLICT.
+- Uso de `sql_para` centralizando as queries com e sem postgres (placeholders)
+- Tabela de fila em `app/main.py` acessando o bd via módulo apropriado.
+- Criação e aprovação do teste de aceite respectivo.
