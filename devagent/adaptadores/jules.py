@@ -50,7 +50,12 @@ from typing import Any
 from devagent.config import PROJETO
 from devagent.estado_github import _get as github_get
 from devagent.estado_github import eh_do_agente, status_ci
-from devagent.fila_specs import LABEL_TENTATIVA, instrucao, specs_prontas
+from devagent.fila_specs import (
+    LABEL_PRIORIDADE,
+    LABEL_TENTATIVA,
+    instrucao,
+    specs_prontas,
+)
 
 API = "https://jules.googleapis.com/v1alpha"
 SOURCE = os.environ.get("JULES_SOURCE", f"sources/github/{PROJETO['repositorio']}")
@@ -510,15 +515,15 @@ def tratar_falhas(sessoes: list[dict[str, Any]], agora: datetime) -> bool:
     return aguardar
 
 
-def issues_de_tentativa() -> list[dict[str, Any]]:
-    """Issues `tentativa-falhou` abertas, no formato do estado_github (ADR 018).
+def issues_com_label(label: str) -> list[dict[str, Any]]:
+    """Issues abertas com o label, no formato do estado_github (ADRs 018 e 020).
 
     Sem acesso ao GitHub, devolve lista vazia: a fila segue sem o desvio.
     """
     try:
         brutas = github_get(
             f"/repos/{PROJETO['repositorio']}/issues"
-            f"?state=open&labels={LABEL_TENTATIVA}&per_page=100"
+            f"?state=open&labels={label}&per_page=100"
         )
     except (urllib.error.URLError, OSError, ValueError):
         return []
@@ -534,6 +539,14 @@ def issues_de_tentativa() -> list[dict[str, Any]]:
     ]
 
 
+def issues_de_tentativa() -> list[dict[str, Any]]:
+    return issues_com_label(LABEL_TENTATIVA)
+
+
+def issues_de_prioridade() -> list[dict[str, Any]]:
+    return issues_com_label(LABEL_PRIORIDADE)
+
+
 def prompt_de(persona: str) -> str:
     """Prompt da sessão; o do desenvolvedor já traz a próxima spec da fila.
 
@@ -546,7 +559,8 @@ def prompt_de(persona: str) -> str:
     if persona != "desenvolvedor":
         return texto
     try:
-        fila = instrucao(specs_prontas(), issues=issues_de_tentativa())
+        issues = issues_de_tentativa() + issues_de_prioridade()
+        fila = instrucao(specs_prontas(), issues=issues)
     except OSError:
         fila = ""
     return f"{texto} {fila}" if fila else texto

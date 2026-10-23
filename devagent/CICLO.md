@@ -105,7 +105,7 @@ Produção quebrada vem antes de qualquer outra coisa. Verifique, nesta ordem:
 5. **Ambiente de produção simulado.** Em um virtualenv limpo, `make install-prod` e `make smoke`. É o mesmo teste do job `smoke` do CI.
 6. **Correções prioritárias.** Se as verificações acima passaram, trate **uma** correção pendente, nesta ordem:
    1. a primeira entrada da seção *Correções* de `docs/BACKLOG.md`, que um humano ou o agente registrou como defeito conhecido;
-   2. a issue aberta mais antiga com label `prioridade` (exceto as com `bloqueado`), classificada pela tabela do Passo 6.
+   2. a issue aberta mais antiga com label `prioridade` (exceto as com `bloqueado`), classificada pela tabela do Passo 6. Os achados de severidade média e baixa da auditoria chegam com esse label (ADR 020): bug visível em produção passa na frente da fila de specs. Quando houver uma, o `estado_github` e o prompt da sessão dizem qual é.
 
    Se já existe um PR do agente aberto, destrave-o antes (Passo 2): a regra de continuidade vale aqui também. Ao terminar uma entrada do backlog, remova-a da seção *Correções* no mesmo PR `fix:` e registre a correção no `CHANGELOG.md`. Se a correção depender de configuração no painel da plataforma de deploy, abra uma issue `bloqueado` com o ajuste exato, cite-a na entrada do backlog e encerre. Entradas que citam issue `bloqueado` ainda aberta são puladas nas execuções seguintes.
 

@@ -20,6 +20,7 @@ from devagent.conferir_pr import documentos, status_de
 
 NUMERO = re.compile(r"0*(\d+)([a-z]*)")
 LABEL_TENTATIVA = "tentativa-falhou"
+LABEL_PRIORIDADE = "prioridade"
 
 
 def chave(caminho: Path) -> tuple[int, str, str]:
@@ -64,17 +65,48 @@ def tentativas_da_spec(spec: Path, issues: list[dict[str, Any]]) -> list[int]:
     ]
 
 
+def issue_prioritaria(issues: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """A issue `prioridade` aberta mais antiga, fora as `bloqueado` (Passo 1.6).
+
+    Ela passa na frente da fila de specs. Sem isto, o prompt mandava
+    implementar a próxima spec e o bug ficava atrás de uma fila que o próprio
+    agente vai enchendo: a #418 (rodapé, 23/10) nunca seria tratada (ADR 020).
+    """
+    candidatas = [
+        i
+        for i in issues
+        if LABEL_PRIORIDADE in i.get("labels", [])
+        and "bloqueado" not in i.get("labels", [])
+    ]
+    return min(candidatas, key=lambda i: i["numero"]) if candidatas else None
+
+
 def instrucao(
     prontas: list[Path],
     raiz: Path | None = None,
     issues: list[dict[str, Any]] | None = None,
 ) -> str:
-    """Frase que manda a sessão para o Passo 4; vazia se a fila está vazia.
+    """Frase que diz o trabalho da sessão; vazia se não há prioridade nem fila.
+
+    Issue `prioridade` aberta vem antes da fila (Passo 1.6, ADR 020).
 
     Se a próxima spec já tem tentativa fechada pelo guardião, a sessão não a
     implementa de novo: divide. Repetir a mesma spec do mesmo tamanho foi o
     laço de 21 e 22/10 (spec 075, PRs #402 e #403).
     """
+    prioritaria = issue_prioritaria(issues or [])
+    if prioritaria:
+        depois = (
+            f" A spec {prontas[0].name} fica para a sessão seguinte." if prontas else ""
+        )
+        return (
+            f"Existe issue `prioridade` aberta: #{prioritaria['numero']} "
+            f"({prioritaria['titulo']}). Ela vem antes da fila de specs (Passo 1.6): "
+            "depois do Passo 1 (produção quebrada) e do Passo 2 (PR aberto do "
+            "agente), o trabalho desta sessão é corrigi-la num PR `fix:` com "
+            f"`Closes #{prioritaria['numero']}`, com teste de regressão. Não "
+            f"implemente spec nesta sessão.{depois}"
+        )
     if not prontas:
         return ""
     raiz = raiz or Path.cwd()

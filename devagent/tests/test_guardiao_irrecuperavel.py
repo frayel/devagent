@@ -88,8 +88,13 @@ def test_especialista_com_codigo_nao_e_sem_achado() -> None:
     )
 
 
-def test_especialista_vazio_continua_irrecuperavel() -> None:
-    assert not guardiao_prs.sem_achado_de_especialista(SENTINEL, [])
+def test_especialista_vazio_e_sem_achado() -> None:
+    # ADR 020: o #426 (Sentinel, nenhum arquivo) abriu a #427, que ninguém lê.
+    assert guardiao_prs.sem_achado_de_especialista(SENTINEL, [])
+
+
+def test_especialista_sem_leitura_dos_arquivos_nao_fecha() -> None:
+    assert not guardiao_prs.sem_achado_de_especialista(SENTINEL, None)
 
 
 def test_ci_falhou_de_especialista_sem_achado_nao_abre_issue(

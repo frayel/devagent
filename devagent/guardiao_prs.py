@@ -9,8 +9,8 @@ Modos:
 
 Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
     - CI falhou: comenta @jules com o log, até MAX_TENTATIVAS. Depois fecha o PR.
-    - Especialista sem achado: PR de Sentinel, Palette ou Bolt só com o diário
-      fecha sem issue; não é trabalho perdido (ADR 019).
+    - Especialista sem achado: PR de Sentinel, Palette ou Bolt vazio ou só com
+      o diário fecha sem issue; não é trabalho perdido (ADRs 019 e 020).
     - Falha irrecuperável: PR vazio ou só com registros de execução não tem
       nada a corrigir na branch (a sessão perdeu o trabalho). Fecha na hora,
       sem cobrar o agente, e abre `tentativa-falhou` (ADR 018). Cobrar só
@@ -20,9 +20,11 @@ Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
       para resolver. Conflito grande: fecha o PR; o próximo ciclo refaz a partir da main.
     - PR cujo corpo diz "Substitui #N": fecha o #N.
     - Issue citada com Closes/Fixes/Resolves num PR mergeado nos últimos 7 dias: fecha.
-    - Ao fechar, abre issue `tentativa-falhou` com o motivo, para o próximo ciclo aprender.
-      Exceção: se tudo o que o PR muda já chegou à main (sobram só registros de
-      execução), fecha como absorvido e não abre issue (ADR 014).
+    - Ao fechar, abre issue `tentativa-falhou` com o motivo e a spec do PR, para o
+      próximo ciclo aprender. Exceção: se tudo o que o PR muda já chegou à main
+      (sobram só registros de execução), fecha como absorvido e não abre issue (ADR 014).
+    - `tentativa-falhou` órfã fecha: a spec citada já está `done` na main, ou a
+      issue não cita spec nenhuma e por isso nenhum passo do ciclo a lê (ADR 020).
 """
 
 from __future__ import annotations
@@ -36,7 +38,7 @@ import tempfile
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from devagent.conferir_pr import FECHA_ISSUE, PADRAO_REGISTROS
+from devagent.conferir_pr import FECHA_ISSUE, PADRAO_REGISTROS, documentos, status_de
 from devagent.config import VERIFICACAO
 
 MAX_TENTATIVAS = 3
@@ -192,14 +194,16 @@ ESPECIALISTA = re.compile(r"(?:^|\s)(Sentinel|Palette|Bolt):")
 
 
 def sem_achado_de_especialista(pr: dict[str, Any], arquivos: list[str] | None) -> bool:
-    """PR de especialista que só traz o diário: a varredura não achou nada.
+    """PR de especialista vazio ou só com o diário: a varredura não achou nada.
 
     Não é sessão que perdeu o trabalho. Em 22/10 o #406 (Sentinel, varredura
     limpa) foi fechado como trabalho perdido e a issue #407 mandou "dividir a
-    spec" de uma tarefa que não tem spec (ADR 019). Fecha sem abrir
-    `tentativa-falhou`; a regra 7 dos especialistas já diz para não abrir esse PR.
+    spec" de uma tarefa que não tem spec (ADR 019). Em 23/10 o #426 (Sentinel,
+    nenhum arquivo) abriu a #427, que nenhum passo do ciclo lê (ADR 020). Fecha
+    sem abrir `tentativa-falhou`; a regra 7 dos especialistas já diz para não
+    abrir esse PR.
     """
-    if not arquivos or not ESPECIALISTA.search(pr.get("title") or ""):
+    if arquivos is None or not ESPECIALISTA.search(pr.get("title") or ""):
         return False
     if FECHA_ISSUE.search(pr.get("body") or ""):
         return False
@@ -211,13 +215,52 @@ def fechar_sem_achado(pr: dict[str, Any]) -> None:
     comentar(
         numero,
         "Fechando este PR: a varredura do especialista não achou nada a mudar e "
-        "o PR só traz o diário. Não há trabalho perdido nem spec a refazer, então "
+        "o PR não traz nada além do diário. Não há trabalho perdido nem spec a refazer, então "
         "não abro issue `tentativa-falhou`. Pela regra 7 de "
         "`devagent/agents/especialistas.md`, sem achado a sessão segue para o "
         "ciclo do desenvolvedor em vez de abrir PR.",
     )
     sh("gh", "pr", "close", str(numero), "--delete-branch", check=False)
     print(f"PR #{numero} fechado: especialista sem achado")
+
+
+# Spec citada num texto: marcador do guardião, caminho do arquivo ou "spec 076b".
+SPEC_NO_TEXTO = re.compile(
+    r"(?i)(?:<!-- spec: |specs/|\bspec\s+`?)(\d{1,4}[a-z]?)(?![a-z0-9])"
+)
+SPEC_NO_ARQUIVO = re.compile(r"(?:^|/)(\d{1,4}[a-z]?)-[^/]*\.md$")
+
+
+def chave_spec(spec: str) -> str:
+    """ "076b", "76B" e "0076b" são a mesma spec."""
+    m = re.fullmatch(r"(\d+)([a-z]?)", spec.lower())
+    return f"{int(m.group(1))}{m.group(2)}" if m else spec.lower()
+
+
+def specs_citadas(texto: str, arquivos: list[str] | None = None) -> list[str]:
+    """Specs citadas no texto ou alteradas pelo PR, sem repetição.
+
+    "spec 076b", "specs/076b-x.md" e o marcador `<!-- spec: 076b -->` contam;
+    "#76" e números soltos não.
+    """
+    achadas = [m.lower() for m in SPEC_NO_TEXTO.findall(texto or "")]
+    pasta = documentos()["specs"].rstrip("/") + "/"
+    for arq in arquivos or []:
+        if arq.startswith(pasta):
+            m = SPEC_NO_ARQUIVO.search(arq)
+            if m:
+                achadas.append(m.group(1).lower())
+    unicas: dict[str, str] = {}
+    for spec in achadas:
+        unicas.setdefault(chave_spec(spec), spec)
+    return list(unicas.values())
+
+
+def specs_do_pr(pr: dict[str, Any], arquivos: list[str] | None) -> list[str]:
+    return specs_citadas(
+        f"{pr.get('title') or ''}\n{pr.get('body') or ''}\n{pr.get('headRefName') or ''}",
+        arquivos,
+    )
 
 
 def fechar(
@@ -259,9 +302,23 @@ def fechar(
         "PR do agente fechado pelo guardião",
         check=False,
     )
+    specs = specs_do_pr(pr, arquivos_do_pr(numero))
+    # "spec 076b" por extenso: é o que o fila_specs procura para mandar dividir
+    # a spec (ADR 018); o marcador é o que o guardião procura para fechar a
+    # issue quando a spec virar `done` (ADR 020).
+    linha_specs = (
+        "**Spec:** "
+        + ", ".join(f"spec {s}" for s in specs)
+        + "\n"
+        + "".join(f"<!-- spec: {s} -->" for s in specs)
+        + "\n\n"
+        if specs
+        else ""
+    )
     corpo_issue = (
         f"O guardião fechou {pr['url']} ({pr['title']}).\n\n"
         f"**Motivo:** {motivo}\n\n"
+        + linha_specs
         + (
             f"<details><summary>Detalhe</summary>\n\n```\n{detalhe[-6000:]}\n```\n</details>\n\n"
             if detalhe
@@ -463,6 +520,93 @@ def fechar_issues_citadas() -> None:
             print(f"Issue #{n} fechada (citada no PR #{pr['number']})")
 
 
+PR_NO_CORPO = re.compile(r"/pull/(\d+)")
+
+
+def status_das_specs(ref: str = "origin/main") -> dict[str, str]:
+    """Status de cada spec em `ref`, pela chave normalizada ("76b": "done").
+
+    Lê do git, não da árvore de trabalho: a varredura troca de branch.
+    """
+    pasta = documentos()["specs"].rstrip("/")
+    nomes = sh("git", "ls-tree", "--name-only", ref, f"{pasta}/").split()
+    status: dict[str, str] = {}
+    for nome in nomes:
+        m = SPEC_NO_ARQUIVO.search(nome)
+        if not m:
+            continue
+        st = status_de(sh("git", "show", f"{ref}:{nome}", check=False))
+        if st:
+            status[chave_spec(m.group(1))] = st
+    return status
+
+
+def motivo_tentativa_orfa(specs: list[str], status: dict[str, str]) -> str:
+    """Motivo para fechar a `tentativa-falhou`, ou "" se ela ainda ensina algo.
+
+    O ciclo só lê `tentativa-falhou` no Passo 4, para a próxima spec da fila
+    (ADR 018), e o Passo 6 a exclui. Sem spec, ninguém a lê; com a spec já
+    `done`, o trabalho foi entregue e a lição não tem mais a quem servir. Em
+    23/10 a #416 (spec 076b, entregue no #414 sem `Closes`) e a #427 (Sentinel
+    sem spec) estavam nessas condições (ADR 020).
+    """
+    if not specs:
+        return (
+            "esta tentativa não cita spec nenhuma. O ciclo só lê `tentativa-falhou` "
+            "ao pegar a próxima spec da fila (Passo 4), então nenhuma sessão "
+            "chegaria a ela."
+        )
+    estados = [status.get(chave_spec(s)) for s in specs]
+    if all(e == "done" for e in estados):
+        lista = ", ".join(f"spec {s}" for s in specs)
+        return (
+            f"o trabalho já foi entregue: {lista} está com `status: done` na `main`. "
+            "O PR da entrega não trouxe `Closes` para esta issue."
+        )
+    return ""
+
+
+def fechar_tentativas_orfas() -> None:
+    """Fecha `tentativa-falhou` que nenhum passo do ciclo vai consumir (ADR 020)."""
+    issues = [
+        i
+        for i in gh_json(
+            "api",
+            "repos/{owner}/{repo}/issues?state=open&labels=tentativa-falhou&per_page=100",
+        )
+        if "pull_request" not in i
+    ]
+    if not issues:
+        return
+    sh("git", "fetch", "-q", "origin", "main")
+    status = status_das_specs()
+    for issue in issues:
+        if "bloqueado" in {lbl["name"] for lbl in issue.get("labels", [])}:
+            continue
+        corpo = issue.get("body") or ""
+        specs = specs_citadas(f"{issue['title']}\n{corpo}")
+        if not specs:
+            # Issues antigas não têm o marcador: as specs vêm do PR fechado.
+            m = PR_NO_CORPO.search(corpo)
+            if m:
+                specs = specs_citadas("", arquivos_do_pr(int(m.group(1))))
+        motivo = motivo_tentativa_orfa(specs, status)
+        if not motivo:
+            continue
+        sh(
+            "gh",
+            "issue",
+            "close",
+            str(issue["number"]),
+            "--reason",
+            "not planned",
+            "--comment",
+            f"Fechada pelo guardião: {motivo}",
+            check=False,
+        )
+        print(f"Issue #{issue['number']} fechada: tentativa órfã")
+
+
 def varredura() -> None:
     # Um passo auxiliar com defeito não pode cegar os outros: de 28/09 a 30/09
     # uma falha aqui derrubou a varredura inteira em toda execução.
@@ -470,6 +614,10 @@ def varredura() -> None:
         fechar_issues_citadas()
     except Exception as erro:  # noqa: BLE001
         print(f"::warning::fechar_issues_citadas falhou: {erro}")
+    try:
+        fechar_tentativas_orfas()
+    except Exception as erro:  # noqa: BLE001
+        print(f"::warning::fechar_tentativas_orfas falhou: {erro}")
     prs = prs_do_agente()
     fechados: set[int] = set()
 
