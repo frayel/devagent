@@ -59,8 +59,9 @@ jobs:
             esac
           done
 
-          # Achados do auditor LLM viram issues logo após o merge.
+          # Achados do auditor LLM e do verificador geral viram issues logo após o merge.
           title=$(gh pr view "$pr" -R "$GITHUB_REPOSITORY" --json title -q .title)
           case "$title" in
-            auditoria:*) gh workflow run auditoria-achados.yml -R "$GITHUB_REPOSITORY" --ref main ;;
+            auditoria:*|verificação:*|verificacao:*|Verificação:*|Verificacao:*)
+              gh workflow run auditoria-achados.yml -R "$GITHUB_REPOSITORY" --ref main ;;
           esac

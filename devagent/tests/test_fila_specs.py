@@ -17,6 +17,7 @@ def _spec(pasta: Path, nome: str, status: str) -> None:
 @pytest.fixture(autouse=True)
 def sem_github(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(jules, "issues_de_tentativa", lambda: [])
+    monkeypatch.setattr(jules, "issues_de_prioridade", lambda: [])
 
 
 @pytest.fixture
@@ -112,3 +113,39 @@ def test_prompt_do_desenvolvedor_manda_dividir(
         jules, "issues_de_tentativa", lambda: [_tentativa(9, "spec 068b falhou")]
     )
     assert "divida a spec" in jules.prompt_de("desenvolvedor")
+
+
+# ADR 020: issue `prioridade` passa na frente da fila (caso #418).
+def _prioridade(numero: int, *labels: str) -> dict[str, object]:
+    return {
+        "numero": numero,
+        "titulo": "[auditoria] data incompleta",
+        "labels": ["auditoria", "bug", "prioridade", *labels],
+    }
+
+
+def test_prioridade_vem_antes_da_spec(raiz: Path) -> None:
+    issues = [_prioridade(420), _prioridade(418)]
+    texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, issues)
+    assert "#418" in texto and "#420" not in texto
+    assert "Closes #418" in texto
+    assert "Não implemente spec" in texto
+
+
+def test_prioridade_bloqueada_nao_desvia(raiz: Path) -> None:
+    issues = [_prioridade(418, "bloqueado")]
+    texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, issues)
+    assert "068b-regras.md" in texto
+    assert "#418" not in texto
+
+
+def test_prioridade_com_fila_vazia(tmp_path: Path) -> None:
+    texto = fila_specs.instrucao([], tmp_path, [_prioridade(418)])
+    assert "Closes #418" in texto
+
+
+def test_prompt_do_desenvolvedor_traz_a_prioridade(
+    raiz: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(jules, "issues_de_prioridade", lambda: [_prioridade(418)])
+    assert "Closes #418" in jules.prompt_de("desenvolvedor")
