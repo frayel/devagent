@@ -1,3 +1,4 @@
+from datetime import date
 import sqlite3
 import json
 from dataclasses import dataclass
@@ -196,11 +197,13 @@ def save_volatilidade_silenciosa_data(data: VolatilidadeSilenciosaData) -> None:
     gravar_snapshot("volatilidade_silenciosa", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_volatilidade_silenciosa_data() -> VolatilidadeSilenciosaData | None:
+def get_latest_volatilidade_silenciosa_data(
+    data_referencia: date | None = None,
+) -> VolatilidadeSilenciosaData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("volatilidade_silenciosa")
+    payload = ler_snapshot("volatilidade_silenciosa", data_referencia)
     if not payload:
         return None
 
@@ -233,11 +236,13 @@ def save_esforco_resultado_data(data: EsforcoResultadoData) -> None:
     )
 
 
-def get_latest_esforco_resultado_data() -> EsforcoResultadoData | None:
+def get_latest_esforco_resultado_data(
+    data_referencia: date | None = None,
+) -> EsforcoResultadoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("esforco_resultado")
+    payload = ler_snapshot("esforco_resultado", data_referencia)
     if not payload:
         return None
 
@@ -424,11 +429,13 @@ def save_ibovespa_data(data: IbovespaData) -> None:
     gravar_snapshot("ibovespa", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_ibovespa_data() -> IbovespaData | None:
+def get_latest_ibovespa_data(
+    data_referencia: date | None = None,
+) -> IbovespaData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("ibovespa")
+    payload = ler_snapshot("ibovespa", data_referencia)
     if payload:
         return IbovespaData(
             timestamp=datetime.fromisoformat(payload["timestamp"]),
@@ -458,11 +465,13 @@ def save_highlights_data(data: HighlightsData) -> None:
     gravar_snapshot("maiores_altas_baixas", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_highlights_data() -> HighlightsData | None:
+def get_latest_highlights_data(
+    data_referencia: date | None = None,
+) -> HighlightsData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("maiores_altas_baixas")
+    payload = ler_snapshot("maiores_altas_baixas", data_referencia)
     if payload:
         return HighlightsData(
             timestamp=datetime.fromisoformat(payload["timestamp"]),
@@ -485,11 +494,13 @@ def save_volume_alerts_data(data: VolumeAlertsData) -> None:
     gravar_snapshot("volume_alerts", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_volume_alerts_data() -> VolumeAlertsData | None:
+def get_latest_volume_alerts_data(
+    data_referencia: date | None = None,
+) -> VolumeAlertsData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("volume_alerts")
+    payload = ler_snapshot("volume_alerts", data_referencia)
     if not payload:
         return None
 
@@ -515,11 +526,13 @@ def save_dolar_correlation_data(data: DolarCorrelationData) -> None:
     )
 
 
-def get_latest_dolar_correlation_data() -> DolarCorrelationData | None:
+def get_latest_dolar_correlation_data(
+    data_referencia: date | None = None,
+) -> DolarCorrelationData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("dolar_correlation")
+    payload = ler_snapshot("dolar_correlation", data_referencia)
     if not payload:
         return None
 
@@ -538,10 +551,12 @@ def save_fator_mola_data(data: FatorMolaData) -> None:
     gravar_snapshot("fator_mola", data.timestamp.date(), "ao_vivo", data.fonte, payload)
 
 
-def get_latest_fator_mola_data() -> FatorMolaData | None:
+def get_latest_fator_mola_data(
+    data_referencia: date | None = None,
+) -> FatorMolaData | None:
     from app.banco import ler_snapshot
 
-    payload = ler_snapshot("fator_mola")
+    payload = ler_snapshot("fator_mola", data_referencia)
     if not payload:
         return None
     payload_copy = dict(payload)
@@ -562,11 +577,13 @@ def save_scanner_capitulacao_data(data: ScannerCapitulacaoData) -> None:
     gravar_snapshot("scanner_capitulacao", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_scanner_capitulacao_data() -> ScannerCapitulacaoData | None:
+def get_latest_scanner_capitulacao_data(
+    data_referencia: date | None = None,
+) -> ScannerCapitulacaoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("scanner_capitulacao")
+    payload = ler_snapshot("scanner_capitulacao", data_referencia)
     if not payload:
         return None
 
@@ -587,10 +604,12 @@ def save_forca_relativa_data(data: ForcaRelativaData) -> None:
     )
 
 
-def get_latest_forca_relativa_data() -> ForcaRelativaData | None:
+def get_latest_forca_relativa_data(
+    data_referencia: date | None = None,
+) -> ForcaRelativaData | None:
     from app.banco import ler_snapshot
 
-    payload = ler_snapshot("forca_relativa")
+    payload = ler_snapshot("forca_relativa", data_referencia)
     if not payload:
         return None
     payload_copy = dict(payload)
@@ -610,11 +629,13 @@ def save_escudo_quedas_data(data: EscudoQuedasData) -> None:
     )
 
 
-def get_latest_escudo_quedas_data() -> EscudoQuedasData | None:
+def get_latest_escudo_quedas_data(
+    data_referencia: date | None = None,
+) -> EscudoQuedasData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("escudo_quedas")
+    payload = ler_snapshot("escudo_quedas", data_referencia)
     if not payload:
         return None
 
@@ -634,11 +655,11 @@ def save_coesao_data(data: CoesaoData) -> None:
     gravar_snapshot("coesao", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_coesao_data() -> CoesaoData | None:
+def get_latest_coesao_data(data_referencia: date | None = None) -> CoesaoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("coesao")
+    payload = ler_snapshot("coesao", data_referencia)
     if not payload:
         return None
 
@@ -658,11 +679,13 @@ def save_atrasadas_rally_data(data: AtrasadasRallyData) -> None:
     gravar_snapshot("atrasadas_rally", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_atrasadas_rally_data() -> AtrasadasRallyData | None:
+def get_latest_atrasadas_rally_data(
+    data_referencia: date | None = None,
+) -> AtrasadasRallyData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("atrasadas_rally")
+    payload = ler_snapshot("atrasadas_rally", data_referencia)
     if not payload:
         return None
 
@@ -691,11 +714,13 @@ def save_concentracao_vendedora_data(data: ConcentracaoData) -> None:
     gravar_snapshot("concentracao_vendedora", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_concentracao_vendedora_data() -> ConcentracaoData | None:
+def get_latest_concentracao_vendedora_data(
+    data_referencia: date | None = None,
+) -> ConcentracaoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("concentracao_vendedora")
+    payload = ler_snapshot("concentracao_vendedora", data_referencia)
     if not payload:
         return None
 
@@ -706,11 +731,13 @@ def get_latest_concentracao_vendedora_data() -> ConcentracaoData | None:
     return ConcentracaoData(**payload_copy)
 
 
-def get_latest_concentracao_data() -> ConcentracaoData | None:
+def get_latest_concentracao_data(
+    data_referencia: date | None = None,
+) -> ConcentracaoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("concentracao")
+    payload = ler_snapshot("concentracao", data_referencia)
     if not payload:
         return None
 
@@ -730,11 +757,13 @@ def save_variacao_subita_data(data: VariacaoSubitaData) -> None:
     gravar_snapshot("variacao_subita", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_variacao_subita_data() -> VariacaoSubitaData | None:
+def get_latest_variacao_subita_data(
+    data_referencia: date | None = None,
+) -> VariacaoSubitaData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("variacao_subita")
+    payload = ler_snapshot("variacao_subita", data_referencia)
     if not payload:
         return None
 
@@ -754,11 +783,13 @@ def save_concentracao_setorial_data(data: ConcentracaoSetorialData) -> None:
     gravar_snapshot("concentracao_setorial", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_concentracao_setorial_data() -> ConcentracaoSetorialData | None:
+def get_latest_concentracao_setorial_data(
+    data_referencia: date | None = None,
+) -> ConcentracaoSetorialData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("concentracao_setorial")
+    payload = ler_snapshot("concentracao_setorial", data_referencia)
     if not payload:
         return None
 
@@ -778,11 +809,13 @@ def save_apetite_risco_data(data: ApetiteRiscoData) -> None:
     gravar_snapshot("apetite_risco", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_apetite_risco_data() -> ApetiteRiscoData | None:
+def get_latest_apetite_risco_data(
+    data_referencia: date | None = None,
+) -> ApetiteRiscoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("apetite_risco")
+    payload = ler_snapshot("apetite_risco", data_referencia)
     if not payload:
         return None
 
@@ -802,11 +835,13 @@ def save_rotacao_capital_data(data: RotacaoCapitalData) -> None:
     gravar_snapshot("rotacao_capital", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_rotacao_capital_data() -> RotacaoCapitalData | None:
+def get_latest_rotacao_capital_data(
+    data_referencia: date | None = None,
+) -> RotacaoCapitalData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("rotacao_capital")
+    payload = ler_snapshot("rotacao_capital", data_referencia)
     if not payload:
         return None
 
@@ -835,11 +870,13 @@ def save_faca_caindo_data(data: FacaCaindoData) -> None:
     )
 
 
-def get_latest_faca_caindo_data() -> FacaCaindoData | None:
+def get_latest_faca_caindo_data(
+    data_referencia: date | None = None,
+) -> FacaCaindoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("faca_caindo")
+    payload = ler_snapshot("faca_caindo", data_referencia)
     if not payload:
         return None
 
@@ -866,11 +903,13 @@ def save_compradores_fundo_data(data: CompradoresFundoData) -> None:
     gravar_snapshot("compradores_fundo", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_compradores_fundo_data() -> CompradoresFundoData | None:
+def get_latest_compradores_fundo_data(
+    data_referencia: date | None = None,
+) -> CompradoresFundoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("compradores_fundo")
+    payload = ler_snapshot("compradores_fundo", data_referencia)
     if not payload:
         return None
 
@@ -897,11 +936,13 @@ def save_armadilha_abertura_data(data: ArmadilhaAberturaData) -> None:
     gravar_snapshot("armadilha_abertura", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_armadilha_abertura_data() -> ArmadilhaAberturaData | None:
+def get_latest_armadilha_abertura_data(
+    data_referencia: date | None = None,
+) -> ArmadilhaAberturaData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("armadilha_abertura")
+    payload = ler_snapshot("armadilha_abertura", data_referencia)
     if not payload:
         return None
 
@@ -928,11 +969,13 @@ def save_sobrevivencia_semanal_data(data: SobrevivenciaSemanalData) -> None:
     gravar_snapshot("sobrevivencia_semanal", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_sobrevivencia_semanal_data() -> SobrevivenciaSemanalData | None:
+def get_latest_sobrevivencia_semanal_data(
+    data_referencia: date | None = None,
+) -> SobrevivenciaSemanalData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("sobrevivencia_semanal")
+    payload = ler_snapshot("sobrevivencia_semanal", data_referencia)
     if not payload:
         return None
 
@@ -951,10 +994,10 @@ def save_mare_data(data: MareData) -> None:
     gravar_snapshot("mare", data.timestamp.date(), "ao_vivo", data.fonte, payload)
 
 
-def get_latest_mare_data() -> MareData | None:
+def get_latest_mare_data(data_referencia: date | None = None) -> MareData | None:
     from app.banco import ler_snapshot
 
-    payload = ler_snapshot("mare")
+    payload = ler_snapshot("mare", data_referencia)
     if not payload:
         return None
     payload_copy = dict(payload)
@@ -979,11 +1022,13 @@ def save_anomalia_peso_data(data: AnomaliaPesoData) -> None:
     gravar_snapshot("anomalia_peso", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_anomalia_peso_data() -> AnomaliaPesoData | None:
+def get_latest_anomalia_peso_data(
+    data_referencia: date | None = None,
+) -> AnomaliaPesoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("anomalia_peso")
+    payload = ler_snapshot("anomalia_peso", data_referencia)
     if not payload:
         return None
 
@@ -1017,11 +1062,13 @@ def save_radar_inflexao_data(data: RadarInflexaoData) -> None:
     gravar_snapshot("radar_inflexao", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_radar_inflexao_data() -> RadarInflexaoData | None:
+def get_latest_radar_inflexao_data(
+    data_referencia: date | None = None,
+) -> RadarInflexaoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("radar_inflexao")
+    payload = ler_snapshot("radar_inflexao", data_referencia)
     if not payload:
         return None
     payload_copy = payload.copy()
@@ -1074,11 +1121,13 @@ def save_radar_congestionamento_data(alertas: list[dict], fonte: str) -> None:
     gravar_snapshot("radar_congestionamento", hoje, "ao_vivo", fonte, payload)
 
 
-def get_latest_radar_congestionamento_data() -> RadarCongestionamentoData | None:
+def get_latest_radar_congestionamento_data(
+    data_referencia: date | None = None,
+) -> RadarCongestionamentoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("radar_congestionamento")
+    payload = ler_snapshot("radar_congestionamento", data_referencia)
     if not payload:
         return None
     payload_copy = payload.copy()
@@ -1096,11 +1145,13 @@ def save_radar_short_squeeze_data(data: RadarShortSqueezeData) -> None:
     gravar_snapshot("radar_short_squeeze", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_radar_short_squeeze_data() -> RadarShortSqueezeData | None:
+def get_latest_radar_short_squeeze_data(
+    data_referencia: date | None = None,
+) -> RadarShortSqueezeData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("radar_short_squeeze")
+    payload = ler_snapshot("radar_short_squeeze", data_referencia)
     if not payload:
         return None
     payload_copy = payload.copy()
@@ -1126,10 +1177,12 @@ def save_falso_rompimento_data(data: FalsoRompimentoData) -> None:
     )
 
 
-def get_latest_falso_rompimento_data() -> FalsoRompimentoData | None:
+def get_latest_falso_rompimento_data(
+    data_referencia: date | None = None,
+) -> FalsoRompimentoData | None:
     from app.banco import ler_snapshot
 
-    payload = ler_snapshot("falso_rompimento")
+    payload = ler_snapshot("falso_rompimento", data_referencia)
     if not payload:
         return None
     payload_copy = dict(payload)
@@ -1154,11 +1207,13 @@ def save_radar_absorcao_cruzada_data(data: RadarAbsorcaoCruzadaData) -> None:
     gravar_snapshot("radar_absorcao_cruzada", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_radar_absorcao_cruzada_data() -> RadarAbsorcaoCruzadaData | None:
+def get_latest_radar_absorcao_cruzada_data(
+    data_referencia: date | None = None,
+) -> RadarAbsorcaoCruzadaData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("radar_absorcao_cruzada")
+    payload = ler_snapshot("radar_absorcao_cruzada", data_referencia)
     if not payload:
         return None
     payload_copy = payload.copy()
@@ -1207,10 +1262,12 @@ def save_liquidez_abertura_data(data: LiquidezAberturaData) -> None:
     )
 
 
-def get_latest_liquidez_abertura_data() -> LiquidezAberturaData | None:
+def get_latest_liquidez_abertura_data(
+    data_referencia: date | None = None,
+) -> LiquidezAberturaData | None:
     from app.banco import ler_snapshot
 
-    payload = ler_snapshot("liquidez_abertura")
+    payload = ler_snapshot("liquidez_abertura", data_referencia)
     if not payload:
         return None
     payload_copy = dict(payload)
@@ -1228,11 +1285,13 @@ def save_radar_divergencia_volume_data(data: RadarDivergenciaVolumeData) -> None
     gravar_snapshot("radar_divergencia_volume", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_radar_divergencia_volume_data() -> RadarDivergenciaVolumeData | None:
+def get_latest_radar_divergencia_volume_data(
+    data_referencia: date | None = None,
+) -> RadarDivergenciaVolumeData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("radar_divergencia_volume")
+    payload = ler_snapshot("radar_divergencia_volume", data_referencia)
     if not payload:
         return None
     payload_copy = payload.copy()
@@ -1250,11 +1309,13 @@ def save_sensibilidade_juros_data(data: SensibilidadeJurosData) -> None:
     gravar_snapshot("sensibilidade_juros", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_sensibilidade_juros_data() -> SensibilidadeJurosData | None:
+def get_latest_sensibilidade_juros_data(
+    data_referencia: date | None = None,
+) -> SensibilidadeJurosData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("sensibilidade_juros")
+    payload = ler_snapshot("sensibilidade_juros", data_referencia)
     if not payload:
         return None
 
@@ -1275,10 +1336,12 @@ def save_fator_peso_pesado_data(data: FatorPesoPesadoData) -> None:
     )
 
 
-def get_latest_fator_peso_pesado_data() -> FatorPesoPesadoData | None:
+def get_latest_fator_peso_pesado_data(
+    data_referencia: date | None = None,
+) -> FatorPesoPesadoData | None:
     from app.banco import ler_snapshot
 
-    payload = ler_snapshot("fator_peso_pesado")
+    payload = ler_snapshot("fator_peso_pesado", data_referencia)
     if not payload:
         return None
     payload_copy = dict(payload)
@@ -1296,11 +1359,13 @@ def save_motores_indice_data(data: MotoresIndiceData) -> None:
     gravar_snapshot("motores_indice", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_motores_indice_data() -> MotoresIndiceData | None:
+def get_latest_motores_indice_data(
+    data_referencia: date | None = None,
+) -> MotoresIndiceData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("motores_indice")
+    payload = ler_snapshot("motores_indice", data_referencia)
     if not payload:
         return None
     payload_copy = payload.copy()
@@ -1327,11 +1392,13 @@ def save_clima_global_data(data: ClimaGlobalData) -> None:
     gravar_snapshot("clima_global", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_clima_global_data() -> ClimaGlobalData | None:
+def get_latest_clima_global_data(
+    data_referencia: date | None = None,
+) -> ClimaGlobalData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("clima_global")
+    payload = ler_snapshot("clima_global", data_referencia)
     if not payload:
         return None
 
@@ -1342,11 +1409,13 @@ def get_latest_clima_global_data() -> ClimaGlobalData | None:
     return ClimaGlobalData(**payload_copy)
 
 
-def get_latest_relogio_volatilidade_data() -> RelogioVolatilidadeData | None:
+def get_latest_relogio_volatilidade_data(
+    data_referencia: date | None = None,
+) -> RelogioVolatilidadeData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("relogio_volatilidade")
+    payload = ler_snapshot("relogio_volatilidade", data_referencia)
     if not payload:
         return None
     payload_copy = payload.copy()
@@ -1468,11 +1537,13 @@ def save_radar_anomalias_spread_data(data: RadarAnomaliasSpreadData) -> None:
     gravar_snapshot("anomalias_spread", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_radar_anomalias_spread_data() -> RadarAnomaliasSpreadData | None:
+def get_latest_radar_anomalias_spread_data(
+    data_referencia: date | None = None,
+) -> RadarAnomaliasSpreadData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("anomalias_spread")
+    payload = ler_snapshot("anomalias_spread", data_referencia)
     if not payload:
         return None
 
@@ -1492,11 +1563,13 @@ def save_concentracao_ordens_data(data: ConcentracaoOrdensData) -> None:
     gravar_snapshot("concentracao_ordens", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_concentracao_ordens_data() -> ConcentracaoOrdensData | None:
+def get_latest_concentracao_ordens_data(
+    data_referencia: date | None = None,
+) -> ConcentracaoOrdensData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("concentracao_ordens")
+    payload = ler_snapshot("concentracao_ordens", data_referencia)
     if not payload:
         return None
 
@@ -1532,11 +1605,13 @@ def save_exaustao_queda_data(data: ExaustaoQuedaData) -> None:
     )
 
 
-def get_latest_exaustao_queda_data() -> ExaustaoQuedaData | None:
+def get_latest_exaustao_queda_data(
+    data_referencia: date | None = None,
+) -> ExaustaoQuedaData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("exaustao_queda")
+    payload = ler_snapshot("exaustao_queda", data_referencia)
     if not payload:
         return None
 
@@ -1562,11 +1637,13 @@ def save_exaustao_tendencia_data(data: ExaustaoTendenciaData) -> None:
     )
 
 
-def get_latest_exaustao_tendencia_data() -> ExaustaoTendenciaData | None:
+def get_latest_exaustao_tendencia_data(
+    data_referencia: date | None = None,
+) -> ExaustaoTendenciaData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("exaustao_tendencia")
+    payload = ler_snapshot("exaustao_tendencia", data_referencia)
     if not payload:
         return None
 
@@ -1593,11 +1670,13 @@ def save_assimetria_risco_retorno_data(data: AssimetriaRiscoRetornoData) -> None
     gravar_snapshot("assimetria_risco_retorno", hoje, "ao_vivo", data.fonte, payload)
 
 
-def get_latest_assimetria_risco_retorno_data() -> AssimetriaRiscoRetornoData | None:
+def get_latest_assimetria_risco_retorno_data(
+    data_referencia: date | None = None,
+) -> AssimetriaRiscoRetornoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime
 
-    payload = ler_snapshot("assimetria_risco_retorno")
+    payload = ler_snapshot("assimetria_risco_retorno", data_referencia)
     if not payload:
         return None
 
@@ -1709,11 +1788,13 @@ def save_radar_anomalia_fechamento_data(alertas_json: str, fonte: str) -> None:
     gravar_snapshot("radar_anomalia_fechamento", hoje, "ao_vivo", fonte, payload)
 
 
-def get_latest_radar_anomalia_fechamento_data() -> RadarAnomaliaFechamentoData | None:
+def get_latest_radar_anomalia_fechamento_data(
+    data_referencia: date | None = None,
+) -> RadarAnomaliaFechamentoData | None:
     from app.banco import ler_snapshot
     from datetime import datetime, timezone as tz
 
-    snapshot = ler_snapshot("radar_anomalia_fechamento")
+    snapshot = ler_snapshot("radar_anomalia_fechamento", data_referencia)
     if not snapshot:
         return None
 

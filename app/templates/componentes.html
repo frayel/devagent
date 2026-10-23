@@ -9,7 +9,16 @@
     </details>
     {% endif %}
   </div>
-  {{ caller() }}
+
+  {% set body = caller() | trim %}
+  {% if body %}
+    {{ body | safe }}
+  {% elif is_historico %}
+    <div class="vazio">Sem registro neste pregão</div>
+  {% else %}
+    <div class="vazio escondido">Sem dados</div>
+  {% endif %}
+
   {% if fonte and horario %}
   <div class="rodape">Fonte {{ fonte }} · {{ horario }}</div>
   {% endif %}

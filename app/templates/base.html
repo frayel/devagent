@@ -29,13 +29,35 @@
         </nav>
                 <div class="pregao">
             {% set estado_mercado = estado_mercado|default('fechado', true) %}
-            {% if estado_mercado == 'aberto' %}
-                Ao vivo &middot; atualizado às {{ data.time if data else '' }}
+
+            {% if is_historico %}
+                <div class="aviso-historico" >
+                    Você está vendo o fechamento de {{ data_referencia.strftime('%d/%m/%Y') }} &middot;
+                    <a href="{{ request.url.path }}">Voltar para hoje</a>
+                </div>
+            {% endif %}
+
+            {% if datas_disponiveis and (request.url.path == "/" or request.url.path == "/consultor") %}
+                <select
+                    class="seletor-data"
+                    name="data"
+                    onchange="if(this.value === '{{ datas_disponiveis[0].value }}'){ window.location.href = '{{ request.url.path }}'; } else { window.location.href = '{{ request.url.path }}?data=' + this.value; }">
+                    {% for d in datas_disponiveis %}
+                        {% set is_selected = (data_referencia|string) == d.value %}
+                        <option value="{{ d.value }}" {% if is_selected %}selected{% endif %}>
+                            {{ d.label }}
+                        </option>
+                    {% endfor %}
+                </select>
             {% else %}
-                {% if data_referencia %}
-                Fechamento de {{ data_referencia.strftime('%d/%m/%Y') }} &middot; dados congelados
+                {% if estado_mercado == 'aberto' %}
+                    Ao vivo &middot; atualizado às {{ data.timestamp.astimezone(timezone(timedelta(hours=-3))).strftime('%H:%M:%S') if data else '' }}
                 {% else %}
-                Pregão Fechado
+                    {% if data_referencia %}
+                    Fechamento de {{ data_referencia.strftime('%d/%m/%Y') }} &middot; dados congelados
+                    {% else %}
+                    Pregão Fechado
+                    {% endif %}
                 {% endif %}
             {% endif %}
         </div>

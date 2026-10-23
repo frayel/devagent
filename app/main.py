@@ -1,3 +1,6 @@
+from app.banco import listar_datas
+from app.constants import PREGOES_NO_SELETOR
+from datetime import date
 from app.banco import get_backend_type
 import asyncio
 import logging
@@ -416,8 +419,61 @@ def api_consultor(request: Request):
     )
 
 
+def get_data_referencia_and_options(agora, param_data: "str | None"):
+    mercado_aberto = calendario.mercado_aberto(agora)
+    estado_mercado = "aberto" if mercado_aberto else "fechado"
+    data_hoje = (
+        calendario.ultimo_pregao_fechado(agora)
+        if not mercado_aberto
+        else calendario.pregao_corrente(agora)
+    )
+
+    datas_brutas = listar_datas("ibovespa", limite=PREGOES_NO_SELETOR + 1)
+    str_hoje = str(data_hoje)
+    if str_hoje not in datas_brutas:
+        datas_brutas.insert(0, str_hoje)
+        if len(datas_brutas) > PREGOES_NO_SELETOR + 1:
+            datas_brutas.pop()
+
+    data_ref = data_hoje
+    is_historico = False
+
+    if param_data:
+        try:
+            parsed_date = date.fromisoformat(param_data)
+            if param_data in datas_brutas and param_data != str_hoje:
+                data_ref = parsed_date
+                is_historico = True
+            elif param_data == str_hoje:
+                data_ref = data_hoje
+                is_historico = False
+            else:
+                return None, None, None, None, None, False
+        except ValueError:
+            return None, None, None, None, None, False
+
+    datas_disponiveis = []
+    dias_semana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+    for i, d_str in enumerate(datas_brutas):
+        d_obj = date.fromisoformat(d_str)
+        if i == 0:
+            label = "Hoje" if estado_mercado == "aberto" else "Último fechamento"
+        else:
+            label = f"{d_obj.strftime('%d/%m')} {dias_semana[d_obj.weekday()]}"
+        datas_disponiveis.append({"value": d_str, "label": label, "is_hoje": (i == 0)})
+
+    return (
+        data_ref,
+        estado_mercado,
+        mercado_aberto,
+        is_historico,
+        datas_disponiveis,
+        True,
+    )
+
+
 @app.get("/api/snapshot")
-def snapshot():
+def snapshot(data: str | None = None):
     agora = datetime.now(timezone.utc)
     mercado_aberto = calendario.mercado_aberto(agora)
     estado_mercado = "aberto" if mercado_aberto else "fechado"
@@ -427,7 +483,9 @@ def snapshot():
         else calendario.pregao_corrente(agora)
     )
 
-    resp = {
+    from typing import Any
+
+    resp: dict[str, Any] = {
         "gerado_em": agora.isoformat(),
         "estado_mercado": estado_mercado,
         "data_referencia": data_ref.isoformat(),
@@ -446,33 +504,37 @@ def snapshot():
             "alertas": json.loads(assimetria.alertas_json),
         }
 
-    data = get_latest_ibovespa_data()
-    if data:
+    ibovespa_data = get_latest_ibovespa_data(data_ref)
+    if ibovespa_data:
         variation_pct = (
-            ((data.current_price - data.previous_close) / data.previous_close) * 100
-            if data.previous_close
+            (
+                (ibovespa_data.current_price - ibovespa_data.previous_close)
+                / ibovespa_data.previous_close
+            )
+            * 100
+            if ibovespa_data.previous_close
             else 0.0
         )
 
         history_data = (
-            json.loads(data.history_json)
-            if data.history_json
+            json.loads(ibovespa_data.history_json)
+            if ibovespa_data.history_json
             else {"dates": [], "closes": []}
         )
 
         resp["paineis"]["ibovespa"] = {
-            "valor": data.current_price,
-            "fechamento_anterior": data.previous_close,
+            "valor": ibovespa_data.current_price,
+            "fechamento_anterior": ibovespa_data.previous_close,
             "variacao_pct": variation_pct,
-            "coletado_em": data.timestamp.isoformat(),
-            "fonte": getattr(data, "fonte", "brapi"),
+            "coletado_em": ibovespa_data.timestamp.isoformat(),
+            "fonte": getattr(ibovespa_data, "fonte", "brapi"),
             "historico": {
                 "datas": history_data.get("dates", []),
                 "fechamentos": history_data.get("closes", []),
             },
             "medias_moveis": {
-                "mm21": data.mm21,
-                "mm200": data.mm200,
+                "mm21": ibovespa_data.mm21,
+                "mm200": ibovespa_data.mm200,
             },
         }
 
@@ -1015,13 +1077,15 @@ def snapshot():
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     agora = datetime.now(timezone.utc)
-    mercado_aberto = calendario.mercado_aberto(agora)
-    estado_mercado = "aberto" if mercado_aberto else "fechado"
-    data_ref = (
-        calendario.ultimo_pregao_fechado(agora)
-        if not mercado_aberto
-        else calendario.pregao_corrente(agora)
+    param_data = request.query_params.get("data")
+    data_ref, estado_mercado, mercado_aberto, is_historico, datas_disponiveis, valid = (
+        get_data_referencia_and_options(agora, param_data)
     )
+
+    if not valid:
+        from fastapi.responses import RedirectResponse
+
+        return RedirectResponse(url="/")
 
     motores_data = get_latest_motores_indice_data()
     motores_cards = json.loads(motores_data.motores_json) if motores_data else None
@@ -1059,7 +1123,7 @@ async def index(request: Request):
     if apetite_risco_data:
         risco_dict["estado"] = apetite_risco_data.estado
 
-    data = get_ibovespa_view_data()
+    ibovespa_data = get_ibovespa_view_data()
     highlights = get_highlights_view_data()
     volume_alerts = get_volume_alerts_view_data()
     dolar_correlation = get_dolar_correlation_view_data()
@@ -1345,9 +1409,11 @@ async def index(request: Request):
         context={
             "estado_mercado": estado_mercado,
             "data_referencia": data_ref,
+            "is_historico": is_historico,
+            "datas_disponiveis": datas_disponiveis,
             "mercado_aberto": mercado_aberto,
             "manchete": manchete,
-            "data": data,
+            "data": ibovespa_data,
             "highlights": highlights,
             "volume_alerts": volume_alerts,
             "dolar_correlation": dolar_correlation,

@@ -10,10 +10,15 @@
 ## Manutenção
 
 - Última rodada de manutenção: 2026-10-17, spec 063. Medidas: unificação de histórico diário (cache).
-- Specs entregues desde a última rodada (exceto as de manutenção): 2.
+- Specs entregues desde a última rodada (exceto as de manutenção): 3.
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
+
+- Spec 078 (Histórico dos últimos 5 pregões):
+  - Adicionado seletor de datas ao topo da página e `/consultor` permitindo navegação via HTMX entre os últimos pregões.
+  - Implementada política de retenção de 30 pregões de snapshots com limpeza agendada diária.
+  - Funções de acesso de painéis adaptadas para suportar `data_referencia`.
 
 - Spec 082 (Página de sistema):
   - `/sistema` e `/api/sistema`, protegidas pela `CONSULTOR_SENHA`; link "Sistema" no cabeçalho.
