@@ -1,5 +1,6 @@
-- Verifiquei o PR #442 que implementa a Spec 079 (Radar de Exaustão de Alta).
-- Observei que o coletor, os testes e o endpoint snapshot estão corretos e de acordo com a spec.
-- Detectei que a variável `exaustao_alta` não foi repassada para o template no contexto da função `index()` em `app/main.py`.
-- Omissão impede a visualização dos ativos em alerta no painel da tela inicial.
-- Próxima verificação: conferir testes ponta a ponta que garantam presença da variável.
+- Verifiquei os PRs integrados na main recém testados localmente e com smoke test.
+- O PR 470 (Spec 085, que corrige problemas de banco no CI) atendeu adequadamente à integração dos modelos no banco de dados com tratamento assertivo e logs via API diagnostica.
+- Além do PR 470, os testes das Specs recentes de correções funcionaram bem com assertivas locais.
+- A omissão de `exaustao_alta` citada anteriormente não ocorre mais, pois já se encontra repassada de modo correto.
+- Sem problemas de segurança, ou discrepâncias entre interface e contrato de spec detectados nos painéis de diagnósticos.
+- Próxima verificação: revisar se possíveis instabilidades do Yahoo afetam outras coleções não reportadas na API.
