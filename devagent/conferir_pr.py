@@ -113,6 +113,8 @@ def corpo_do_pr() -> str:
 
 
 def titulo_do_pr() -> str:
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return ""
     """Título do PR no CI (evento pull_request); vazio fora dele."""
     return _campo_do_pr("title")
 
