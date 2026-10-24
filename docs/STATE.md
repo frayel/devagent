@@ -420,3 +420,5 @@
   - Adicionado ExaustaoAltaData em app/database.py com salvamento/leitura via snapshots.
   - Atualizado app/agendador.py.
   - Atualizado app/main.py e app/templates/index.html para exibição do novo painel.
+
+- implementado 084-consultor-esquema-postgres.md (saúde técnica, contador de specs não incrementado)
