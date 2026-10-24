@@ -1338,6 +1338,21 @@ async def index(request: Request, data_str: str | None = None):
     if exaustao_queda:
         pass
 
+    exaustao_alta_data = get_latest_exaustao_alta_data()
+    exaustao_alta = None
+    if exaustao_alta_data:
+        try:
+            alertas = json.loads(exaustao_alta_data.alertas_json)
+            exaustao_alta = {
+                "coletado_em": exaustao_alta_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": exaustao_alta_data.fonte,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+
     exaustao_tendencia_data = get_latest_exaustao_tendencia_data()
     exaustao_tendencia = None
     if exaustao_tendencia_data:
@@ -1543,5 +1558,6 @@ async def index(request: Request, data_str: str | None = None):
             "anomalias_spread": anomalias_spread,
             "exaustao_tendencia": exaustao_tendencia,
             "exaustao_queda": exaustao_queda,
+            "exaustao_alta": exaustao_alta,
         },
     )

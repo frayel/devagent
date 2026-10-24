@@ -96,3 +96,5 @@
 **Vulnerability:** N/A.
 **Learning:** Revisei dependências, templates em busca de `| safe` inseguros e configurações do Content-Security-Policy. Nenhum risco visível crítico e que possa ser mitigado em curto tempo foi encontrado.
 **Prevention:** Executando repasse para o ciclo principal.
+
+- **24/10/2026 10:32**: Executei `pip-audit` e não encontrei vulnerabilidades nas dependências. Verifiquei usos de `|safe` (nenhum encontrado) e revisei uso de `cursor.execute` em `app/banco.py`. Nenhuma vulnerabilidade encontrada. Passo o turno para o desenvolvedor resolver a issue 451.
