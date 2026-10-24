@@ -45,12 +45,6 @@ def escrever(raiz: Path, arquivos: dict[str, str]) -> None:
         alvo.write_text(texto, encoding="utf-8")
 
 
-@pytest.fixture(autouse=True)
-def clear_env(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
-    monkeypatch.delenv("GITHUB_EVENT_NAME", raising=False)
-
-
 @pytest.fixture
 def repo(tmp_path: Path) -> Path:
     git(tmp_path, "init", "-q", "-b", "main")
