@@ -63,18 +63,58 @@ def incrementar_llm_uso() -> None:
         conn.close()
 
 
-def set_opinioes_status(status: str, motivo: str = "") -> None:
+def set_opinioes_status(
+    status: str, motivo: str = "", descartadas_na_rodada: int = 0
+) -> None:
     conn, backend = get_connection()
     try:
         agora = datetime.now(timezone.utc).isoformat()
         cur = conn.cursor()
+
+        # Pegar descartadas antigas e somar
+        cur.execute("SELECT descartadas FROM consultor_opinioes_status LIMIT 1")
+        row = cur.fetchone()
+        descartadas_antigas = row[0] if row and row[0] else 0
+        descartadas_total = descartadas_antigas + descartadas_na_rodada
+
+        # Calcular os novos valores
+        sete_dias = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+        cur.execute(
+            sql_para(
+                backend,
+                "SELECT COUNT(*) FROM consultor_opinioes WHERE extraida_em >= ?",
+            ),
+            (sete_dias,),
+        )
+        op_gravadas = cur.fetchone()[0]
+
+        vinte_e_quatro_h = (
+            datetime.now(timezone.utc) - timedelta(hours=24)
+        ).isoformat()
+        cur.execute(
+            sql_para(
+                backend,
+                "SELECT COUNT(*) FROM consultor_fila_materias WHERE processada = 1 AND criado_em >= ?",
+            ),
+            (vinte_e_quatro_h,),
+        )
+        mat_processadas = cur.fetchone()[0]
+
         cur.execute("DELETE FROM consultor_opinioes_status")
         cur.execute(
             sql_para(
                 backend,
-                "INSERT INTO consultor_opinioes_status (status, motivo, desde) VALUES (?, ?, ?)",
+                "INSERT INTO consultor_opinioes_status (status, motivo, desde, ultima_extracao_em, materias_processadas, opinioes_gravadas, descartadas) VALUES (?, ?, ?, ?, ?, ?, ?)",
             ),
-            (status, motivo, agora),
+            (
+                status,
+                motivo,
+                agora,
+                agora,
+                mat_processadas,
+                op_gravadas,
+                descartadas_total,
+            ),
         )
         conn.commit()
     finally:

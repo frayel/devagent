@@ -15,6 +15,9 @@
 
 ## Implementado
 
+- Spec 085 (Consultor Motivos Sem Opinião):
+  - Substituição da frase "Nenhuma opinião recente" por 7 diagnósticos.
+  - Atualização do banco Postgres e SQLite para suportar as colunas de data da ultima extração, matérias processadas e descartadas.
 - Spec 081 (Rastreador de Correlação com DI):
   - Coletor buscando fechamentos intraday recentes para Juros Futuros (DI1F27/DI1F29) via `yfinance`.
   - Cálculo de correlação com o Ibovespa (15 min intraday e diário de 5 dias).
