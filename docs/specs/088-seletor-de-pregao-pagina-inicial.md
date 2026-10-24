@@ -2,6 +2,7 @@
 id: 088
 titulo: Seletor de pregão que funciona na página inicial e na API (conserto da 078)
 status: ready
+revisada: 2026-10-24
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_088.py
