@@ -2,7 +2,7 @@
 id: 2026-10-23-paineis-fuso-horario-incompleto
 severidade: media
 painel: multiplos
-status: aberto
+status: resolvido
 visto_em: 2026-10-23T00:15-03:00
 ---
 
@@ -32,3 +32,6 @@ e
 
 ## Invariante proposta
 Verificar com uma expressão regular no HTML se o texto após "Fonte" contém o padrão de data completo `dd/mm/aaaa`.
+
+## Resolução
+Verificado em produção no dia 23/10/2026 às 21:00 BRT: os rodapés foram corrigidos e agora exibem a data completa, como `23/10/2026 18:48:22 BRT`.
