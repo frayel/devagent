@@ -1774,6 +1774,36 @@ def get_consultor_confianca() -> dict[str, dict]:
 
 
 @dataclass
+class CorrelacaoDIData:
+    timestamp: datetime
+    correlacao_intradiaria: float
+    correlacao_5d: float
+    fonte: str = "yfinance"
+
+
+def save_correlacao_di_data(data: CorrelacaoDIData) -> None:
+    from app.banco import gravar_snapshot
+
+    hoje = data.timestamp.astimezone(timezone.utc).date()
+    payload = data.__dict__.copy()
+    payload["timestamp"] = payload["timestamp"].isoformat()
+    gravar_snapshot("correlacao_di", hoje, "ao_vivo", data.fonte, payload)
+
+
+def get_latest_correlacao_di_data() -> CorrelacaoDIData | None:
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("correlacao_di")
+    if not payload:
+        return None
+    payload_copy = payload.copy()
+    if "timestamp" in payload_copy:
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+    return CorrelacaoDIData(**payload_copy)
+
+
+@dataclass
 class ExaustaoAltaData:
     timestamp: datetime
     alertas_json: str

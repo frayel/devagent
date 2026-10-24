@@ -115,8 +115,14 @@ def corpo_do_pr() -> str:
 def titulo_do_pr() -> str:
     """Título do PR no CI (evento pull_request); vazio fora dele."""
     titulo = _campo_do_pr("title")
-    # Quando rodando pytest os mocks geram titulos indesejados
-    if os.environ.get("PYTEST_CURRENT_TEST"):
+    # Quando rodando pytest os mocks geram titulos indesejados, testamos via env var
+    import os
+
+    if (
+        os.environ.get("PYTEST_CURRENT_TEST")
+        and titulo
+        and ("verificação:" in titulo or "auditoria:" in titulo or "spec:" in titulo)
+    ):
         return ""
     return titulo
 

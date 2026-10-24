@@ -10,6 +10,7 @@
 - Spec 077a: Resíduos do SQLite depois da migração
 - **Spec 077:** Congelamento de dados e data de referência no pós-pregão, melhorando o carregamento intradiário
 ### Added
+- feat: Rastreador de Correlação com DI (Spec 081) - Painel que exibe a correlação entre o Ibovespa e os juros futuros (DI1F27/DI1F29) em dois horizontes de tempo (15 min intraday e diário 5 dias).
 - Refatoração: migração de painéis (lote 3 parte a) para usar snapshots_paineis, removendo tabelas SQLite. (Spec 076a)
 - Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
 - Refatoração: migração de painéis (lote 2 parte b) para usar snapshots_paineis, removendo tabelas SQLite. (Spec 075b)

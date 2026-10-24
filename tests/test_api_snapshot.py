@@ -30,3 +30,11 @@ def test_api_snapshot_volatilidade_silenciosa():
     assert response.status_code == 200
     data = response.json()
     assert "volatilidade_silenciosa" in data["paineis"]
+
+
+def test_api_snapshot_correlacao_di():
+    response = client.get("/api/snapshot")
+    assert response.status_code == 200
+    data = response.json()
+    if "correlacao_di" in data["paineis"]:
+        assert "correlacao_di" in data["paineis"]

@@ -17,6 +17,7 @@ def test_coleta_desligada_nos_testes():
 
 
 def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
+    monkeypatch.setattr("app.collectors.correlacao_di.collect_and_save", lambda: True)
     monkeypatch.setattr("app.collectors.anomalia_peso.collect_and_save", lambda: True)
     monkeypatch.setattr("app.collectors.radar_inflexao.collect_and_save", lambda: True)
     monkeypatch.setattr(
@@ -135,6 +136,7 @@ def test_httpx_e_dependencia_de_producao():
 
 
 def test_mascara_token_no_estado(monkeypatch):
+    monkeypatch.setattr("app.collectors.correlacao_di.collect_and_save", lambda: True)
     from app import agendador
     import httpx
 
@@ -190,6 +192,7 @@ def test_mascara_token_no_estado(monkeypatch):
         "concentracao_ordens",
         "exaustao_tendencia",
         "radar_anomalia_fechamento",
+        "correlacao_di",
         "consultor_historico",
         "exaustao_queda",
         "fator_mola",
