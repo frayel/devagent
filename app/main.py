@@ -54,6 +54,7 @@ from app.services.compradores_fundo import get_compradores_fundo_view
 from app.services.armadilha_abertura import get_armadilha_abertura_view
 from app.services.sobrevivencia_semanal import get_sobrevivencia_semanal_view
 from app.services.volatilidade_silenciosa import get_volatilidade_silenciosa_view
+from app.services.correlacao_di import get_correlacao_di_view_data
 from app.services import scanner_capitulacao
 from app.services import mare as mare_servico
 from app.database import (
@@ -908,6 +909,10 @@ def snapshot(data_str: str | None = None):
         get_latest_falso_rompimento_data,
     )
 
+    view_di = get_correlacao_di_view_data()
+    if view_di:
+        resp["paineis"]["correlacao_di"] = view_di
+
     radar_short_squeeze_data = get_latest_radar_short_squeeze_data()
     db_radar_congestionamento = get_latest_radar_congestionamento_data()
     if radar_short_squeeze_data:
@@ -1177,6 +1182,7 @@ async def index(request: Request, data_str: str | None = None):
 
     clima_global_data = get_latest_clima_global_data()
     clima_global = None
+    correlacao_di = get_correlacao_di_view_data()
     if clima_global_data:
         clima_global = {
             "coletado_em": clima_global_data.timestamp.astimezone(
@@ -1532,6 +1538,7 @@ async def index(request: Request, data_str: str | None = None):
             "mare": mare,
             "motores_cards": motores_cards,
             "clima_global": clima_global,
+            "correlacao_di": correlacao_di,
             "relogio": relogio,
             "anomalias_spread": anomalias_spread,
             "exaustao_tendencia": exaustao_tendencia,
