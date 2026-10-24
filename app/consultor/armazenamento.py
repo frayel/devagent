@@ -40,7 +40,11 @@ def init_db():
                         id SERIAL PRIMARY KEY,
                         status TEXT NOT NULL,
                         motivo TEXT,
-                        desde TEXT NOT NULL
+                        desde TEXT NOT NULL,
+                        ultima_extracao_em TEXT,
+                        materias_processadas INTEGER DEFAULT 0,
+                        opinioes_gravadas INTEGER DEFAULT 0,
+                        descartadas INTEGER DEFAULT 0
                     );
                 """)
                 cursor.execute("""
@@ -83,6 +87,18 @@ def init_db():
                 cursor.execute(
                     "ALTER TABLE consultor_fila_materias ADD COLUMN IF NOT EXISTS processada INTEGER NOT NULL DEFAULT 0;"
                 )
+                cursor.execute(
+                    "ALTER TABLE consultor_opinioes_status ADD COLUMN IF NOT EXISTS ultima_extracao_em TEXT;"
+                )
+                cursor.execute(
+                    "ALTER TABLE consultor_opinioes_status ADD COLUMN IF NOT EXISTS materias_processadas INTEGER DEFAULT 0;"
+                )
+                cursor.execute(
+                    "ALTER TABLE consultor_opinioes_status ADD COLUMN IF NOT EXISTS opinioes_gravadas INTEGER DEFAULT 0;"
+                )
+                cursor.execute(
+                    "ALTER TABLE consultor_opinioes_status ADD COLUMN IF NOT EXISTS descartadas INTEGER DEFAULT 0;"
+                )
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS consultor_llm_uso (
                         data DATE PRIMARY KEY,
@@ -118,7 +134,11 @@ def init_db():
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     status TEXT NOT NULL,
                     motivo TEXT,
-                    desde TEXT NOT NULL
+                    desde TEXT NOT NULL,
+                    ultima_extracao_em TEXT,
+                    materias_processadas INTEGER DEFAULT 0,
+                    opinioes_gravadas INTEGER DEFAULT 0,
+                    descartadas INTEGER DEFAULT 0
                 );
             """)
             cursor.execute("""
@@ -161,6 +181,30 @@ def init_db():
             try:
                 cursor.execute(
                     "ALTER TABLE consultor_fila_materias ADD COLUMN processada INTEGER DEFAULT 0"
+                )
+            except Exception:
+                pass
+            try:
+                cursor.execute(
+                    "ALTER TABLE consultor_opinioes_status ADD COLUMN ultima_extracao_em TEXT"
+                )
+            except Exception:
+                pass
+            try:
+                cursor.execute(
+                    "ALTER TABLE consultor_opinioes_status ADD COLUMN materias_processadas INTEGER DEFAULT 0"
+                )
+            except Exception:
+                pass
+            try:
+                cursor.execute(
+                    "ALTER TABLE consultor_opinioes_status ADD COLUMN opinioes_gravadas INTEGER DEFAULT 0"
+                )
+            except Exception:
+                pass
+            try:
+                cursor.execute(
+                    "ALTER TABLE consultor_opinioes_status ADD COLUMN descartadas INTEGER DEFAULT 0"
                 )
             except Exception:
                 pass
@@ -375,13 +419,29 @@ def get_opinioes_status() -> dict:
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT status, motivo, desde FROM consultor_opinioes_status LIMIT 1"
+            "SELECT status, motivo, desde, ultima_extracao_em, materias_processadas, opinioes_gravadas, descartadas FROM consultor_opinioes_status LIMIT 1"
         )
         row = cursor.fetchone()
 
         if row:
-            return {"status": row[0], "motivo": row[1], "desde": row[2]}
-        return {"status": "ok", "motivo": "", "desde": ""}
+            return {
+                "status": row[0],
+                "motivo": row[1],
+                "desde": row[2],
+                "ultima_extracao_em": row[3] or "",
+                "materias_processadas": row[4] or 0,
+                "opinioes_gravadas": row[5] or 0,
+                "descartadas": row[6] or 0,
+            }
+        return {
+            "status": "ok",
+            "motivo": "",
+            "desde": "",
+            "ultima_extracao_em": "",
+            "materias_processadas": 0,
+            "opinioes_gravadas": 0,
+            "descartadas": 0,
+        }
     finally:
         conn.close()
 

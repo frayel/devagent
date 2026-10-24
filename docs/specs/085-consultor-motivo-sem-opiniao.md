@@ -1,7 +1,7 @@
 ---
 id: 085
 titulo: Consultor explica por que não há opiniões, em vez de "Nenhuma opinião recente"
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_085.py
