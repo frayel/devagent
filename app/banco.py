@@ -100,7 +100,7 @@ def init_db():
                     """
                 )
                 cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_snapshots_paineis_data_referencia ON snapshots_paineis(data_referencia DESC);"
+                    "CREATE INDEX IF NOT EXISTS idx_snapshots_paineis_painel_data_referencia ON snapshots_paineis(painel, data_referencia DESC);"
                 )
                 cursor.execute(
                     """
@@ -130,7 +130,7 @@ def init_db():
                 """
             )
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_snapshots_paineis_data_referencia ON snapshots_paineis(data_referencia DESC)"
+                "CREATE INDEX IF NOT EXISTS idx_snapshots_paineis_painel_data_referencia ON snapshots_paineis(painel, data_referencia DESC)"
             )
             cursor.execute(
                 """
