@@ -114,17 +114,7 @@ def corpo_do_pr() -> str:
 
 def titulo_do_pr() -> str:
     """Título do PR no CI (evento pull_request); vazio fora dele."""
-    titulo = _campo_do_pr("title")
-    # Quando rodando pytest os mocks geram titulos indesejados, testamos via env var
-    import os
-
-    if (
-        os.environ.get("PYTEST_CURRENT_TEST")
-        and titulo
-        and ("verificação:" in titulo or "auditoria:" in titulo or "spec:" in titulo)
-    ):
-        return ""
-    return titulo
+    return _campo_do_pr("title")
 
 
 def git(*args: str, raiz: Path) -> str | None:
@@ -256,8 +246,7 @@ def conferir(
         )
 
     # Regra 8: cada raia escreve só na sua faixa.
-    if titulo is None:
-        titulo = titulo_do_pr()
+    titulo = titulo_do_pr() if titulo is None else titulo
     if titulo and alterados:
         raia = raia_do_titulo(titulo)
         invasoes = fora_da_raia(raia, alterados)
