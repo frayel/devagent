@@ -200,6 +200,12 @@ def responder(request: httpx.Request) -> httpx.Response:
             }
         }
         return httpx.Response(200, json=corpo, request=request)
+    if "moneytimes.com.br" in url.netloc or "infomoney.com.br" in url.netloc:
+        return httpx.Response(
+            200,
+            text="<rss><channel><item><guid>123</guid><title>Teste PETR4</title><description>PETR4 sobe</description><pubDate>Wed, 23 Oct 2024 10:00:00 GMT</pubDate><link>http://link</link></item></channel></rss>",
+            request=request,
+        )
     return httpx.Response(404, json={"error": "fora do Yahoo falso"}, request=request)
 
 

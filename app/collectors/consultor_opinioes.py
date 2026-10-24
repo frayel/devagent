@@ -1,7 +1,7 @@
 from app.services.consultor_opinioes import extrair_opinioes
 import logging
 import time
-import requests
+import httpx
 import xml.etree.ElementTree as ET
 from app.consultor.pre_filtro import filtrar_materia
 from app.consultor.armazenamento import save_materia
@@ -62,7 +62,7 @@ def parse_feed(xml_content: str) -> list[dict]:
 def fetch_with_retry(url: str, max_retries: int = 3) -> str | None:
     for i in range(max_retries):
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=10)
+            resp = httpx.get(url, headers=HEADERS, timeout=10, follow_redirects=True)
             resp.raise_for_status()
             return resp.text
         except Exception as e:
