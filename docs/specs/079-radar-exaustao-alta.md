@@ -1,7 +1,7 @@
 ---
 id: 079
 titulo: Capacidade Nova: Radar de Exaustão de Alta
-status: ready
+status: done
 esforco: M
 gaveta: capacidade nova
 ---

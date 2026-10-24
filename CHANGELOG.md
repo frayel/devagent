@@ -210,3 +210,5 @@
 - Divide a especificação 072 sobre consultor placar em 072a e 072b.
 - Spec 72: Consultor · placar de acertos e avaliações na UI.
 - Spec 76: Banco · migração dos painéis para snapshots (terceiro lote, parte b).
+
+- Spec 079: Radar de Exaustão de Alta
