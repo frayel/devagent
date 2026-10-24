@@ -9,7 +9,7 @@ aceite: tests/test_aceite_084.py
 
 ## Problema
 
-Em produção, a página `/sistema` acusa `consultor_opinioes: relation "consultor_llm_uso" does not exist`, a aba Consultor mostra sempre "Nenhuma opinião recente." e a integração Gemini aparece como *Inativo*, mesmo com `GEMINI_API_KEY` cadastrada no Render. As três coisas têm a mesma causa.
+Em produção, a página `/sistema` acusa `consultor_opinioes: relation "consultor_llm_uso" does not exist`, a aba Consultor mostra sempre "Nenhuma opinião recente." e a integração Gemini aparece como *Inativo*, mesmo com `GEMINI_API_KEY` cadastrada no Render. As três coisas têm a mesma causa, confirmada no `/api/sistema` de produção em 24/10/2026: o erro da última rodada é `consultor_opinioes: relation "consultor_llm_uso" does not exist`, e o item do Gemini diz "sem chamadas desde a partida" (e não "sem GEMINI_API_KEY"), o que mostra que a chave está configurada e que nenhuma chamada saiu.
 
 A spec 077b foi marcada `done`, mas o esquema do Postgres ficou incompleto. Em `app/consultor/armazenamento.py::init_db`, o ramo Postgres cria cinco tabelas (`consultor_opinioes`, `consultor_opinioes_status`, `consultor_recomendacoes`, `consultor_fechamentos`, `consultor_fila_materias`) e **não cria**:
 

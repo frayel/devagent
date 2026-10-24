@@ -9,13 +9,13 @@ aceite: tests/test_aceite_090.py
 
 ## Problema
 
-`/sistema` mostra o Yahoo Finance com **Atenção** e erro 404. Hoje o produto não consegue dizer se a chamada está inválida ou se o servidor tem problema, porque o registro de fontes (`app/collectors/registro_fontes.py`) guarda só `HTTP 404 em <url>` da **última** falha, sem o corpo da resposta, sem o endpoint e sem o símbolo. O próprio nível mostra a dúvida: `grave()` trata 404 como "pedido que a fonte não tem" e rebaixa para *Atenção*, o que é correto para um ticker que saiu da bolsa e errado se o endpoint inteiro sumiu.
+`/sistema` mostra o Yahoo Finance com **Atenção** e erro 404 ("0 de 19 chamadas ok"). O produto não consegue dizer sozinho se o pedido está errado ou se o servidor falhou, porque o registro de fontes (`app/collectors/registro_fontes.py`) guarda só `HTTP 404 em <url>` da **última** falha, sem corpo da resposta, endpoint ou símbolo.
 
-A leitura do código dá candidatos, que a implementação precisa confirmar com o registro novo e não assumir:
+**Causa confirmada em produção (leitura do `/api/sistema` em 24/10/2026, 03:00 UTC).** Os 404 vêm de pedidos por ativo, `/v8/finance/chart/{ticker}.SA?range=2y&interval=1d`, para **NTCO3, SOMA3, JBSS3, MRFG3 e PETZ3**. Os cinco estão em `CARTEIRA_IBOVESPA` (`app/consultor/universo.py`), e o MetaTrader 5 também falha para os mesmos símbolos (`HTTP 503: copy_rates_from_pos returned None`). Dois serviços independentes não conhecem o ticker: o pedido está certo na forma e errado no conteúdo, porque a carteira tem papéis que deixaram de existir ou mudaram de código (fusões e reorganizações). O contador "0 de 19" é só dos pedidos que sobraram depois de o MT5 falhar, ou seja, exatamente os desses papéis. O servidor do Yahoo, nesse caso, não tem problema.
 
-1. **Tickers que a bolsa não reconhece mais.** `consultor_historico` chama `/v8/finance/chart/{ticker}.SA` uma vez por ativo da carteira (cerca de 90 por hora). Um ticker renomeado, incorporado ou deslistado devolve 404 em toda rodada, para sempre. A própria tela do Consultor avisa que a composição pode estar desatualizada.
-2. **Lote que cai por um símbolo.** `fetch_historico_diario_yfinance_spark` monta `{t}.SA` para todo símbolo, sem passar por `simbolo_yahoo` (que poupa `^BVSP`, `BRL=X` e símbolos com ponto), e manda 15 por chamada em `/v7/finance/spark`. Um símbolo inválido pode derrubar o lote inteiro com 404.
-3. **Endpoint que mudou.** Quase todos os coletores usam `/v7/finance/spark`, que não é uma API documentada. Se o Yahoo a retirar, todos os painéis perdem o dado de uma vez.
+Atualizar a lista de papéis é a spec 094. Esta spec trata do que o produto faz quando um símbolo não existe e de como a tela explica isso.
+
+**Ainda não confirmado** (candidatos que a implementação precisa verificar com o registro novo): o lote de `fetch_historico_diario_yfinance_spark` monta `{t}.SA` sem passar por `simbolo_yahoo` e manda 15 símbolos por chamada, de modo que um símbolo ruim pode derrubar o lote; e `/v7/finance/spark` não é uma API documentada e pode mudar. Nenhum dos dois aparece no erro de hoje. Não foi possível testar o Yahoo direto do ambiente de desenvolvimento (HTTP 429 do próprio Yahoo para o IP do ambiente).
 
 ## Comportamento esperado
 

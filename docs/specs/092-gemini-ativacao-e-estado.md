@@ -9,7 +9,7 @@ aceite: tests/test_aceite_092.py
 
 ## Problema
 
-Em `/sistema`, a integração **Gemini** aparece como *Inativo*. A chave `GEMINI_API_KEY` está cadastrada no Render, então o rótulo engana, por três motivos de código:
+Em `/sistema`, a integração **Gemini** aparece como *Inativo*. A chave `GEMINI_API_KEY` está cadastrada no Render, e o `/api/sistema` de produção de 24/10/2026 confirma: o detalhe diz "sem chamadas desde a partida", texto que o código só usa quando a chave existe (sem chave, o texto seria "sem GEMINI_API_KEY"). O rótulo engana, por três motivos de código:
 
 1. *Inativo* em `app/services/sistema.py::_item_da_fonte` significa "sem chamadas desde a partida", e **não** "sem chave". Com a chave presente e nenhuma chamada, a tela mostra *Inativo, sem chamadas desde a partida*, que é indistinguível de "desligado de propósito".
 2. Nenhuma chamada acontece porque o pipeline do Consultor quebra antes de chegar à API (spec 084: tabela `consultor_llm_uso` ausente no Postgres). Corrigir a 084 destrava as chamadas, mas só quando houver matérias na fila e a rodada do coletor passar por `extrair_opinioes`; a tela continua cega até lá.
