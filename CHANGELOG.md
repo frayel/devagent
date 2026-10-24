@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- fix(núcleo): os testes do agente não enxergam mais o evento real do PR (ADR 022). PRs de raia paralela (`spec:`, `revisão:`, `verificação:`) falhavam no CI por herdarem o título na regra 8 e entravam em laço de correção e fechamento.
 - Histórico dos últimos 5 pregões na UI e API (Spec 078).
 - Spec 077d: Resíduos do SQLite depois da migração - remoção das tabelas `radar_anomalia_fechamento_cache` e `consultor_confianca_regras`.
 - agent: raias paralelas (ADR 021). Ao lado do desenvolvimento, que segue único, a rodada abre três raias que escrevem em outros lugares: Especificador (o antigo Passo 7, quando a fila de specs `ready` chega a uma, PR `spec:`), Revisor (revisa a próxima spec e preenche `revisada:` antes de ela entrar na fila do desenvolvimento, PR `revisão:`) e Verificador geral (confere os merges do desenvolvimento a cada 90 min no mínimo e abre achados em `docs/verificacao/`, que viram issues `verificacao`). Cada raia tem uma sessão e um PR por vez; a regra 8 do `conferir_pr` reprova PR fora da sua faixa; números de spec nova são reservados no prompt para não colidirem; o guardião fecha PR de raia paralela sem `tentativa-falhou`.
