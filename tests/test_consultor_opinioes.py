@@ -196,6 +196,9 @@ def test_llm_without_key(monkeypatch):
     from app.services.consultor_opinioes import extrair_opinioes
     from app.consultor.armazenamento import get_opinioes_status
 
+    from app.consultor.armazenamento import init_db
+
+    init_db()
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
 
     extrair_opinioes()
@@ -210,6 +213,9 @@ def test_llm_quota_reached(monkeypatch):
     from datetime import date
 
     monkeypatch.setenv("GEMINI_API_KEY", "fake_key")
+    from app.consultor.armazenamento import init_db
+
+    init_db()
     monkeypatch.setenv("GEMINI_MAX_CHAMADAS_DIA", "1")
 
     conn = get_connection()

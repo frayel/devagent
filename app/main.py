@@ -406,6 +406,78 @@ def pagina_consultor(request: Request, data_str: str | None = None):
         consultor_indisponivel = True
         regras_limiares = {}
 
+    try:
+        from typing import cast, Dict
+
+        dados_dict = cast(Dict[str, Any], dados) if isinstance(dados, dict) else {}
+        opinioes_status_data = dados_dict.get("opinioes_status") or {
+            "status": "ok",
+            "motivo": "",
+            "desde": "",
+            "ultima_extracao_em": "",
+            "materias_processadas": 0,
+            "opinioes_gravadas": 0,
+            "descartadas": 0,
+        }
+
+        has_opinions = (
+            len(cast(list, dados_dict.get("opinioes_recentes", []))) > 0
+            if dados_dict
+            else False
+        )
+
+        status = opinioes_status_data.get("status", "ok")
+        motivo = opinioes_status_data.get("motivo", "")
+
+        from app.database import get_connection
+
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT COUNT(*) FROM consultor_fila_materias WHERE processada = 0"
+            )
+            fila_pendentes = cursor.fetchone()[0]
+        except Exception:
+            fila_pendentes = 0
+        finally:
+            conn.close()
+
+        never_extracted = not bool(opinioes_status_data.get("ultima_extracao_em"))
+
+        codigo = "aguardando"
+        if status == "sem_chave":
+            codigo = "sem_chave"
+        elif status == "cota":
+            codigo = "cota"
+        elif status in ("erro", "invalido"):
+            codigo = "erro"
+        elif never_extracted:
+            codigo = "aguardando"
+        elif status == "ok":
+            if fila_pendentes > 0:
+                codigo = "fila"
+            else:
+                if opinioes_status_data.get("descartadas", 0) > 0 and not has_opinions:
+                    codigo = "descartadas"
+                elif not has_opinions:
+                    codigo = "sem_materias"
+                else:
+                    codigo = "ok"
+
+        opinioes_diagnostico = {
+            "codigo": codigo,
+            "motivo": motivo,
+            "desde": opinioes_status_data.get("desde", ""),
+            "ultima_extracao_em": opinioes_status_data.get("ultima_extracao_em", ""),
+            "materias_processadas": opinioes_status_data.get("materias_processadas", 0),
+            "opinioes_gravadas": opinioes_status_data.get("opinioes_gravadas", 0),
+            "descartadas": opinioes_status_data.get("descartadas", 0),
+            "fila_pendentes": fila_pendentes,
+        }
+    except Exception:
+        opinioes_diagnostico = {"codigo": "erro"}
+
     return templates.TemplateResponse(
         request=request,
         name="consultor.html",
@@ -415,6 +487,7 @@ def pagina_consultor(request: Request, data_str: str | None = None):
             "dados": dados,
             "consultor_indisponivel": consultor_indisponivel,
             "regras_limiares": regras_limiares,
+            "opinioes_diagnostico": opinioes_diagnostico,
         },
     )
 
@@ -433,25 +506,75 @@ def api_consultor(request: Request):
         }
 
     try:
-        # Extrair opinioes_status
-        opinioes_status_data = dados.get(
-            "opinioes_status", {"status": "ok", "motivo": "", "desde": ""}
+        opinioes_status_data = (
+            dados.get("opinioes_status") if isinstance(dados, dict) else None
+        ) or {
+            "status": "ok",
+            "motivo": "",
+            "desde": "",
+            "ultima_extracao_em": "",
+            "materias_processadas": 0,
+            "opinioes_gravadas": 0,
+            "descartadas": 0,
+        }
+        has_opinions = (
+            len(dados.get("opinioes_recentes", [])) > 0
+            if isinstance(dados, dict)
+            else False
         )
-        # Fila and feeds for api payload (simplified as specs require)
+
         from app.database import get_connection
 
         conn = get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM consultor_fila_materias")
+            cursor.execute(
+                "SELECT COUNT(*) FROM consultor_fila_materias WHERE processada = 0"
+            )
             fila_n = cursor.fetchone()[0]
         except Exception:
             fila_n = 0
         finally:
             conn.close()
 
+        never_extracted = not bool(opinioes_status_data.get("ultima_extracao_em"))
+        status = opinioes_status_data.get("status", "ok")
+        motivo = opinioes_status_data.get("motivo", "")
+
+        codigo = "aguardando"
+        if status == "sem_chave":
+            codigo = "sem_chave"
+        elif status == "cota":
+            codigo = "cota"
+        elif status in ("erro", "invalido"):
+            codigo = "erro"
+        elif never_extracted:
+            codigo = "aguardando"
+        elif status == "ok":
+            if fila_n > 0:
+                codigo = "fila"
+            else:
+                if opinioes_status_data.get("descartadas", 0) > 0 and not has_opinions:
+                    codigo = "descartadas"
+                elif not has_opinions:
+                    codigo = "sem_materias"
+                else:
+                    codigo = "ok"
+
+        opinioes_diagnostico = {
+            "codigo": codigo,
+            "motivo": motivo,
+            "desde": opinioes_status_data.get("desde", ""),
+            "ultima_extracao_em": opinioes_status_data.get("ultima_extracao_em", ""),
+            "materias_processadas": opinioes_status_data.get("materias_processadas", 0),
+            "opinioes_gravadas": opinioes_status_data.get("opinioes_gravadas", 0),
+            "descartadas": opinioes_status_data.get("descartadas", 0),
+            "fila_pendentes": fila_n,
+        }
+
         fontes_opiniao = {
             "llm": opinioes_status_data,
+            "diagnostico": opinioes_diagnostico,
             "feeds": [
                 {
                     "url": "https://www.moneytimes.com.br/feed/",

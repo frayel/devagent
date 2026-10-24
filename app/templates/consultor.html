@@ -93,10 +93,29 @@
                         </tr>
                         {% endfor %}
                         {% if not dados.opinioes_recentes %}
-                        <tr><td colspan="7">Nenhuma opinião recente.</td></tr>
+                            {% if opinioes_diagnostico.codigo == "sem_chave" %}
+                            <tr><td colspan="7">Extração desligada: falta a chave do Gemini.</td></tr>
+                            {% elif opinioes_diagnostico.codigo == "cota" %}
+                            <tr><td colspan="7">Cota diária do Gemini esgotada ({{ opinioes_diagnostico.materias_processadas }} chamadas). Volta amanhã.</td></tr>
+                            {% elif opinioes_diagnostico.codigo == "erro" %}
+                            <tr><td colspan="7">A última extração falhou às {{ opinioes_diagnostico.desde[11:16] }} ({{ opinioes_diagnostico.motivo }}).</td></tr>
+                            {% elif opinioes_diagnostico.codigo == "aguardando" %}
+                            <tr><td colspan="7">Aguardando a primeira extração. Há {{ opinioes_diagnostico.fila_pendentes }} matérias na fila.</td></tr>
+                            {% elif opinioes_diagnostico.codigo == "fila" %}
+                            <tr><td colspan="7">{{ opinioes_diagnostico.fila_pendentes }} matérias na fila, a próxima extração é na próxima rodada.</td></tr>
+                            {% elif opinioes_diagnostico.codigo == "sem_materias" %}
+                            <tr><td colspan="7">Nenhuma matéria dos feeds citou ativos do Ibovespa com opinião de casa de análise nos últimos 30 dias.</td></tr>
+                            {% elif opinioes_diagnostico.codigo == "descartadas" %}
+                            <tr><td colspan="7">{{ opinioes_diagnostico.descartadas }} opiniões extraídas foram descartadas porque o trecho citado não está na matéria.</td></tr>
+                            {% else %}
+                            <tr><td colspan="7">Nenhuma opinião nos últimos 30 dias.</td></tr>
+                            {% endif %}
                         {% endif %}
                     </tbody>
                 </table>
+                <div class="rodape-painel">
+                    <small>Última extração: {{ opinioes_diagnostico.ultima_extracao_em or "nunca" }} · matérias processadas em 24 h: {{ opinioes_diagnostico.materias_processadas }} · opiniões gravadas em 7 dias: {{ opinioes_diagnostico.opinioes_gravadas }} · descartadas: {{ opinioes_diagnostico.descartadas }}</small>
+                </div>
             </div>
         </div>
 
