@@ -1,4 +1,7 @@
+from typing import Any
 from app.banco import get_backend_type
+
+
 import asyncio
 import logging
 from collections.abc import AsyncIterator
@@ -160,7 +163,25 @@ def healthz():
 @app.get("/api/coleta")
 def coleta():
     """Diagnóstico da coleta automática (última rodada e último erro)."""
-    from app.banco import get_backend_type
+
+
+def obter_pregoes_disponiveis(agora, mercado_aberto, pregao_corr):
+    from app.banco import listar_datas, PREGOES_NO_SELETOR
+
+    datas_banco = listar_datas("ibovespa", 30)
+    pregoes = []
+
+    if mercado_aberto:
+        s_corr = str(pregao_corr)
+        pregoes.append(s_corr)
+
+    for d in datas_banco:
+        if d not in pregoes:
+            pregoes.append(d)
+        if len(pregoes) >= PREGOES_NO_SELETOR + 1:
+            break
+
+    return pregoes[: PREGOES_NO_SELETOR + 1]
 
     res = {"ligada": agendador.coleta_ligada(), **agendador.estado}
     backend = get_backend_type()
@@ -282,11 +303,81 @@ def verificar_credenciais(credentials: HTTPBasicCredentials = Depends(security))
 
 
 @app.get("/consultor")
-def pagina_consultor(request: Request):
+def pagina_consultor(request: Request, data_str: str | None = None):
     exigir_senha(request)
 
+    agora = datetime.now(timezone.utc)
+    mercado_aberto = calendario.mercado_aberto(agora)
+    estado_mercado = "aberto" if mercado_aberto else "fechado"
+    pregao_corr = calendario.pregao_corrente(agora)
+    datas_disponiveis = obter_pregoes_disponiveis(agora, mercado_aberto, pregao_corr)
+
+    data_ref = (
+        calendario.ultimo_pregao_fechado(agora) if not mercado_aberto else pregao_corr
+    )
+
+    is_historical = False
+    if data_str:
+        if data_str in datas_disponiveis:
+            try:
+                data_ref = datetime.strptime(data_str, "%Y-%m-%d").date()
+                is_historical = True
+                estado_mercado = "fechado"
+                _ = (data_ref, estado_mercado)
+            except ValueError:
+                pass
+
     try:
-        dados = calcular_consultor()
+        if is_historical:
+            from app.consultor.armazenamento import get_recomendacoes
+
+            hist = get_recomendacoes(data_str or "")
+
+            # format hist to look like calcular_consultor output
+            resultados: dict[str, list[Any]] = {
+                "Comprar": [],
+                "Vender": [],
+                "Aguardar": [],
+                "No radar": [],
+                "Sem sinal": [],
+            }
+            for row in hist:
+                group = row["decisao"]
+                if group not in resultados:
+                    resultados[group] = []
+                # map consensus back, and format
+                import ast
+
+                consenso_dict = {}
+                try:
+                    if row["consenso"]:
+                        consenso_dict = ast.literal_eval(row["consenso"])
+                except Exception:
+                    pass
+
+                resultados[group].append(
+                    {
+                        "ticker": row["ticker"],
+                        "fechamento": row["preco"],
+                        "regra": row["regra"],
+                        "gatilho": row["gatilho"],
+                        "consenso": consenso_dict,
+                        "justificativa": "",
+                        "motivo": row["regra"],
+                        "timestamp": row["timestamp"],
+                        "mensagem_confianca": "histórico indisponível (pregão passado)",
+                    }
+                )
+
+            dados = {
+                "resultados": resultados,
+                "ativos_avaliados": len(hist),
+                "regras_confianca": {},
+                "opinioes_recentes": [],
+                "opinioes_status": {},
+            }
+        else:
+            dados = calcular_consultor()
         consultor_indisponivel = False
         import app.consultor.regras as regras_module
 
@@ -417,17 +508,43 @@ def api_consultor(request: Request):
 
 
 @app.get("/api/snapshot")
-def snapshot():
+def snapshot(data_str: str | None = None):
     agora = datetime.now(timezone.utc)
     mercado_aberto = calendario.mercado_aberto(agora)
     estado_mercado = "aberto" if mercado_aberto else "fechado"
+
+    pregao_corr = calendario.pregao_corrente(agora)
+    datas_disponiveis = obter_pregoes_disponiveis(agora, mercado_aberto, pregao_corr)
+
     data_ref = (
-        calendario.ultimo_pregao_fechado(agora)
-        if not mercado_aberto
-        else calendario.pregao_corrente(agora)
+        calendario.ultimo_pregao_fechado(agora) if not mercado_aberto else pregao_corr
     )
 
-    resp = {
+    is_historical = False
+    if data_str:
+        if data_str in datas_disponiveis:
+            try:
+                data_ref = datetime.strptime(data_str, "%Y-%m-%d").date()
+                is_historical = True
+                estado_mercado = "fechado"
+                _ = (data_ref, estado_mercado)
+            except ValueError:
+                pass
+        else:
+            return JSONResponse(
+                {"erro": "Data fora da janela disponível, futura ou inválida"},
+                status_code=404,
+            )
+
+    import app.banco
+
+    old_data_ref = app.banco._data_referencia_snapshot.get()
+    _ = old_data_ref
+
+    if is_historical:
+        app.banco._data_referencia_snapshot.set(data_ref)
+
+    resp: dict[str, Any] = {
         "gerado_em": agora.isoformat(),
         "estado_mercado": estado_mercado,
         "data_referencia": data_ref.isoformat(),
@@ -1009,19 +1126,42 @@ def snapshot():
         "composicao_vigente_ate": COMPOSICAO_VIGENTE_ATE.isoformat(),
     }
 
+    if is_historical:
+        app.banco._data_referencia_snapshot.set(old_data_ref)
     return resp
 
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
+async def index(request: Request, data_str: str | None = None):
     agora = datetime.now(timezone.utc)
     mercado_aberto = calendario.mercado_aberto(agora)
     estado_mercado = "aberto" if mercado_aberto else "fechado"
+
+    pregao_corr = calendario.pregao_corrente(agora)
+    datas_disponiveis = obter_pregoes_disponiveis(agora, mercado_aberto, pregao_corr)
+
     data_ref = (
-        calendario.ultimo_pregao_fechado(agora)
-        if not mercado_aberto
-        else calendario.pregao_corrente(agora)
+        calendario.ultimo_pregao_fechado(agora) if not mercado_aberto else pregao_corr
     )
+
+    is_historical = False
+    if data_str:
+        if data_str in datas_disponiveis:
+            try:
+                data_ref = datetime.strptime(data_str, "%Y-%m-%d").date()
+                is_historical = True
+                estado_mercado = "fechado"  # Force historical view
+            except ValueError:
+                pass
+
+    import app.banco
+
+    # Store old values to restore
+    old_data_ref = app.banco._data_referencia_snapshot.get()
+    _ = old_data_ref
+
+    if is_historical:
+        app.banco._data_referencia_snapshot.set(data_ref)
 
     motores_data = get_latest_motores_indice_data()
     motores_cards = json.loads(motores_data.motores_json) if motores_data else None

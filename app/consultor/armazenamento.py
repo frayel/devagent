@@ -436,3 +436,34 @@ def save_fechamentos(resultados_list: list[dict]):
         conn.commit()
     finally:
         conn.close()
+
+
+def get_recomendacoes(data_referencia: str) -> list[dict]:
+    init_db()
+    conn, backend = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            sql_para(
+                backend,
+                "SELECT ticker, timestamp, decisao_final, regra_tecnica, consenso, preco, gatilho FROM consultor_recomendacoes WHERE timestamp LIKE ? ORDER BY ticker ASC",
+            ),
+            (f"{data_referencia}%",),
+        )
+        rows = cursor.fetchall()
+        result = []
+        for row in rows:
+            result.append(
+                {
+                    "ticker": row[0],
+                    "timestamp": row[1],
+                    "decisao": row[2],
+                    "regra": row[3],
+                    "consenso": row[4],
+                    "preco": row[5],
+                    "gatilho": row[6],
+                }
+            )
+        return result
+    finally:
+        conn.close()

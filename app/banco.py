@@ -8,6 +8,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+PREGOES_NO_SELETOR = 5
+
 try:
     import psycopg
 
@@ -242,7 +244,7 @@ def listar_datas(painel: str, limite: int = 10) -> list[str]:
         if backend == "postgres":
             with conn.cursor() as cursor:
                 cursor.execute(
-                    "SELECT data_referencia FROM snapshots_paineis WHERE painel = %s ORDER BY data_referencia DESC LIMIT %s",
+                    "SELECT data_referencia FROM snapshots_paineis WHERE painel = %s AND estado IN ('final', 'incompleto', 'ok') ORDER BY data_referencia DESC LIMIT %s",
                     (painel, limite),
                 )
                 rows = cursor.fetchall()
@@ -250,7 +252,7 @@ def listar_datas(painel: str, limite: int = 10) -> list[str]:
         else:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT data_referencia FROM snapshots_paineis WHERE painel = ? ORDER BY data_referencia DESC LIMIT ?",
+                "SELECT data_referencia FROM snapshots_paineis WHERE painel = ? AND estado IN ('final', 'incompleto', 'ok') ORDER BY data_referencia DESC LIMIT ?",
                 (painel, limite),
             )
             rows = cursor.fetchall()
@@ -382,3 +384,25 @@ def diagnostico() -> dict:
     info["latencia_ms"] = round((time.perf_counter() - inicio) * 1000)
     info["tabelas"] = tabelas
     return info
+
+
+def remover_snapshots_antigos(dias: int = 30):
+    init_db()
+    conn, backend = get_connection()
+    try:
+        if backend == "postgres":
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM snapshots_paineis WHERE data_referencia NOT IN (SELECT data_referencia FROM (SELECT DISTINCT data_referencia FROM snapshots_paineis ORDER BY data_referencia DESC LIMIT %s) as t)",
+                    (dias,),
+                )
+            conn.commit()
+        else:
+            cursor = conn.cursor()
+            cursor.execute(
+                "DELETE FROM snapshots_paineis WHERE data_referencia NOT IN (SELECT DISTINCT data_referencia FROM snapshots_paineis ORDER BY data_referencia DESC LIMIT ?)",
+                (dias,),
+            )
+            conn.commit()
+    finally:
+        conn.close()

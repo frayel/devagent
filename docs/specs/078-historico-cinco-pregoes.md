@@ -1,7 +1,7 @@
 ---
 id: 078
 titulo: Histórico dos últimos 5 pregões
-status: ready
+status: done
 esforco: M
 ---
 
