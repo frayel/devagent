@@ -5,9 +5,12 @@ status: ready
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_085.py
+revisada: 2026-10-24
 ---
 
 ## Problema
+
+Pergunta do usuário: Por que a tabela de opiniões de especialistas do Consultor não mostra nenhuma opinião?
 
 A tabela de opiniões de especialistas do Consultor mostra a linha "Nenhuma opinião recente." em qualquer situação: pipeline quebrado, chave ausente, cota esgotada, fila vazia ou extração que rejeitou tudo na validação. Quem olha não sabe se o produto funciona e simplesmente não há opinião, ou se há um defeito. O aviso que existe hoje (`dados.opinioes_status`) só aparece quando já há uma linha de status diferente de `ok`; antes da primeira extração, ou com status `ok` e zero opiniões, a tela não diz nada.
 
@@ -45,7 +48,7 @@ Só o banco do próprio Consultor. Nenhuma requisição nova.
 
 ## Invariantes de produção
 
-- `/consultor` nunca mostra a frase "Nenhuma opinião recente." sem um motivo ao lado.
+- `/consultor` nunca mostra a frase "Nenhuma opinião recente." (o texto deve ser sempre substituído por uma das 7 mensagens explicativas, nunca aparecendo com o sufixo ou complemento).
 
 ## Fora do escopo
 
