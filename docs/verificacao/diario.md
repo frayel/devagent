@@ -1,0 +1,5 @@
+- Verifiquei o PR #442 que implementa a Spec 079 (Radar de Exaustão de Alta).
+- Observei que o coletor, os testes e o endpoint snapshot estão corretos e de acordo com a spec.
+- Detectei que a variável `exaustao_alta` não foi repassada para o template no contexto da função `index()` em `app/main.py`.
+- Omissão impede a visualização dos ativos em alerta no painel da tela inicial.
+- Próxima verificação: conferir testes ponta a ponta que garantam presença da variável.
