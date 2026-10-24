@@ -76,3 +76,8 @@
 - **Por que fiz:** O `docs/DESIGN.md` (seção 5) dita que todo gráfico precisa ter um `aria-label` com o resumo da série em texto para a acessibilidade.
 - **O que aprendi:** A macro `sparkline` estava utilizando apenas `aria-hidden="true"`, o que inviabilizava a compreensão do contexto desse elemento por leitores de tela em tabelas de ranking.
 - **O que evitar:** Deixar elementos visuais de dados (ainda que secundários ou miniaturas) sem a devida descrição para acessibilidade (Screen Readers).
+## 2026-10-24
+- **O que fiz:** Ajustei os painéis "Clima Global", "Motores do Índice" e "Fator Peso Pesado" para usar a vírgula como separador decimal, conforme o padrão brasileiro (PRODUTO.md), corrigindo a exibição que estava utilizando pontos nas porcentagens.
+- **Por que fiz:** A convenção de formato definida no `PRODUTO.md` exige números no padrão brasileiro. Em minha análise, detectei que as porcentagens nesses três componentes ("S&P 500 Fut", "VIX", os 3 "Motores do Índice" e o "+45.2%" do "Fator Peso Pesado") estavam sendo exibidas com ponto (ex: +1.00%, -3.00%, +45.2%).
+- **O que aprendi:** Embora as macros `variacao` e `kpi` estejam corretamente estilizando a variação percentual, as formatações passadas para elas no `index.html` não tratavam a localização para separar as decimais por vírgula em todos os lugares, usando `"{:+.2f}%".format()` puro.
+- **O que evitar:** Esquecer o uso do `.replace('.', ',')` depois de formatar pontos flutuantes no lado do cliente que devem ser exibidos ao usuário.
