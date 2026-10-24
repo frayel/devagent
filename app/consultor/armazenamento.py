@@ -56,7 +56,7 @@ def init_db():
                     );
                 """)
                 cursor.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_consultor_recomendacoes_timestamp ON consultor_recomendacoes(timestamp DESC);"
+                    "CREATE INDEX IF NOT EXISTS idx_consultor_recomendacoes_ticker_timestamp ON consultor_recomendacoes(ticker, timestamp DESC);"
                 )
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS consultor_fechamentos (
@@ -124,7 +124,7 @@ def init_db():
                 );
             """)
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_consultor_recomendacoes_timestamp ON consultor_recomendacoes(timestamp DESC)"
+                "CREATE INDEX IF NOT EXISTS idx_consultor_recomendacoes_ticker_timestamp ON consultor_recomendacoes(ticker, timestamp DESC)"
             )
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS consultor_fechamentos (
