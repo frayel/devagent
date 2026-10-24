@@ -84,6 +84,13 @@ def coletar_tudo() -> None:
         )
     estado["ultima_coleta"] = datetime.now(timezone.utc).isoformat()
 
+    try:
+        import app.banco
+
+        app.banco.remover_snapshots_antigos(30)
+    except Exception:
+        pass
+
 
 def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
 

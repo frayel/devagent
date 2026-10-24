@@ -28,14 +28,36 @@
             {%- endfor %}
         </nav>
                 <div class="pregao">
-            {% set estado_mercado = estado_mercado|default('fechado', true) %}
-            {% if estado_mercado == 'aberto' %}
-                Ao vivo &middot; atualizado às {{ data.time if data else '' }}
+            {% if is_historical %}
+            <div class="alerta-historico">
+                Você está vendo o fechamento de {{ data_referencia.strftime('%d/%m/%Y') }}
+                <a href="{{ caminho }}">Voltar para hoje</a>
+            </div>
+            {% endif %}
+            {% if datas_disponiveis %}
+            <select class="seletor-data" hx-get="{{ caminho }}" hx-target="body" hx-push-url="true" name="data" aria-label="Selecionar pregão">
+                {% for d in datas_disponiveis %}
+                <option value="{{ d }}" {% if data_referencia and data_referencia.strftime('%Y-%m-%d') == d %}selected{% endif %}>
+                    {% if loop.first and not is_historical and estado_mercado == 'aberto' %}
+                        Hoje
+                    {% elif loop.first and not is_historical %}
+                        Último fechamento
+                    {% else %}
+                        {{ d[8:10] }}/{{ d[5:7] }}
+                    {% endif %}
+                </option>
+                {% endfor %}
+            </select>
             {% else %}
-                {% if data_referencia %}
-                Fechamento de {{ data_referencia.strftime('%d/%m/%Y') }} &middot; dados congelados
+                {% set estado_mercado = estado_mercado|default('fechado', true) %}
+                {% if estado_mercado == 'aberto' %}
+                    Ao vivo &middot; atualizado às {{ data.time if data else '' }}
                 {% else %}
-                Pregão Fechado
+                    {% if data_referencia %}
+                    Fechamento de {{ data_referencia.strftime('%d/%m/%Y') }} &middot; dados congelados
+                    {% else %}
+                    Pregão Fechado
+                    {% endif %}
                 {% endif %}
             {% endif %}
         </div>

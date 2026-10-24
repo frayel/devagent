@@ -406,3 +406,8 @@
 - Spec 077c (Diagnóstico do Banco):
   - Lógica de diagnóstico do banco movida para `app/banco.py` e integrada ao postgres.
   - Atualizada a página /sistema para exibir os dados reais do Postgres.
+- Spec 078 (Histórico dos últimos 5 pregões):
+  - Adicionado suporte ao parâmetro `?data=` nas rotas principais e de API.
+  - Implementado o controle de contexto de data no `app/banco.py`.
+  - Criada rotina de exclusão de snapshots antigos (30 dias).
+  - Adicionado seletor HTMX na UI e atualização de `get_recomendacoes` no `app/consultor/armazenamento.py`.
