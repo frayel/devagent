@@ -5,6 +5,7 @@ status: ready
 esforco: M
 gaveta: experiência
 aceite: tests/test_aceite_089.py
+revisada: 2026-10-24
 ---
 
 ## Problema
