@@ -11,7 +11,18 @@ def sql_para(backend: str, sqlite_sql: str) -> str:
     return sqlite_sql
 
 
+_consultor_db_initialized = False
+
+
+def reset_db_init():
+    global _consultor_db_initialized
+    _consultor_db_initialized = False
+
+
 def init_db():
+    global _consultor_db_initialized
+    if _consultor_db_initialized:
+        return
     conn, backend = get_connection()
     try:
         if backend == "postgres":
@@ -302,6 +313,7 @@ def save_materia(
                 """
             )
             conn.commit()
+        _consultor_db_initialized = True
     finally:
         conn.close()
 

@@ -496,9 +496,21 @@ def pagina_consultor(request: Request, data_str: str | None = None):
 def api_consultor(request: Request):
     exigir_senha(request)
 
+    import time
+    from app.consultor.calculador import _consultor_cache_time
+
+    _t0 = time.perf_counter()
     try:
+        _cache_ts_before = _consultor_cache_time
         dados = calcular_consultor()
+        _cache_ts_after = _consultor_cache_time
+        _usou_cache = (
+            _cache_ts_before == _cache_ts_after
+            if _cache_ts_before is not None
+            else False
+        )
     except Exception:
+        _usou_cache = False
         dados = {
             "resultados": {},
             "ativos_avaliados": 0,
@@ -628,6 +640,8 @@ def api_consultor(request: Request):
             "resultados": resultados_dict,
             "fontes_opiniao": fontes_opiniao,
             "opinioes": opinioes_api,
+            "duracao_ms": int((time.perf_counter() - _t0) * 1000),
+            "cache": _usou_cache,
         }
     )
 

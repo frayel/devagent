@@ -1,7 +1,7 @@
 ---
 id: 087
 titulo: Consultor abre em poucos segundos (consulta única, sem gravar na visita, com cache)
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_087.py
