@@ -167,6 +167,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
         "exaustao_queda",
         "radar_exaustao_alta",
         "divergencia_ibov_dolar",
+        "correlacao_di",
         "assimetria_risco_retorno",
         "consultor_historico",
         "consultor_opinioes",

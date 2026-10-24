@@ -5,16 +5,20 @@
 ## Experiência
 
 - Última revisão de experiência: 2026-10-19
-- Painéis, seções ou telas acrescentados desde a última revisão: 2 (página Sistema, spec 082; Consultor, spec 068b).
+- Painéis, seções ou telas acrescentados desde a última revisão: 3 (página Sistema, spec 082; Consultor, spec 068b; Rastreador Correlacao DI, spec 081).
 
 ## Manutenção
 
 - Última rodada de manutenção: 2026-10-17, spec 063. Medidas: unificação de histórico diário (cache).
-- Specs entregues desde a última rodada (exceto as de manutenção): 2.
+- Specs entregues desde a última rodada (exceto as de manutenção): 3.
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
 
+- Spec 081 (Rastreador de Correlação com DI):
+  - Coletor buscando fechamentos intraday recentes para Juros Futuros (DI1F27/DI1F29) via `yfinance`.
+  - Cálculo de correlação com o Ibovespa (15 min intraday e diário de 5 dias).
+  - Exibição de correlação no painel.
 - Spec 082 (Página de sistema):
   - `/sistema` e `/api/sistema`, protegidas pela `CONSULTOR_SENHA`; link "Sistema" no cabeçalho.
   - `app/collectors/registro_fontes.py`: resultado final de cada chamada às fontes externas, por integração.

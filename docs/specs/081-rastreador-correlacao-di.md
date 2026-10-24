@@ -1,7 +1,7 @@
 ---
 id: 081
 titulo: Rastreador de Correlação com Juros Futuros (DI)
-status: ready
+status: done
 esforco: M
 ---
 
