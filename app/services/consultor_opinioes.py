@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import time
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, timedelta
 import httpx
 
 from app.consultor.armazenamento import get_connection
@@ -29,7 +29,8 @@ def sql_para(backend: str, sqlite_sql: str) -> str:
 def get_llm_uso_hoje() -> int:
     conn, backend = get_connection()
     try:
-        hoje = date.today().isoformat()
+        now_brt = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=-3)))
+        hoje = now_brt.date().isoformat()
         cursor = conn.cursor()
         cursor.execute(
             sql_para(backend, "SELECT chamadas FROM consultor_llm_uso WHERE data = ?"),
@@ -44,7 +45,8 @@ def get_llm_uso_hoje() -> int:
 def incrementar_llm_uso() -> None:
     conn, backend = get_connection()
     try:
-        hoje = date.today().isoformat()
+        now_brt = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=-3)))
+        hoje = now_brt.date().isoformat()
         cursor = conn.cursor()
         if backend == "postgres":
             cursor.execute(
@@ -240,16 +242,29 @@ def _gerar(api_key: str, payload: dict) -> httpx.Response:
 def extrair_opinioes():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        set_opinioes_status("sem_chave", "sem chave configurada")
+        try:
+            set_opinioes_status("sem_chave", "sem chave configurada")
+        except Exception as e:
+            logger.error(f"Erro ao gravar status: {e}")
         return
 
     max_calls = int(os.environ.get("GEMINI_MAX_CHAMADAS_DIA", GEMINI_MAX_CHAMADAS))
-    usos = get_llm_uso_hoje()
-    if usos >= max_calls:
-        set_opinioes_status("cota", "cota do LLM esgotada")
+
+    try:
+        usos = get_llm_uso_hoje()
+        if usos >= max_calls:
+            set_opinioes_status("cota", "cota do LLM esgotada")
+            return
+
+        materias = get_materias_nao_processadas()
+    except Exception as e:
+        logger.error(f"Falha de banco antes da extracao: {e}")
+        try:
+            set_opinioes_status("erro", f"falha no banco: {type(e).__name__}")
+        except Exception as set_err:
+            logger.error(f"Erro ao gravar status de falha no banco: {set_err}")
         return
 
-    materias = get_materias_nao_processadas()
     if not materias:
         # Se estava com erro/timeout antes, mantemos. Senão, se tem feeds e tá tudo ok, não mexemos.
         return

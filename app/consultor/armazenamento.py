@@ -76,7 +76,17 @@ def init_db():
                         data_publicacao TEXT NOT NULL,
                         link TEXT NOT NULL,
                         tickers_citados TEXT NOT NULL,
-                        criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+                        criado_em TEXT DEFAULT CURRENT_TIMESTAMP,
+                        processada INTEGER NOT NULL DEFAULT 0
+                    );
+                """)
+                cursor.execute(
+                    "ALTER TABLE consultor_fila_materias ADD COLUMN IF NOT EXISTS processada INTEGER NOT NULL DEFAULT 0;"
+                )
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS consultor_llm_uso (
+                        data DATE PRIMARY KEY,
+                        chamadas INTEGER NOT NULL DEFAULT 0
                     );
                 """)
             conn.commit()
@@ -144,9 +154,16 @@ def init_db():
                     data_publicacao TEXT NOT NULL,
                     link TEXT NOT NULL,
                     tickers_citados TEXT NOT NULL,
-                    criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+                    criado_em TEXT DEFAULT CURRENT_TIMESTAMP,
+                    processada INTEGER NOT NULL DEFAULT 0
                 );
             """)
+            try:
+                cursor.execute(
+                    "ALTER TABLE consultor_fila_materias ADD COLUMN processada INTEGER DEFAULT 0"
+                )
+            except Exception:
+                pass
             conn.commit()
             conn.close()
     except Exception:

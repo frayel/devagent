@@ -1,7 +1,7 @@
 ---
 id: 084
 titulo: Consultor no Postgres com o esquema completo (tabela de cota e coluna da fila)
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_084.py
