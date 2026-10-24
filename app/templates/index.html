@@ -100,8 +100,8 @@
             {% endif %}
             <div class="destaque {{ color_class }}">{{ clima_global.status }}</div>
             <div class="kpi-group">
-                {{ kpi("", "S&P 500 Fut", (variacao("{:+.2f}%".format(clima_global.sp500_pct), clima_global.sp500_pct)) | safe) }}
-                {{ kpi("", "VIX", (variacao("{:+.2f}%".format(clima_global.vix_pct), clima_global.vix_pct)) | safe) }}
+                {{ kpi("", "S&P 500 Fut", (variacao("{:+.2f}%".format(clima_global.sp500_pct).replace('.', ','), clima_global.sp500_pct)) | safe) }}
+                {{ kpi("", "VIX", (variacao("{:+.2f}%".format(clima_global.vix_pct).replace('.', ','), clima_global.vix_pct)) | safe) }}
             </div>
         </div>
     {% else %}
@@ -115,7 +115,7 @@
         <div class="motores-grid">
             {% for motor in motores_cards %}
             <div class="motor-card">
-                {{ kpi("", motor.nome, (variacao("{:+.2f}%".format(motor.variacao), motor.variacao)) | safe) }}
+                {{ kpi("", motor.nome, (variacao("{:+.2f}%".format(motor.variacao).replace('.', ','), motor.variacao)) | safe) }}
             </div>
             {% endfor %}
         </div>
@@ -153,11 +153,11 @@
         {% else %}
             {% set prop = fator_peso_pesado_data.proporcao %}
             {% if prop > 0 %}
-                {% set val = "+" ~ ('%.1f' % prop) ~ "%" %}
+                {% set val = "+" ~ ('%.1f' % prop).replace('.', ',') ~ "%" %}
             {% elif prop < 0 %}
-                {% set val = ('%.1f' % prop) ~ "%" %}
+                {% set val = ('%.1f' % prop).replace('.', ',') ~ "%" %}
             {% else %}
-                {% set val = "0.0%" %}
+                {% set val = "0,0%" %}
             {% endif %}
             {{ kpi(val, "", '<div class="texto-2 espaco-topo-curto">do movimento do Ibovespa é explicado pelas 5 maiores ações (VALE, PETR e ITUB)</div>' | safe, is_hero=True) }}
         {% endif %}
@@ -195,7 +195,7 @@
           {% endif %}
       {% endset %}
       <div class="kpi-container alinha-centro">
-        {{ kpi(concentracao_setorial.get('setor_lider_volume', 'N/A') or 'N/A', "", ((volume_str ~ '<p class="sub">Maior volume (R$)</p>') | safe)) }}
+        {{ kpi(concentracao_setorial.get('setor_lider_volume', 'N/A') or 'N/A', "Maior volume (R$)", (volume_str | safe)) }}
       </div>
     </div>
   {% endif %}
