@@ -1,11 +1,15 @@
 ---
 id: 091
 titulo: brapi com erro 400: tratar a recusa do plano gratuito e guardar o motivo
-status: ready
+status: draft
+revisada: 2026-10-24
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_091.py
 ---
+
+## Revisão
+Esta spec é inviável no momento porque depende da spec 083, que está em `draft` e ainda não foi implementada (cita o arquivo `app/collectors/brapi.py` que não existe). Além disso, o problema não está formulado como uma pergunta do usuário e o título contém "e", o que geralmente indica mais de um problema. Retornada para draft para aguardar a 083 ou ser refeita de forma independente.
 
 ## Problema
 
