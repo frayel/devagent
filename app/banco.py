@@ -302,6 +302,42 @@ def gravar_serie(ticker: str, barras: list[dict]):
         conn.close()
 
 
+def ler_series(tickers: list[str], inicio: date, fim: date) -> dict[str, list[dict]]:
+    init_db()
+    conn, backend = get_connection()
+    try:
+        if backend == "postgres":
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT ticker, barras FROM series_diarias WHERE ticker = ANY(%s) AND data_pregao >= %s AND data_pregao <= %s ORDER BY data_pregao ASC",
+                    (tickers, inicio, fim),
+                )
+                rows = cursor.fetchall()
+                res_pg: dict[str, list[dict]] = {t: [] for t in tickers}
+                for row in rows:
+                    t = row[0]
+                    barras = row[1] if isinstance(row[1], list) else json.loads(row[1])
+                    if t in res_pg:
+                        res_pg[t].extend(barras)
+                return res_pg
+        else:
+            cursor = conn.cursor()
+            placeholders = ",".join(["?"] * len(tickers))
+            query = f"SELECT ticker, barras FROM series_diarias WHERE ticker IN ({placeholders}) AND data_pregao >= ? AND data_pregao <= ? ORDER BY data_pregao ASC"
+            params = tuple(tickers) + (str(inicio), str(fim))
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+            res_sqlite: dict[str, list[dict]] = {t: [] for t in tickers}
+            for row in rows:
+                t = row[0]
+                barras = json.loads(row[1])
+                if t in res_sqlite:
+                    res_sqlite[t].extend(barras)
+            return res_sqlite
+    finally:
+        conn.close()
+
+
 def ler_serie(ticker: str, inicio: date, fim: date) -> list[dict]:
     init_db()
     conn, backend = get_connection()

@@ -17,12 +17,48 @@ from datetime import datetime
 JANELA = "2y"
 IDADE_MAXIMA_MIN = 60 * 24 * 4
 
+_consultor_cache = None
+_consultor_cache_versao = None
+_consultor_cache_time = None
 
-def calcular_consultor():
+
+def calcular_consultor(ignorar_cache: bool = False) -> dict:
+    global _consultor_cache, _consultor_cache_versao, _consultor_cache_time
+
     ativos = CARTEIRA_IBOVESPA + ["^BVSP"]
     historicos = get_historico_diario(
         ativos, JANELA, "1d", max_age_minutes=IDADE_MAXIMA_MIN
     )
+
+    opinioes_recentes = get_opinioes_recentes()
+    opinioes_status = get_opinioes_status()
+
+    # Calcular versão dos dados
+    max_criado = ""
+    for ticker, dados in historicos.items():
+        if "metadata" in dados and "criado_em" in dados["metadata"]:
+            ts = str(dados["metadata"]["criado_em"])
+            if ts > max_criado:
+                max_criado = ts
+
+    max_extraida = ""
+    for op in opinioes_recentes:
+        if op.get("extraida_em", "") > max_extraida:
+            max_extraida = str(op["extraida_em"])
+
+    status_ts = str(opinioes_status.get("ultima_extracao_em", ""))
+    versao_atual = (max_criado, max_extraida, status_ts)
+
+    if (
+        not ignorar_cache
+        and _consultor_cache
+        and _consultor_cache_versao == versao_atual
+    ):
+        if (
+            _consultor_cache_time
+            and (datetime.now() - _consultor_cache_time).total_seconds() < 300
+        ):
+            return _consultor_cache
 
     if "^BVSP" not in historicos or not historicos["^BVSP"]:
         return {
@@ -34,7 +70,7 @@ def calcular_consultor():
 
     ibov_closes, _, ibov_ts = pre_processar_ativo(historicos["^BVSP"])
 
-    resultados = {
+    resultados: dict[str, list[dict]] = {
         "Comprar": [],
         "Vender": [],
         "Aguardar": [],
@@ -43,8 +79,8 @@ def calcular_consultor():
     }
 
     try:
-        ts = datetime.fromtimestamp(ibov_ts[-1], timezone.utc)
-        timestamp = ts.astimezone(timezone(timedelta(hours=-3))).strftime(
+        _ts_dt = datetime.fromtimestamp(ibov_ts[-1], timezone.utc)
+        timestamp = _ts_dt.astimezone(timezone(timedelta(hours=-3))).strftime(
             "%d/%m/%Y %H:%M:%S BRT"
         )
     except Exception:
@@ -183,28 +219,5 @@ def calcular_consultor():
         "opinioes_recentes": opinioes_recentes,
         "opinioes_status": opinioes_status,
     }
-
-    # Trigger saves for recomendacoes & fechamentos
-    try:
-        from app.consultor.armazenamento import save_recomendacoes, save_fechamentos
-
-        flat_resultados = []
-        for group_name, items in resultados.items():
-            for item in items:
-                flat_resultados.append(
-                    {
-                        "ticker": item["ticker"],
-                        "timestamp": item["timestamp"],
-                        "decisao": group_name,
-                        "regra": item["regra"],
-                        "consenso": str(item.get("consenso", "")),
-                        "preco": item.get("fechamento", 0.0),
-                        "gatilho": str(item.get("gatilho", "-")),
-                    }
-                )
-        save_recomendacoes(flat_resultados)
-        save_fechamentos(flat_resultados)
-    except Exception:
-        pass
 
     return res_dict

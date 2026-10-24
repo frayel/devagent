@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Spec 087: Otimização do tempo de carregamento da página Consultor.
 - Spec 085: Consultor explica por que não há opiniões em vez de aviso vazio.
 - fix(núcleo): os testes do agente não enxergam mais o evento real do PR (ADR 022). PRs de raia paralela (`spec:`, `revisão:`, `verificação:`) falhavam no CI por herdarem o título na regra 8 e entravam em laço de correção e fechamento.
 - Histórico dos últimos 5 pregões na UI e API (Spec 078).
