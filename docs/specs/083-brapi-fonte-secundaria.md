@@ -1,7 +1,7 @@
 ---
 id: 083
 titulo: brapi como fonte secundária, com uma chamada por ativo e orçamento de requisições
-status: ready
+status: draft
 esforco: M
 gaveta: saúde técnica
 ---
