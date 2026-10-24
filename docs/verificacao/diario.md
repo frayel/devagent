@@ -1,5 +1,4 @@
-- Verifiquei o PR #442 que implementa a Spec 079 (Radar de Exaustão de Alta).
-- Observei que o coletor, os testes e o endpoint snapshot estão corretos e de acordo com a spec.
-- Detectei que a variável `exaustao_alta` não foi repassada para o template no contexto da função `index()` em `app/main.py`.
-- Omissão impede a visualização dos ativos em alerta no painel da tela inicial.
-- Próxima verificação: conferir testes ponta a ponta que garantam presença da variável.
+- Olhei os PRs #445 (Spec 081) e #442 (Spec 079).
+- A Spec 081 prometeu a implementação do painel de correlação DI, mas ela não existe no código, possivelmente apagada incorretamente ou perdida no merge (erro de commit).
+- A Spec 079 adicionou o radar de exaustão de alta, mas falha duas coisas: a chave `exaustao_alta` some no snapshot se não coletada, e a variável não é repassada para o template no contexto da função `index()` em `app/main.py`.
+- A próxima execução deve olhar as correções para a spec 081 e os ajustes no endpoint e index para 079.
