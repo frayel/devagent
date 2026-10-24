@@ -1771,3 +1771,38 @@ def get_consultor_confianca() -> dict[str, dict]:
             v["atualizado_em"] = datetime.fromisoformat(v["atualizado_em"])
 
     return snapshot
+
+
+@dataclass
+class ExaustaoAltaData:
+    timestamp: datetime
+    alertas_json: str
+    fonte: str = "yfinance"
+
+
+def save_exaustao_alta_data(data: ExaustaoAltaData) -> None:
+    from datetime import datetime, timezone
+    from app.banco import gravar_snapshot
+
+    hoje = datetime.now(timezone.utc).date()
+    payload = {
+        "timestamp": data.timestamp.isoformat(),
+        "alertas_json": data.alertas_json,
+        "fonte": getattr(data, "fonte", "yfinance"),
+    }
+    gravar_snapshot(
+        "exaustao_alta", hoje, "ao_vivo", getattr(data, "fonte", "yfinance"), payload
+    )
+
+
+def get_latest_exaustao_alta_data() -> ExaustaoAltaData | None:
+    from app.banco import ler_snapshot
+    from datetime import datetime
+
+    payload = ler_snapshot("exaustao_alta")
+    if not payload:
+        return None
+    payload_copy = payload.copy()
+    if isinstance(payload_copy.get("timestamp"), str):
+        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+    return ExaustaoAltaData(**payload_copy)

@@ -336,7 +336,7 @@
 {% endcall %}
 
 
-{% if (not volume_alerts or not volume_alerts.alerts) and (not variacao_subita or not variacao_subita.alertas) and (not concentracao_ordens or not concentracao_ordens.alertas) and (not exaustao_queda or not exaustao_queda.alertas) and (not exaustao_tendencia or not exaustao_tendencia.alertas) and (not radar_absorcao_cruzada or not radar_absorcao_cruzada.alertas) and (not liquidez_abertura or not liquidez_abertura.alertas) and (not radar_congestionamento or not radar_congestionamento.alertas) and (not faca_caindo or not faca_caindo.alertas) and (not anomalias_spread or not anomalias_spread.alertas) and (not short_squeeze or not short_squeeze.alertas) and (not falso_rompimento or not falso_rompimento.alertas) and (not radar_divergencia_volume or not radar_divergencia_volume.alertas) and (not esforco_resultado or not esforco_resultado.alertas) and (not scanner_capitulacao or not scanner_capitulacao.alertas) and (not armadilha_abertura or not armadilha_abertura.alertas) and (not compradores_fundo or not compradores_fundo.alertas) and (not radar_anomalia_fechamento or not radar_anomalia_fechamento.alertas) and (not radar_inflexao or not radar_inflexao.alertas) %}
+{% if (not volume_alerts or not volume_alerts.alerts) and (not variacao_subita or not variacao_subita.alertas) and (not concentracao_ordens or not concentracao_ordens.alertas) and (not exaustao_queda or not exaustao_queda.alertas) and (not exaustao_alta or not exaustao_alta.alertas) and (not exaustao_tendencia or not exaustao_tendencia.alertas) and (not radar_absorcao_cruzada or not radar_absorcao_cruzada.alertas) and (not liquidez_abertura or not liquidez_abertura.alertas) and (not radar_congestionamento or not radar_congestionamento.alertas) and (not faca_caindo or not faca_caindo.alertas) and (not anomalias_spread or not anomalias_spread.alertas) and (not short_squeeze or not short_squeeze.alertas) and (not falso_rompimento or not falso_rompimento.alertas) and (not radar_divergencia_volume or not radar_divergencia_volume.alertas) and (not esforco_resultado or not esforco_resultado.alertas) and (not scanner_capitulacao or not scanner_capitulacao.alertas) and (not armadilha_abertura or not armadilha_abertura.alertas) and (not compradores_fundo or not compradores_fundo.alertas) and (not radar_anomalia_fechamento or not radar_anomalia_fechamento.alertas) and (not radar_inflexao or not radar_inflexao.alertas) %}
 <section class="painel span-12 visao-micro alertas aviso-vazio">
     <div class="vazio">Sem alertas ativos no momento.</div>
 </section>
@@ -405,6 +405,24 @@
         </table>
     {% endif %}
 {% endcall %}
+
+
+    {% call painel("Exaustão de Alta", 4, "Ações que subiram mais de 2% no dia, mas cuja sombra superior é pelo menos o dobro do corpo, indicando forte rejeição.", exaustao_alta.fonte if exaustao_alta else "", exaustao_alta.coletado_em if exaustao_alta else "", 'visao-micro alertas escondido' if not exaustao_alta or not exaustao_alta.alertas else 'visao-micro alertas') %}
+    {% if not exaustao_alta %}
+        <p class="alerta-vazio">Dados não disponíveis.</p>
+    {% elif not exaustao_alta.alertas %}
+        <p class="alerta-vazio">Nenhum ativo em exaustão</p>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in exaustao_alta.alertas %}
+            {% set _ = linhas.append([
+                {'texto': a.ticker, 'ticker': True},
+                {'texto': "%.2f%%"|format(a.variacao), 'destaque': True, 'cor': 'alta' if a.variacao > 0 else 'baixa'}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Variação', 'num': True}], 'exaustao_alta') }}
+    {% endif %}
+    {% endcall %}
 
     {% call painel("Exaustão de Queda", 4, "Ações que fecharam em queda por 3 dias, abriram com gap de baixa e se recuperaram com volume projetado acima da média.", exaustao_queda.fonte if exaustao_queda else "", exaustao_queda.coletado_em if exaustao_queda else "", 'visao-micro alertas escondido' if not exaustao_queda or not exaustao_queda.alertas else 'visao-micro alertas') %}
     {% if not exaustao_queda %}

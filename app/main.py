@@ -83,6 +83,7 @@ from app.database import (
     get_latest_concentracao_ordens_data,
     get_latest_exaustao_tendencia_data,
     get_latest_exaustao_queda_data,
+    get_latest_exaustao_alta_data,
 )
 from app import agendador
 from app.collectors import mt5 as mt5_coletor
@@ -1085,6 +1086,14 @@ def snapshot(data_str: str | None = None):
     # unused avoid f841
     if exaustao_queda:
         pass
+
+    exaustao_alta_data = get_latest_exaustao_alta_data()
+    if exaustao_alta_data:
+        resp["paineis"]["exaustao_alta"] = {
+            "coletado_em": exaustao_alta_data.timestamp.isoformat(),
+            "fonte": getattr(exaustao_alta_data, "fonte", "yfinance"),
+            "alertas": json.loads(exaustao_alta_data.alertas_json),
+        }
 
     exaustao_tendencia_data = get_latest_exaustao_tendencia_data()
     if exaustao_tendencia_data:
