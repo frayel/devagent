@@ -34,20 +34,24 @@
                 <a href="{{ caminho }}">Voltar para hoje</a>
             </div>
             {% endif %}
-            {% if datas_disponiveis %}
-            <select class="seletor-data" hx-get="{{ caminho }}" hx-target="body" hx-push-url="true" name="data" aria-label="Selecionar pregão">
-                {% for d in datas_disponiveis %}
-                <option value="{{ d }}" {% if data_referencia and data_referencia.strftime('%Y-%m-%d') == d %}selected{% endif %}>
-                    {% if loop.first and not is_historical and estado_mercado == 'aberto' %}
-                        Hoje
-                    {% elif loop.first and not is_historical %}
-                        Último fechamento
-                    {% else %}
-                        {{ d[8:10] }}/{{ d[5:7] }}
-                    {% endif %}
-                </option>
-                {% endfor %}
-            </select>
+            {% if data_invalida %}
+            <div class="aviso-banco-efemero espacador-direita">Data selecionada inválida, exibindo pregão mais recente</div>
+            {% endif %}
+            {% if datas_seletor %}
+            <form method="get" class="form-inline">
+                <select class="seletor-data" name="data" aria-label="Selecionar pregão" onchange="this.form.submit()" {% if datas_seletor|length == 1 %}disabled{% endif %}>
+                    {% for d_val, d_rotulo in datas_seletor %}
+                    <option value="{{ d_val }}" {% if data_referencia and data_referencia.strftime('%Y-%m-%d') == d_val %}selected{% endif %}>
+                        {% if datas_seletor|length == 1 %}
+                            só há registro de {{ d_rotulo }}
+                        {% else %}
+                            {{ d_rotulo }}
+                        {% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                <noscript><button type="submit">Ver</button></noscript>
+            </form>
             {% else %}
                 {% set estado_mercado = estado_mercado|default('fechado', true) %}
                 {% if estado_mercado == 'aberto' %}

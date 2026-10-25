@@ -223,6 +223,42 @@ def verificar_instancia(inicio: datetime, agora: datetime) -> Item:
     )
 
 
+def verificar_historico_pregoes(datas: list[str], agora: datetime) -> Item:
+    from app.calendario import pregao_anterior, ultimo_pregao_fechado
+
+    if not datas:
+        return Item(
+            "Histórico de pregões",
+            PROBLEMA,
+            "sem registros",
+            "Nenhum snapshot encontrado.",
+        )
+
+    # The seletor lists 5 previous pregoes + today/last closed.
+    u = ultimo_pregao_fechado(agora)
+    esperados = [u.strftime("%Y-%m-%d")]
+    curr = u
+    for _ in range(4):
+        curr = pregao_anterior(curr)
+        esperados.append(curr.strftime("%Y-%m-%d"))
+
+    falhas = []
+    for esp in esperados:
+        if esp not in datas:
+            falhas.append(esp)
+
+    resumo = f"{len(datas)} pregões registrados"
+    menor_data = min(datas)
+    maior_data = max(datas)
+    detalhe = f"Do {menor_data[8:10]}/{menor_data[5:7]} ao {maior_data[8:10]}/{maior_data[5:7]}."
+
+    if falhas:
+        detalhe += f" Faltam snapshots na janela recente: {', '.join(falhas)}"
+        return Item("Histórico de pregões", ATENCAO, resumo, detalhe)
+
+    return Item("Histórico de pregões", OK, resumo, detalhe)
+
+
 def verificar_banco(info: dict[str, Any]) -> Item:
     if info.get("erro"):
         return Item("Banco de dados", PROBLEMA, "não conecta", info["erro"])
@@ -809,6 +845,7 @@ def montar(
     horas_vazios: int,
     rodadas: dict[str, int] | None = None,
     tempos: dict[str, float],
+    historico_pregoes: list[str],
     fontes: dict[str, Any],
     pausa_mt5: tuple[float, str] | None,
     prontas: list[str],
@@ -825,6 +862,7 @@ def montar(
     aplicacao += verificar_render(remoto.get("render"), remoto.get("render_erro"))
     aplicacao.append(verificar_instancia(inicio, agora))
     aplicacao.append(verificar_banco(banco))
+    aplicacao.append(verificar_historico_pregoes(historico_pregoes, agora))
 
     coleta = verificar_agendador(
         coleta_ligada, estado_coleta, intervalo_coleta, inicio, agora

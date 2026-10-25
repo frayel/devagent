@@ -1,7 +1,7 @@
 ---
 id: 088
 titulo: Seletor de pregão que funciona na página inicial e na API (conserto da 078)
-status: ready
+status: done
 revisada: 2026-10-24
 esforco: M
 gaveta: saúde técnica
