@@ -1,10 +1,11 @@
 ---
 id: 109b
 titulo: Consultor: exibição da data de cada informação na interface
-status: ready
+status: draft
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_109b.py
+revisada: 2026-10-25
 ---
 
 ## Problema
@@ -19,7 +20,7 @@ Três datas, sempre em BRT, no formato `dd/mm/aaaa HH:MM`:
 
 - **Sinais técnicos**: pregão da última barra do Ibovespa usada no cálculo (só `dd/mm/aaaa`) e hora da coleta (`coletado_em`).
 - **Opiniões de especialistas**: horário da última extração (`ultima_extracao_em`, spec 085) e data da matéria mais recente exibida.
-- **Composição do Ibovespa**: a data em que a lista `CARTEIRA_IBOVESPA` foi conferida (constante nova em `app/consultor/universo.py`), já que hoje só há o aviso de "possivelmente desatualizada".
+- **Composição do Ibovespa**: a data em que a lista `CARTEIRA_IBOVESPA` foi conferida (constante `CARTEIRA_CONFERIDA_EM` em `app/consultor/universo.py`), já que hoje só há o aviso de "possivelmente desatualizada".
 
 Cada data traz um selo escrito, além da cor: **Atualizado** ou **Defasado**.
 
@@ -46,3 +47,7 @@ Só o banco local.
 
 - A data dos sinais na tela do Consultor é igual à última data do gráfico do Ibovespa na página inicial.
 - A data dos sinais nunca é anterior ao último pregão fechado por mais de um dia útil sem o selo *Defasado*.
+
+## Revisão
+
+A spec 109b é inviável e duplicada. A funcionalidade e o comportamento descritos aqui já foram especificados de forma quase idêntica em `docs/specs/108b-consultor-interface-datas.md`, que também descreve a exibição das datas na interface do Consultor e a dependência dos carimbos reais do banco de dados (providos pela spec 108a). Além disso, a spec 109a da qual ela depende também está como `draft` pelo mesmo motivo (duplicação da 108a). Por isso, esta spec foi marcada como `draft` para que o Especificador não repita a ideia.
