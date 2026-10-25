@@ -1,7 +1,7 @@
 ---
 id: 086
 titulo: Consultor mostra a data de cada informação e avisa quando está defasada
-status: draft
+status: draft # cancelada e dividida
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_086.py
@@ -62,3 +62,6 @@ Só o banco local. Nenhuma requisição nova.
 
 ## Revisão
 A spec era muito grande e foi dividida em 108a e 108b porque tocava em muitos arquivos de backend e frontend de uma vez.
+
+## Divisão
+A spec 086 era muito grande e foi dividida em 109a e 109b para facilitar a implementação e revisão em etapas menores.
