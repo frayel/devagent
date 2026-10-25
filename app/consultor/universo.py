@@ -4,6 +4,7 @@ from datetime import date
 # Fonte: https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplo/indice-ibovespa-ibovespa-composicao-da-carteira.htm
 
 COMPOSICAO_VIGENTE_ATE = date(2026, 12, 30)
+CARTEIRA_CONFERIDA_EM = date(2026, 9, 2)
 COMPOSICAO_INICIO = date(2026, 9, 2)
 FONTE_URL = "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplo/indice-ibovespa-ibovespa-composicao-da-carteira.htm"
 

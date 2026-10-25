@@ -1,0 +1,8 @@
+This commit implements the remaining scope of Spec 086 which was skipped in a prior pull request, effectively closing the bug issue #488.
+
+It includes:
+- Updating `get_historico_diario` to extract real series timestamps.
+- A new `informacoes_de` module to compute data recency states according to B3 trading days and limit parameters.
+- Exposing the state directly on `/api/consultor` and integrating it on the frontend template with a new UI component.
+- The `test_aceite_086.py` regression tests check both the function logic and the integration behavior.
+- Documenting the resolution in a `docs/runs/` report file as instructed.
