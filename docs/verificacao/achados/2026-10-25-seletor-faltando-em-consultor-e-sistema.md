@@ -2,7 +2,7 @@
 id: 2026-10-25-seletor-faltando-em-consultor-e-sistema
 severidade: media
 painel: app/main.py (rotas /consultor e /sistema)
-status: aberto
+status: resolvido
 visto_em: 2026-10-25T12:00-03:00
 pr: 498
 ---

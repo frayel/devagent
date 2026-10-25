@@ -7,3 +7,8 @@
 - Notei que os critérios de aceite foram na maioria cumpridos (o seletor está na página inicial sem hx-target, api validada).
 - No entanto, a implementação do seletor faltou em /consultor e /sistema, o que gerou o achado 2026-10-25-seletor-faltando-em-consultor-e-sistema.
 - Próxima verificação deve focar se outros detalhes da UX, ou de consumo, sofreram impacto.
+
+- Verifiquei o PR 501 que implementa correções para a spec 088.
+- Confirmada a resolução do achado '2026-10-25-seletor-faltando-em-consultor-e-sistema'. O seletor agora é exibido corretamente nas rotas /consultor e /sistema.
+- Nenhum novo defeito foi introduzido.
+- Próxima verificação deve continuar observando regressões nas páginas do consultor.
