@@ -106,3 +106,15 @@ def test_api_snapshot_404(mock_snapshots):
 def test_api_snapshot_valid(mock_snapshots):
     resp = client.get("/api/snapshot?data=2026-10-21")
     assert resp.status_code == 200
+
+
+def test_seletor_presente_no_consultor(mock_snapshots):
+    resp = client.get("/consultor")
+    assert resp.status_code == 200
+    assert '<select class="seletor-data"' in resp.text
+
+
+def test_seletor_presente_no_sistema(mock_snapshots):
+    resp = client.get("/sistema")
+    assert resp.status_code == 200
+    assert '<select class="seletor-data"' in resp.text

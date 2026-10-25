@@ -292,6 +292,11 @@ def api_sistema(request: Request):
 def pagina_sistema(request: Request):
     exigir_senha(request)
     estado = estado_do_sistema()
+    agora = datetime.now(timezone.utc)
+    mercado_aberto = calendario.mercado_aberto(agora)
+    pregao_corr = calendario.pregao_corrente(agora)
+    ctx = _get_seletor_context(None, agora, mercado_aberto, pregao_corr)
+
     return templates.TemplateResponse(
         request=request,
         name="sistema.html",
@@ -300,6 +305,10 @@ def pagina_sistema(request: Request):
             "sistema": estado,
             "gerado_txt": sistema_servico.hora_brt(estado["gerado_em"]),
             "remoto_txt": sistema_servico.hora_brt(estado["remoto_em"]),
+            "datas_seletor": ctx["datas_seletor"],
+            "data_referencia": ctx["data_referencia"],
+            "is_historical": ctx["is_historical"],
+            "data_invalida": ctx["data_invalida"],
         },
     )
 
@@ -539,6 +548,10 @@ def pagina_consultor(
             "consultor_indisponivel": consultor_indisponivel,
             "regras_limiares": regras_limiares,
             "opinioes_diagnostico": opinioes_diagnostico,
+            "datas_seletor": datas_seletor,
+            "data_referencia": data_ref,
+            "is_historical": is_historical,
+            "data_invalida": data_invalida,
         },
     )
 
