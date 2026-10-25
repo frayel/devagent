@@ -210,7 +210,6 @@ def test_llm_quota_reached(monkeypatch):
     from app.database import get_connection
     from app.services.consultor_opinioes import extrair_opinioes
     from app.consultor.armazenamento import get_opinioes_status
-    from datetime import date
 
     monkeypatch.setenv("GEMINI_API_KEY", "fake_key")
     from app.consultor.armazenamento import init_db
@@ -220,10 +219,20 @@ def test_llm_quota_reached(monkeypatch):
 
     conn = get_connection()
     c = conn.cursor()
-    c.execute(
-        "INSERT OR REPLACE INTO consultor_llm_uso (data, chamadas) VALUES (?, ?)",
-        (date.today().isoformat(), 1),
-    )
+    from datetime import datetime, timezone, timedelta
+
+    now_brt = datetime.now(timezone.utc).astimezone(timezone(timedelta(hours=-3)))
+    hoje = now_brt.date().isoformat()
+    try:
+        c.execute(
+            "INSERT INTO consultor_llm_uso (data, chamadas) VALUES (?, ?) ON CONFLICT(data) DO UPDATE SET chamadas=excluded.chamadas",
+            (hoje, 1),
+        )
+    except Exception:
+        c.execute(
+            "INSERT OR REPLACE INTO consultor_llm_uso (data, chamadas) VALUES (?, ?)",
+            (hoje, 1),
+        )
     conn.commit()
     conn.close()
 
