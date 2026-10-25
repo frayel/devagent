@@ -1,10 +1,11 @@
 ---
 id: 108b
 titulo: Consultor mostra a data de cada informação e avisa quando está defasada na interface
-status: ready
+status: draft
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_108b.py
+revisada: 2026-10-25
 ---
 
 ## Problema
@@ -19,7 +20,7 @@ Três datas, sempre em BRT, no formato `dd/mm/aaaa HH:MM`:
 
 - **Sinais técnicos**: pregão da última barra do Ibovespa usada no cálculo (só `dd/mm/aaaa`) e hora da coleta (`coletado_em`).
 - **Opiniões de especialistas**: horário da última extração (`ultima_extracao_em`, spec 085) e data da matéria mais recente exibida.
-- **Composição do Ibovespa**: a data em que a lista `CARTEIRA_IBOVESPA` foi conferida (constante nova em `app/consultor/universo.py`), já que hoje só há o aviso de "possivelmente desatualizada".
+- **Composição do Ibovespa**: a data em que a lista `CARTEIRA_IBOVESPA` foi conferida (constante `CARTEIRA_CONFERIDA_EM` em `app/consultor/universo.py`), já que hoje só há o aviso de "possivelmente desatualizada".
 
 Cada data traz um selo escrito, além da cor: **Atualizado** ou **Defasado**.
 
@@ -55,3 +56,7 @@ Nenhum cálculo novo, apenas lógicas de defasagem de data.
 
 - Escolher outra data de referência (spec 089).
 - Recalcular o Consultor automaticamente quando a série é renovada.
+
+## Revisão
+
+Marcada como `draft` porque depende da spec 108a (para obter os carimbos reais e `coletado_em`), que ainda não foi implementada no código-fonte principal (`main`), embora esteja com status `ready`. Além disso, o texto mencionava uma constante nova para a conferência da carteira, mas a constante `CARTEIRA_CONFERIDA_EM` já existe em `app/consultor/universo.py`, o que foi corrigido no texto.
