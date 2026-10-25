@@ -81,3 +81,8 @@
 - **Por que fiz:** A convenção de formato definida no `PRODUTO.md` exige números no padrão brasileiro. Em minha análise, detectei que as porcentagens nesses três componentes ("S&P 500 Fut", "VIX", os 3 "Motores do Índice" e o "+45.2%" do "Fator Peso Pesado") estavam sendo exibidas com ponto (ex: +1.00%, -3.00%, +45.2%).
 - **O que aprendi:** Embora as macros `variacao` e `kpi` estejam corretamente estilizando a variação percentual, as formatações passadas para elas no `index.html` não tratavam a localização para separar as decimais por vírgula em todos os lugares, usando `"{:+.2f}%".format()` puro.
 - **O que evitar:** Esquecer o uso do `.replace('.', ',')` depois de formatar pontos flutuantes no lado do cliente que devem ser exibidos ao usuário.
+## 2026-10-25
+- **O que fiz:** Ajustei as formatações em dezenas de locais em `app/templates/index.html` para aplicar o `.replace('.', ',')` nos números em painéis secundários (Atrasadas do Rally, Compradores de Fundo, Exaustão de Alta/Queda, Radar de Absorção Cruzada, entre outros) usando script para encontrar as formatações sem vírgula, corrigindo a exibição de porcentagens e pontos decimais na interface (PRODUTO.md).
+- **Por que fiz:** A convenção exige números no padrão brasileiro e havia muitos componentes com formatação estática `.format()` escapando a verificação de localização em Jinja.
+- **O que aprendi:** Templates lidam bem com filtros em concatenações `(%s|format())|replace('.', ',')`.
+- **O que evitar:** Deixar números flutuantes dependentes de formatação nativa ou `|format` puro em Jinja.

@@ -371,7 +371,7 @@
         {% set linhas = [] %}
         {% for a in variacao_subita.alertas %}
             {% set s = 1 if a.change_percent > 0 else -1 if a.change_percent < 0 else 0 %}
-            {% set val = ("%.2f%%" | format(a.change_percent | abs)) %}
+            {% set val = ("%.2f%%" | format(a.change_percent | abs))|replace(".", ",") %}
             {% set _ = linhas.append([
                 {'tk': True, 'conteudo': a.ticker},
                 {'conteudo': (variacao(val, s)) | safe, 'num': True}
@@ -417,7 +417,7 @@
         {% for a in exaustao_alta.alertas %}
             {% set _ = linhas.append([
                 {'texto': a.ticker, 'ticker': True},
-                {'texto': "%.2f%%"|format(a.variacao), 'destaque': True, 'cor': 'alta' if a.variacao > 0 else 'baixa'}
+                {'texto': ("%.2f%%"|format(a.variacao))|replace(".", ","), 'destaque': True, 'cor': 'alta' if a.variacao > 0 else 'baixa'}
             ]) %}
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Variação', 'num': True}], 'exaustao_alta') }}
@@ -434,8 +434,8 @@
         {% for a in exaustao_queda.alertas %}
             {% set _ = linhas.append([
                 {'tk': True, 'conteudo': a.ticker},
-                {'num': True, 'conteudo': (variacao('%.2f%%' | format(a.queda_acumulada), -1)) | safe},
-                {'num': True, 'conteudo': (variacao('%.2f%%' | format(a.recuperacao_intraday), 1)) | safe}
+                {'num': True, 'conteudo': (variacao(("%.2f%%" | format(a.queda_acumulada))|replace(".", ","), -1)) | safe},
+                {'num': True, 'conteudo': (variacao(("%.2f%%" | format(a.recuperacao_intraday))|replace(".", ","), 1)) | safe}
             ]) %}
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda Acumulada (3d)', 'num': True}, {'titulo': 'Recuperação Intraday', 'num': True}], 'ex-queda') }}
@@ -453,7 +453,7 @@
             {% set celulas = [
                 {'tk': True, 'conteudo': a.ticker},
                 {'num': True, 'conteudo': ("%d dias" % a.dias_consecutivos) },
-                {'num': True, 'conteudo': (variacao("%.2f%%" | format(a.variacao_acumulada), 1 if a.variacao_acumulada > 0 else -1 if a.variacao_acumulada < 0 else 0)) | safe }
+                {'num': True, 'conteudo': (variacao(("%.2f%%" | format(a.variacao_acumulada))|replace(".", ","), 1 if a.variacao_acumulada > 0 else -1 if a.variacao_acumulada < 0 else 0)) | safe }
             ] %}
             {% set _ = linhas.append(celulas) %}
         {% endfor %}
@@ -493,9 +493,9 @@
                 {% for alerta in liquidez_abertura.alertas %}
                 <tr>
                     <td><strong>{{ alerta.ticker }}</strong></td>
-                    <td class="direita">{{ "%.0f"|format(alerta.ratio * 100) }}%</td>
+                    <td class="direita">{{ ("%.0f"|format(alerta.ratio * 100)) }}%</td>
                     <td class="direita {% if alerta.var_pct > 0 %}alta{% elif alerta.var_pct < 0 %}baixa{% endif %}">
-                        {% if alerta.var_pct > 0 %}▲ {% elif alerta.var_pct < 0 %}▼ {% endif %}{{ "%.2f"|format(alerta.var_pct|abs) }}%
+                        {% if alerta.var_pct > 0 %}▲ {% elif alerta.var_pct < 0 %}▼ {% endif %}{{ ("%.2f"|format(alerta.var_pct|abs))|replace(".", ",") }}%
                     </td>
                 </tr>
                 {% endfor %}
@@ -590,7 +590,7 @@
                     <tr>
                         <td class="esq">{{ a.ticker }}</td>
                         <td class="dir">
-                            <span class="var alta">{{ "%.2f"|format(a.spread_percent) }}%</span>
+                            <span class="var alta">{{ ("%.2f"|format(a.spread_percent))|replace(".", ",") }}%</span>
                         </td>
                     </tr>
                     {% endfor %}
@@ -610,9 +610,9 @@
         {% for a in short_squeeze.alertas %}
             {% set _ = linhas.append([
                 {'tk': True, 'conteudo': a.ticker},
-                {'conteudo': (variacao("%.2f%%" | format(a.queda_10d), -1)) | safe, 'num': True},
+                {'conteudo': (variacao(("%.2f%%" | format(a.queda_10d))|replace(".", ","), -1)) | safe, 'num': True},
                 {'conteudo': ('<span>' | safe) ~ (a.mult_vol | e) ~ ('x vol</span>' | safe)},
-                {'conteudo': (variacao("%.2f%%" | format(a.alta_hoje), 1)) | safe, 'num': True}
+                {'conteudo': (variacao(("%.2f%%" | format(a.alta_hoje))|replace(".", ","), 1)) | safe, 'num': True}
             ]) %}
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda 10d', 'num': True}, {'titulo': 'Volume'}, {'titulo': 'Alta', 'num': True}], 'short-squeeze') }}
@@ -691,7 +691,7 @@
             {% set celulas = [
                 {'tk': True, 'conteudo': a.ticker},
                 {'num': True, 'conteudo': ("%.1fx" | format(a.vol_ratio)) | replace('.', ',')},
-                {'num': True, 'conteudo': (variacao("%.2f%%" | format(a.price_var), 1 if a.price_var > 0 else -1 if a.price_var < 0 else 0)) | safe}
+                {'num': True, 'conteudo': (variacao(("%.2f%%" | format(a.price_var))|replace(".", ","), 1 if a.price_var > 0 else -1 if a.price_var < 0 else 0)) | safe}
             ] %}
             {% set _ = linhas.append(celulas) %}
         {% endfor %}
@@ -705,7 +705,7 @@
     {% else %}
         <div class="destaque">
             <h3>{{ relogio.hora_str }}</h3>
-            <p>Amplitude de {{ "%.2f"|format(relogio.amplitude_percentual) }}%</p>
+            <p>Amplitude de {{ ("%.2f"|format(relogio.amplitude_percentual))|replace(".", ",") }}%</p>
         </div>
     {% endif %}
 {% endcall %}
@@ -721,7 +721,7 @@
             {% set _ = linhas.append([
                 {'tk': True, 'conteudo': a.ticker},
                 {'conteudo': ('<span>' | safe) ~ (a.texto | e) ~ ('</span>' | safe)},
-                {'conteudo': (variacao("%.2f%%" | format(a.queda_pct), -1)) | safe, 'num': True}
+                {'conteudo': (variacao(("%.2f%%" | format(a.queda_pct))|replace(".", ","), -1)) | safe, 'num': True}
             ]) %}
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Sinal'}, {'titulo': 'Queda', 'num': True}], 'scanner-capitulacao') }}
@@ -738,7 +738,7 @@
                 {% set _ = linhas.append({
                     'ticker': alerta.ticker,
                     'magnitudes': [alerta.dist_max_pct],
-                    'var_formatada': "{:.1f}% min".format(alerta.dist_min_pct),
+                    'var_formatada': "{:.1f}% min".format(alerta.dist_min_pct).replace(".", ","),
                     'sinal': 1
                 }) %}
             {% endfor %}
@@ -856,7 +856,7 @@
     {% else %}
         {% set linhas = [] %}
         {% for a in compradores_fundo.alertas %}
-            {% set val = ("%.2f%%" | format(a.queda_maxima | abs)) %}
+            {% set val = ("%.2f%%" | format(a.queda_maxima | abs))|replace(".", ",") %}
             {% set _ = linhas.append([
                 {'tk': True, 'conteudo': a.ticker},
                 {'conteudo': (variacao(val, -1)) | safe, 'num': True},
@@ -894,9 +894,9 @@
         {% for a in radar_anomalia_fechamento.alertas %}
             {% set _ = linhas.append([
                 {'tk': True, 'conteudo': a.ticker},
-                {'conteudo': "%.2f" | format(a.preco_antes), 'num': True},
-                {'conteudo': "%.2f" | format(a.fechamento), 'num': True},
-                {'conteudo': (variacao("%.2f%%" | format(a.diferenca_pct), a.diferenca_pct)) | safe, 'num': True}
+                {'conteudo': ("%.2f" | format(a.preco_antes))|replace(".", ","), 'num': True},
+                {'conteudo': ("%.2f" | format(a.fechamento))|replace(".", ","), 'num': True},
+                {'conteudo': (variacao(("%.2f%%" | format(a.diferenca_pct))|replace(".", ","), a.diferenca_pct)) | safe, 'num': True}
             ]) %}
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': '16:50', 'num': True}, {'titulo': 'Fech.', 'num': True}, {'titulo': 'Dif', 'num': True}], 'radar-anomalia') }}
@@ -913,8 +913,8 @@
         {% for a in radar_inflexao.alertas %}
             {% set _ = linhas.append([
                 {'tk': True, 'conteudo': a.ticker},
-                {'conteudo': (variacao("%.2f%%" | format(a.retorno_acumulado), -1)) | safe, 'num': True},
-                {'conteudo': (variacao("%.2f%%" | format(a.variacao_hoje), 1)) | safe, 'num': True}
+                {'conteudo': (variacao(("%.2f%%" | format(a.retorno_acumulado))|replace(".", ","), -1)) | safe, 'num': True},
+                {'conteudo': (variacao(("%.2f%%" | format(a.variacao_hoje))|replace(".", ","), 1)) | safe, 'num': True}
             ]) %}
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda'}, {'titulo': 'Hoje', 'num': True}], 'radar-inflexao') }}
@@ -932,7 +932,7 @@
             {% set celulas = [
                 {'tk': True, 'conteudo': a.ticker},
                 {'num': True, 'conteudo': ("%.1f%%" | format(a.amplitude)) | replace('.', ','), 'barra': True, 'valor_barra': a.amplitude},
-                {'num': True, 'conteudo': (variacao("%.2f%%" | format(a.variacao), 1 if a.variacao > 0 else -1 if a.variacao < 0 else 0)) | safe}
+                {'num': True, 'conteudo': (variacao(("%.2f%%" | format(a.variacao))|replace(".", ","), 1 if a.variacao > 0 else -1 if a.variacao < 0 else 0)) | safe}
             ] %}
             {% set _ = linhas.append(celulas) %}
         {% endfor %}
