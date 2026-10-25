@@ -2,7 +2,7 @@
 id: 2026-10-24-spec-086-nao-implementada
 severidade: alta
 painel: consultor
-status: aberto
+status: resolvido
 visto_em: 2026-10-24T15:27:00-03:00
 pr: 478
 ---

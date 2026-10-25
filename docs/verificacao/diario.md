@@ -1,5 +1,4 @@
-- Verifiquei os PRs 478 e 477 integrados na main recém testados localmente e com smoke test.
-- O PR 477 (Ajuste formato percentual pelo especialista Palette) funciona corretamente e previne problemas de design formatando os dados de forma adequada (PRODUTO.md).
-- O PR 478 (Spec 086) introduziu a falha de ser mesclado sem o código e sem o teste de aceite listado em seu escopo, resultando em um achado de severidade alta para retomada pelo desenvolvedor.
+- O PR 489 implementou a Spec 086 com sucesso, provendo os timestamps reais para a página do consultor e os avisos de defasagem de sinais e opiniões. O teste de aceite da spec 086 foi incluído no commit e passou, bem como os avisos constam nas telas e nas rotas da API.
+- Confirmada a resolução dos achados 'radar-exaustao-alta' (PR anterior) e 'spec-086-nao-implementada' (PR 489).
 - Sem problemas de segurança identificados.
-- Próxima verificação: revisar novamente a Spec 086 se o desenvolvedor finalizar seu escopo com sucesso na próxima iteração do ciclo.
+- Próxima verificação: focar em avaliar se alguma nova spec entregue impactou o tempo de carregamento da página inicial ou o consumo de chamadas das APIs externas integradas.

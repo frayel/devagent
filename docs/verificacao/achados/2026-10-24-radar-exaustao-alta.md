@@ -2,7 +2,7 @@
 id: 2026-10-24-radar-exaustao-alta
 severidade: media
 painel: app/main.py
-status: aberto
+status: resolvido
 visto_em: 2026-10-24T02:30:00-03:00
 pr: 442
 ---
