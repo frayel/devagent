@@ -1,13 +1,16 @@
 ---
 id: 093
-titulo: Alertas da página de sistema com causa, ação sugerida e acompanhamento até sumirem
+titulo: Resolução guiada para alertas da página de sistema
 status: ready
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_093.py
+revisada: 2026-10-25
 ---
 
 ## Problema
+
+Como o dono do produto descobre o que fazer com os alertas da página de sistema e acompanha a resolução?
 
 A página `/sistema` lista alertas, mas deixa o dono do produto adivinhar o que fazer. Na leitura de 23/10/2026 havia quatro ao mesmo tempo: `consultor_opinioes: relation "consultor_llm_uso" does not exist`, Yahoo Finance com 404, brapi com 400 e Gemini *Inativo*. Para cada um, a tela dá o texto do erro (às vezes só a URL) e mais nada: não diz se o defeito é do pedido ou do servidor externo, nem o que seria preciso fazer, nem se o ciclo do agente já está tratando.
 
@@ -30,11 +33,9 @@ As causas dos quatro alertas de hoje têm specs próprias (084, 090, 091, 092). 
 - **Integração sem chamadas**: causa "configurada, mas nunca chamada", ação "verificar o pipeline que a usa".
 - Erro desconhecido: causa "causa não classificada", ação "ver o detalhe e abrir issue".
 
-O erro da última rodada de coleta (`ultimo_erro` do agendador) ganha o nome do coletor no começo e deixa de ser uma frase solta: "coletor consultor_opinioes: <erro>".
-
 ### 2. Há quanto tempo
 
-Cada item pendente mostra "desde dd/mm HH:MM" (primeira leitura em que apareceu com esse nível). O monitor (`app/collectors/sistema.py`) guarda essa primeira vez por chave do item (grupo e nome) na memória do processo e na tabela nova `sistema_alertas (chave, nivel, desde, ultimo_visto)`, para sobreviver a um reinício. Item que volta a *OK* é removido da tabela.
+Cada item pendente mostra "desde dd/mm HH:MM" (primeira leitura em que apareceu com esse nível). O monitor (`app/collectors/sistema.py`) guarda essa primeira vez por chave do item (grupo e nome) na memória do processo e no banco de dados (usando a tabela unificada `snapshots_paineis` sob o painel `sistema_alertas` para persistência), para sobreviver a um reinício. Item que volta a *OK* é removido da persistência.
 
 ### 3. O ciclo do agente enxerga *Atenção* persistente
 
@@ -55,7 +56,7 @@ Só dados que `/sistema` já tem. Nenhuma requisição nova.
 - [ ] `/api/sistema` traz `causa`, `acao` e `desde` por pendência, e o núcleo (`devagent/saude.py`) continua lendo contratos antigos sem esses campos.
 - [ ] Item em *Atenção* há 25 h gera pendência de ação na issue; há 23 h, não.
 - [ ] A chave da issue não muda quando só o texto ou a hora do erro mudam.
-- [ ] Item que volta a *OK* sai da tabela `sistema_alertas`; um reinício mantém o `desde` dos que continuam.
+- [ ] Item que volta a *OK* é removido da persistência em `snapshots_paineis`; um reinício mantém o `desde` dos que continuam.
 - [ ] Nenhum segredo aparece nos novos campos.
 
 ## Invariantes de produção
