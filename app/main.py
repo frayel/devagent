@@ -482,6 +482,9 @@ def pagina_consultor(request: Request, data_str: str | None = None):
         request=request,
         name="consultor.html",
         context={
+            "informacoes_de": dados.get("informacoes_de", {})
+            if isinstance(dados, dict)
+            else {},
             "desatualizada": composicao_esta_desatualizada(),
             "fonte": FONTE_URL,
             "dados": dados,
@@ -641,6 +644,9 @@ def api_consultor(request: Request):
             "fontes_opiniao": fontes_opiniao,
             "opinioes": opinioes_api,
             "duracao_ms": int((time.perf_counter() - _t0) * 1000),
+            "informacoes_de": dados.get("informacoes_de", {})
+            if isinstance(dados, dict)
+            else {},
             "cache": _usou_cache,
         }
     )

@@ -1,6 +1,0 @@
-Implementa o comportamento descrito na Spec 077d:
-- Move o cache de `radar_anomalia_fechamento_cache` para `snapshots_paineis`.
-- Move a persistência de regras em `consultor_confianca_regras` para `snapshots_paineis`.
-- Remove vestígios e indexações locais para o Render efêmero (SQLite) em `init_db`.
-- Atualiza testes de unidade `test_radar_anomalia_fechamento` e `test_avaliador_historico` para lidar com as novas assinaturas e dependências no DB.
-- Adicionado teste de aceite automatizado.

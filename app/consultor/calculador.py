@@ -66,6 +66,15 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
             "opinioes_recentes": [],
             "regras_confianca": {},
             "opinioes_status": get_opinioes_status(),
+            "informacoes_de": {
+                "sinais_pregao": "-",
+                "sinais_coletado_em": "",
+                "sinais_estado": "Defasado",
+                "opinioes_extraidas_em": "",
+                "opinioes_estado": "Defasado",
+                "composicao_conferida_em": "-",
+                "composicao_estado": "Defasado",
+            },
         }
 
     ibov_closes, _, ibov_ts = pre_processar_ativo(historicos["^BVSP"])

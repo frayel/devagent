@@ -104,3 +104,6 @@ MAPA_NOMES_TICKERS = {
 
 def composicao_esta_desatualizada() -> bool:
     return date.today() > COMPOSICAO_VIGENTE_ATE
+
+
+COMPOSICAO_CONFERIDA_EM = date(2026, 9, 2)

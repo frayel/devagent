@@ -22,6 +22,40 @@
             Composição do Ibovespa possivelmente desatualizada. <a href="{{ fonte }}" target="_blank">Verificar fonte</a>.
         </div>
         {% endif %}
+        {% if informacoes_de and (informacoes_de.sinais_estado == 'Defasado' or informacoes_de.opinioes_estado == 'Defasado' or informacoes_de.composicao_estado == 'Defasado') %}
+            <div class="alerta">
+                {% if informacoes_de.sinais_estado == 'Defasado' %}
+                Sinais técnicos defasados desde {{ informacoes_de.sinais_pregao }}.
+                {% endif %}
+                {% if informacoes_de.opinioes_estado == 'Defasado' %}
+                Opiniões extraídas há mais de 24h/72h ({{ informacoes_de.opinioes_extraidas_em[:16] | replace('T', ' ') }}).
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if informacoes_de %}
+        <section class="painel span-12 painel-mb-2">
+            <div class="cab">
+                <h2>Informações de</h2>
+            </div>
+            <div class="informacoes-container">
+                <div>
+                    <strong>Sinais técnicos:</strong> {{ informacoes_de.sinais_pregao }}
+                    <span class="info-status {% if informacoes_de.sinais_estado == 'Atualizado' %}info-atualizado{% else %}info-defasado{% endif %}">{{ informacoes_de.sinais_estado }}</span><br>
+                    <span class="info-coleta">Coleta: {{ informacoes_de.sinais_coletado_em[:16] | replace('T', ' ') if informacoes_de.sinais_coletado_em else '-' }}</span>
+                </div>
+                <div>
+                    <strong>Opiniões:</strong> {{ informacoes_de.opinioes_extraidas_em[:16] | replace('T', ' ') if informacoes_de.opinioes_extraidas_em else '-' }}
+                    <span class="info-status {% if informacoes_de.opinioes_estado == 'Atualizado' %}info-atualizado{% else %}info-defasado{% endif %}">{{ informacoes_de.opinioes_estado }}</span>
+                </div>
+                <div>
+                    <strong>Composição Ibovespa:</strong> {{ informacoes_de.composicao_conferida_em }}
+                    <span class="info-status {% if informacoes_de.composicao_estado == 'Atualizado' %}info-atualizado{% else %}info-defasado{% endif %}">{{ informacoes_de.composicao_estado }}</span>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
 
         <details class="accordion-regras">
             <summary>Como o consultor decide</summary>

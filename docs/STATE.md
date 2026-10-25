@@ -10,7 +10,7 @@
 ## Manutenção
 
 - Última rodada de manutenção: 2026-10-17, spec 063. Medidas: unificação de histórico diário (cache).
-- Specs entregues desde a última rodada (exceto as de manutenção): 3.
+- Specs entregues desde a última rodada (exceto as de manutenção): 4.
 - Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
 
 ## Implementado
@@ -430,3 +430,5 @@
   - Atualizado app/main.py e app/templates/index.html para exibição do novo painel.
 
 - implementado 084-consultor-esquema-postgres.md (saúde técnica, contador de specs não incrementado)
+- Spec 086 (Data das Informações no Consultor):
+  - Adicionado painel com o status da data dos dados coletados.

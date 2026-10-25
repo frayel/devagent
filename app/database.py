@@ -1632,7 +1632,20 @@ def get_historico_diario(
 
             spark_like_item = {
                 "symbol": ticker,
-                "timestamp": [1] * len(closes),
+                "metadata": {
+                    "criado_em": max(
+                        (b.get("criado_em", "") for b in barras), default=""
+                    )
+                },
+                "timestamp": [
+                    int(
+                        __import__("datetime")
+                        .datetime.fromisoformat(str(b.get("data"))[:10])
+                        .replace(tzinfo=__import__("datetime").timezone.utc)
+                        .timestamp()
+                    )
+                    for b in barras
+                ],
                 "indicators": {"quote": [quote_dict]},
             }
             result[ticker] = spark_like_item
