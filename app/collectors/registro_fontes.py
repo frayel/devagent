@@ -26,7 +26,24 @@ FONTES: tuple[tuple[str, str], ...] = (
 )
 MT5 = "MetaTrader 5"
 
-_SEGREDO = re.compile(r"([?&](?:token|key|apikey)=)[^&\s]+", re.I)
+_SEGREDO = re.compile(
+    r"([?&](?:token|key|apikey)=|\"(?:token|key|apikey)\"\s*:\s*\")[^&\"\s]+", re.I
+)
+
+
+@dataclass
+class EndpointStat:
+    ok: int = 0
+    falhas: int = 0
+    ultimo_status: int | None = None
+
+
+@dataclass
+class Falha:
+    endpoint: str
+    simbolos: list[str]
+    status: int
+    corpo: str
 
 
 @dataclass
@@ -43,6 +60,8 @@ class Fonte:
     # 429, chave recusada)? Um 404 é a fonte respondendo que o pedido não
     # existe: o defeito está em quem pediu, não na integração.
     graves: list[bool] = field(default_factory=list)
+    endpoints: dict[str, EndpointStat] = field(default_factory=dict)
+    falhas_recentes: list[Falha] = field(default_factory=list)
 
 
 _fontes: dict[str, Fonte] = {}
@@ -75,17 +94,36 @@ def grave(status: int) -> bool:
     return status in (401, 403, 429) or status >= 500
 
 
-def sucesso(nome: str, quando: datetime | None = None) -> None:
+def sucesso(
+    nome: str, quando: datetime | None = None, endpoint: str | None = None
+) -> None:
     quando = quando or datetime.now(timezone.utc)
     with _trava:
         f = _fonte(nome)
         f.sucessos += 1
         f.ultimo_sucesso = quando
         _anotar(f, True)
+        if endpoint:
+            if endpoint not in f.endpoints:
+                if len(f.endpoints) >= 10:
+                    oldest = next(iter(f.endpoints))
+                    del f.endpoints[oldest]
+                f.endpoints[endpoint] = EndpointStat()
+            f.endpoints[endpoint].ok += 1
+            # Move para o fim para manter os 10 mais recentes acessados
+            stat = f.endpoints.pop(endpoint)
+            f.endpoints[endpoint] = stat
 
 
 def falha(
-    nome: str, motivo: str, quando: datetime | None = None, grave: bool = True
+    nome: str,
+    motivo: str,
+    quando: datetime | None = None,
+    grave: bool = True,
+    endpoint: str | None = None,
+    simbolos: list[str] | None = None,
+    status: int | None = None,
+    corpo: str | None = None,
 ) -> None:
     quando = quando or datetime.now(timezone.utc)
     with _trava:
@@ -95,20 +133,58 @@ def falha(
         f.ultimo_erro = _SEGREDO.sub(r"\1***", motivo)[:200]
         _anotar(f, False, grave)
 
+        if endpoint and status is not None:
+            if endpoint not in f.endpoints:
+                if len(f.endpoints) >= 10:
+                    oldest = next(iter(f.endpoints))
+                    del f.endpoints[oldest]
+                f.endpoints[endpoint] = EndpointStat()
+            stat = f.endpoints.pop(endpoint)
+            stat.falhas += 1
+            stat.ultimo_status = status
+            f.endpoints[endpoint] = stat
+
+            if corpo is not None:
+                corpo = _SEGREDO.sub(r"\1***", corpo)[:200]
+                # Regex adicional para 'Authorization'
+                corpo = re.sub(
+                    r'(?i)(Authorization\s*[:=]\s*)[^\s"\']+', r"\1***", corpo
+                )[:200]
+            else:
+                corpo = ""
+
+            f.falhas_recentes.append(
+                Falha(
+                    endpoint=endpoint,
+                    simbolos=simbolos or [],
+                    status=status,
+                    corpo=corpo,
+                )
+            )
+            del f.falhas_recentes[:-10]
+
 
 def fontes() -> dict[str, Fonte]:
     """Cópia do registro, para quem só lê."""
     with _trava:
         return {
             nome: Fonte(
-                f.nome,
-                f.sucessos,
-                f.falhas,
-                f.ultimo_sucesso,
-                f.ultima_falha,
-                f.ultimo_erro,
-                list(f.recentes),
-                list(f.graves),
+                nome=f.nome,
+                sucessos=f.sucessos,
+                falhas=f.falhas,
+                ultimo_sucesso=f.ultimo_sucesso,
+                ultima_falha=f.ultima_falha,
+                ultimo_erro=f.ultimo_erro,
+                recentes=list(f.recentes),
+                graves=list(f.graves),
+                endpoints={
+                    k: EndpointStat(v.ok, v.falhas, v.ultimo_status)
+                    for k, v in f.endpoints.items()
+                },
+                falhas_recentes=[
+                    Falha(fa.endpoint, list(fa.simbolos), fa.status, fa.corpo)
+                    for fa in f.falhas_recentes
+                ],
             )
             for nome, f in _fontes.items()
         }

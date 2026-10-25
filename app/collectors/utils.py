@@ -20,6 +20,42 @@ MIN_DELAY = 2.0  # 2 seconds per domain
 _last_request_time: dict[str, float] = {}
 
 
+def _extrair_endpoint_e_simbolos(url: str) -> tuple[str, list[str]]:
+    # Remove domínio e query string, deixa só o caminho
+    import urllib.parse
+    import re
+
+    parsed = urllib.parse.urlparse(url)
+    caminho = parsed.path
+    query = urllib.parse.parse_qs(parsed.query)
+
+    simbolos = []
+
+    # yahoo spark: /v7/finance/spark?symbols=AAPL.SA,MSFT.SA
+    if "/v7/finance/spark" in caminho:
+        if "symbols" in query:
+            symbols = query["symbols"][0].split(",")
+            simbolos = [s.replace(".SA", "") for s in symbols]
+
+    # yahoo chart: /v8/finance/chart/AAPL.SA
+    elif "/v8/finance/chart/" in caminho:
+        match = re.search(r"/v8/finance/chart/([^/]+)", caminho)
+        if match:
+            simbolo_raw = match.group(1)
+            simbolos = [simbolo_raw.replace(".SA", "")]
+            caminho = caminho.replace(simbolo_raw, "{simbolo}")
+
+    # brapi: /api/quote/PETR4,VALE3
+    elif "/api/quote/" in caminho:
+        match = re.search(r"/api/quote/([^/]+)", caminho)
+        if match:
+            simbolo_raw = match.group(1)
+            simbolos = simbolo_raw.split(",")
+            caminho = caminho.replace(simbolo_raw, "{simbolo}")
+
+    return caminho, simbolos
+
+
 def _get_domain(url: str) -> str:
     return urlparse(url).netloc
 
@@ -81,7 +117,10 @@ def fetch_with_retry(
 
             # Raise for status to catch 4xx and 5xx errors
             response.raise_for_status()
-            registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain))
+            endpoint, simbolos = _extrair_endpoint_e_simbolos(url)
+            registro_fontes.sucesso(
+                registro_fontes.nome_da_fonte(domain), endpoint=endpoint
+            )
             return response
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
@@ -95,10 +134,16 @@ def fetch_with_retry(
                     )
                     time.sleep(sleep_time)
                     continue
+            endpoint, simbolos = _extrair_endpoint_e_simbolos(url)
+            corpo = e.response.text if hasattr(e.response, "text") else ""
             registro_fontes.falha(
                 registro_fontes.nome_da_fonte(domain),
                 f"HTTP {status_code} em {url}",
                 grave=registro_fontes.grave(status_code),
+                endpoint=endpoint,
+                simbolos=simbolos,
+                status=status_code,
+                corpo=corpo,
             )
             raise  # Raise if not retryable or max retries reached
         except httpx.RequestError as e:
@@ -111,8 +156,14 @@ def fetch_with_retry(
                 )
                 time.sleep(sleep_time)
                 continue
+            endpoint, simbolos = _extrair_endpoint_e_simbolos(url)
             registro_fontes.falha(
-                registro_fontes.nome_da_fonte(domain), f"{type(e).__name__} em {url}"
+                registro_fontes.nome_da_fonte(domain),
+                f"{type(e).__name__} em {url}",
+                endpoint=endpoint,
+                simbolos=simbolos,
+                status=0,
+                corpo="",
             )
             raise
 
@@ -161,19 +212,34 @@ async def async_fetch_with_retry(
                     logger.info(f"Retrying in {sleep_time} seconds...")
                     await asyncio.sleep(sleep_time)
                     continue
+                endpoint, simbolos = _extrair_endpoint_e_simbolos(url)
+                corpo = response.text if hasattr(response, "text") else ""
                 registro_fontes.falha(
                     registro_fontes.nome_da_fonte(domain),
                     f"HTTP {status_code} em {url}",
+                    endpoint=endpoint,
+                    simbolos=simbolos,
+                    status=status_code,
+                    corpo=corpo,
                 )
                 response.raise_for_status()
 
             if status_code < 400:
-                registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain))
+                endpoint, simbolos = _extrair_endpoint_e_simbolos(url)
+                registro_fontes.sucesso(
+                    registro_fontes.nome_da_fonte(domain), endpoint=endpoint
+                )
             else:
+                endpoint, simbolos = _extrair_endpoint_e_simbolos(url)
+                corpo = response.text if hasattr(response, "text") else ""
                 registro_fontes.falha(
                     registro_fontes.nome_da_fonte(domain),
                     f"HTTP {status_code} em {url}",
                     grave=registro_fontes.grave(status_code),
+                    endpoint=endpoint,
+                    simbolos=simbolos,
+                    status=status_code,
+                    corpo=corpo,
                 )
             return response
 
@@ -187,8 +253,14 @@ async def async_fetch_with_retry(
                 logger.info(f"Retrying in {sleep_time} seconds...")
                 await asyncio.sleep(sleep_time)
                 continue
+            endpoint, simbolos = _extrair_endpoint_e_simbolos(url)
             registro_fontes.falha(
-                registro_fontes.nome_da_fonte(domain), f"{type(e).__name__} em {url}"
+                registro_fontes.nome_da_fonte(domain),
+                f"{type(e).__name__} em {url}",
+                endpoint=endpoint,
+                simbolos=simbolos,
+                status=0,
+                corpo="",
             )
             raise
 

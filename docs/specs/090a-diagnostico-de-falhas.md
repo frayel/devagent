@@ -1,7 +1,7 @@
 ---
 id: 090a
 titulo: O pedido está errado ou o servidor falhou? Detalhar falhas no registro
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_090a.py

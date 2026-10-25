@@ -430,32 +430,114 @@ def verificar_integracoes(
 
 
 def _item_da_fonte(nome: str, fonte: Any, papel: str, agora: datetime) -> Item:
-    if fonte is None or not fonte.recentes:
+    if fonte is None or not getattr(fonte, "recentes", []):
         return Item(nome, INATIVO, "sem chamadas desde a partida", papel)
-    recentes = fonte.recentes
+
+    recentes = getattr(fonte, "recentes", [])
     graves = getattr(fonte, "graves", None) or [not r for r in recentes]
-    falhas_recentes = recentes.count(False)
-    # Problema é a fonte fora do ar: as últimas chamadas (ao menos 3) falharam
-    # e alguma por rede, 5xx, 429 ou chave recusada. Só 404 e afins são pedidos
-    # que a fonte não tem: o defeito é de quem pediu, e fica em atenção.
+    falhas_recentes_lista = getattr(fonte, "falhas_recentes", [])
+    endpoints = getattr(fonte, "endpoints", {})
+
+    falhas_count = recentes.count(False)
     ultimas = recentes[-5:]
+
+    nivel = OK
+    texto_nivel = ""
+
+    # Regras de nível (090a)
+    # 1. 404 isoladas -> ATENCAO
+    # 2. mesmo endpoint 404 para 3 ou mais seguidos (símbolos diferentes), incluindo ^BVSP -> PROBLEMA
     if len(ultimas) >= 3 and not any(ultimas) and any(graves[-5:]):
         nivel = PROBLEMA
-    elif not recentes[-1] or falhas_recentes / len(recentes) >= 0.3:
+    elif not recentes[-1] or falhas_count / len(recentes) >= 0.3:
         nivel = ATENCAO
-    else:
-        nivel = OK
-    total = fonte.sucessos + fonte.falhas
-    resumo = f"{fonte.sucessos} de {total} chamadas ok"
-    if fonte.ultimo_sucesso:
-        resumo += f" · última ok {ha_quanto(fonte.ultimo_sucesso, agora)}"
+
+    # Verificar endpoints com 404 (Problema/Atenção específico 090a)
+    if falhas_recentes_lista:
+        # Analisa os 404 recentes
+        falhas_404 = [
+            f for f in falhas_recentes_lista if getattr(f, "status", None) == 404
+        ]
+        if falhas_404:
+            # Agrupa por endpoint
+            por_endpoint: dict[str, list[Any]] = {}
+            for f in falhas_404:
+                ep = getattr(f, "endpoint", None)
+                if not ep:
+                    continue
+                if ep not in por_endpoint:
+                    por_endpoint[ep] = []
+                por_endpoint[ep].append(f)
+
+            for ep, falhas in por_endpoint.items():
+                if len(falhas) >= 3:
+                    simbolos_diferentes = set()
+                    tem_bvsp = False
+                    for f in falhas:
+                        simbolos_f = getattr(f, "simbolos", [])
+                        for s in simbolos_f:
+                            simbolos_diferentes.add(s)
+                            if s == "^BVSP":
+                                tem_bvsp = True
+
+                    if len(simbolos_diferentes) > 1 and tem_bvsp:
+                        nivel = PROBLEMA
+                        texto_nivel = (
+                            f"O endpoint {ep} parece ter mudado ou saído do ar"
+                        )
+                        break
+
+            # Se não for problema, e tiver 404, garante que seja pelo menos atenção (falhas 404 isoladas)
+            if nivel != PROBLEMA:
+                nivel = ATENCAO
+                simbolos_isolados = set()
+                for f in falhas_404:
+                    for s in getattr(f, "simbolos", []):
+                        simbolos_isolados.add(s)
+                if simbolos_isolados:
+                    texto_nivel = (
+                        f"Falhas 404 em: {', '.join(sorted(simbolos_isolados))}"
+                    )
+
+    total = getattr(fonte, "sucessos", 0) + getattr(fonte, "falhas", 0)
+    sucessos = getattr(fonte, "sucessos", 0)
+    ultimo_sucesso = getattr(fonte, "ultimo_sucesso", None)
+    ultima_falha = getattr(fonte, "ultima_falha", None)
+    ultimo_erro = getattr(fonte, "ultimo_erro", None)
+
+    resumo = f"{sucessos} de {total} chamadas ok"
+    if ultimo_sucesso:
+        resumo += f" · última ok {ha_quanto(ultimo_sucesso, agora)}"
+
     detalhe = papel
-    if fonte.ultima_falha:
-        erro = f"Última falha {hora_brt(fonte.ultima_falha)}: {fonte.ultimo_erro}"
+
+    if endpoints:
+        # Pega os 3 endpoints com mais falhas
+        piores = sorted(endpoints.items(), key=lambda kv: (-kv[1].falhas, kv[0]))[:3]
+        linhas_ep = []
+        for ep, st in piores:
+            if st.falhas > 0:
+                linha = f"{ep} ({st.falhas} falhas"
+                if st.ultimo_status:
+                    linha += f", último {st.ultimo_status}"
+                linha += ")"
+                linhas_ep.append(linha)
+        if linhas_ep:
+            detalhe += ". Endpoints com falha: " + "; ".join(linhas_ep)
+
+    if falhas_recentes_lista:
+        ultima = falhas_recentes_lista[-1]
+        corpo = getattr(ultima, "corpo", "")
+        if corpo:
+            detalhe += f". Trecho: {corpo}"
+    elif ultima_falha:
+        erro = f"Última falha {hora_brt(ultima_falha)}: {ultimo_erro}"
         detalhe = f"{papel}. {erro}" if papel else erro
-    quando = max(
-        (d for d in (fonte.ultimo_sucesso, fonte.ultima_falha) if d), default=None
-    )
+
+    if texto_nivel:
+        detalhe += f" ({texto_nivel})"
+
+    quando = max((d for d in (ultimo_sucesso, ultima_falha) if d), default=None)
     return Item(nome, nivel, resumo, detalhe, quando.isoformat() if quando else None)
 
 
