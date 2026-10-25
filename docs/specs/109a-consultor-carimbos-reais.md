@@ -1,10 +1,11 @@
 ---
 id: 109a
 titulo: Consultor: timestamps reais em get_historico_diario
-status: ready
+status: draft
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_109a.py
+revisada: 2026-10-25
 ---
 
 ## Problema
@@ -23,3 +24,6 @@ Só o banco local.
 ## Critérios de aceite (1 arquivo de teste editado)
 
 - [ ] `get_historico_diario` devolve timestamps reais e monotônicos para uma série de fixture (nenhum valor igual a 1) e `coletado_em`.
+
+## Revisão
+A spec 109a é inviável/duplicada porque a funcionalidade descrita (obter timestamps reais em `get_historico_diario`) já foi especificada e está presente em `docs/specs/108a-consultor-timestamps-reais.md`, que também já foi revisada. O desenvolvimento já tem essa demanda através da spec 108a.
