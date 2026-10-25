@@ -2,3 +2,8 @@
 - Confirmada a resolução dos achados 'radar-exaustao-alta' (PR anterior) e 'spec-086-nao-implementada' (PR 489).
 - Sem problemas de segurança identificados.
 - Próxima verificação: focar em avaliar se alguma nova spec entregue impactou o tempo de carregamento da página inicial ou o consumo de chamadas das APIs externas integradas.
+
+- Verifiquei o PR 498 referente à entrega da Spec 088.
+- Notei que os critérios de aceite foram na maioria cumpridos (o seletor está na página inicial sem hx-target, api validada).
+- No entanto, a implementação do seletor faltou em /consultor e /sistema, o que gerou o achado 2026-10-25-seletor-faltando-em-consultor-e-sistema.
+- Próxima verificação deve focar se outros detalhes da UX, ou de consumo, sofreram impacto.
