@@ -1,9 +1,11 @@
 ---
 id: 098
-titulo: brapi como fonte secundária, com uma chamada por ativo (Módulo Base e Ordem das Fontes - Lote 1)
+titulo: Módulo Base da brapi como fonte secundária
 status: ready
 esforco: M
 gaveta: saúde técnica
+aceite: tests/test_brapi.py
+revisada: 2026-10-25
 ---
 
 ## Problema
@@ -39,3 +41,13 @@ Nos coletores `ibovespa.py` e `mare.py`, a ordem passa a ser: MT5 -> Yahoo -> br
 - [ ] 403 da brapi liga o disjuntor sem repetir a chamada (novo teste).
 - [ ] 429 da brapi não é repetido por `fetch_with_retry` (novo teste).
 - [ ] Coletores `ibovespa.py` e `mare.py` seguem MT5 → Yahoo → brapi e usam o novo módulo (alterar `tests/test_ibovespa.py`, e adicionar `tests/test_mare.py` se necessário ou checar logs).
+
+## Invariantes de produção
+
+- A falha (403, 429) ou instabilidade da brapi não derruba a coleta do Ibovespa nem do Maré, que devem degradar graciosamente para o Yahoo Finance ou MT5 (verificável pelos testes e logs).
+- O token da brapi nunca é enviado na URL (query string) para não vazar em logs de erro, sendo enviado apenas no cabeçalho `Authorization: Bearer`.
+
+## Fora do escopo
+
+- Migrar os demais coletores que hoje chamam a brapi (como `coesao.py`, `fator_mola.py`, `highlights.py`, etc.). Eles continuarão chamando a brapi diretamente até serem migrados no Lote 2.
+- Lidar com paginação complexa ou outros endpoints da brapi além de `/api/quote/list` e `/api/quote`.
