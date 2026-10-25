@@ -1611,15 +1611,16 @@ def get_latest_assimetria_risco_retorno_data() -> AssimetriaRiscoRetornoData | N
 def get_historico_diario(
     tickers: list[str], range_str: str, interval: str, max_age_minutes: int = 15
 ) -> dict[str, dict]:
-    from app.banco import ler_serie
     from datetime import date, timedelta
 
     result = {}
     hoje = date.today()
     inicio = hoje - timedelta(days=365 * 2)  # max
 
-    for ticker in tickers:
-        barras = ler_serie(ticker, inicio, hoje)
+    from app.banco import ler_series
+
+    series = ler_series(tickers, inicio, hoje)
+    for ticker, barras in series.items():
         if barras:
             closes = [b.get("close") for b in barras]
             quote_dict = {"close": closes}

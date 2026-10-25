@@ -15,6 +15,11 @@
 
 ## Implementado
 
+- Spec 087 (Consultor abre em poucos segundos):
+  - Consulta em lote no histórico (`ler_series`).
+  - Guardião de inicialização de esquema em processo único.
+  - Escrita fora da visita com o agendamento de fechamento.
+  - Cache de visão temporário com TTL.
 - Spec 085 (Consultor Motivos Sem Opinião):
   - Substituição da frase "Nenhuma opinião recente" por 7 diagnósticos.
   - Atualização do banco Postgres e SQLite para suportar as colunas de data da ultima extração, matérias processadas e descartadas.

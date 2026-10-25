@@ -2,7 +2,7 @@
 id: 086
 titulo: Consultor mostra a data de cada informação e avisa quando está defasada
 status: ready
-esforco: M
+esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_086.py
 revisada: 2026-10-24
