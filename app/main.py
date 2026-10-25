@@ -478,6 +478,10 @@ def pagina_consultor(request: Request, data_str: str | None = None):
     except Exception:
         opinioes_diagnostico = {"codigo": "erro"}
 
+    from app.consultor.informacoes import construir_informacoes_de
+
+    informacoes_de = construir_informacoes_de(dados) if isinstance(dados, dict) else {}
+
     return templates.TemplateResponse(
         request=request,
         name="consultor.html",
@@ -485,6 +489,7 @@ def pagina_consultor(request: Request, data_str: str | None = None):
             "desatualizada": composicao_esta_desatualizada(),
             "fonte": FONTE_URL,
             "dados": dados,
+            "informacoes_de": informacoes_de,
             "consultor_indisponivel": consultor_indisponivel,
             "regras_limiares": regras_limiares,
             "opinioes_diagnostico": opinioes_diagnostico,
@@ -632,11 +637,16 @@ def api_consultor(request: Request):
     except Exception:
         ativos_avaliados = 0
 
+    from app.consultor.informacoes import construir_informacoes_de
+
+    informacoes_de = construir_informacoes_de(dados) if isinstance(dados, dict) else {}
+
     return JSONResponse(
         content={
             "atualizado_em": datetime.now().isoformat(),
             "ativos_avaliados": ativos_avaliados,
             "composicao_vigente_ate": COMPOSICAO_VIGENTE_ATE.isoformat(),
+            "informacoes_de": informacoes_de,
             "resultados": resultados_dict,
             "fontes_opiniao": fontes_opiniao,
             "opinioes": opinioes_api,

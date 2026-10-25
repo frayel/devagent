@@ -309,7 +309,7 @@ def ler_series(tickers: list[str], inicio: date, fim: date) -> dict[str, list[di
         if backend == "postgres":
             with conn.cursor() as cursor:
                 cursor.execute(
-                    "SELECT ticker, barras FROM series_diarias WHERE ticker = ANY(%s) AND data_pregao >= %s AND data_pregao <= %s ORDER BY data_pregao ASC",
+                    "SELECT ticker, barras, criado_em FROM series_diarias WHERE ticker = ANY(%s) AND data_pregao >= %s AND data_pregao <= %s ORDER BY data_pregao ASC",
                     (tickers, inicio, fim),
                 )
                 rows = cursor.fetchall()
@@ -317,13 +317,24 @@ def ler_series(tickers: list[str], inicio: date, fim: date) -> dict[str, list[di
                 for row in rows:
                     t = row[0]
                     barras = row[1] if isinstance(row[1], list) else json.loads(row[1])
+                    criado_em = (
+                        row[2]
+                        if isinstance(row[2], str)
+                        else str(row[2])
+                        if row[2]
+                        else ""
+                    )
+                    if barras and isinstance(barras, list):
+                        for b in barras:
+                            if "criado_em" not in b:
+                                b["criado_em"] = criado_em
                     if t in res_pg:
                         res_pg[t].extend(barras)
                 return res_pg
         else:
             cursor = conn.cursor()
             placeholders = ",".join(["?"] * len(tickers))
-            query = f"SELECT ticker, barras FROM series_diarias WHERE ticker IN ({placeholders}) AND data_pregao >= ? AND data_pregao <= ? ORDER BY data_pregao ASC"
+            query = f"SELECT ticker, barras, criado_em FROM series_diarias WHERE ticker IN ({placeholders}) AND data_pregao >= ? AND data_pregao <= ? ORDER BY data_pregao ASC"
             params = tuple(tickers) + (str(inicio), str(fim))
             cursor.execute(query, params)
             rows = cursor.fetchall()
@@ -331,6 +342,11 @@ def ler_series(tickers: list[str], inicio: date, fim: date) -> dict[str, list[di
             for row in rows:
                 t = row[0]
                 barras = json.loads(row[1])
+                criado_em = row[2]
+                if barras and isinstance(barras, list):
+                    for b in barras:
+                        if "criado_em" not in b:
+                            b["criado_em"] = criado_em
                 if t in res_sqlite:
                     res_sqlite[t].extend(barras)
             return res_sqlite

@@ -1611,7 +1611,7 @@ def get_latest_assimetria_risco_retorno_data() -> AssimetriaRiscoRetornoData | N
 def get_historico_diario(
     tickers: list[str], range_str: str, interval: str, max_age_minutes: int = 15
 ) -> dict[str, dict]:
-    from datetime import date, timedelta
+    from datetime import date, datetime, timedelta, timezone
 
     result = {}
     hoje = date.today()
@@ -1630,10 +1630,32 @@ def get_historico_diario(
                 quote_dict["low"] = [b.get("low", 0) for b in barras]
                 quote_dict["volume"] = [b.get("volume", 0) for b in barras]
 
+            timestamps = []
+            for b in barras:
+                data_str = b.get("data")
+                if data_str:
+                    try:
+                        # Pregões em BRT, fechamento às 17h para referência do timestamp, em UTC
+                        dt = datetime.strptime(data_str, "%Y-%m-%d").replace(
+                            hour=20, tzinfo=timezone.utc
+                        )
+                        timestamps.append(int(dt.timestamp()))
+                    except ValueError:
+                        timestamps.append(1)
+                else:
+                    timestamps.append(1)
+
+            max_criado = ""
+            for b in barras:
+                criado = b.get("criado_em")
+                if criado and isinstance(criado, str) and criado > max_criado:
+                    max_criado = criado
+
             spark_like_item = {
                 "symbol": ticker,
-                "timestamp": [1] * len(closes),
+                "timestamp": timestamps,
                 "indicators": {"quote": [quote_dict]},
+                "metadata": {"criado_em": max_criado} if max_criado else {},
             }
             result[ticker] = spark_like_item
 

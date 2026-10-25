@@ -125,6 +125,7 @@
 ### Changed
 - agent: `docs/DESIGN.md` reduz o gráfico do Ibovespa para 200px e proíbe eixo Y de preço começando em zero (vai de 2% abaixo do mínimo do período), a pedido do dono do produto.
 ### Fixed
+- fix: Implementa de fato a Spec 086 com datas reais e painel de defasagem (Closes #488).
 - fix: JSON cru em 8 painéis e painel Ação Órfã sem tabela, ordenação nem critério
 - fix: a Calma da Maré do mercado (Spec 027) passa a medir só a volatilidade de queda (semidesvio com alvo zero). Com o desvio-padrão comum, a alta de 7,42% do Ibovespa em 05/10/2026 zerava a Calma e deixava a Maré em Medo (25) no dia seguinte a uma alta histórica.
 - fix: gráfico do Ibovespa com 200px de altura (antes ficava com a altura padrão do Plotly, 450px) e eixo Y a partir de 2% abaixo do mínimo do período, em vez de zero.

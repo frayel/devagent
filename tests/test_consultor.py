@@ -81,7 +81,8 @@ def test_pagina_consultor_desatualizada(monkeypatch):
     monkeypatch.setattr(app.main, "calcular_consultor", mock_calc)
     response = client.get("/consultor")
     assert response.status_code == 200
-    assert "Composição do Ibovespa possivelmente desatualizada" in response.text
+    assert "Composição do Ibovespa" in response.text
+    assert "possivelmente desatualizada" not in response.text
 
 
 def test_calculos_ifr_mm():

@@ -17,11 +17,45 @@
             Opiniões de especialistas indisponíveis desde {{ dados.opinioes_status.desde[11:16] }} ({{ dados.opinioes_status.motivo }}). Recomendações baseadas só nos sinais técnicos.
         </div>
         {% endif %}
-        {% if desatualizada %}
-        <div class="alerta">
-            Composição do Ibovespa possivelmente desatualizada. <a href="{{ fonte }}" target="_blank">Verificar fonte</a>.
+
+        {% if informacoes_de.estado_sinais == 'Defasado' %}
+        <div class="alerta" id="alerta-sinais-defasado">
+            {{ informacoes_de.frase_sinais }}
         </div>
         {% endif %}
+        {% if informacoes_de.estado_opinioes == 'Defasado' %}
+        <div class="alerta" id="alerta-opinioes-defasado">
+            {{ informacoes_de.frase_opinioes }}
+        </div>
+        {% endif %}
+
+        <div class="painel-informacoes">
+            <div>
+                <h4>Sinais técnicos</h4>
+                <div class="info-conteudo">
+                    Pregão: {{ informacoes_de.sinais_pregao }}<br>
+                    Coleta: {{ informacoes_de.sinais_coletado_em }}<br>
+                    <span class="badge {% if informacoes_de.estado_sinais == 'Atualizado' %}badge-positivo{% else %}badge-negativo{% endif %}">{{ informacoes_de.estado_sinais }}</span>
+                </div>
+            </div>
+            <div>
+                <h4>Opiniões de especialistas</h4>
+                <div class="info-conteudo">
+                    Extração: {{ informacoes_de.opinioes_extraidas_em }}<br>
+                    Matéria mais recente: {{ informacoes_de.opinioes_materia_mais_recente }}<br>
+                    <span class="badge {% if informacoes_de.estado_opinioes == 'Atualizado' %}badge-positivo{% else %}badge-negativo{% endif %}">{{ informacoes_de.estado_opinioes }}</span>
+                </div>
+            </div>
+            <div>
+                <h4>Composição do Ibovespa</h4>
+                <div class="info-conteudo">
+                    Conferida em: {{ informacoes_de.composicao_conferida_em }}<br>
+                    <span class="badge badge-positivo">Atualizado</span>
+                </div>
+            </div>
+        </div>
+
+
 
         <details class="accordion-regras">
             <summary>Como o consultor decide</summary>
