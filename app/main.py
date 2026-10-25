@@ -19,7 +19,7 @@ import secrets
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Query
 from app import calendario
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
@@ -167,6 +167,54 @@ def coleta():
     """Diagnóstico da coleta automática (última rodada e último erro)."""
 
 
+def _get_seletor_context(
+    target_data: str | None, agora: datetime, mercado_aberto: bool, pregao_corr
+):
+    datas_disponiveis = obter_pregoes_disponiveis(agora, mercado_aberto, pregao_corr)
+    data_ref = (
+        calendario.ultimo_pregao_fechado(agora) if not mercado_aberto else pregao_corr
+    )
+
+    is_historical = False
+    estado_mercado = "aberto" if mercado_aberto else "fechado"
+    data_invalida = False
+
+    if target_data:
+        if target_data in datas_disponiveis:
+            try:
+                data_ref = datetime.strptime(target_data, "%Y-%m-%d").date()
+                is_historical = True
+                estado_mercado = "fechado"
+            except ValueError:
+                pass
+        else:
+            data_invalida = True
+
+    DIAS = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"]
+    datas_seletor = []
+    for i, d_str in enumerate(datas_disponiveis):
+        if i == 0 and not is_historical and estado_mercado == "aberto":
+            rotulo = "Hoje"
+        elif i == 0 and not is_historical:
+            rotulo = "Último fechamento"
+        else:
+            try:
+                dt = datetime.strptime(d_str, "%Y-%m-%d").date()
+                rotulo = f"{dt.strftime('%d/%m')} {DIAS[dt.weekday()]}"
+            except Exception:
+                rotulo = d_str
+        datas_seletor.append((d_str, rotulo))
+
+    return {
+        "datas_disponiveis": datas_disponiveis,
+        "datas_seletor": datas_seletor,
+        "data_referencia": data_ref,
+        "is_historical": is_historical,
+        "estado_mercado": estado_mercado,
+        "data_invalida": data_invalida,
+    }
+
+
 def obter_pregoes_disponiveis(agora, mercado_aberto, pregao_corr):
     from app.banco import listar_datas, PREGOES_NO_SELETOR
 
@@ -225,6 +273,7 @@ def estado_do_sistema() -> dict:
         horas_vazios=HORAS_VAZIOS,
         rodadas=rodadas,
         tempos=tempos,
+        historico_pregoes=banco_module.listar_datas("ibovespa", 30),
         fontes=registro_fontes.fontes(),
         pausa_mt5=mt5_coletor.pausa(),
         prontas=sistema_servico.specs_prontas(),
@@ -305,35 +354,32 @@ def verificar_credenciais(credentials: HTTPBasicCredentials = Depends(security))
 
 
 @app.get("/consultor")
-def pagina_consultor(request: Request, data_str: str | None = None):
+def pagina_consultor(
+    request: Request,
+    data: str | None = Query(default=None, alias="data"),
+    data_str: str | None = None,
+):
     exigir_senha(request)
 
+    target_data = data or data_str
     agora = datetime.now(timezone.utc)
     mercado_aberto = calendario.mercado_aberto(agora)
-    estado_mercado = "aberto" if mercado_aberto else "fechado"
     pregao_corr = calendario.pregao_corrente(agora)
-    datas_disponiveis = obter_pregoes_disponiveis(agora, mercado_aberto, pregao_corr)
 
-    data_ref = (
-        calendario.ultimo_pregao_fechado(agora) if not mercado_aberto else pregao_corr
-    )
-
-    is_historical = False
-    if data_str:
-        if data_str in datas_disponiveis:
-            try:
-                data_ref = datetime.strptime(data_str, "%Y-%m-%d").date()
-                is_historical = True
-                estado_mercado = "fechado"
-                _ = (data_ref, estado_mercado)
-            except ValueError:
-                pass
+    ctx = _get_seletor_context(target_data, agora, mercado_aberto, pregao_corr)
+    estado_mercado = ctx["estado_mercado"]
+    data_ref = ctx["data_referencia"]
+    is_historical = ctx["is_historical"]
+    datas_disponiveis = ctx["datas_disponiveis"]
+    datas_seletor = ctx["datas_seletor"]
+    data_invalida = ctx["data_invalida"]
+    _ = (estado_mercado, data_ref, datas_disponiveis, datas_seletor, data_invalida)
 
     try:
         if is_historical:
             from app.consultor.armazenamento import get_recomendacoes
 
-            hist = get_recomendacoes(data_str or "")
+            hist = get_recomendacoes(target_data or "")
 
             # format hist to look like calcular_consultor output
             resultados: dict[str, list[Any]] = {
@@ -657,33 +703,24 @@ def api_consultor(request: Request):
 
 
 @app.get("/api/snapshot")
-def snapshot(data_str: str | None = None):
+def snapshot(
+    data_query: str | None = Query(default=None, alias="data"),
+    data_str: str | None = None,
+):
+    target_data = data_query or data_str
     agora = datetime.now(timezone.utc)
     mercado_aberto = calendario.mercado_aberto(agora)
-    estado_mercado = "aberto" if mercado_aberto else "fechado"
-
     pregao_corr = calendario.pregao_corrente(agora)
-    datas_disponiveis = obter_pregoes_disponiveis(agora, mercado_aberto, pregao_corr)
 
-    data_ref = (
-        calendario.ultimo_pregao_fechado(agora) if not mercado_aberto else pregao_corr
-    )
+    ctx = _get_seletor_context(target_data, agora, mercado_aberto, pregao_corr)
+    if ctx["data_invalida"]:
+        return JSONResponse(
+            status_code=404, content={"erro": "Data inválida ou fora da janela."}
+        )
 
-    is_historical = False
-    if data_str:
-        if data_str in datas_disponiveis:
-            try:
-                data_ref = datetime.strptime(data_str, "%Y-%m-%d").date()
-                is_historical = True
-                estado_mercado = "fechado"
-                _ = (data_ref, estado_mercado)
-            except ValueError:
-                pass
-        else:
-            return JSONResponse(
-                {"erro": "Data fora da janela disponível, futura ou inválida"},
-                status_code=404,
-            )
+    estado_mercado = ctx["estado_mercado"]
+    data_ref = ctx["data_referencia"]
+    is_historical = ctx["is_historical"]
 
     import app.banco
 
@@ -1293,27 +1330,23 @@ def snapshot(data_str: str | None = None):
 
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request, data_str: str | None = None):
+async def index(
+    request: Request,
+    data: str | None = Query(default=None, alias="data"),
+    data_str: str | None = None,
+):
+    target_data = data or data_str
     agora = datetime.now(timezone.utc)
     mercado_aberto = calendario.mercado_aberto(agora)
-    estado_mercado = "aberto" if mercado_aberto else "fechado"
-
     pregao_corr = calendario.pregao_corrente(agora)
-    datas_disponiveis = obter_pregoes_disponiveis(agora, mercado_aberto, pregao_corr)
 
-    data_ref = (
-        calendario.ultimo_pregao_fechado(agora) if not mercado_aberto else pregao_corr
-    )
-
-    is_historical = False
-    if data_str:
-        if data_str in datas_disponiveis:
-            try:
-                data_ref = datetime.strptime(data_str, "%Y-%m-%d").date()
-                is_historical = True
-                estado_mercado = "fechado"  # Force historical view
-            except ValueError:
-                pass
+    ctx = _get_seletor_context(target_data, agora, mercado_aberto, pregao_corr)
+    estado_mercado = ctx["estado_mercado"]
+    data_ref = ctx["data_referencia"]
+    is_historical = ctx["is_historical"]
+    datas_disponiveis = ctx["datas_disponiveis"]
+    datas_seletor = ctx["datas_seletor"]
+    data_invalida = ctx["data_invalida"]
 
     import app.banco
 
@@ -1361,7 +1394,7 @@ async def index(request: Request, data_str: str | None = None):
     if apetite_risco_data:
         risco_dict["estado"] = apetite_risco_data.estado
 
-    data = get_ibovespa_view_data()
+    data_ibov = get_ibovespa_view_data()
     highlights = get_highlights_view_data()
     volume_alerts = get_volume_alerts_view_data()
     dolar_correlation = get_dolar_correlation_view_data()
@@ -1660,11 +1693,15 @@ async def index(request: Request, data_str: str | None = None):
         request=request,
         name="index.html",
         context={
+            "datas_seletor": datas_seletor,
+            "data_invalida": data_invalida,
+            "datas_disponiveis": datas_disponiveis,
+            "is_historical": is_historical,
             "estado_mercado": estado_mercado,
             "data_referencia": data_ref,
             "mercado_aberto": mercado_aberto,
             "manchete": manchete,
-            "data": data,
+            "data": data_ibov,
             "highlights": highlights,
             "volume_alerts": volume_alerts,
             "dolar_correlation": dolar_correlation,

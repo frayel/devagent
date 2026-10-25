@@ -384,6 +384,7 @@ def test_resumo_geral_poe_problemas_primeiro():
         fontes={},
         pausa_mt5=None,
         prontas=["082-x"],
+        historico_pregoes=[],
         ambiente={},
     )
     geral = estado["geral"]

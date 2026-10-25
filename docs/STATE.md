@@ -423,6 +423,10 @@
   - Implementado o controle de contexto de data no `app/banco.py`.
   - Criada rotina de exclusão de snapshots antigos (30 dias).
   - Adicionado seletor HTMX na UI e atualização de `get_recomendacoes` no `app/consultor/armazenamento.py`.
+- Spec 088 (Seletor de pregão corrigido):
+  - Unificou a variável `data` nas rotas (`index`, `snapshot`, `consultor`).
+  - Trocou o HTMX do `<select>` por um `<form method="get">` padrão.
+  - Adicionada checagem e alerta na página `/sistema` para o histórico.
 - Spec 079 (Capacidade Nova: Radar de Exaustão de Alta):
   - Criado app/collectors/radar_exaustao_alta.py
   - Adicionado ExaustaoAltaData em app/database.py com salvamento/leitura via snapshots.
