@@ -1,7 +1,7 @@
 ---
 id: 089
 titulo: Consultor numa data passada (recomendações e opiniões daquele pregão)
-status: ready
+status: draft
 esforco: M
 gaveta: experiência
 aceite: tests/test_aceite_089.py
