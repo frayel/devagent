@@ -1,11 +1,19 @@
 ---
 id: 094
 titulo: Carteira do Consultor igual à composição vigente do Ibovespa
-status: ready
+status: draft
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_094.py
+revisada: 2026-10-25
 ---
+
+## Revisão
+
+A spec foi marcada como `draft` por ser inviável neste momento e desviar da skill de especificação:
+1. **Contradição com a `main`:** A spec exige colocar um aviso "no bloco 'Informações de' (spec 086)". Esse bloco não existe na `main`, pois a spec 086 ainda não foi implementada. Uma spec não pode depender de componentes de UI ou funções inexistentes.
+2. **Quebra de autonomia:** A instrução "abre issue bloqueado com o motivo e para" viola a política de execução ponta a ponta do agente desenvolvedor. O plano B deve permitir concluir o PR (ex.: se a B3 falhar, usar a lista antiga, mas seguir com a criação do coletor e tabelas).
+3. **Formato do problema:** O problema não foi descrito como uma pergunta do usuário.
 
 ## Problema
 
