@@ -1,7 +1,7 @@
 ---
 id: 086
 titulo: Consultor mostra a data de cada informação e avisa quando está defasada
-status: ready
+status: draft
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_086.py
@@ -59,3 +59,6 @@ Só o banco local. Nenhuma requisição nova.
 
 - Escolher outra data de referência (spec 089).
 - Recalcular o Consultor automaticamente quando a série é renovada.
+
+## Revisão
+A spec era muito grande e foi dividida em 108a e 108b porque tocava em muitos arquivos de backend e frontend de uma vez.
