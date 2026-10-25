@@ -1,10 +1,18 @@
 ---
 id: 099
 titulo: brapi como fonte secundária, com uma chamada por ativo (Orçamento e Lote 2)
-status: ready
+status: draft
 esforco: M
 gaveta: saúde técnica
+revisada: 2026-10-25
 ---
+
+## Revisão
+
+A spec está como `draft` porque é **inviável e possui pendências estruturais**:
+1. Ela depende fortemente do módulo `app/collectors/brapi.py`, mas este arquivo ainda não existe na branch principal (ele foi proposto na spec 098, que está `ready` mas ainda não foi implementada).
+2. Faltam os campos obrigatórios no cabeçalho (como `aceite:` apontando para os testes principais).
+3. Estão faltando seções obrigatórias exigidas para specs, como **Invariantes de produção** e **Fora do escopo**.
 
 ## Problema
 

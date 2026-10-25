@@ -1,6 +1,5 @@
-- Verifiquei os PRs integrados na main recém testados localmente e com smoke test.
-- O PR 470 (Spec 085, que corrige problemas de banco no CI) atendeu adequadamente à integração dos modelos no banco de dados com tratamento assertivo e logs via API diagnostica.
-- Além do PR 470, os testes das Specs recentes de correções funcionaram bem com assertivas locais.
-- A omissão de `exaustao_alta` citada anteriormente não ocorre mais, pois já se encontra repassada de modo correto.
-- Sem problemas de segurança, ou discrepâncias entre interface e contrato de spec detectados nos painéis de diagnósticos.
-- Próxima verificação: revisar se possíveis instabilidades do Yahoo afetam outras coleções não reportadas na API.
+- Verifiquei os PRs 478 e 477 integrados na main recém testados localmente e com smoke test.
+- O PR 477 (Ajuste formato percentual pelo especialista Palette) funciona corretamente e previne problemas de design formatando os dados de forma adequada (PRODUTO.md).
+- O PR 478 (Spec 086) introduziu a falha de ser mesclado sem o código e sem o teste de aceite listado em seu escopo, resultando em um achado de severidade alta para retomada pelo desenvolvedor.
+- Sem problemas de segurança identificados.
+- Próxima verificação: revisar novamente a Spec 086 se o desenvolvedor finalizar seu escopo com sucesso na próxima iteração do ciclo.
