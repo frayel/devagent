@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 PREGOES_NO_SELETOR = 5
 
 try:
-    import psycopg
+    import importlib.util
 
-    PSYCOPG_AVAILABLE = True
+    PSYCOPG_AVAILABLE = importlib.util.find_spec("psycopg") is not None
 except ImportError:
     PSYCOPG_AVAILABLE = False
 
@@ -40,6 +40,8 @@ def _determine_backend() -> Literal["postgres", "sqlite_efemero"]:
     ):
         for attempt in range(2):
             try:
+                import psycopg
+
                 with psycopg.connect(db_url, connect_timeout=10):
                     return "postgres"
             except Exception as e:
@@ -68,6 +70,8 @@ def get_connection():
         # For individual connections, if it fails, maybe we just throw? Or we return postgres connection and if it fails it fails.
         # But wait, the reviewer says "If a database is explicitly configured, connection failures must propagate (fail fast) rather than silently failing over to a completely different database backend."
         if db_url:
+            import psycopg
+
             return psycopg.connect(db_url, connect_timeout=10), "postgres"
 
     from app.database import get_connection as get_sqlite_connection
