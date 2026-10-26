@@ -434,3 +434,4 @@
   - Atualizado app/main.py e app/templates/index.html para exibição do novo painel.
 
 - implementado 084-consultor-esquema-postgres.md (saúde técnica, contador de specs não incrementado)
+- Corrigido problema da spec 089, adicionado aviso de onde foram as partes derivadas (specs 113a e 113b).

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import re
 import threading
+import urllib.parse
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -43,6 +44,7 @@ class Fonte:
     # 429, chave recusada)? Um 404 é a fonte respondendo que o pedido não
     # existe: o defeito está em quem pediu, não na integração.
     graves: list[bool] = field(default_factory=list)
+    endpoints: dict[str, dict] = field(default_factory=dict)
 
 
 _fontes: dict[str, Fonte] = {}
@@ -75,25 +77,110 @@ def grave(status: int) -> bool:
     return status in (401, 403, 429) or status >= 500
 
 
-def sucesso(nome: str, quando: datetime | None = None) -> None:
+_SEGREDO_CORPO = re.compile(
+    r'("(?:token|key|apikey|authorization)"\s*:\s*)"[^"]+"', re.I
+)
+_SEGREDO_HEADER = re.compile(r"(authorization\s*:\s*(?:bearer\s+)?)[^\s\\]+", re.I)
+
+
+def url_para_endpoint_e_simbolos(url: str) -> tuple[str, list[str]]:
+    parsed = urllib.parse.urlparse(url)
+    path = parsed.path
+    query = urllib.parse.parse_qs(parsed.query)
+
+    endpoint = path
+    simbolos = []
+
+    if "finance/chart/" in path:
+        parts = path.split("finance/chart/")
+        endpoint = parts[0] + "finance/chart/{simbolo}"
+        if len(parts) > 1 and parts[1]:
+            simbolos = [parts[1]]
+    elif "finance/spark" in path:
+        endpoint = path
+        s = query.get("symbols", [""])[0] if "symbols" in query else ""
+        if s:
+            simbolos = s.split(",")
+    elif "/api/quote/" in path:
+        parts = path.split("/api/quote/")
+        endpoint = parts[0] + "/api/quote/{simbolos}"
+        if len(parts) > 1 and parts[1]:
+            simbolos = parts[1].split(",")
+
+    return endpoint, simbolos
+
+
+def mascarar(texto: str) -> str:
+    if not texto:
+        return ""
+    t = _SEGREDO.sub(r"\1***", texto)
+    t = _SEGREDO_CORPO.sub(r'\1"***"', t)
+    t = _SEGREDO_HEADER.sub(r"\1***", t)
+    return t
+
+
+def _anotar_endpoint(
+    f: Fonte, url: str, status: int | None, corpo: str | None, ok: bool
+):
+    endpoint, simbolos = url_para_endpoint_e_simbolos(url)
+    if endpoint not in f.endpoints:
+        f.endpoints[endpoint] = {
+            "ok": 0,
+            "falhas": 0,
+            "ultimo_status": None,
+            "ultimo_corpo": None,
+            "simbolos_ok": set(),
+        }
+    ep = f.endpoints[endpoint]
+
+    if ok:
+        ep["ok"] += 1
+        for s in simbolos:
+            ep["simbolos_ok"].add(s)
+    else:
+        ep["falhas"] += 1
+        ep["ultimo_status"] = status
+        ep["ultimo_corpo"] = mascarar(corpo)[:200] if corpo else None
+
+        # Mantém apenas os 10 mais recentes
+        if len(f.endpoints) > 10:
+            mais_antigo = next(iter(f.endpoints))
+            del f.endpoints[mais_antigo]
+
+        # Reinsere para manter a ordem de inserção (LRU)
+        e = f.endpoints.pop(endpoint)
+        f.endpoints[endpoint] = e
+
+
+def sucesso(nome: str, quando: datetime | None = None, url: str | None = None) -> None:
     quando = quando or datetime.now(timezone.utc)
     with _trava:
         f = _fonte(nome)
         f.sucessos += 1
         f.ultimo_sucesso = quando
         _anotar(f, True)
+        if url:
+            _anotar_endpoint(f, url, status=None, corpo=None, ok=True)
 
 
 def falha(
-    nome: str, motivo: str, quando: datetime | None = None, grave: bool = True
+    nome: str,
+    motivo: str,
+    quando: datetime | None = None,
+    grave: bool = True,
+    url: str | None = None,
+    corpo: str | None = None,
+    status: int | None = None,
 ) -> None:
     quando = quando or datetime.now(timezone.utc)
     with _trava:
         f = _fonte(nome)
         f.falhas += 1
         f.ultima_falha = quando
-        f.ultimo_erro = _SEGREDO.sub(r"\1***", motivo)[:200]
+        f.ultimo_erro = mascarar(motivo)[:200]
         _anotar(f, False, grave)
+        if url:
+            _anotar_endpoint(f, url, status=status, corpo=corpo, ok=False)
 
 
 def fontes() -> dict[str, Fonte]:
@@ -109,6 +196,16 @@ def fontes() -> dict[str, Fonte]:
                 f.ultimo_erro,
                 list(f.recentes),
                 list(f.graves),
+                {
+                    k: {
+                        "ok": v["ok"],
+                        "falhas": v["falhas"],
+                        "ultimo_status": v["ultimo_status"],
+                        "ultimo_corpo": v["ultimo_corpo"],
+                        "simbolos_ok": set(v["simbolos_ok"]),
+                    }
+                    for k, v in f.endpoints.items()
+                },
             )
             for nome, f in _fontes.items()
         }

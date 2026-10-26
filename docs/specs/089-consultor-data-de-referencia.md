@@ -8,6 +8,11 @@ aceite: tests/test_aceite_089.py
 revisada: 2026-10-24
 ---
 
+> [!NOTE]
+> Esta spec era muito grande e foi dividida em duas:
+> - **113a-consultor-data-passada-exibicao.md** (exibição de recomendações e opiniões)
+> - **113b-consultor-data-passada-resultados.md** (resultados e coleta diária)
+
 ## Problema
 
 Quem usa o Consultor quer ver o que ele recomendava em um pregão anterior e comparar com o que aconteceu depois. A spec 078 previa isso ("no `/consultor`, uma data passada mostra as recomendações registradas no diário"), mas a rota existe só no papel:
