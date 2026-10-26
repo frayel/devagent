@@ -1859,3 +1859,21 @@ def get_latest_exaustao_alta_data() -> ExaustaoAltaData | None:
     if isinstance(payload_copy.get("timestamp"), str):
         payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
     return ExaustaoAltaData(**payload_copy)
+
+
+def registrar_falha_simbolo(fonte: str, simbolo: str, sucesso: bool = False) -> None:
+    from app.banco import registrar_falha_simbolo as _registrar
+
+    _registrar(fonte, simbolo, sucesso)
+
+
+def is_simbolo_suspenso(fonte: str, simbolo: str) -> bool:
+    from app.banco import is_simbolo_suspenso as _is_suspenso
+
+    return _is_suspenso(fonte, simbolo)
+
+
+def get_simbolos_suspensos() -> list[dict]:
+    from app.banco import get_simbolos_suspensos as _get_suspensos
+
+    return _get_suspensos()

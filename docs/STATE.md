@@ -439,3 +439,7 @@
 - Spec 090a (Diagnóstico de falhas):
   - Registro HTTP agora anota falhas de endpoint separadamente e esconde segredos da URL e corpo.
   - Atualizada página de diagnóstico /sistema e seus testes.
+
+- Spec 090b (Tolerância a símbolo inválido):
+  - Adicionada tabela de suspensão de símbolos em SQLite e Postgres.
+  - Isola 404 de lote na query e reporta alertas no Yahoo Finance para o consultor.

@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from app.services.cron import Cron
+from app.banco import get_simbolos_suspensos
 
 BRT = timezone(timedelta(hours=-3))
 RAIZ = Path(__file__).resolve().parent.parent.parent
@@ -465,6 +466,38 @@ def _item_da_fonte(nome: str, fonte: Any, papel: str, agora: datetime) -> Item:
         resumo += f" · última ok {ha_quanto(fonte.ultimo_sucesso, agora)}"
 
     detalhe = papel
+
+    if nome == "Yahoo Finance":
+        suspensos = get_simbolos_suspensos()
+        suspensos_yahoo = [s["simbolo"] for s in suspensos if s["fonte"] == "yfinance"]
+        if suspensos_yahoo:
+            nivel = _pior([nivel, ATENCAO])
+            alerta = f"Sem cotação no Yahoo: {', '.join(suspensos_yahoo)}. Verifique a composição do Ibovespa."
+            detalhe = f"{papel}. {alerta}" if papel else alerta
+
+    if nome == "Yahoo Finance":
+        suspensos = get_simbolos_suspensos()
+        suspensos_yahoo = [s["simbolo"] for s in suspensos if s["fonte"] == "yfinance"]
+        if suspensos_yahoo:
+            nivel = _pior([nivel, ATENCAO])
+            alerta = f"Sem cotação no Yahoo: {', '.join(suspensos_yahoo)}. Verifique a composição do Ibovespa."
+            detalhe = f"{papel}. {alerta}" if papel else alerta
+
+    if nome == "Yahoo Finance":
+        suspensos = get_simbolos_suspensos()
+        suspensos_yahoo = [s["simbolo"] for s in suspensos if s["fonte"] == "yfinance"]
+        if suspensos_yahoo:
+            nivel = _pior([nivel, ATENCAO])
+            alerta = f"Sem cotação no Yahoo: {', '.join(suspensos_yahoo)}. Verifique a composição do Ibovespa."
+            detalhe = f"{papel}. {alerta}" if papel else alerta
+
+    if nome == "Yahoo Finance":
+        suspensos = get_simbolos_suspensos()
+        suspensos_yahoo = [s["simbolo"] for s in suspensos if s["fonte"] == "yfinance"]
+        if suspensos_yahoo:
+            nivel = _pior([nivel, ATENCAO])
+            alerta = f"Sem cotação no Yahoo: {', '.join(suspensos_yahoo)}. Verifique a composição do Ibovespa."
+            detalhe = f"{papel}. {alerta}" if papel else alerta
     if texto_problema:
         detalhe = f"{papel}. {texto_problema}" if papel else texto_problema
     elif fonte.ultima_falha:

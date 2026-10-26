@@ -1,7 +1,7 @@
 ---
 id: 090b
 titulo: Como o sistema reage a símbolos deslistados no Yahoo? Suspender por 24h e isolar
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_090b.py
