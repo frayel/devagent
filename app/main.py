@@ -87,10 +87,6 @@ from app.database import (
     get_latest_exaustao_alta_data,
 )
 from app import agendador
-from app.collectors import mt5 as mt5_coletor
-from app.collectors import registro_fontes
-from app.services import gemini_modelo
-from app.collectors import sistema as monitor_sistema
 from app.services import sistema as sistema_servico
 
 # Quando esta instância subiu: o Render reinicia o processo a cada deploy e a
@@ -103,6 +99,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     tarefas = []
     if agendador.coleta_ligada():
         tarefas.append(asyncio.create_task(agendador.laco_de_coleta()))
+    from app.collectors import sistema as monitor_sistema
+
     if monitor_sistema.monitor_ligado():
         tarefas.append(asyncio.create_task(monitor_sistema.laco_do_monitor()))
     yield
@@ -251,6 +249,10 @@ def estado_do_sistema() -> dict:
     """Verificações da página /sistema (spec 082). Só lê: não chama fonte externa."""
     from app import database
     from app import banco as banco_module
+    from app.collectors import mt5 as mt5_coletor
+    from app.collectors import registro_fontes
+    from app.services import gemini_modelo
+    from app.collectors import sistema as monitor_sistema
 
     agora = datetime.now(timezone.utc)
     try:
