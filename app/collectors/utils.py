@@ -79,9 +79,23 @@ def fetch_with_retry(
             else:
                 response = httpx.get(url, **kwargs)
 
-            # Raise for status to catch 4xx and 5xx errors
-            response.raise_for_status()
-            registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain), url=url)
+            # Raise for status to catch 4xx and 5xx errors (but allow 404 through for yfinance fetchers that handle missing symbols/splitting logic natively)
+            if response.status_code >= 400:
+                if (
+                    response.status_code == 404
+                    and "finance.yahoo.com/v7/finance/spark" in url
+                ):
+                    pass
+                elif (
+                    response.status_code == 404
+                    and "finance.yahoo.com/v8/finance/chart" in url
+                ):
+                    pass
+                else:
+                    response.raise_for_status()
+
+            if response.status_code < 400:
+                registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain), url=url)
             return response
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
@@ -219,10 +233,14 @@ def fetch_historico_diario_yfinance_spark(
     from datetime import datetime, timezone
 
     from app.database import get_historico_diario, save_historico_diario
+    from app.database import registrar_falha_simbolo, is_simbolo_suspenso
+
+    # Filtrar suspensos
+    valid_symbols = [s for s in symbols if not is_simbolo_suspenso("yfinance", s)]
 
     # 1. Check cache
-    cached_data = get_historico_diario(symbols, range_str, interval)
-    missing_symbols = [s for s in symbols if s not in cached_data]
+    cached_data = get_historico_diario(valid_symbols, range_str, interval)
+    missing_symbols = [s for s in valid_symbols if s not in cached_data]
 
     all_results = []
 
@@ -234,17 +252,28 @@ def fetch_historico_diario_yfinance_spark(
         return all_results
 
     # 2. Fetch missing data in batches
-    batch_size = 15
-    batches = [
-        missing_symbols[i : i + batch_size]
-        for i in range(0, len(missing_symbols), batch_size)
-    ]
-
     agora = datetime.now(timezone.utc)
 
-    for batch in batches:
-        batch_query = ",".join([f"{t}.SA" for t in batch])
+    queue = []
+    batch_size = 15
+    for i in range(0, len(missing_symbols), batch_size):
+        queue.append((missing_symbols[i : i + batch_size], 4))
+
+    while queue:
+        batch, max_divisoes = queue.pop(0)
+        if not batch:
+            continue
+
+        batch_query = ",".join(
+            [
+                simbolo_yahoo(t.replace(".SA", ""))
+                if not t.endswith(".SA") and not t.startswith("^") and "=" not in t
+                else t
+                for t in batch
+            ]
+        )
         url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={batch_query}&range={range_str}&interval={interval}"
+
         try:
             response = fetch_with_retry(url, client=client)
             data = response.json()
@@ -254,15 +283,27 @@ def fetch_historico_diario_yfinance_spark(
                     continue
                 symbol = item.get("symbol", "").replace(".SA", "")
 
-                # Save to cache
+                registrar_falha_simbolo("yfinance", symbol, sucesso=True)
+
                 save_historico_diario(
                     symbol, range_str, interval, json.dumps(item), agora
                 )
 
                 all_results.append(item)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                if len(batch) > 1 and max_divisoes > 0:
+                    mid = len(batch) // 2
+                    queue.append((batch[:mid], max_divisoes - 1))
+                    queue.append((batch[mid:], max_divisoes - 1))
+                elif len(batch) == 1:
+                    bad_symbol = batch[0].replace(".SA", "")
+                    registrar_falha_simbolo("yfinance", bad_symbol, sucesso=False)
+                    logger.warning(f"Symbol {bad_symbol} returned 404, isolated.")
+            else:
+                logger.error(f"Error fetching batch {batch_query} from yfinance: {e}")
         except httpx.HTTPError as e:
             logger.error(f"Error fetching batch {batch_query} from yfinance: {e}")
-            continue
 
     return all_results
 
@@ -284,6 +325,10 @@ def fetch_historico_diario_yfinance_chart(
     import json
     from datetime import datetime, timezone
     from app.database import get_historico_diario, save_historico_diario
+    from app.database import registrar_falha_simbolo, is_simbolo_suspenso
+
+    if is_simbolo_suspenso("yfinance", symbol):
+        return None
 
     cached_data = get_historico_diario(
         [symbol], range_str, interval, max_age_minutes=max_age_minutes
@@ -294,6 +339,7 @@ def fetch_historico_diario_yfinance_chart(
     url = f"https://query2.finance.yahoo.com/v8/finance/chart/{simbolo_yahoo(symbol)}?range={range_str}&interval={interval}"
     try:
         response = fetch_with_retry(url, client=client)
+        registrar_falha_simbolo("yfinance", symbol, sucesso=True)
         data = response.json()
         result = data.get("chart", {}).get("result", [])
         if not result:
@@ -332,6 +378,41 @@ def fetch_historico_diario_yfinance_chart(
             symbol, range_str, interval, json.dumps(spark_like_item), agora
         )
         return spark_like_item
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            registrar_falha_simbolo("yfinance", symbol, sucesso=False)
+            logger.warning(f"Symbol {symbol} returned 404, isolated.")
+        else:
+            logger.error(f"Error fetching chart {symbol} from yfinance: {e}")
+        return None
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            registrar_falha_simbolo("yfinance", symbol, sucesso=False)
+            logger.warning(f"Symbol {symbol} returned 404, isolated.")
+        else:
+            logger.error(f"Error fetching chart {symbol} from yfinance: {e}")
+        return None
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            registrar_falha_simbolo("yfinance", symbol, sucesso=False)
+            logger.warning(f"Symbol {symbol} returned 404, isolated.")
+        else:
+            logger.error(f"Error fetching chart {symbol} from yfinance: {e}")
+        return None
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            registrar_falha_simbolo("yfinance", symbol, sucesso=False)
+            logger.warning(f"Symbol {symbol} returned 404, isolated.")
+        else:
+            logger.error(f"Error fetching chart {symbol} from yfinance: {e}")
+        return None
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            registrar_falha_simbolo("yfinance", symbol, sucesso=False)
+            logger.warning(f"Symbol {symbol} returned 404, isolated.")
+        else:
+            logger.error(f"Error fetching chart {symbol} from yfinance: {e}")
+        return None
     except httpx.HTTPError as e:
         logger.error(f"Error fetching chart {symbol} from yfinance: {e}")
         return None

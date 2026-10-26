@@ -220,3 +220,11 @@
 
 - Spec 079: Radar de Exaustão de Alta
 - spec 084: esquema completo do Consultor no Postgres (tabela de uso de LLM e coluna de fila processada)
+
+- Spec 090b: Tolerância a símbolo inválido
+
+- Spec 090b: Tolerância a símbolo inválido
+
+- Spec 090b: Tolerância a símbolo inválido
+
+- Spec 090b: Tolerância a símbolo inválido

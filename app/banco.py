@@ -117,6 +117,18 @@ def init_db():
                     )
                     """
                 )
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS simbolos_sem_cotacao (
+                        fonte VARCHAR(50),
+                        simbolo VARCHAR(50),
+                        desde TIMESTAMP WITH TIME ZONE,
+                        ultimo_status TIMESTAMP WITH TIME ZONE,
+                        tentativas INTEGER,
+                        PRIMARY KEY (fonte, simbolo)
+                    )
+                    """
+                )
             conn.commit()
         else:
             cursor = conn.cursor()
@@ -144,6 +156,18 @@ def init_db():
                     barras TEXT,
                     criado_em TEXT,
                     PRIMARY KEY (ticker, data_pregao)
+                )
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS simbolos_sem_cotacao (
+                    fonte TEXT,
+                    simbolo TEXT,
+                    desde TEXT,
+                    ultimo_status TEXT,
+                    tentativas INTEGER,
+                    PRIMARY KEY (fonte, simbolo)
                 )
                 """
             )
@@ -460,5 +484,144 @@ def remover_snapshots_antigos(dias: int = 30):
                 (dias,),
             )
             conn.commit()
+    finally:
+        conn.close()
+
+
+def registrar_falha_simbolo(fonte: str, simbolo: str, sucesso: bool = False) -> None:
+    init_db()
+    conn, backend = get_connection()
+    try:
+        from datetime import datetime, timezone
+
+        agora = datetime.now(timezone.utc)
+        agora_str = agora.isoformat()
+
+        if backend == "postgres":
+            with conn.cursor() as cursor:
+                if sucesso:
+                    cursor.execute(
+                        "DELETE FROM simbolos_sem_cotacao WHERE fonte = %s AND simbolo = %s",
+                        (fonte, simbolo),
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        INSERT INTO simbolos_sem_cotacao (fonte, simbolo, desde, ultimo_status, tentativas)
+                        VALUES (%s, %s, %s, %s, 1)
+                        ON CONFLICT (fonte, simbolo)
+                        DO UPDATE SET
+                            ultimo_status = EXCLUDED.ultimo_status,
+                            tentativas = simbolos_sem_cotacao.tentativas + 1
+                        """,
+                        (fonte, simbolo, agora_str, agora_str),
+                    )
+            conn.commit()
+        else:
+            cursor = conn.cursor()
+            if sucesso:
+                cursor.execute(
+                    "DELETE FROM simbolos_sem_cotacao WHERE fonte = ? AND simbolo = ?",
+                    (fonte, simbolo),
+                )
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO simbolos_sem_cotacao (fonte, simbolo, desde, ultimo_status, tentativas)
+                    VALUES (?, ?, ?, ?, 1)
+                    ON CONFLICT(fonte, simbolo)
+                    DO UPDATE SET
+                        ultimo_status = excluded.ultimo_status,
+                        tentativas = simbolos_sem_cotacao.tentativas + 1
+                    """,
+                    (fonte, simbolo, agora_str, agora_str),
+                )
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def is_simbolo_suspenso(fonte: str, simbolo: str) -> bool:
+    init_db()
+    conn, backend = get_connection()
+    try:
+        from datetime import datetime, timezone, timedelta
+
+        if backend == "postgres":
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT ultimo_status, tentativas FROM simbolos_sem_cotacao WHERE fonte = %s AND simbolo = %s",
+                    (fonte, simbolo),
+                )
+                row = cursor.fetchone()
+                if not row:
+                    return False
+                ultimo_status, tentativas = row
+
+                if isinstance(ultimo_status, str):
+                    ultimo_status = datetime.fromisoformat(ultimo_status)
+
+                if tentativas >= 3:
+                    agora = datetime.now(timezone.utc)
+                    if (agora - ultimo_status) < timedelta(hours=24):
+                        return True
+                return False
+        else:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT ultimo_status, tentativas FROM simbolos_sem_cotacao WHERE fonte = ? AND simbolo = ?",
+                (fonte, simbolo),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return False
+            ultimo_status_str, tentativas = row
+
+            ultimo_status = datetime.fromisoformat(ultimo_status_str)
+            if tentativas >= 3:
+                agora = datetime.now(timezone.utc)
+                if (agora - ultimo_status) < timedelta(hours=24):
+                    return True
+            return False
+    finally:
+        conn.close()
+
+
+def get_simbolos_suspensos() -> list[dict]:
+    init_db()
+    conn, backend = get_connection()
+    try:
+        if backend == "postgres":
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT fonte, simbolo, desde, ultimo_status, tentativas FROM simbolos_sem_cotacao WHERE tentativas >= 3"
+                )
+                rows = cursor.fetchall()
+                return [
+                    {
+                        "fonte": row[0],
+                        "simbolo": row[1],
+                        "desde": str(row[2]),
+                        "ultimo_status": str(row[3]),
+                        "tentativas": row[4],
+                    }
+                    for row in rows
+                ]
+        else:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT fonte, simbolo, desde, ultimo_status, tentativas FROM simbolos_sem_cotacao WHERE tentativas >= 3"
+            )
+            rows = cursor.fetchall()
+            return [
+                {
+                    "fonte": row[0],
+                    "simbolo": row[1],
+                    "desde": row[2],
+                    "ultimo_status": row[3],
+                    "tentativas": row[4],
+                }
+                for row in rows
+            ]
     finally:
         conn.close()
