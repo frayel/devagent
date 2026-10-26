@@ -68,7 +68,7 @@ def test_fetch_yfinance_success():
     }
 
     respx.get(
-        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
     ).mock(return_value=httpx.Response(200, json=yfinance_response))
 
     data = fetch_yfinance()
@@ -92,7 +92,7 @@ def test_fetch_yfinance_success():
 @respx.mock
 def test_fetch_yfinance_no_data():
     respx.get(
-        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
     ).mock(return_value=httpx.Response(200, json={"spark": {"result": []}}))
 
     data = fetch_yfinance()
@@ -102,7 +102,7 @@ def test_fetch_yfinance_no_data():
 @respx.mock
 def test_fetch_yfinance_http_error():
     respx.get(
-        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
     ).mock(return_value=httpx.Response(500))
 
     data = fetch_yfinance()

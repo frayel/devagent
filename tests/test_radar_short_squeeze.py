@@ -9,7 +9,7 @@ from app.database import get_latest_radar_short_squeeze_data
 def mock_yfinance_spark():
     with respx.mock(assert_all_mocked=False) as respx_mock:
         route = respx_mock.get(
-            url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+            url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
         )
         yield route
 

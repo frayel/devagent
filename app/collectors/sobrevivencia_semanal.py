@@ -26,7 +26,7 @@ def coletar() -> SobrevivenciaSemanalData | None:
 
         for batch in batches:
             tickers = ",".join(f"{t}.SA" for t in batch)
-            url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={tickers}&range=1mo&interval=1d"
+            url = f"https://query1.finance.yahoo.com/v8/finance/spark?symbols={tickers}&range=1mo&interval=1d"
 
             resp = fetch_with_retry(url)
             data = resp.json()

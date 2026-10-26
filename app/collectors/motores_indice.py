@@ -52,7 +52,7 @@ def fetch_yfinance() -> MotoresIndiceData | None:
         for nome_motor, tickers in MOTORES.items():
             symbols = ",".join([f"{t}.SA" for t in tickers])
             # Usando spark endpoint para as variações diárias (fechamento atual vs fechamento anterior)
-            url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
+            url = f"https://query1.finance.yahoo.com/v8/finance/spark?symbols={symbols}&range=1d&interval=1d"
 
             soma_variacao = 0.0
             contador = 0

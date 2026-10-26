@@ -22,7 +22,7 @@ def isolated_db(tmp_path, monkeypatch):
 def test_collect_and_save_success(isolated_db, monkeypatch):
     # Mock dollar
     respx.get(
-        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark\?symbols=BRL=X.*"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols=BRL=X.*"
     ).respond(
         json={
             "spark": {
@@ -41,7 +41,7 @@ def test_collect_and_save_success(isolated_db, monkeypatch):
     )
     # Mock stocks
     respx.get(
-        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
     ).respond(
         json={
             "spark": {
@@ -72,7 +72,7 @@ def test_collect_and_save_success(isolated_db, monkeypatch):
 @respx.mock
 def test_collect_and_save_failure(isolated_db, monkeypatch):
     respx.get(
-        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
     ).respond(status_code=500)
 
     # patch sleep to speed up

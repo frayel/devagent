@@ -73,7 +73,7 @@ def fetch_brapi() -> RadarAnomaliasSpreadData | None:
 def fetch_yfinance() -> RadarAnomaliasSpreadData | None:
     parsed_results = []
     tickers_str = ",".join([f"{t}.SA" for t in CESTA_LIQUIDEZ])
-    url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={tickers_str}&range=1d&interval=1d"
+    url = f"https://query1.finance.yahoo.com/v8/finance/spark?symbols={tickers_str}&range=1d&interval=1d"
     try:
         response = fetch_with_retry(url)
         data = response.json()

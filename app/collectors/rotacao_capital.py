@@ -14,7 +14,7 @@ def fetch_yfinance() -> RotacaoCapitalData | None:
     commodities = ["VALE3.SA", "PETR4.SA", "PRIO3.SA"]
     symbols = ",".join(bancos + commodities)
 
-    url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=1d&interval=1d"
+    url = f"https://query1.finance.yahoo.com/v8/finance/spark?symbols={symbols}&range=1d&interval=1d"
 
     try:
         with httpx.Client(timeout=10.0) as client:

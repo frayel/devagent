@@ -25,10 +25,10 @@ def test_fetch_lote_divide():
 
     with respx.mock:
         respx.get(
-            url__startswith="https://query1.finance.yahoo.com/v7/finance/spark"
+            url__startswith="https://query1.finance.yahoo.com/v8/finance/spark"
         ).mock(side_effect=on_request)
         respx.get(
-            url__startswith="https://query2.finance.yahoo.com/v7/finance/spark"
+            url__startswith="https://query2.finance.yahoo.com/v8/finance/spark"
         ).mock(side_effect=on_request)
         respx.get(
             url__startswith="https://query1.finance.yahoo.com/v8/finance/chart"
@@ -71,10 +71,10 @@ def test_teto_de_chamadas():
 
     with respx.mock:
         respx.get(
-            url__startswith="https://query1.finance.yahoo.com/v7/finance/spark"
+            url__startswith="https://query1.finance.yahoo.com/v8/finance/spark"
         ).mock(side_effect=on_request)
         respx.get(
-            url__startswith="https://query2.finance.yahoo.com/v7/finance/spark"
+            url__startswith="https://query2.finance.yahoo.com/v8/finance/spark"
         ).mock(side_effect=on_request)
         respx.get(
             url__startswith="https://query1.finance.yahoo.com/v8/finance/chart"

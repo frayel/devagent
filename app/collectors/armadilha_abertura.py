@@ -22,7 +22,7 @@ def collect_and_save() -> bool:
         with httpx.Client(timeout=10.0) as client:
             for batch in batches:
                 tickers_str = ",".join([f"{t}.SA" for t in batch])
-                url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={tickers_str}&range=2d&interval=1d"
+                url = f"https://query1.finance.yahoo.com/v8/finance/spark?symbols={tickers_str}&range=2d&interval=1d"
 
                 resp = fetch_with_retry(url, client=client)
                 data = resp.json()

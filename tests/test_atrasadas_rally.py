@@ -49,7 +49,7 @@ def test_fetch_atrasadas_rally_valido():
         re.compile(r"https://query[12]\.finance\.yahoo\.com/v8/finance/chart/\^BVSP.*")
     ).mock(return_value=httpx.Response(200, json=mock_ibov_data))
     respx.get(
-        re.compile(r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*")
+        re.compile(r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*")
     ).mock(return_value=httpx.Response(200, json=mock_spark_data))
 
     data = atrasadas_rally.fetch_yfinance()
@@ -81,7 +81,7 @@ def test_fetch_atrasadas_rally_invalido():
         re.compile(r"https://query[12]\.finance\.yahoo\.com/v8/finance/chart/\^BVSP.*")
     ).mock(return_value=httpx.Response(200, json=mock_ibov_data))
     respx.get(
-        re.compile(r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*")
+        re.compile(r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*")
     ).mock(return_value=httpx.Response(200, json={"spark": {"result": []}}))
 
     data = atrasadas_rally.fetch_yfinance()

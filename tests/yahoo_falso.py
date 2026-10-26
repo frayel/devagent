@@ -175,7 +175,7 @@ def responder(request: httpx.Request) -> httpx.Response:
     q = parse_qs(url.query)
     intervalo_range = q.get("range", ["1mo"])[0]
     intervalo = q.get("interval", ["1d"])[0]
-    if "finance.yahoo.com" in url.netloc and "/v7/finance/spark" in url.path:
+    if "finance.yahoo.com" in url.netloc and "/v8/finance/spark" in url.path:
         simbolos = unquote(q.get("symbols", [""])[0]).split(",")
         corpo = {
             "spark": {

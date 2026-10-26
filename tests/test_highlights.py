@@ -136,7 +136,7 @@ def test_fetch_yfinance_success(monkeypatch):
         )
         respx.get(
             re.compile(
-                rf"https://query[12]\.finance\.yahoo\.com/v7/finance/spark\?symbols={symbols}&range=15d&interval=1d"
+                rf"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols={symbols}&range=15d&interval=1d"
             )
         ).respond(status_code=200, json=yfinance_data)
 
@@ -189,7 +189,7 @@ def test_collect_and_save_fallback(monkeypatch):
             )
             respx.get(
                 re.compile(
-                    rf"https://query[12]\.finance\.yahoo\.com/v7/finance/spark\?symbols={symbols}&range=15d&interval=1d"
+                    rf"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols={symbols}&range=15d&interval=1d"
                 )
             ).respond(status_code=200, json=yfinance_data)
 
@@ -289,7 +289,7 @@ def test_index_route_yfinance(monkeypatch):
             )
             respx.get(
                 re.compile(
-                    rf"https://query[12]\.finance\.yahoo\.com/v7/finance/spark\?symbols={symbols}&range=15d&interval=1d"
+                    rf"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols={symbols}&range=15d&interval=1d"
                 )
             ).respond(status_code=200, json=yfinance_data)
 
