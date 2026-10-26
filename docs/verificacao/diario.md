@@ -17,3 +17,8 @@
 - As specs 113a e 113b foram geradas corretamente com status ready.
 - A spec 089 original falhou em informar para onde as partes foram movidas, resultando no achado '2026-10-26-spec-089-nao-aponta-partes'.
 - Próxima verificação deve continuar atenta à qualidade dos metadados e conteúdos das especificações após divisão.
+
+- Verifiquei o PR 512 referente à correção do apontamento das partes da spec 089 dividida.
+- O arquivo `docs/specs/089-consultor-data-de-referencia.md` foi atualizado corretamente e agora aponta para as specs 113a e 113b.
+- Confirmada a resolução do achado '2026-10-26-spec-089-nao-aponta-partes'.
+- Próxima verificação: avaliar os PRs subsequentes na fila de implementação.

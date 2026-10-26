@@ -2,7 +2,7 @@
 id: 2026-10-26-spec-089-nao-aponta-partes
 severidade: media
 painel: docs/specs/089-consultor-data-de-referencia.md
-status: aberto
+status: resolvido
 visto_em: 2026-10-26T00:00-03:00
 pr: 507
 ---
