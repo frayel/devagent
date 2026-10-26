@@ -435,24 +435,59 @@ def _item_da_fonte(nome: str, fonte: Any, papel: str, agora: datetime) -> Item:
     recentes = fonte.recentes
     graves = getattr(fonte, "graves", None) or [not r for r in recentes]
     falhas_recentes = recentes.count(False)
-    # Problema é a fonte fora do ar: as últimas chamadas (ao menos 3) falharam
-    # e alguma por rede, 5xx, 429 ou chave recusada. Só 404 e afins são pedidos
-    # que a fonte não tem: o defeito é de quem pediu, e fica em atenção.
+
+    nivel = OK
+    texto_problema = ""
+    endpoints_com_problema = []
+
+    # Avaliação por endpoint
+    if hasattr(fonte, "endpoints"):
+        for ep_path, ep_data in fonte.endpoints.items():
+            if ep_data.get("falhas", 0) >= 3 and ep_data.get("ultimo_status") == 404:
+                simbolos_ok = ep_data.get("simbolos_ok", set())
+                if len(simbolos_ok) > 0 or ep_data.get("falhas", 0) >= 3:
+                    endpoints_com_problema.append(ep_path)
+
     ultimas = recentes[-5:]
-    if len(ultimas) >= 3 and not any(ultimas) and any(graves[-5:]):
+    if endpoints_com_problema:
+        nivel = PROBLEMA
+        texto_problema = (
+            f"o endpoint {endpoints_com_problema[0]} parece ter mudado ou saído do ar"
+        )
+    elif len(ultimas) >= 3 and not any(ultimas) and any(graves[-5:]):
         nivel = PROBLEMA
     elif not recentes[-1] or falhas_recentes / len(recentes) >= 0.3:
         nivel = ATENCAO
-    else:
-        nivel = OK
+
     total = fonte.sucessos + fonte.falhas
     resumo = f"{fonte.sucessos} de {total} chamadas ok"
     if fonte.ultimo_sucesso:
         resumo += f" · última ok {ha_quanto(fonte.ultimo_sucesso, agora)}"
+
     detalhe = papel
-    if fonte.ultima_falha:
+    if texto_problema:
+        detalhe = f"{papel}. {texto_problema}" if papel else texto_problema
+    elif fonte.ultima_falha:
         erro = f"Última falha {hora_brt(fonte.ultima_falha)}: {fonte.ultimo_erro}"
+
+        ep_infos = []
+        if hasattr(fonte, "endpoints") and fonte.endpoints:
+            eps_ordenados = sorted(
+                fonte.endpoints.items(),
+                key=lambda x: x[1].get("falhas", 0),
+                reverse=True,
+            )
+            for ep_path, ep_data in eps_ordenados[:3]:
+                if ep_data.get("falhas", 0) > 0:
+                    status = ep_data.get("ultimo_status") or "?"
+                    corpo = ep_data.get("ultimo_corpo") or ""
+                    ep_infos.append(f"[{ep_path} status {status}: {corpo}]")
+
+        if ep_infos:
+            erro += " " + " ".join(ep_infos)
+
         detalhe = f"{papel}. {erro}" if papel else erro
+
     quando = max(
         (d for d in (fonte.ultimo_sucesso, fonte.ultima_falha) if d), default=None
     )

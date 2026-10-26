@@ -81,7 +81,7 @@ def fetch_with_retry(
 
             # Raise for status to catch 4xx and 5xx errors
             response.raise_for_status()
-            registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain))
+            registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain), url=url)
             return response
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
@@ -95,10 +95,18 @@ def fetch_with_retry(
                     )
                     time.sleep(sleep_time)
                     continue
+            corpo = (
+                e.response.text
+                if hasattr(e, "response") and hasattr(e.response, "text")
+                else None
+            )
             registro_fontes.falha(
                 registro_fontes.nome_da_fonte(domain),
                 f"HTTP {status_code} em {url}",
                 grave=registro_fontes.grave(status_code),
+                url=url,
+                corpo=corpo,
+                status=status_code,
             )
             raise  # Raise if not retryable or max retries reached
         except httpx.RequestError as e:
@@ -112,7 +120,9 @@ def fetch_with_retry(
                 time.sleep(sleep_time)
                 continue
             registro_fontes.falha(
-                registro_fontes.nome_da_fonte(domain), f"{type(e).__name__} em {url}"
+                registro_fontes.nome_da_fonte(domain),
+                f"{type(e).__name__} em {url}",
+                url=url,
             )
             raise
 
@@ -161,14 +171,18 @@ async def async_fetch_with_retry(
                     logger.info(f"Retrying in {sleep_time} seconds...")
                     await asyncio.sleep(sleep_time)
                     continue
+                corpo = response.text if hasattr(response, "text") else None
                 registro_fontes.falha(
                     registro_fontes.nome_da_fonte(domain),
                     f"HTTP {status_code} em {url}",
+                    url=url,
+                    corpo=corpo,
+                    status=status_code,
                 )
                 response.raise_for_status()
 
             if status_code < 400:
-                registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain))
+                registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain), url=url)
             else:
                 registro_fontes.falha(
                     registro_fontes.nome_da_fonte(domain),
@@ -188,7 +202,9 @@ async def async_fetch_with_retry(
                 await asyncio.sleep(sleep_time)
                 continue
             registro_fontes.falha(
-                registro_fontes.nome_da_fonte(domain), f"{type(e).__name__} em {url}"
+                registro_fontes.nome_da_fonte(domain),
+                f"{type(e).__name__} em {url}",
+                url=url,
             )
             raise
 
