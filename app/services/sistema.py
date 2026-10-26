@@ -435,12 +435,56 @@ def _item_da_fonte(nome: str, fonte: Any, papel: str, agora: datetime) -> Item:
     recentes = fonte.recentes
     graves = getattr(fonte, "graves", None) or [not r for r in recentes]
     falhas_recentes = recentes.count(False)
+
+    problemas_endpoints = []
+    atencao_endpoints = []
+
+    if hasattr(fonte, "endpoints"):
+        endpoints_ordenados = sorted(
+            fonte.endpoints.items(), key=lambda x: x[1].falhas, reverse=True
+        )
+        top_3_falhas: list[tuple[str, Any]] = []
+        for endpoint, stats in endpoints_ordenados:
+            if stats.falhas > 0 and len(top_3_falhas) < 3:
+                top_3_falhas.append((endpoint, stats))
+
+            seq_404 = []
+            for f_syms, f_status in reversed(stats.falhas_seguidas):
+                if f_status == 404:
+                    seq_404.append(f_syms)
+                else:
+                    break
+
+            if len(seq_404) >= 3:
+                distinct_symbols = set()
+                for syms in seq_404:
+                    distinct_symbols.update(syms)
+                if len(distinct_symbols) >= 3 and (
+                    distinct_symbols & stats.simbolos_ok
+                ):
+                    problemas_endpoints.append(
+                        f"o endpoint {endpoint} parece ter mudado ou saído do ar"
+                    )
+
+            if len(seq_404) > 0 and not problemas_endpoints:
+                syms_404 = set()
+                for syms in seq_404:
+                    syms_404.update(syms)
+                if syms_404:
+                    atencao_endpoints.append(
+                        f"{endpoint}: {', '.join(sorted(syms_404))}"
+                    )
+
     # Problema é a fonte fora do ar: as últimas chamadas (ao menos 3) falharam
     # e alguma por rede, 5xx, 429 ou chave recusada. Só 404 e afins são pedidos
     # que a fonte não tem: o defeito é de quem pediu, e fica em atenção.
     ultimas = recentes[-5:]
-    if len(ultimas) >= 3 and not any(ultimas) and any(graves[-5:]):
+    if problemas_endpoints:
         nivel = PROBLEMA
+    elif len(ultimas) >= 3 and not any(ultimas) and any(graves[-5:]):
+        nivel = PROBLEMA
+    elif atencao_endpoints:
+        nivel = ATENCAO
     elif not recentes[-1] or falhas_recentes / len(recentes) >= 0.3:
         nivel = ATENCAO
     else:
@@ -452,6 +496,21 @@ def _item_da_fonte(nome: str, fonte: Any, papel: str, agora: datetime) -> Item:
     detalhe = papel
     if fonte.ultima_falha:
         erro = f"Última falha {hora_brt(fonte.ultima_falha)}: {fonte.ultimo_erro}"
+
+        # append top 3 failures
+        if hasattr(fonte, "endpoints") and top_3_falhas:
+            linhas_ep = []
+            for ep, st in top_3_falhas:
+                corpo = f" - {st.ultimo_corpo}" if st.ultimo_corpo else ""
+                linhas_ep.append(f"{ep} ({st.ultimo_status}){corpo}")
+            if linhas_ep:
+                erro += ". Top falhas: " + "; ".join(linhas_ep)
+
+        if problemas_endpoints:
+            erro += ". " + "; ".join(problemas_endpoints)
+        if atencao_endpoints:
+            erro += ". Falhas isoladas: " + "; ".join(atencao_endpoints)
+
         detalhe = f"{papel}. {erro}" if papel else erro
     quando = max(
         (d for d in (fonte.ultimo_sucesso, fonte.ultima_falha) if d), default=None

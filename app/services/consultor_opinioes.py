@@ -261,7 +261,10 @@ def _gerar(api_key: str, payload: dict) -> httpx.Response:
             timeout=30.0,
         )
         if resp.status_code == 200:
-            registro_fontes.sucesso(gemini_modelo.FONTE)
+            registro_fontes.sucesso(
+                gemini_modelo.FONTE,
+                url="https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+            )
             return resp
         registro_fontes.falha(
             gemini_modelo.FONTE,

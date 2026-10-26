@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Detalhar falhas no registro de fontes externas (spec 090a)
 - **Saúde técnica**: Seletor de pregão da página inicial agora utiliza a variável `data`, validando o histórico em /sistema (spec 088).
 - Spec 087: Otimização do tempo de carregamento da página Consultor.
 - Spec 085: Consultor explica por que não há opiniões em vez de aviso vazio.

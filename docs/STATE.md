@@ -434,3 +434,7 @@
   - Atualizado app/main.py e app/templates/index.html para exibição do novo painel.
 
 - implementado 084-consultor-esquema-postgres.md (saúde técnica, contador de specs não incrementado)
+- Spec 090a (O pedido está errado ou o servidor falhou? Detalhar falhas no registro):
+  - O registro_fontes agora extrai endpoints, contabiliza sucessos e falhas seguidas.
+  - O nível em `/sistema` agora reporta Problema apenas quando 3+ pedidos seguidos de símbolos diferentes falham.
+  - O corpo do erro é truncado e censurado para senhas.

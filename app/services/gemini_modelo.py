@@ -94,7 +94,10 @@ def _listar_modelos(api_key: str) -> list[dict]:
     except httpx.RequestError as e:
         registro_fontes.falha(FONTE, f"{type(e).__name__} ao listar modelos")
         raise
-    registro_fontes.sucesso(FONTE)
+    registro_fontes.sucesso(
+        FONTE,
+        url="https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+    )
     return modelos
 
 
