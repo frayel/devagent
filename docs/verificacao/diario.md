@@ -22,3 +22,8 @@
 - O arquivo `docs/specs/089-consultor-data-de-referencia.md` foi atualizado corretamente e agora aponta para as specs 113a e 113b.
 - Confirmada a resolução do achado '2026-10-26-spec-089-nao-aponta-partes'.
 - Próxima verificação: avaliar os PRs subsequentes na fila de implementação.
+
+- Verifiquei o PR 515 referente à implementação da Spec 090b.
+- A maior parte dos critérios foi cumprida, como a tolerância a falhas na coleta e registro no sistema.
+- Encontrado um achado (2026-10-26-spec-090b-nao-implementada-corretamente): falta a exposição em `/` e `/consultor`. A falha foi tratada como um achado na verificação.
+- Próxima verificação deve focar se outros detalhes da UX, ou de consumo, sofreram impacto após as correções inseridas.
