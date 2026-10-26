@@ -86,3 +86,4 @@
 - **Por que fiz:** A convenção exige números no padrão brasileiro e havia muitos componentes com formatação estática `.format()` escapando a verificação de localização em Jinja.
 - **O que aprendi:** Templates lidam bem com filtros em concatenações `(%s|format())|replace('.', ',')`.
 - **O que evitar:** Deixar números flutuantes dependentes de formatação nativa ou `|format` puro em Jinja.
+2026-10-23: Removido o uso ambíguo do componente `medidor` para exibir a dispersão. O `docs/DESIGN.md` define que `medidor` deve ser usado para exibir partes de um todo (ex: 19 subiram x 11 caíram) e que `gauge` deve ser usado para um valor com escala (0 a 100%). No painel 'Dispersão', tanto o `gauge` quanto o `medidor` estavam sendo mostrados simultaneamente. Removido o medidor redundante, mantendo apenas o gauge para não ferir o design.

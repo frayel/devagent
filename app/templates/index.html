@@ -127,7 +127,6 @@
 {% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro sentimento-risco") %}
     {% if highlights and highlights.dispersion_pct is not none %}
         {{ gauge(highlights.dispersion_pct, "em alta", 0, 100, "{:.0f}%", resumo="Dispersão, ações em alta") }}
-        {{ medidor(highlights.dispersion_pct|int, "em alta", numero=False) }}
         <div class="legenda num">
             <span>{{ highlights.up_count }} subiram</span>
             <span>{{ highlights.down_count }} caíram</span>
