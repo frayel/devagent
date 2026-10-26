@@ -79,20 +79,9 @@ def fetch_with_retry(
             else:
                 response = httpx.get(url, **kwargs)
 
-            # Raise for status to catch 4xx and 5xx errors (but allow 404 through for yfinance fetchers that handle missing symbols/splitting logic natively)
+            # Raise for status to catch 4xx and 5xx errors
             if response.status_code >= 400:
-                if (
-                    response.status_code == 404
-                    and "finance.yahoo.com/v7/finance/spark" in url
-                ):
-                    pass
-                elif (
-                    response.status_code == 404
-                    and "finance.yahoo.com/v8/finance/chart" in url
-                ):
-                    pass
-                else:
-                    response.raise_for_status()
+                response.raise_for_status()
 
             if response.status_code < 400:
                 registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain), url=url)
@@ -198,10 +187,14 @@ async def async_fetch_with_retry(
             if status_code < 400:
                 registro_fontes.sucesso(registro_fontes.nome_da_fonte(domain), url=url)
             else:
+                corpo = response.text if hasattr(response, "text") else None
                 registro_fontes.falha(
                     registro_fontes.nome_da_fonte(domain),
                     f"HTTP {status_code} em {url}",
                     grave=registro_fontes.grave(status_code),
+                    url=url,
+                    corpo=corpo,
+                    status=status_code,
                 )
             return response
 
