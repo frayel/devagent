@@ -27,7 +27,7 @@ FONTES: tuple[tuple[str, str], ...] = (
 )
 MT5 = "MetaTrader 5"
 
-_SEGREDO = re.compile(r"([?&](?:token|key|apikey)=)[^&\s]+", re.I)
+_SEGREDO = re.compile(r"([?&](?:token|key|apikey)=)[^&\"\s]+", re.I)
 
 
 @dataclass
