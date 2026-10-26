@@ -43,7 +43,7 @@ def fetch_yfinance() -> ForcaRelativaData | None:
     with httpx.Client(timeout=10.0) as client:
         for batch in batches:
             symbols = ",".join([f"{t}.SA" for t in batch])
-            url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range={range_str}&interval=1d"
+            url = f"https://query1.finance.yahoo.com/v8/finance/spark?symbols={symbols}&range={range_str}&interval=1d"
             try:
                 response = fetch_with_retry(url, client=client)
                 data = response.json()

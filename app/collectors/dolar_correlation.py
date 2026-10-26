@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def fetch_yfinance_history(tickers: list[str]) -> list[dict]:
     symbols = ",".join(tickers)
-    url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=2mo&interval=1d"
+    url = f"https://query1.finance.yahoo.com/v8/finance/spark?symbols={symbols}&range=2mo&interval=1d"
 
     try:
         response = fetch_with_retry(url, timeout=15.0)

@@ -54,7 +54,7 @@ def fetch_yfinance() -> CoesaoData | None:
         return None
 
     symbols = ",".join(TICKERS)
-    url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range={range_str}&interval=1d"
+    url = f"https://query1.finance.yahoo.com/v8/finance/spark?symbols={symbols}&range={range_str}&interval=1d"
 
     concordantes = 0
     total = len(TICKERS)

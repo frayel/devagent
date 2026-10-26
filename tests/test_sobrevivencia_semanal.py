@@ -12,7 +12,7 @@ def mock_yfinance_success():
     with respx.mock(assert_all_called=False) as respx_mock:
         # Mock para a primeira requisição (PETR4, etc)
         respx_mock.get(
-            url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+            url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
         ).mock(
             return_value=httpx.Response(
                 200,
@@ -84,7 +84,7 @@ def test_sobrevivencia_semanal_success(mock_yfinance_success):
 def mock_yfinance_failure():
     with respx.mock(assert_all_called=False) as respx_mock:
         respx_mock.get(
-            url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+            url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
         ).mock(return_value=httpx.Response(500))
         yield respx_mock
 
@@ -98,7 +98,7 @@ def test_sobrevivencia_semanal_failure(mock_yfinance_failure):
 def mock_yfinance_empty():
     with respx.mock(assert_all_called=False) as respx_mock:
         respx_mock.get(
-            url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+            url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
         ).mock(
             return_value=httpx.Response(
                 200,

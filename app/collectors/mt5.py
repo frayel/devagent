@@ -5,7 +5,7 @@ O terminal MT5 roda numa máquina Windows com o servidor `mt5api`
 autenticação pelo header `X-API-Key`. Este módulo conversa com ele.
 
 Como entra na coleta: os coletores continuam montando as URLs do Yahoo
-Finance (`/v7/finance/spark` e `/v8/finance/chart`). `fetch_with_retry`
+Finance (`/v8/finance/spark` e `/v8/finance/chart`). `fetch_with_retry`
 pergunta a este módulo se ele consegue responder a URL; se consegue, devolve
 uma resposta no mesmo formato do Yahoo, montada com as barras do MT5, e o
 Yahoo nem é chamado. Se o MT5 falhar, a requisição segue para o Yahoo como

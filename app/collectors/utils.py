@@ -265,7 +265,7 @@ def fetch_historico_diario_yfinance_spark(
                 for t in batch
             ]
         )
-        url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={batch_query}&range={range_str}&interval={interval}"
+        url = f"https://query1.finance.yahoo.com/v8/finance/spark?symbols={batch_query}&range={range_str}&interval={interval}"
 
         try:
             response = fetch_with_retry(url, client=client)

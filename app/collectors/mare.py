@@ -2,7 +2,7 @@
 
 Baixa duas séries diárias e entrega o cálculo a `app/services/mare.py`:
 
-- a cesta `TICKERS` de `highlights.py` pelo `/v7/finance/spark`
+- a cesta `TICKERS` de `highlights.py` pelo `/v8/finance/spark`
   (`range=3mo&interval=1d`, fechamento e volume), em lotes de 15;
 - o Ibovespa pelo `/v8/finance/chart` (`range=2y&interval=1d`), com a brapi
   (`range=2y`) como reserva.

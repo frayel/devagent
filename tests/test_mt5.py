@@ -60,7 +60,7 @@ def rota_rates(dados_por_simbolo: dict[str, list[dict]]):
 
 def test_sem_configuracao_nao_intercepta():
     assert not mt5.configurado()
-    url = "https://query1.finance.yahoo.com/v7/finance/spark?symbols=PETR4.SA"
+    url = "https://query1.finance.yahoo.com/v8/finance/spark?symbols=PETR4.SA"
     assert mt5.interceptar(url) is None
 
 
@@ -85,7 +85,7 @@ def test_spark_servido_pelo_mt5(mt5_ligado):
     yahoo = respx.get(url__regex=r"https://query[12]\.finance\.yahoo\.com.*")
 
     url = (
-        "https://query1.finance.yahoo.com/v7/finance/spark"
+        "https://query1.finance.yahoo.com/v8/finance/spark"
         "?symbols=PETR4.SA,VALE3.SA&range=5d&interval=1d"
     )
     resp = fetch_with_retry(url)
@@ -114,7 +114,7 @@ def test_spark_servido_pelo_mt5(mt5_ligado):
 @respx.mock
 def test_cache_evita_segunda_chamada(mt5_ligado):
     rota = rota_rates({"PETR4:D1": barras_diarias(30)})
-    url = "https://query1.finance.yahoo.com/v7/finance/spark?symbols=PETR4.SA&range=1d&interval=1d"
+    url = "https://query1.finance.yahoo.com/v8/finance/spark?symbols=PETR4.SA&range=1d&interval=1d"
     fetch_with_retry(url)
     fetch_with_retry(url.replace("range=1d", "range=1mo"))
     assert rota.call_count == 1
@@ -146,7 +146,7 @@ def test_intradia_converte_fuso_do_servidor(mt5_ligado):
         0, {"time": "2026-10-02T17:45:00", "open": 1, "high": 1, "low": 1, "close": 9}
     )
     rota_rates({"PETR4:D1": barras_diarias(10), "PETR4:M15": m15})
-    url = "https://query1.finance.yahoo.com/v7/finance/spark?symbols=PETR4.SA&range=1d&interval=15m"
+    url = "https://query1.finance.yahoo.com/v8/finance/spark?symbols=PETR4.SA&range=1d&interval=15m"
     bloco = fetch_with_retry(url).json()["spark"]["result"][0]["response"][0]
     assert bloco["indicators"]["quote"][0]["close"] == [1, 2, 3, 4]
     primeiro = datetime.fromtimestamp(bloco["timestamp"][0], tz=timezone.utc)
@@ -159,7 +159,7 @@ def test_mt5_fora_do_ar_cai_para_o_yahoo_e_pausa(mt5_ligado):
     yahoo = respx.get(url__regex=r"https://query[12]\.finance\.yahoo\.com.*").mock(
         return_value=httpx.Response(200, json={"spark": {"result": []}})
     )
-    url = "https://query1.finance.yahoo.com/v7/finance/spark?symbols=PETR4.SA,VALE3.SA&range=1d&interval=1d"
+    url = "https://query1.finance.yahoo.com/v8/finance/spark?symbols=PETR4.SA,VALE3.SA&range=1d&interval=1d"
     fetch_with_retry(url)
     fetch_with_retry(url)
     assert yahoo.call_count == 2
@@ -187,7 +187,7 @@ def test_simbolo_sem_traducao_vai_ao_yahoo(mt5_ligado):
         return_value=httpx.Response(200, json={"spark": {"result": []}})
     )
     fetch_with_retry(
-        "https://query1.finance.yahoo.com/v7/finance/spark?symbols=%5EGSPC&range=2mo&interval=1d"
+        "https://query1.finance.yahoo.com/v8/finance/spark?symbols=%5EGSPC&range=2mo&interval=1d"
     )
     assert yahoo.called
     assert not rota.called
@@ -268,7 +268,7 @@ def test_simbolo_recusado_nao_pausa_os_outros(mt5_ligado, caplog):
 
     rota = respx.get(RATES).mock(side_effect=responder)
     url = (
-        "https://query1.finance.yahoo.com/v7/finance/spark"
+        "https://query1.finance.yahoo.com/v8/finance/spark"
         "?symbols=ELET3.SA,PETR4.SA,VALE3.SA&range=5d&interval=1d"
     )
     with caplog.at_level("WARNING"):

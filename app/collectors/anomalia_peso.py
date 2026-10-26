@@ -28,7 +28,7 @@ def collect_and_save() -> bool:
         ibov_prev_close = ibov_data.previous_close
 
         symbols = [f"{t}.SA" for t in PESOS.keys()]
-        url = "https://query1.finance.yahoo.com/v7/finance/spark"
+        url = "https://query1.finance.yahoo.com/v8/finance/spark"
         params = {"symbols": ",".join(symbols), "range": "1d", "interval": "1d"}
 
         response = fetch_with_retry(url, params=params)

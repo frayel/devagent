@@ -465,7 +465,7 @@ def test_so_404_e_pedido_errado_e_nao_fonte_fora_do_ar():
     f.falhas = 3
     f.ultima_falha = AGORA
     f.ultimo_erro = (
-        "HTTP 404 em https://query1.finance.yahoo.com/v7/finance/spark?symbols=X"
+        "HTTP 404 em https://query1.finance.yahoo.com/v8/finance/spark?symbols=X"
     )
     item = s.verificar_integracoes({"Yahoo Finance": f}, None, {}, AGORA)[1]
     assert item.nivel == s.ATENCAO

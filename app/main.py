@@ -165,6 +165,9 @@ def healthz():
 @app.get("/api/coleta")
 def coleta():
     """Diagnóstico da coleta automática (última rodada e último erro)."""
+    from app.agendador import estado
+
+    return estado
 
 
 def _get_seletor_context(

@@ -12,7 +12,7 @@ def fetch_yfinance_history(
     tickers: list[str], range_str="5d", interval="15m"
 ) -> list[dict]:
     symbols = ",".join(tickers)
-    url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range={range_str}&interval={interval}"
+    url = f"https://query1.finance.yahoo.com/v8/finance/spark?symbols={symbols}&range={range_str}&interval={interval}"
     try:
         response = fetch_with_retry(url, timeout=15.0)
         data = response.json()

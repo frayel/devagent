@@ -27,7 +27,7 @@ TICKERS_PESOS = {
 
 def fetch_yfinance() -> ConcentracaoData | None:
     symbols = ",".join([f"{t}.SA" for t in TICKERS_PESOS.keys()]) + ",%5EBVSP"
-    url = f"https://query1.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=5d&interval=1d"
+    url = f"https://query1.finance.yahoo.com/v8/finance/spark?symbols={symbols}&range=5d&interval=1d"
     try:
         response = fetch_with_retry(url)
         data = response.json()
@@ -116,7 +116,7 @@ def fetch_yfinance() -> ConcentracaoData | None:
 
 def fetch_concentracao_vendedora_yfinance() -> ConcentracaoData | None:
     symbols = ",".join([f"{t}.SA" for t in TICKERS_PESOS.keys()]) + ",%5EBVSP"
-    url = f"https://query2.finance.yahoo.com/v7/finance/spark?symbols={symbols}&range=5d&interval=1d"
+    url = f"https://query2.finance.yahoo.com/v8/finance/spark?symbols={symbols}&range=5d&interval=1d"
     try:
         response = fetch_with_retry(url)
         data = response.json()

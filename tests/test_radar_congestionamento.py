@@ -22,7 +22,7 @@ def test_radar_congestionamento_collector_success(monkeypatch):
     import httpx
 
     respx.get(
-        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
     ).mock(
         return_value=httpx.Response(
             200,

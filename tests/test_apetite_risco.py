@@ -30,7 +30,7 @@ def test_fetch_yfinance_tomando_risco():
         }
     }
     respx.get(
-        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
     ).mock(return_value=httpx.Response(200, json=mock_response))
     data = fetch_yfinance()
     assert data is not None
@@ -65,7 +65,7 @@ def test_fetch_yfinance_defensivo():
         }
     }
     respx.get(
-        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
     ).mock(return_value=httpx.Response(200, json=mock_response))
     data = fetch_yfinance()
     assert data is not None
@@ -100,7 +100,7 @@ def test_fetch_yfinance_neutro():
         }
     }
     respx.get(
-        url__regex=r"https://query[12]\.finance\.yahoo\.com/v7/finance/spark.*"
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark.*"
     ).mock(return_value=httpx.Response(200, json=mock_response))
     data = fetch_yfinance()
     assert data is not None

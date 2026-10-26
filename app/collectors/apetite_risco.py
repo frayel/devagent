@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_yfinance() -> ApetiteRiscoData | None:
-    url = "https://query1.finance.yahoo.com/v7/finance/spark?symbols=SMAL11.SA,%5EBVSP&range=1d&interval=1d"
+    url = "https://query1.finance.yahoo.com/v8/finance/spark?symbols=SMAL11.SA,%5EBVSP&range=1d&interval=1d"
     try:
         with httpx.Client(timeout=10.0) as client:
             response = fetch_with_retry(url, client=client)
