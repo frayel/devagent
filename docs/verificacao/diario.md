@@ -12,3 +12,8 @@
 - Confirmada a resolução do achado '2026-10-25-seletor-faltando-em-consultor-e-sistema'. O seletor agora é exibido corretamente nas rotas /consultor e /sistema.
 - Nenhum novo defeito foi introduzido.
 - Próxima verificação deve continuar observando regressões nas páginas do consultor.
+
+- Verifiquei o PR 507 referente à divisão da spec 089.
+- As specs 113a e 113b foram geradas corretamente com status ready.
+- A spec 089 original falhou em informar para onde as partes foram movidas, resultando no achado '2026-10-26-spec-089-nao-aponta-partes'.
+- Próxima verificação deve continuar atenta à qualidade dos metadados e conteúdos das especificações após divisão.
