@@ -95,3 +95,40 @@ def test_nivel_problema_vs_atencao():
     )
     assert item.nivel == sistema.PROBLEMA
     assert "parece ter mudado ou saído do ar" in item.detalhe
+
+
+def test_nenhum_segredo_vaza():
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    registro_fontes.limpar()
+    url = "https://query2.finance.yahoo.com/v8/finance/chart/PETZ3.SA?range=2y&interval=1d&token=secreto"
+    corpo_resposta = '{"error": "Not Found", "token": "supersecreto", "apikey": "1234"}'
+
+    with respx.mock:
+        respx.get(url).respond(status_code=404, text=corpo_resposta)
+        client = httpx.Client()
+        try:
+            utils.fetch_with_retry(url, client=client, max_retries=1)
+        except Exception:
+            pass
+
+    test_client = TestClient(app)
+
+    # Test API
+    resp_api = test_client.get("/api/sistema")
+    assert resp_api.status_code == 200
+    texto_api = resp_api.text
+    assert "secreto" not in texto_api
+    assert "supersecreto" not in texto_api
+    assert "1234" not in texto_api
+    assert "token=***" in texto_api
+
+    # Test HTML
+    resp_html = test_client.get("/sistema")
+    assert resp_html.status_code == 200
+    texto_html = resp_html.text
+    assert "secreto" not in texto_html
+    assert "supersecreto" not in texto_html
+    assert "1234" not in texto_html
+    assert "token=***" in texto_html

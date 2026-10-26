@@ -435,3 +435,7 @@
 
 - implementado 084-consultor-esquema-postgres.md (saúde técnica, contador de specs não incrementado)
 - Corrigido problema da spec 089, adicionado aviso de onde foram as partes derivadas (specs 113a e 113b).
+
+- Spec 090a (Diagnóstico de falhas):
+  - Registro HTTP agora anota falhas de endpoint separadamente e esconde segredos da URL e corpo.
+  - Atualizada página de diagnóstico /sistema e seus testes.

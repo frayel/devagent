@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- **Saúde técnica**: Detalhamento de falhas no registro HTTP para diferenciar pedidos errados de indisponibilidade (Spec 090a).
 - **Saúde técnica**: Seletor de pregão da página inicial agora utiliza a variável `data`, validando o histórico em /sistema (spec 088).
 - Spec 087: Otimização do tempo de carregamento da página Consultor.
 - Spec 085: Consultor explica por que não há opiniões em vez de aviso vazio.
