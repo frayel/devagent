@@ -1,13 +1,16 @@
 ---
 id: 092a
-titulo: Gemini ativo e verificado: validar a chave e declarar as variáveis
+titulo: Gemini ativo, validar a chave, declarar as variáveis
 status: ready
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_092a.py
+revisada: 2026-10-26
 ---
 
 ## Problema
+
+Como sabemos se a chave do Gemini configurada ainda funciona sem esperar o momento de uma extração real de conteúdo?
 
 Em `/sistema`, a integração **Gemini** aparece como *Inativo*. A chave `GEMINI_API_KEY` está cadastrada no Render, mas ninguém valida a chave. O único contato com a API do Gemini é a extração, e `gemini_modelo.modelo_atual` só lista os modelos quando precisa escolher um. Uma chave errada, revogada ou sem permissão só seria descoberta na primeira extração real.
 
@@ -35,6 +38,11 @@ API do Gemini: `GET /v1beta/models` (validação). Plano B: sem chave ou chave r
 - [ ] Sem a variável, nenhuma requisição ao Gemini é feita na validação.
 - [ ] A validação não roda em visita, nem em teste (mesma regra do laço do monitor: desligada com `MONITOR_SISTEMA=0` e sob pytest).
 - [ ] `render.yaml` declara as três variáveis com `sync: false`, sem valor, e os testes do adaptador do Render passam.
+
+## Invariantes de produção
+
+- A tabela de banco de dados registra sucesso ou erro a cada 6 horas para as chaves presentes, mantendo visibilidade da validade.
+- `render.yaml` mantém declaração sem valor das variáveis de ambiente de chaves.
 
 ## Fora do escopo
 
