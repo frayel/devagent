@@ -2,7 +2,7 @@
 id: 2026-10-26-spec-092-variaveis-render
 severidade: media
 painel: render.yaml
-status: aberto
+status: resolvido
 visto_em: 2026-10-26T14:00-03:00
 pr: 524
 ---
