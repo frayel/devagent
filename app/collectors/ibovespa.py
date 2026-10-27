@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import sys
 from datetime import datetime, timezone, timedelta
 
@@ -21,23 +20,16 @@ def calc_mm(closes: list[float], window: int) -> float | None:
 
 
 def fetch_brapi() -> IbovespaData | None:
-    BRAPI_TOKEN = os.environ.get("BRAPI_TOKEN")
-    if not BRAPI_TOKEN:
-        logger.warning("BRAPI_TOKEN not set, skipping brapi.dev")
-        return None
+    from app.collectors import brapi
 
-    url = f"https://brapi.dev/api/quote/%5EBVSP?token={BRAPI_TOKEN}&range=1y&interval=1d&fundamental=false"
     try:
-        response = fetch_with_retry(url, timeout=10.0)
-        data = response.json()
-
-        if "results" not in data or not data["results"]:
+        result = brapi.cotacao("^BVSP", range="1y", interval="1d", fundamental="false")
+        if not result:
             logger.error("Invalid response from brapi")
             return None
 
-        result = data["results"][0]
-        current_price = result.get("regularMarketPrice")
-        previous_close = result.get("regularMarketPreviousClose")
+        current_price = float(result.get("regularMarketPrice", 0.0))
+        previous_close = float(result.get("regularMarketPreviousClose", 0.0))
 
         history = result.get("historicalDataPrice", [])
         if not history:
@@ -96,7 +88,7 @@ def fetch_yfinance() -> IbovespaData | None:
 
         result = data["chart"]["result"][0]
         meta = result["meta"]
-        current_price = meta.get("regularMarketPrice")
+        current_price = float(meta.get("regularMarketPrice", 0.0))
 
         timestamps = result["timestamp"]
         closes = result["indicators"]["quote"][0]["close"]
@@ -123,22 +115,35 @@ def fetch_yfinance() -> IbovespaData | None:
         )
 
         previous_close = None
+
+        # Yahoo Finance returns a chartPreviousClose which is the most reliable source for previous close
+        # especially for indices where intraday previousClose calculation might use incomplete data
+        meta_prev_close = meta.get("chartPreviousClose") or meta.get("previousClose")
+
         if len(valid_closes) > 1:
             if valid_dates[-1] == current_date_str:
-                previous_close = valid_closes[-2]
+                previous_close = (
+                    meta_prev_close if meta_prev_close else valid_closes[-2]
+                )
             else:
                 # In tests, the fixture might not have today's date, but current_price matches valid_closes[-1]
                 if current_price and current_price == valid_closes[-1]:
-                    previous_close = valid_closes[-2]
+                    previous_close = (
+                        meta_prev_close if meta_prev_close else valid_closes[-2]
+                    )
                 else:
-                    previous_close = valid_closes[-1]
+                    previous_close = (
+                        meta_prev_close if meta_prev_close else valid_closes[-1]
+                    )
         elif len(valid_closes) == 1:
             if valid_dates[-1] == current_date_str or (
                 current_price and current_price == valid_closes[-1]
             ):
-                previous_close = current_price
+                previous_close = meta_prev_close if meta_prev_close else current_price
             else:
-                previous_close = valid_closes[-1]
+                previous_close = (
+                    meta_prev_close if meta_prev_close else valid_closes[-1]
+                )
 
         # Absolute fallback to meta if for some reason history is empty
         if previous_close is None:
@@ -151,6 +156,7 @@ def fetch_yfinance() -> IbovespaData | None:
         # In case the fallback also fails, use the current_price
         if previous_close is None:
             previous_close = current_price
+        previous_close = float(previous_close) if previous_close is not None else 0.0
 
         calc_closes = valid_closes.copy()
         if current_price and (not calc_closes or current_price != calc_closes[-1]):

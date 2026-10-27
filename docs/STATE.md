@@ -442,3 +442,6 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
   - Adicionada tabela de suspensão de símbolos em SQLite e Postgres.
   - Isola 404 de lote na query e reporta alertas no Yahoo Finance para o consultor.
 - Spec 093 movida para draft e dividida em 121a e 121b.
+
+- Implemented Spec 098: brapi secondary source client module.
+- Fixed Issue 531: Ibovespa implausible daily variation.

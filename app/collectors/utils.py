@@ -89,7 +89,9 @@ def fetch_with_retry(
         except httpx.HTTPStatusError as e:
             status_code = e.response.status_code
             if status_code == 429 or status_code >= 500:
-                if attempt < max_retries - 1:
+                if status_code == 429 and domain == "brapi.dev":
+                    pass  # não repete 429 para brapi
+                elif attempt < max_retries - 1:
                     sleep_time = backoff_factor * (2**attempt)
                     safe_url = re.sub(r"([?&]token=)[^&\s]+", r"\1***", url)
                     logger.warning(

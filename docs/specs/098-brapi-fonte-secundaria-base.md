@@ -1,7 +1,7 @@
 ---
 id: 098
 titulo: Módulo Base da brapi como fonte secundária
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_brapi.py

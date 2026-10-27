@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from datetime import date, datetime, timezone
 
 import httpx
@@ -34,7 +33,7 @@ URL_CESTA = "https://{domain}.finance.yahoo.com/v8/finance/chart/{simbolo}?range
 URL_IBOV = (
     "https://query2.finance.yahoo.com/v8/finance/chart/%5EBVSP?range=2y&interval=1d"
 )
-URL_IBOV_BRAPI = (
+URL_IBOV_BRAPI_DEPRECATED = (
     "https://brapi.dev/api/quote/%5EBVSP?token={token}&range=2y&interval=1d"
     "&fundamental=false"
 )
@@ -89,11 +88,12 @@ def _ibov_yahoo(client: httpx.Client) -> dict[date, float]:
 
 
 def _ibov_brapi(client: httpx.Client) -> dict[date, float]:
-    token = os.environ.get("BRAPI_TOKEN")
-    if not token:
+    from app.collectors import brapi
+
+    dados = brapi.cotacao("^BVSP", range="2y", interval="1d", fundamental="false")
+    if not dados:
         return {}
-    dados = fetch_with_retry(URL_IBOV_BRAPI.format(token=token), client=client).json()
-    historico = dados["results"][0].get("historicalDataPrice", [])
+    historico = dados.get("historicalDataPrice", [])
     return {
         _dia(h["date"]): float(h["close"])
         for h in historico
