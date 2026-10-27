@@ -27,3 +27,8 @@
 - A maior parte dos critérios foi cumprida, como a tolerância a falhas na coleta e registro no sistema.
 - Encontrado um achado (2026-10-26-spec-090b-nao-implementada-corretamente): falta a exposição em `/` e `/consultor`. A falha foi tratada como um achado na verificação.
 - Próxima verificação deve focar se outros detalhes da UX, ou de consumo, sofreram impacto após as correções inseridas.
+
+- Verifiquei o PR 524 referente à implementação parcial e divisão da spec 092.
+- A validação de chave falhou em seguir estritamente o `render.yaml` prescrito, resultando no achado '2026-10-26-spec-092-variaveis-render'.
+- Encontrei vulnerabilidade de segurança potencial (Jinja2 XSS em `app/templates/index.html`) não mitigada adequadamente, gerando achado '2026-10-26-safe-jinja-falso-positivo'.
+- Próxima verificação: assegurar aderência estrita aos critérios de aceite ao declarar infraestrutura e segurança da renderização.
