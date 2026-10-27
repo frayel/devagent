@@ -2,7 +2,6 @@
 
 Memória entre execuções do auditor LLM. No máximo 20 linhas: condense em vez de acumular.
 
-- 2026-10-10 a 2026-10-20 · Problemas de rodapés vazios e 'clima_global' resolvidos.
-- 2026-10-20 a 2026-10-21 · Painel 'detector_acao_orfa' ausente. Resolvido: ausência intencional (spec 067).
-- 2026-10-22 · Auditoria determinística e inspeção rodam sem achar novos defeitos ou falhas na API. Nenhuma invariante pendente mapeada na página inicial. Próxima checagem: avaliar impactos se painéis vazios ressurgirem no snapshot.
-- 2026-10-23 · Auditoria determinística e inspeção exploratória passaram. Achado do rodapé (data/hora incompleta) foi resolvido em produção. Próxima checagem: avaliar impactos se painéis vazios ressurgirem no snapshot.
+- 2026-10-10 a 2026-10-21 · Problemas de rodapés, 'clima_global' e 'detector_acao_orfa' resolvidos.
+- 2026-10-22 a 2026-10-23 · Auditoria e inspeção exploratória passaram. Achado do rodapé incompleto (fuso horário) resolvido.
+- 2026-10-26 · Auditoria determinística falhou em `ibov.variacao_plausivel` (-13.88% vs limite ±12.0%). Fonte (Yahoo Finance) está retornando variação irreal (queda muito além do circuit breaker) para `^BVSP`. Achado de severidade alta reportado. Próxima checagem: avaliar normalização da fonte ou necessidade de ignorar pregões anômalos.
