@@ -304,6 +304,52 @@ def ler_render(client: httpx.Client) -> dict[str, Any] | None:
 
 
 # --------------------------------------------------------------------------
+# Idades dos alertas
+# --------------------------------------------------------------------------
+
+_idades_alertas: dict[str, str] = {}
+_idades_carregadas = False
+
+
+def idades_dos_alertas(chaves_atuais: list[str], agora: datetime) -> dict[str, str]:
+    global _idades_carregadas, _idades_alertas
+    import app.banco
+
+    if not _idades_carregadas:
+        snapshot = app.banco.ler_snapshot("sistema_alertas")
+        if snapshot:
+            _idades_alertas = snapshot.get("idades", {})
+        _idades_carregadas = True
+
+    set_atuais = set(chaves_atuais)
+    mudou = False
+
+    # Remover o que voltou a OK
+    para_remover = [k for k in _idades_alertas if k not in set_atuais]
+    for k in para_remover:
+        del _idades_alertas[k]
+        mudou = True
+
+    # Adicionar novos
+    agora_iso = agora.isoformat()
+    for k in set_atuais:
+        if k not in _idades_alertas:
+            _idades_alertas[k] = agora_iso
+            mudou = True
+
+    if mudou:
+        app.banco.gravar_snapshot(
+            "sistema_alertas",
+            agora.date(),
+            "ok",
+            "monitor",
+            {"idades": _idades_alertas},
+        )
+
+    return dict(_idades_alertas)
+
+
+# --------------------------------------------------------------------------
 # Laço
 # --------------------------------------------------------------------------
 

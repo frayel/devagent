@@ -53,10 +53,49 @@ class Item:
     detalhe: str = ""
     quando: str | None = None  # ISO 8601
     link: str | None = None
+    causa: str = ""
+    acao: str = ""
+    desde: str = ""
+    spec: str | None = None
 
     @property
     def rotulo(self) -> str:
         return ROTULOS[self.nivel]
+
+
+def _classificar_causa_acao(item: Item) -> tuple[str, str]:
+    texto = item.resumo + " " + item.detalhe
+    import re
+
+    if item.nivel == INATIVO:
+        if "sem chamadas desde a partida" in texto:
+            return "configurada, mas nunca chamada", "verificar o pipeline que a usa"
+        return "", ""
+
+    if "HTTP 400" in texto or "HTTP 404" in texto or "HTTP 422" in texto:
+        return (
+            "pedido inválido ou ativo desconhecido (HTTP N)",
+            "corrigir o pedido no coletor X; o servidor está respondendo",
+        )
+
+    if (
+        re.search(r"5\d\d|429|401|403|não respondeu", texto)
+        or "rede" in texto.lower()
+        or "timeout" in texto.lower()
+        or "limite da api" in texto.lower()
+    ):
+        return (
+            "fonte indisponível ou recusando a chave (HTTP N)",
+            "aguardar, ou conferir a chave no Render",
+        )
+
+    if "relation" in texto or "column" in texto or "does not exist" in texto:
+        return "esquema do banco incompleto", "falta migração; ver spec do Consultor"
+
+    if item.nivel in (PROBLEMA, ATENCAO):
+        return "causa não classificada", "ver o detalhe e abrir issue"
+
+    return "", ""
 
 
 # --------------------------------------------------------------------------
@@ -964,14 +1003,46 @@ def montar(
         workflows = verificar_workflows(github, agora)
     desenvolvimento.append(verificar_fila(prontas))
 
-    grupos = [
-        _grupo("Aplicação e banco", aplicacao),
-        _grupo("Coleta", coleta),
-        _grupo("Integrações externas", integracoes),
-        _grupo("Fluxo de desenvolvimento", desenvolvimento),
+    from app.collectors.sistema import idades_dos_alertas
+
+    todas_listas = [
+        ("Aplicação e banco", aplicacao),
+        ("Coleta", coleta),
+        ("Integrações externas", integracoes),
+        ("Fluxo de desenvolvimento", desenvolvimento),
     ]
     if workflows:
-        grupos.append(_grupo("Workflows do GitHub", workflows))
+        todas_listas.append(("Workflows do GitHub", workflows))
+
+    chaves_atuais = []
+    for titulo, lista in todas_listas:
+        for item in lista:
+            if item.nivel in (PROBLEMA, ATENCAO) or (
+                item.nivel == INATIVO
+                and "sem chamadas desde a partida" in item.resumo + " " + item.detalhe
+            ):
+                chaves_atuais.append(f"{titulo}/{item.nome}")
+
+    idades = idades_dos_alertas(chaves_atuais, agora)
+
+    for titulo, lista in todas_listas:
+        for item in lista:
+            if item.nivel in (PROBLEMA, ATENCAO) or (
+                item.nivel == INATIVO
+                and "sem chamadas desde a partida" in item.resumo + " " + item.detalhe
+            ):
+                causa, acao = _classificar_causa_acao(item)
+                item.causa = causa
+                item.acao = acao
+                chave = f"{titulo}/{item.nome}"
+                if chave in idades:
+                    idade_iso = idades[chave]
+                    idade_dt = _dt(idade_iso)
+                    if idade_dt:
+                        idade_local = idade_dt.astimezone(timezone(timedelta(hours=-3)))
+                        item.desde = idade_local.strftime("%d/%m %H:%M")
+
+    grupos = [_grupo(titulo, lista) for titulo, lista in todas_listas]
     return {
         "gerado_em": agora.isoformat(),
         "remoto_em": remoto.get("atualizado_em"),

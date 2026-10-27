@@ -1,7 +1,7 @@
 ---
 id: 093
 titulo: Resolução guiada para alertas da página de sistema
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_093.py
