@@ -425,20 +425,44 @@ def save_ibovespa_data(data: IbovespaData) -> None:
 
 
 def get_latest_ibovespa_data() -> IbovespaData | None:
-    from app.banco import ler_snapshot
+    from app.banco import get_connection
     from datetime import datetime
+    import json
 
-    payload = ler_snapshot("ibovespa")
-    if payload:
-        return IbovespaData(
-            timestamp=datetime.fromisoformat(payload["timestamp"]),
-            current_price=payload["current_price"],
-            previous_close=payload["previous_close"],
-            history_json=payload["history_json"],
-            fonte=payload["fonte"],
-            mm21=payload.get("mm21"),
-            mm200=payload.get("mm200"),
-        )
+    conn, backend = get_connection()
+    try:
+        if backend == "postgres":
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT payload FROM snapshots_paineis WHERE painel = 'ibovespa' ORDER BY data_referencia DESC LIMIT 5"
+                )
+                rows = cursor.fetchall()
+        else:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT payload FROM snapshots_paineis WHERE painel = 'ibovespa' ORDER BY data_referencia DESC LIMIT 5"
+            )
+            rows = cursor.fetchall()
+
+        for row in rows:
+            payload = row[0] if isinstance(row[0], dict) else json.loads(row[0])
+            cp = payload.get("current_price")
+            pc = payload.get("previous_close")
+            if cp is not None and pc:
+                var_pct = ((cp - pc) / pc) * 100
+                if abs(var_pct) <= 12.0:
+                    return IbovespaData(
+                        timestamp=datetime.fromisoformat(payload["timestamp"]),
+                        current_price=payload["current_price"],
+                        previous_close=payload["previous_close"],
+                        history_json=payload["history_json"],
+                        fonte=payload["fonte"],
+                        mm21=payload.get("mm21"),
+                        mm200=payload.get("mm200"),
+                    )
+    finally:
+        conn.close()
+
     return None
 
 

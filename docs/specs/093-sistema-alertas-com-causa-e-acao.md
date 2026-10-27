@@ -1,7 +1,7 @@
 ---
 id: 093
 titulo: Resolução guiada para alertas da página de sistema
-status: ready
+status: draft
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_093.py
@@ -69,3 +69,11 @@ Só dados que `/sistema` já tem. Nenhuma requisição nova.
 - Corrigir a causa de cada alerta (specs 084, 090, 091 e 092).
 - Notificar por e-mail ou celular.
 - Resolver automaticamente alertas sem spec.
+
+
+## Revisão
+
+A spec era grande demais (tocava em `test_sistema.py`, `test_api_snapshot.py`, `test_banco.py`, e `devagent/test_saude.py`) e foi dividida no Passo 4 em:
+- **122**: Causa e ação no painel do sistema
+- **123**: Idade dos alertas
+- **124**: Agente enxerga alertas persistentes
