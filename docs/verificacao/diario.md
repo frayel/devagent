@@ -36,3 +36,8 @@
 - Confirmada a resolução do achado '2026-10-26-safe-jinja-falso-positivo' (PR 535 corrigiu o escape XSS antes do filtro safe).
 - Confirmada a resolução do achado '2026-10-26-spec-092-variaveis-render' (PR 536 removeu as variáveis extras do render.yaml).
 - Próxima verificação deve continuar monitorando a segurança na renderização do Jinja2 e o alinhamento de infraestrutura com as specs.
+
+- Verifiquei o PR 554 referente à base da fonte secundária Brapi (Spec 098).
+- A ordem de fallback no coletor do Ibovespa foi implementada incorretamente (Brapi antes de Yahoo), gerando o achado 2026-10-27-spec-098-ordem-fontes-ibovespa.
+- Um trecho de código morto permaneceu no coletor da Maré, gerando o achado 2026-10-27-spec-098-codigo-morto-mare.
+- A próxima verificação deve assegurar que a ordem correta das chamadas às fontes de dados (MT5 -> Yahoo -> Brapi) foi restabelecida.
