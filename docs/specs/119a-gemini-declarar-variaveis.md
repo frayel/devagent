@@ -1,13 +1,16 @@
 ---
 id: 119a
 titulo: Declarar as variáveis no render
-status: ready
+status: draft
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_119a.py
+revisada: 2026-10-27
 ---
 
 ## Problema
+
+Como as demais variáveis além do MT5 são rastreadas no repositório?
 
 `render.yaml` declara só `MT5_API_URL` e `MT5_API_KEY` com `sync: false`. As demais variáveis (`GEMINI_API_KEY`, `GEMINI_MODELO`, `GEMINI_MAX_CHAMADAS_DIA`, `BRAPI_TOKEN`, `DATABASE_URL`) existem só no painel do Render, sem rastro no repositório.
 
@@ -34,3 +37,7 @@ Não aplicável.
 
 - Validação da chave no agendador.
 - Alterar a interface do `/sistema`.
+
+## Revisão
+
+A spec foi marcada como `draft` porque é inviável/duplicada. As variáveis (`GEMINI_API_KEY`, `BRAPI_TOKEN` e `DATABASE_URL`) já se encontram declaradas com `sync: false` no arquivo `render.yaml`.
