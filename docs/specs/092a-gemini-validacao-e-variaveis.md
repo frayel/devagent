@@ -1,7 +1,7 @@
 ---
 id: 092a
 titulo: Gemini ativo, validar a chave, declarar as variáveis
-status: ready
+status: draft
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_092a.py
@@ -9,6 +9,8 @@ revisada: 2026-10-26
 ---
 
 ## Problema
+
+**Nota:** Esta especificação era grande demais para um único PR e falhou no guardião (issue #540). Foi dividida nas especificações 120a (variáveis de ambiente no render) e 120b (validação periódica da chave).
 
 Como sabemos se a chave do Gemini configurada ainda funciona sem esperar o momento de uma extração real de conteúdo?
 
