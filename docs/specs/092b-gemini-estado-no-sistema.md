@@ -1,13 +1,16 @@
 ---
 id: 092b
-titulo: Gemini ativo e verificado: mostrar o estado real
-status: ready
+titulo: Mostrar o estado real do Gemini no sistema
+status: draft
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_092b.py
+revisada: 2026-10-27
 ---
 
 ## Problema
+
+"Por que a integração com o Gemini aparece como Inativo no sistema se a chave está configurada e as requisições estão acontecendo?"
 
 Em `/sistema`, a integração **Gemini** aparece como *Inativo*. O `/api/sistema` de produção de 24/10/2026 confirma: o detalhe diz "sem chamadas desde a partida", texto que o código só usa quando a chave existe (sem chave, o texto seria "sem GEMINI_API_KEY"). O rótulo engana, por motivos de código:
 
@@ -55,3 +58,7 @@ API do Gemini: `generateContent` (extração, já existente). Plano B: sem chave
 - Validação da chave em segundo plano e variáveis em render.yaml (feito na 092a).
 - Trocar o modelo ou o provedor de LLM.
 - Mudar a cota diária de chamadas.
+
+## Revisão
+
+Spec movida para `draft` por depender de uma funcionalidade ainda não implementada na `main`. A spec afirma "Depende da spec 092a (que implementa a validação da chave em registro_fontes)", mas a 092a ainda não foi implementada pelo desenvolvimento. O Revisor não aprova specs baseadas em promessas de código futuro ou dependentes de specs não implementadas na mesma entrega.
