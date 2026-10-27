@@ -2,7 +2,7 @@
 id: 2026-10-26-safe-jinja-falso-positivo
 severidade: media
 painel: app/templates/index.html e app/templates/componentes.html
-status: aberto
+status: resolvido
 visto_em: 2026-10-26T14:10-03:00
 pr: 524
 ---

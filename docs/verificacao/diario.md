@@ -32,3 +32,7 @@
 - A validação de chave falhou em seguir estritamente o `render.yaml` prescrito, resultando no achado '2026-10-26-spec-092-variaveis-render'.
 - Encontrei vulnerabilidade de segurança potencial (Jinja2 XSS em `app/templates/index.html`) não mitigada adequadamente, gerando achado '2026-10-26-safe-jinja-falso-positivo'.
 - Próxima verificação: assegurar aderência estrita aos critérios de aceite ao declarar infraestrutura e segurança da renderização.
+- Verifiquei os PRs #535 e #536.
+- Confirmada a resolução do achado '2026-10-26-safe-jinja-falso-positivo' (PR 535 corrigiu o escape XSS antes do filtro safe).
+- Confirmada a resolução do achado '2026-10-26-spec-092-variaveis-render' (PR 536 removeu as variáveis extras do render.yaml).
+- Próxima verificação deve continuar monitorando a segurança na renderização do Jinja2 e o alinhamento de infraestrutura com as specs.
