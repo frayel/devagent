@@ -10,6 +10,8 @@ revisada: 2026-10-26
 
 ## Problema
 
+**Nota:** Esta especificação era grande demais para um único PR e falhou no guardião (issue #540). Foi dividida nas especificações 120a (variáveis de ambiente no render) e 120b (validação periódica da chave).
+
 Como sabemos se a chave do Gemini configurada ainda funciona sem esperar o momento de uma extração real de conteúdo?
 
 Em `/sistema`, a integração **Gemini** aparece como *Inativo*. A chave `GEMINI_API_KEY` está cadastrada no Render, mas ninguém valida a chave. O único contato com a API do Gemini é a extração, e `gemini_modelo.modelo_atual` só lista os modelos quando precisa escolher um. Uma chave errada, revogada ou sem permissão só seria descoberta na primeira extração real.
