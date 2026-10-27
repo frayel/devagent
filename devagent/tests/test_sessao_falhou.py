@@ -179,6 +179,32 @@ def test_situacao_espera_pr_vermelho_em_correcao(
     assert jules.situacao_dos_prs()[0] == "travado"
 
 
+def test_pr_vermelho_sem_sessao_viva_fica_travado(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Agora(datetime):
+        @classmethod
+        def now(cls, tz: Any = None) -> datetime:  # type: ignore[override]
+            return AGORA
+
+    monkeypatch.setattr(jules, "datetime", Agora)
+    url = "https://github.com/frayel/devagent/pull/532"
+    pr = {
+        "number": 532,
+        "title": "093: alertas",
+        "html_url": url,
+        "head": {"sha": "abc"},
+        "created_at": "2026-10-22T18:55:00Z",
+        "updated_at": "2026-10-22T19:05:00Z",
+    }
+    monkeypatch.setattr(jules, "github_get", lambda caminho: [pr])
+    monkeypatch.setattr(jules, "status_ci", lambda repo, sha: "falhou: test")
+    sessao = {"state": "COMPLETED", "outputs": [{"pullRequest": {"url": url}}]}
+    assert jules.situacao_dos_prs([sessao])[0] == "travado"
+    sessao["state"] = "IN_PROGRESS"
+    assert jules.situacao_dos_prs([sessao])[0] == "esperar"
+
+
 def test_rodada_nao_inicia_enquanto_espera_retomada(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
