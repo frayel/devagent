@@ -803,13 +803,23 @@ def em_correcao(pr: dict[str, Any], agora: datetime) -> bool:
     return agora - _data({"createTime": atualizado}, "createTime") < PR_EM_CORRECAO
 
 
-def situacao_dos_prs() -> tuple[str, str]:
+def sessao_viva_do_pr(pr: dict[str, Any], sessoes: list[dict[str, Any]]) -> bool:
+    """Há sessão ativa do Jules cuja saída é este PR (quem de fato o corrige)."""
+    url = pr.get("html_url")
+    return any(
+        s.get("state") in ATIVOS and url and pr_da_sessao(s) == url for s in sessoes
+    )
+
+
+def situacao_dos_prs(sessoes: list[dict[str, Any]] | None = None) -> tuple[str, str]:
     """('livre' | 'esperar' | 'travado', descrição) dos PRs abertos do agente.
 
     esperar: o CI ainda roda, ou passou há pouco e o auto-merge vai mesclar.
     Uma sessão nova agora só acharia o PR aberto e sairia sem entregar nada.
     Também espera o PR com CI vermelho que teve atividade (push, cobrança do
     guardião) há menos de PR_EM_CORRECAO: a sessão dona dele está corrigindo.
+    Com `sessoes`, a espera "em correção" exige uma sessão ativa cuja saída é o
+    PR; sem ela, o PR vermelho já fica travado e chama o desenvolvedor.
     travado: CI falhou sem atividade recente, ou verde há mais de
     PR_VERDE_TRAVADO; é trabalho do desenvolvedor (Passo 2), nunca de um
     especialista.
@@ -825,7 +835,13 @@ def situacao_dos_prs() -> tuple[str, str]:
         desc = f"PR #{pr['number']} ({ci})"
         if ci in ("rodando", "sem_ci") or (ci == "passou" and idade < PR_VERDE_TRAVADO):
             return "esperar", desc
-        if ci.startswith("falhou") and em_correcao(pr, agora):
+        # Com a lista de sessões em mãos, só espera se a sessão dona do PR
+        # ainda está viva: sessão encerrada não responde à cobrança do guardião.
+        if (
+            ci.startswith("falhou")
+            and em_correcao(pr, agora)
+            and (sessoes is None or sessao_viva_do_pr(pr, sessoes))
+        ):
             return "esperar", f"{desc}, em correção"
         travado = travado or desc
     return ("travado", travado) if travado else ("livre", "")
@@ -1002,7 +1018,7 @@ def rodada_do_desenvolvimento(sessoes: list[dict[str, Any]], agora: datetime) ->
     except Exception as erro:  # noqa: BLE001
         print(f"::warning::tratar_falhas falhou: {erro}")
     persona = persona_da_vez(sessoes, agora)
-    situacao, desc = situacao_dos_prs()
+    situacao, desc = situacao_dos_prs(sessoes)
     if situacao == "esperar":
         print(f"{persona}: aguardando o merge de {desc}.")
     else:
