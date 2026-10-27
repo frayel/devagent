@@ -12,7 +12,7 @@ Os três especialistas rodam uma vez por dia cada um, a partir de horários dife
 4. Rode a verificação completa antes do push: `make verify` (e `make smoke` se mexeu em dependências ou na inicialização).
 5. Título do PR com o prefixo da persona. No corpo: o problema, a evidência (medição, trecho, captura), a mudança e como foi verificada.
 6. Ao final, acrescente ao diário uma entrada curta: data, o que fez, o que aprendeu, o que evitar. Condense entradas antigas quando o arquivo passar de 40 linhas.
-7. Se não encontrar nada que valha a pena, não invente trabalho e **não abra PR só com o diário** (o #326 fez isso e ocupou a fila sem entregar nada; o job `disciplina` agora reprova). Escreva a entrada do diário dizendo o que examinou e, nesta mesma sessão, passe a agir como o desenvolvedor: siga `devagent/CICLO.md` desde o primeiro comando e leve a entrada do diário no PR que o ciclo produzir. Assim a tarefa da cota não se perde. Se o ciclo também terminar sem PR (há PR do agente aberto), encerre sem commit.
+7. Se não encontrar nada que valha a pena, não invente trabalho, **não abra PR só com o diário** e **não passe a agir como o desenvolvedor**: encerre a sessão sem commit. A sessão do desenvolvedor corre com a fila e as instruções dela; um especialista que assume o ciclo lê a mesma fila sem essas travas e pode repetir o trabalho de outra sessão (ADR 024).
 
 ## 🛡️ Sentinel · segurança
 

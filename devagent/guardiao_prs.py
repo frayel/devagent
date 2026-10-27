@@ -24,7 +24,11 @@ Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
       próximo ciclo aprender. Exceção: se tudo o que o PR muda já chegou à main
       (sobram só registros de execução), fecha como absorvido e não abre issue (ADR 014).
     - `tentativa-falhou` órfã fecha: a spec citada já está `done` na main, ou a
-      issue não cita spec nenhuma e por isso nenhum passo do ciclo a lê (ADR 020).
+      issue não cita spec nenhuma e por isso nenhum passo do ciclo a lê (ADR 020),
+      ou as specs citadas estão `draft` ou não existem (ADR 024).
+    - Antes do merge (--antes-do-merge): PR que altera spec que a main já
+      alterou depois que a branch saiu dela fecha como redundante (ADR 024).
+    - Só PRs e branches do Jules: PR ou branch de pessoa fica intocado.
 """
 
 from __future__ import annotations
@@ -40,7 +44,7 @@ from typing import Any
 
 from devagent.conferir_pr import FECHA_ISSUE, PADRAO_REGISTROS, documentos, status_de
 from devagent.config import VERIFICACAO
-from devagent.raias import do_desenvolvimento
+from devagent.raias import do_agente, do_desenvolvimento
 
 MAX_TENTATIVAS = 3
 SEM_REACAO_HORAS = 3
@@ -89,9 +93,19 @@ def data(iso: str) -> datetime:
 
 
 def prs_do_agente() -> list[dict[str, Any]]:
-    campos = "number,title,headRefName,headRefOid,body,labels,createdAt,url"
+    """PRs abertos pelo Jules, menos os do auditor.
+
+    PR de pessoa (o dono do produto) não é cobrado nem fechado: o guardião
+    cuidaria dele como se fosse do agente e abriria `tentativa-falhou` (ADR 024).
+    """
+    campos = "number,title,headRefName,headRefOid,body,labels,createdAt,url,author"
     prs = gh_json("pr", "list", "--state", "open", "--json", campos, "--limit", "50")
-    return [p for p in prs if not p["title"].startswith("auditoria:")]
+    return [
+        p
+        for p in prs
+        if not p["title"].startswith("auditoria:")
+        and do_agente((p.get("author") or {}).get("login"))
+    ]
 
 
 def comentarios(numero: int) -> list[dict[str, Any]]:
@@ -218,8 +232,7 @@ def fechar_sem_achado(pr: dict[str, Any]) -> None:
         "Fechando este PR: a varredura do especialista não achou nada a mudar e "
         "o PR não traz nada além do diário. Não há trabalho perdido nem spec a refazer, então "
         "não abro issue `tentativa-falhou`. Pela regra 7 de "
-        "`devagent/agents/especialistas.md`, sem achado a sessão segue para o "
-        "ciclo do desenvolvedor em vez de abrir PR.",
+        "`devagent/agents/especialistas.md`, sem achado a sessão encerra sem PR.",
     )
     sh("gh", "pr", "close", str(numero), "--delete-branch", check=False)
     print(f"PR #{numero} fechado: especialista sem achado")
@@ -571,11 +584,19 @@ def motivo_tentativa_orfa(specs: list[str], status: dict[str, str]) -> str:
             "chegaria a ela."
         )
     estados = [status.get(chave_spec(s)) for s in specs]
+    lista = ", ".join(f"spec {s}" for s in specs)
     if all(e == "done" for e in estados):
-        lista = ", ".join(f"spec {s}" for s in specs)
         return (
             f"o trabalho já foi entregue: {lista} está com `status: done` na `main`. "
             "O PR da entrega não trouxe `Closes` para esta issue."
+        )
+    # Spec dividida (draft) ou que nem existe: nenhuma sessão vai pegá-la da
+    # fila, e a lição já foi usada na divisão. Era o caso da #523 (092) e da
+    # #550 (093, 122 a 124) em 27/10 (ADR 024).
+    if all(e in (None, "draft", "done") for e in estados):
+        return (
+            f"nenhuma das specs citadas ({lista}) está na fila: estão `draft` "
+            "(divididas ou descartadas), `done` ou não existem na `main`."
         )
     return ""
 
@@ -708,10 +729,25 @@ def varredura() -> None:
                 f"Se não houver commit novo em {SEM_REACAO_HORAS} h, este PR será fechado.",
             )
 
-    # 4. Branches órfãs (sem PR aberto e antigas)
+    # 4. Branches órfãs: só as que já tiveram PR do agente, hoje fechado.
+    # Branch de pessoa, com ou sem PR, fica (ADR 024).
     abertas = {
         p["headRefName"]
         for p in gh_json("pr", "list", "--state", "open", "--json", "headRefName")
+    }
+    do_jules = {
+        p["headRefName"]
+        for p in gh_json(
+            "pr",
+            "list",
+            "--state",
+            "closed",
+            "--json",
+            "headRefName,author",
+            "--limit",
+            "200",
+        )
+        if do_agente((p.get("author") or {}).get("login"))
     }
     sh("git", "fetch", "-q", "--prune", "origin")
     saida = sh(
@@ -724,9 +760,56 @@ def varredura() -> None:
         nome, _, quando = linha.partition(" ")
         if nome in {"HEAD", "main"} or nome in abertas or not quando:
             continue
+        if nome not in do_jules:
+            continue
         if agora() - data(quando) > timedelta(hours=ORFA_HORAS):
             sh("git", "push", "-q", "origin", "--delete", nome, check=False)
             print(f"Branch órfã removida: {nome}")
+
+
+def specs_ja_mudadas_na_main(branch: str, main: str = "origin/main") -> list[str]:
+    """Specs que o PR altera e que a main alterou depois que a branch saiu dela.
+
+    Duas sessões que dividem a mesma spec fazem a mesma troca para `draft`;
+    edições idênticas não geram conflito, o CI passa nas duas e as duas eram
+    mescladas (092a em 119a/b e 120a/b, #542 e #543). Se a main já mexeu na
+    spec, o PR foi feito sobre uma versão velha dela e é redundante (ADR 024).
+    """
+    pasta = documentos()["specs"].rstrip("/") + "/"
+    base = sh("git", "merge-base", main, f"origin/{branch}").strip()
+    do_pr = sh("git", "diff", "--name-only", base, f"origin/{branch}").split()
+    na_main = set(sh("git", "diff", "--name-only", base, main).split())
+    return sorted(
+        a for a in do_pr if a.startswith(pasta) and a.endswith(".md") and a in na_main
+    )
+
+
+REDUNDANTE = 10
+
+
+def antes_do_merge(branch: str) -> int:
+    """0 = pode mesclar; REDUNDANTE = o PR foi fechado como redundante.
+
+    Qualquer outro código (um erro aqui) não impede o merge.
+    """
+    pr = next((p for p in prs_do_agente() if p["headRefName"] == branch), None)
+    if pr is None:
+        return 0
+    sh("git", "fetch", "-q", "origin", "main", branch)
+    mudadas = specs_ja_mudadas_na_main(branch)
+    if not mudadas:
+        return 0
+    comentar(
+        pr["number"],
+        "Fechando sem merge: a `main` alterou estas specs depois que esta branch "
+        "saiu dela, então o PR foi feito sobre uma versão velha e repetiria ou "
+        "desfaria o que já entrou: "
+        + ", ".join(f"`{a}`" for a in mudadas)
+        + ". A raia recomeça da `main` atualizada na próxima rodada (ADR 024).",
+    )
+    sh("gh", "pr", "close", str(pr["number"]), "--delete-branch", check=False)
+    print(f"PR #{pr['number']} fechado como redundante: {', '.join(mudadas)}")
+    return REDUNDANTE
 
 
 def main() -> None:
@@ -734,7 +817,10 @@ def main() -> None:
     parser.add_argument("--ci-falhou", metavar="BRANCH")
     parser.add_argument("--run-id")
     parser.add_argument("--varredura", action="store_true")
+    parser.add_argument("--antes-do-merge", metavar="BRANCH")
     args = parser.parse_args()
+    if args.antes_do_merge:
+        raise SystemExit(antes_do_merge(args.antes_do_merge))
     if args.ci_falhou:
         ci_falhou(args.ci_falhou, args.run_id or "")
     if args.varredura:

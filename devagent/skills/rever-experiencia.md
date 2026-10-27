@@ -28,4 +28,4 @@ Uma revisão de experiência pode reorganizar a página inteira, fundir ou divid
 
 - O guia visual manda. A revisão aplica o guia melhor; ela não cria estilo paralelo. Se a revisão mostrar que o próprio guia está errado ou incompleto, proponha a mudança num PR `agent:` só para o guia, com as capturas como evidência, e siga sem ela.
 - Sem a captura, não há evidência, e sem evidência não há spec de experiência.
-- Ao concluir uma revisão (mesmo que ela conclua que nada precisa mudar), registre a data e o resultado no `docs/STATE.md` e zere o contador de painéis da cadência.
+- Ao concluir uma revisão (mesmo que ela conclua que nada precisa mudar), registre a data e o resultado na própria spec, com `gaveta: experiência`. O contador não é editado à mão: ele zera quando essa spec fica `done` (`python -m devagent.cadencias`, ADR 024).

@@ -22,7 +22,26 @@ jobs:
       github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      # PR feito sobre uma versão velha de uma spec que a main já mudou é
+      # redundante: fecha em vez de mesclar (ADR 024, #542 e #543).
+      - name: Conferir redundância
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          git config user.name "automerge"
+          git config user.email "automerge@users.noreply.github.com"
+          cp -r devagent "$RUNNER_TEMP/devagent"
+          codigo=0
+          PYTHONPATH="$RUNNER_TEMP" python3 -P -m devagent.guardiao_prs --antes-do-merge "$BRANCH" || codigo=$?
+          # 10 = fechado como redundante; outro erro não segura o merge.
+          if [ "$codigo" -eq 10 ]; then echo "redundante=1" >> "$GITHUB_ENV"; fi
       - name: Merge do PR
+        if: env.redundante != '1'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: ${{ github.event.workflow_run.head_branch }}

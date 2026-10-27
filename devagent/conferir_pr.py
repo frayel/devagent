@@ -38,7 +38,11 @@ Regras (mantenha em sincronia com devagent/CICLO.md, Passos 1 e 4):
        É o que deixa as raias correrem em paralelo sem conflito. Vale no CI,
        onde o título do PR existe. Na raia de desenvolvimento, as specs só
        podem ter a linha `status:` trocada para `done`: criar, dividir ou
-       editar spec é das raias de especificação e de revisão (ADR 023).
+       editar spec é das raias de especificação e de revisão (ADR 023). O
+       título precisa bater com a persona da sessão do Jules que abriu o PR;
+       PR `revisão:` só cria partes (NNNa) da spec que altera e traz as linhas
+       de conferência; PR `verificação:` traz achado novo. PR de pessoa fica
+       fora da regra (ADR 024).
 
 Uma regra nunca é afrouxada no mesmo PR que corrige o que ela aponta
 (README do núcleo, separação de poderes).
@@ -52,6 +56,8 @@ import os
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -59,10 +65,21 @@ from devagent.config import CONFIG
 from devagent.raias import (
     DESENVOLVIMENTO,
     PASTA_SPECS,
+    PASTA_VERIFICACAO,
+    REVISAO,
+    TAREFA_NO_CORPO,
+    VERIFICACAO,
+    do_agente,
     edicao_de_spec_proibida,
     fora_da_raia,
+    raia_da_sessao,
     raia_do_titulo,
+    spec_nova_fora_do_alvo,
 )
+
+PASTA_ACHADOS = PASTA_VERIFICACAO + "achados/"
+# Linhas que o corpo de todo PR `revisão:` traz (ADR 024).
+CONFERENCIA_DA_REVISAO = ("Tamanho:", "Já no código:")
 
 PADRAO_DOCUMENTOS = {
     "specs": "docs/specs",
@@ -113,6 +130,60 @@ def _campo_do_pr(campo: str) -> str:
     except (OSError, ValueError):
         return ""
     return str((evento.get("pull_request") or {}).get(campo) or "")
+
+
+def autor_do_pr() -> str:
+    """Login de quem abriu o PR no CI; vazio fora dele."""
+    caminho = os.environ.get("GITHUB_EVENT_PATH")
+    if not caminho or not Path(caminho).is_file():
+        return ""
+    try:
+        evento = json.loads(Path(caminho).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ""
+    return str(
+        ((evento.get("pull_request") or {}).get("user") or {}).get("login") or ""
+    )
+
+
+def titulo_da_sessao(corpo: str) -> str:
+    """Título da sessão do Jules que abriu o PR (o corpo traz `task/<id>`).
+
+    Vazio se o PR não é do Jules, se falta JULES_API_KEY ou se a API não
+    responde: a regra que depende dele fica de fora, sem reprovar.
+    """
+    m = TAREFA_NO_CORPO.search(corpo or "")
+    chave = os.environ.get("JULES_API_KEY")
+    if not m or not chave:
+        return ""
+    req = urllib.request.Request(
+        f"https://jules.googleapis.com/v1alpha/sessions/{m.group(1)}",
+        headers={"x-goog-api-key": chave},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            return str(json.loads(resp.read().decode()).get("title") or "")
+    except (urllib.error.URLError, OSError, ValueError):
+        return ""
+
+
+def conferir_raia_da_sessao(res: Resultado, raia: str, sessao: str | None) -> None:
+    """A raia do título precisa bater com a persona da sessão (ADR 024).
+
+    Em 27/10 sessões do desenvolvedor dividiram a 092a em PRs `spec:` (#542 e
+    #543) e escaparam da regra que reserva specs às raias auxiliares.
+    """
+    if sessao is None:
+        if autor_do_pr() and not do_agente(autor_do_pr()):
+            return
+        sessao = titulo_da_sessao(corpo_do_pr())
+    esperada = raia_da_sessao(sessao)
+    if esperada and esperada != raia:
+        res.falha(
+            f"O PR foi aberto pela sessão `{sessao}`, que é da raia de {esperada}, "
+            f"mas o título o coloca na raia de {raia}. Use o prefixo da sua raia; "
+            "o trabalho de outra raia fica para a sessão dela (ADR 024)."
+        )
 
 
 def corpo_do_pr() -> str:
@@ -186,6 +257,8 @@ def conferir(
     base: str | None = None,
     exigir_alteracao: bool | None = None,
     titulo: str | None = None,
+    sessao: str | None = None,
+    corpo: str | None = None,
 ) -> Resultado:
     if exigir_alteracao is None:
         exigir_alteracao = os.environ.get("GITHUB_EVENT_NAME") == "pull_request"
@@ -253,8 +326,12 @@ def conferir(
             "(CICLO.md, seção 4; especialistas.md, regra 7)."
         )
 
-    # Regra 8: cada raia escreve só na sua faixa.
+    # Regra 8: cada raia escreve só na sua faixa. PR de pessoa (o dono do
+    # produto) não é de raia nenhuma e fica de fora (ADR 024).
     titulo = titulo_do_pr() if titulo is None else titulo
+    autor = autor_do_pr()
+    if autor and not do_agente(autor):
+        titulo = ""
     if titulo and alterados:
         raia = raia_do_titulo(titulo)
         invasoes = fora_da_raia(raia, alterados)
@@ -286,6 +363,47 @@ def conferir(
                         "de revisão. O único toque permitido é mudar `status:` "
                         "para `done` ao entregar (ADR 023). Tire a spec do PR."
                     )
+        corpo = corpo_do_pr() if corpo is None else corpo
+        conferir_raia_da_sessao(res, raia, sessao)
+        specs_mudadas = sorted(
+            a for a in alterados if a.startswith(PASTA_SPECS) and a.endswith(".md")
+        )
+        if raia == REVISAO:
+            novas = [
+                a for a in specs_mudadas if git("show", f"{mb}:{a}", raiz=raiz) is None
+            ]
+            existentes = [a for a in specs_mudadas if a not in novas]
+            fora = spec_nova_fora_do_alvo(novas, existentes)
+            if fora:
+                res.falha(
+                    "O Revisor só divide a spec que revisa, em partes com sufixo "
+                    f"de letra (NNNa, NNNb). Estas specs novas não são partes de uma "
+                    f"spec alterada no PR: {', '.join(fora)}. Número novo é do "
+                    "Especificador (ADR 024)."
+                )
+            faltam = [r for r in CONFERENCIA_DA_REVISAO if r not in corpo]
+            if exigir_alteracao and faltam:
+                res.falha(
+                    "O corpo do PR `revisão:` precisa das linhas "
+                    + ", ".join(f"`{r}`" for r in faltam)
+                    + ": quantos arquivos a spec toca (saída do `grep -rl`, "
+                    "contando os testes) e se o código atual já faz o que ela "
+                    "pede. Revisão que só ajusta a forma não pega spec grande "
+                    "nem duplicada (ADR 024)."
+                )
+        if raia == VERIFICACAO and exigir_alteracao:
+            achados = [
+                a
+                for a in alterados
+                if a.startswith(PASTA_ACHADOS)
+                and git("show", f"{mb}:{a}", raiz=raiz) is None
+            ]
+            if not achados:
+                res.falha(
+                    "PR de verificação sem achado novo em "
+                    f"`{PASTA_ACHADOS}`. Sem achado, sem PR: encerre a sessão "
+                    "sem commit (devagent/agents/raias.md, ADR 024)."
+                )
 
     fechadas_novas: list[str] = []
     fechadas: list[tuple[str, str]] = []

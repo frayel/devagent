@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from devagent import fila_specs, guardiao_prs, raias
+from devagent import conferir_pr, fila_specs, guardiao_prs, raias
 from devagent.adaptadores import jules
 from devagent.auditoria import achados_para_issues
 from devagent.conferir_pr import conferir
@@ -335,3 +335,66 @@ def test_guardiao_fecha_pr_de_raia_sem_tentativa(monkeypatch) -> None:
     guardiao_prs.fechar(pr, "conflito grande")
     assert ("gh", "pr", "close", "7", "--delete-branch") in comandos
     assert not any("issue" in c for c in comandos)
+
+
+def test_raia_respeita_teto_diario() -> None:
+    sessoes = [
+        {
+            "title": jules.PERSONAS["revisor"]["titulo"],
+            "state": "COMPLETED",
+            "createTime": "2026-10-23T15:00:00Z",
+        }
+    ] * jules.TETO_DIARIO_DA_RAIA["revisor"]
+    escolhidas = jules.raias_a_iniciar(
+        sessoes, AGORA, [], [Path("x")], {"especificacao"}, 0
+    )
+    assert "revisor" not in escolhidas
+
+
+def test_revisao_so_cria_partes_da_spec_alterada() -> None:
+    assert raias.spec_nova_fora_do_alvo(
+        ["docs/specs/093a-x.md", "docs/specs/122-y.md"], ["docs/specs/093-x.md"]
+    ) == ["docs/specs/122-y.md"]
+    assert (
+        raias.spec_nova_fora_do_alvo(
+            ["docs/specs/092aa-x.md"], ["docs/specs/092a-x.md"]
+        )
+        == []
+    )
+
+
+def test_raia_da_sessao_vence_o_titulo() -> None:
+    res = conferir_pr.Resultado()
+    conferir_pr.conferir_raia_da_sessao(res, "especificacao", "Desenvolvedor · ciclo")
+    assert res.falhas and "Desenvolvedor" in res.falhas[0]
+    res = conferir_pr.Resultado()
+    conferir_pr.conferir_raia_da_sessao(res, "especificacao", "Especificador · spec")
+    assert res.falhas == []
+
+
+def test_autor_do_agente() -> None:
+    assert raias.do_agente("google-labs-jules[bot]")
+    assert raias.do_agente("app/google-labs-jules")
+    assert not raias.do_agente("frayel")
+
+
+def test_verificacao_sem_achado_reprova(repo: Path) -> None:
+    (repo / "docs/verificacao/relatorios").mkdir(parents=True)
+    (repo / "docs/verificacao/relatorios/r.md").write_text("ok\n")
+    falhas = conferir(
+        repo, "base", True, titulo="verificação: 0 achados", sessao="", corpo=""
+    ).falhas
+    assert any("sem achado" in f for f in falhas)
+
+
+def test_revisao_exige_conferencia_no_corpo(repo: Path) -> None:
+    (repo / "docs/specs/001-a.md").write_text("---\nstatus: ready\nrevisada: x\n---\n")
+    falhas = conferir(
+        repo, "base", True, titulo="revisão: 001", sessao="", corpo="ok"
+    ).falhas
+    assert any("Tamanho:" in f for f in falhas)
+    corpo = "Tamanho: 2 arquivos\nJá no código: não"
+    falhas = conferir(
+        repo, "base", True, titulo="revisão: 001", sessao="", corpo=corpo
+    ).falhas
+    assert not any("Tamanho:" in f for f in falhas)

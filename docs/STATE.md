@@ -2,16 +2,9 @@
 
 > **Coleta em produção (2026-09-27):** até esta data nenhuma coleta rodava em produção; o painel exibia "Dados não disponíveis". A coleta agora roda no próprio web service (`app/agendador.py`, ADR 004). Diagnóstico: `GET /api/coleta`.
 
-## Experiência
+## Cadências
 
-- Última revisão de experiência: 2026-10-19
-- Painéis, seções ou telas acrescentados desde a última revisão: 3 (página Sistema, spec 082; Consultor, spec 068b; Rastreador Correlacao DI, spec 081).
-
-## Manutenção
-
-- Última rodada de manutenção: 2026-10-17, spec 063. Medidas: unificação de histórico diário (cache).
-- Specs entregues desde a última rodada (exceto as de manutenção): 3.
-- Linha de base: ainda não medida. A primeira rodada registra aqui as medidas principais.
+Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
 

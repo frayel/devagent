@@ -1,7 +1,7 @@
 ---
 id: 120a
 titulo: Declarar as variáveis de ambiente adicionais
-status: ready
+status: draft
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_120a.py
@@ -43,3 +43,7 @@ N/A.
 
 - Validação periódica da chave (movida para a spec 120b).
 - Alterar o provedor de LLM.
+
+## Revisão
+
+Duplicata da 119a, nascida da segunda divisão da 092a (#543, paralela ao #542). As variáveis `GEMINI_API_KEY`, `BRAPI_TOKEN` e `DATABASE_URL` já estão declaradas com `sync: false` no `render.yaml`; não há trabalho a fazer. (ADR 024)
