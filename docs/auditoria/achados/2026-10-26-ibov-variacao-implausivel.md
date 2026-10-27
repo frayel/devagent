@@ -2,7 +2,7 @@
 id: 2026-10-26-ibov-variacao-implausivel
 severidade: alta
 painel: ibovespa
-status: aberto
+status: resolvido
 visto_em: 2026-10-26T21:52:14-03:00
 ---
 

@@ -64,6 +64,14 @@ def fetch_brapi() -> IbovespaData | None:
         mm21 = calc_mm(calc_closes, 21)
         mm200 = calc_mm(calc_closes, 200)
 
+        if previous_close:
+            var_pct = ((current_price - previous_close) / previous_close) * 100
+            if abs(var_pct) > 12.0:
+                logger.error(
+                    f"brapi.dev returned implausible variation: {var_pct:.2f}%"
+                )
+                return None
+
         history_json = json.dumps({"dates": dates[-30:], "closes": closes[-30:]})
 
         return IbovespaData(
@@ -150,6 +158,12 @@ def fetch_yfinance() -> IbovespaData | None:
 
         mm21 = calc_mm(calc_closes, 21)
         mm200 = calc_mm(calc_closes, 200)
+
+        if previous_close:
+            var_pct = ((current_price - previous_close) / previous_close) * 100
+            if abs(var_pct) > 12.0:
+                logger.error(f"yfinance returned implausible variation: {var_pct:.2f}%")
+                return None
 
         history_json = json.dumps(
             {"dates": valid_dates[-30:], "closes": valid_closes[-30:]}
