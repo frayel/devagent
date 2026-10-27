@@ -1,7 +1,7 @@
 ---
 id: 095
 titulo: Testes que não dependem da rede (coletor de feeds do Consultor e bloqueio de rede no CI)
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_095.py
@@ -36,11 +36,11 @@ Nenhuma.
 
 ## Critérios de aceite
 
-- [ ] Os seis testes acima passam com a rede bloqueada.
-- [ ] `pytest -q` inteiro passa sem acesso à rede (execução com `unshare -n` ou equivalente documentado no `Makefile`, ou o bloqueio do `conftest.py`).
-- [ ] Um teste que chama `httpx.get("https://example.com")` falha com a mensagem do bloqueio.
-- [ ] Nenhum teste fora de `@pytest.mark.rede` faz requisição externa (o bloqueio o garante).
-- [ ] O guia do projeto (`PRODUTO.md`, seção de testes) diz que teste não pode usar a rede.
+- [x] Os seis testes acima passam com a rede bloqueada.
+- [x] `pytest -q` inteiro passa sem acesso à rede (execução com `unshare -n` ou equivalente documentado no `Makefile`, ou o bloqueio do `conftest.py`).
+- [x] Um teste que chama `httpx.get("https://example.com")` falha com a mensagem do bloqueio.
+- [x] Nenhum teste fora de `@pytest.mark.rede` faz requisição externa (o bloqueio o garante).
+- [x] O guia do projeto (`PRODUTO.md`, seção de testes) diz que teste não pode usar a rede.
 
 ## Invariantes de produção
 

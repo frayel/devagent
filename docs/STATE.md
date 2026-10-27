@@ -15,6 +15,11 @@
 
 ## Implementado
 
+- Spec 095 (Testes sem rede):
+  - Bloqueio de conexões socket no pytest (`conftest.py`).
+  - Marker `pytest.mark.rede`.
+  - Isolamento do `make verify` das chamadas na internet e mocking de `consultor_opinioes` nos testes ponta a ponta.
+
 - Spec 087 (Consultor abre em poucos segundos):
   - Consulta em lote no histórico (`ler_series`).
   - Guardião de inicialização de esquema em processo único.

@@ -21,7 +21,7 @@ verify:
 	ruff check .
 	ruff format --check .
 	mypy app
-	pytest -q
+	pytest -m "not rede" -q
 
 ## Sobe a aplicação com o startCommand do render.yaml e confere o health check.
 smoke:

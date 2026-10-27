@@ -55,6 +55,52 @@ def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
         chamados.append("highlights")
         return True
 
+    for nome in (
+        "mare",
+        "sensibilidade_juros",
+        "motores_indice",
+        "relogio_volatilidade",
+        "forca_relativa",
+        "escudo_quedas",
+        "coesao",
+        "atrasadas_rally",
+        "concentracao",
+        "apetite_risco",
+        "variacao_subita",
+        "concentracao_setorial",
+        "rotacao_capital",
+        "faca_caindo",
+        "compradores_fundo",
+        "armadilha_abertura",
+        "sobrevivencia_semanal",
+        "volatilidade_silenciosa",
+        "scanner_capitulacao",
+        "radar_inflexao",
+        "divergencia_ibov_dolar",
+        "assimetria_risco_retorno",
+        "anomalia_peso",
+        "radar_short_squeeze",
+        "radar_congestionamento",
+        "esforco_resultado",
+        "radar_divergencia_volume",
+        "falso_rompimento",
+        "radar_liquidez_abertura",
+        "radar_absorcao_cruzada",
+        "fator_peso_pesado",
+        "clima_global",
+        "radar_anomalias_spread",
+        "concentracao_ordens",
+        "exaustao_tendencia",
+        "radar_anomalia_fechamento",
+        "correlacao_di",
+        "consultor_historico",
+        "exaustao_queda",
+        "fator_mola",
+        "consultor_opinioes",
+        "radar_exaustao_alta",
+    ):
+        monkeypatch.setattr(f"app.collectors.{nome}.collect_and_save", lambda: True)
+
     def funciona_volume():
         chamados.append("volume_alerts")
         return True
@@ -77,6 +123,49 @@ def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
 
     monkeypatch.setattr("app.collectors.escudo_quedas.collect_and_save", lambda: True)
     monkeypatch.setattr("app.collectors.clima_global.collect_and_save", lambda: True)
+    monkeypatch.setattr("app.collectors.motores_indice.collect_and_save", lambda: True)
+    monkeypatch.setattr(
+        "app.collectors.relogio_volatilidade.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_anomalia_fechamento.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.scanner_capitulacao.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr("app.collectors.radar_inflexao.collect_and_save", lambda: True)
+    monkeypatch.setattr(
+        "app.collectors.assimetria_risco_retorno.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_short_squeeze.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.esforco_resultado.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_divergencia_volume.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.falso_rompimento.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_liquidez_abertura.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.fator_peso_pesado.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.concentracao_ordens.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr("app.collectors.correlacao_di.collect_and_save", lambda: True)
+    monkeypatch.setattr(
+        "app.collectors.consultor_historico.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr("app.collectors.fator_mola.collect_and_save", lambda: True)
+    monkeypatch.setattr(
+        "app.collectors.consultor_opinioes.collect_and_save", lambda: True
+    )
     monkeypatch.setattr(
         "app.collectors.concentracao_ordens.collect_and_save", lambda: True
     )
@@ -105,6 +194,59 @@ def test_falha_de_um_coletor_nao_impede_o_outro(monkeypatch):
         "app.collectors.exaustao_tendencia.collect_and_save", lambda: True
     )
     monkeypatch.setattr("app.collectors.exaustao_queda.collect_and_save", lambda: True)
+    monkeypatch.setattr(
+        "app.collectors.radar_exaustao_alta.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_congestionamento.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_absorcao_cruzada.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr("app.collectors.clima_global.collect_and_save", lambda: True)
+    monkeypatch.setattr("app.collectors.motores_indice.collect_and_save", lambda: True)
+    monkeypatch.setattr(
+        "app.collectors.relogio_volatilidade.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_anomalia_fechamento.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.scanner_capitulacao.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr("app.collectors.radar_inflexao.collect_and_save", lambda: True)
+    monkeypatch.setattr(
+        "app.collectors.assimetria_risco_retorno.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_short_squeeze.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.esforco_resultado.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_divergencia_volume.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.falso_rompimento.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.radar_liquidez_abertura.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.fator_peso_pesado.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr(
+        "app.collectors.concentracao_ordens.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr("app.collectors.correlacao_di.collect_and_save", lambda: True)
+    monkeypatch.setattr(
+        "app.collectors.consultor_historico.collect_and_save", lambda: True
+    )
+    monkeypatch.setattr("app.collectors.fator_mola.collect_and_save", lambda: True)
+    monkeypatch.setattr(
+        "app.collectors.consultor_opinioes.collect_and_save", lambda: True
+    )
     monkeypatch.setattr(
         "app.collectors.radar_anomalia_fechamento.collect_and_save", lambda: True
     )
@@ -159,6 +301,8 @@ def test_mascara_token_no_estado(monkeypatch):
 
     # Mocking others to just return True
     for nome in (
+        "consultor_opinioes",
+        "radar_exaustao_alta",
         "highlights",
         "mare",
         "volume_alerts",
