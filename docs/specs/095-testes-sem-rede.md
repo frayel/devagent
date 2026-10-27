@@ -1,7 +1,7 @@
 ---
 id: 095
 titulo: Testes que não dependem da rede (coletor de feeds do Consultor e bloqueio de rede no CI)
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_095.py
