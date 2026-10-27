@@ -1,11 +1,10 @@
 ---
 id: 092
 titulo: Gemini ativo e verificado: validar a chave, mostrar o estado real e declarar as variáveis
-status: ready
+status: draft
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_092.py
-revisada: 2026-10-25
 ---
 
 ## Problema
@@ -68,3 +67,10 @@ API do Gemini: `GET /v1beta/models` (validação) e `generateContent` (extraçã
 - Trocar o modelo ou o provedor de LLM.
 - Mudar a cota diária de chamadas.
 - Cadastrar a chave: é do dono do produto, no Render.
+
+## Divisão
+
+Esta spec original foi considerada grande demais e dividida em duas specs menores que podem ser implementadas independentemente:
+
+- **docs/specs/092a-gemini-validacao-e-variaveis.md**: Trata da validação ativa da chave, do registro em `registro_fontes` e da declaração das variáveis em `render.yaml`.
+- **docs/specs/092b-gemini-estado-no-sistema.md**: Trata apenas da parte de apresentação (o novo estado real no Sistema), com base no que for feito na 092a e na spec 085.
