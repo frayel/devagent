@@ -443,3 +443,4 @@
 - Spec 090b (Tolerância a símbolo inválido):
   - Adicionada tabela de suspensão de símbolos em SQLite e Postgres.
   - Isola 404 de lote na query e reporta alertas no Yahoo Finance para o consultor.
+- Spec 093 movida para draft e dividida em 121a e 121b.
