@@ -16,8 +16,8 @@ def _spec(pasta: Path, nome: str, status: str) -> None:
 
 @pytest.fixture(autouse=True)
 def sem_github(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(jules, "issues_de_tentativa", lambda: [])
-    monkeypatch.setattr(jules, "issues_de_prioridade", lambda: [])
+    monkeypatch.setattr(jules, "issues_de_tentativa", list)
+    monkeypatch.setattr(jules, "issues_de_prioridade", list)
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def test_ordem_natural_e_so_ready(raiz: Path) -> None:
 def test_instrucao_aponta_a_menor(raiz: Path) -> None:
     texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz)
     assert "docs/specs/068b-regras.md" in texto
-    assert "não escreva spec nova" in texto
+    assert "não cria, não divide e não edita specs" in texto
 
 
 def test_fila_vazia_sem_instrucao(tmp_path: Path) -> None:
@@ -81,12 +81,13 @@ def _tentativa(numero: int, titulo: str, corpo: str = "") -> dict[str, object]:
     }
 
 
-def test_spec_com_tentativa_fechada_manda_dividir(raiz: Path) -> None:
+def test_spec_com_tentativa_fechada_fica_para_o_revisor(raiz: Path) -> None:
     issues = [_tentativa(404, "Tentativa fechada: spec 068b perdeu o código")]
     texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, issues)
     assert "docs/specs/068b-regras.md" in texto
     assert "#404" in texto
-    assert "divida a spec" in texto
+    assert "não a divida" in texto
+    assert fila_specs.spec_para_dividir(fila_specs.specs_prontas(raiz), issues)
 
 
 def test_tentativa_de_outra_spec_nao_desvia(raiz: Path) -> None:
@@ -96,7 +97,8 @@ def test_tentativa_de_outra_spec_nao_desvia(raiz: Path) -> None:
         {"numero": 3, "titulo": "spec 068b", "labels": ["outro"]},
     ]
     texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, issues)
-    assert "divida a spec" not in texto
+    assert "não a divida" not in texto
+    assert fila_specs.spec_para_dividir(fila_specs.specs_prontas(raiz), issues) is None
 
 
 def test_tentativa_citada_no_corpo(raiz: Path) -> None:
@@ -106,13 +108,20 @@ def test_tentativa_citada_no_corpo(raiz: Path) -> None:
     ]
 
 
-def test_prompt_do_desenvolvedor_manda_dividir(
+def test_divisao_vai_para_o_revisor_nao_para_o_desenvolvedor(
     raiz: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    monkeypatch.chdir(raiz)
     monkeypatch.setattr(
         jules, "issues_de_tentativa", lambda: [_tentativa(9, "spec 068b falhou")]
     )
-    assert "divida a spec" in jules.prompt_de("desenvolvedor")
+    monkeypatch.setattr(jules, "issues_de_prioridade", list)
+    dev = jules.prompt_de("desenvolvedor")
+    assert "não a divida" in dev
+    assert "use o número" not in dev
+    revisor = jules.prompt_de("revisor")
+    assert "dividir docs/specs/068b-regras.md" in revisor
+    assert "Closes #9" in revisor
 
 
 # ADR 020: issue `prioridade` passa na frente da fila (caso #418).

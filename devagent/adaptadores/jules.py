@@ -59,6 +59,7 @@ from devagent.fila_specs import (
     fila_da_revisao,
     instrucao,
     proximo_numero,
+    spec_para_dividir,
     specs_prontas,
 )
 from devagent.raias import DESENVOLVIMENTO, raia_do_titulo
@@ -606,23 +607,14 @@ def prompt_de(persona: str) -> str:
         fila = instrucao(specs_prontas(), issues=issues)
     except OSError:
         fila = ""
-    reserva = frase_do_numero(numero_para_spec_nova())
-    return " ".join(t for t in (texto, fila, reserva) if t)
+    # O desenvolvimento não escreve spec (ADR 023): sem número reservado.
+    return " ".join(t for t in (texto, fila) if t)
 
 
 # "use o número 084" no prompt: o número de spec nova reservado para a sessão.
 NUMERO_RESERVADO = re.compile(r"use o número (\d{3,4})\b")
 # Reserva vale enquanto a sessão pode ter PR aberto com a spec nova.
 JANELA_RESERVA = timedelta(hours=12)
-
-
-def frase_do_numero(numero: str) -> str:
-    if not numero:
-        return ""
-    return (
-        f"Se esta sessão escrever uma spec nova, use o número {numero}: ele está "
-        "reservado para ela, e outra raia pode estar escrevendo spec agora (ADR 021)."
-    )
 
 
 def numeros_reservados(sessoes: list[dict[str, Any]], agora: datetime) -> set[int]:
@@ -657,6 +649,13 @@ def numero_para_spec_nova(sessoes: list[dict[str, Any]] | None = None) -> str:
         return ""
 
 
+def _relativo(caminho: Path) -> str:
+    try:
+        return caminho.relative_to(Path.cwd()).as_posix()
+    except ValueError:
+        return caminho.as_posix()
+
+
 def complemento_da_raia(persona: str) -> str:
     """O alvo concreto da sessão de uma raia paralela, decidido antes dela."""
     if persona == "especificador":
@@ -669,18 +668,26 @@ def complemento_da_raia(persona: str) -> str:
         )
     if persona == "revisor":
         try:
-            fila = fila_da_revisao(specs_prontas())
+            prontas = specs_prontas()
         except OSError:
-            fila = []
+            prontas = []
+        dividir = spec_para_dividir(prontas, issues_de_tentativa())
+        if dividir:
+            spec, falhas = dividir
+            fecha = " ".join(f"Closes #{n}" for n in falhas)
+            return (
+                f"A tarefa desta sessão é dividir {_relativo(spec)}: ela teve "
+                f"tentativa fechada pelo guardião ({', '.join(f'#{n}' for n in falhas)}). "
+                "Leia a issue, divida a spec em partes menores (cada parte já "
+                "revisada), marque a original como `draft`, diga nela para onde foi "
+                f"cada parte e ponha no corpo do PR: {fecha}. Não toque em "
+                "nenhuma outra spec."
+            )
+        fila = fila_da_revisao(prontas)
         if not fila:
             return ""
-        alvo = fila[0]
-        try:
-            alvo = alvo.relative_to(Path.cwd())
-        except ValueError:
-            pass
         return (
-            f"A spec a revisar nesta sessão é {alvo.as_posix()}. Não toque em "
+            f"A spec a revisar nesta sessão é {_relativo(fila[0])}. Não toque em "
             "nenhuma outra spec."
         )
     if persona == "verificador":
@@ -929,12 +936,14 @@ def raias_a_iniciar(
     em_revisao: list[Path],
     com_pr: set[str],
     merges_novos: int,
+    dividir: bool = False,
 ) -> list[str]:
     """Quais raias paralelas abrem sessão nesta volta (decisão pura, testável).
 
     Cada raia tem no máximo uma sessão ativa e um PR aberto. Além disso:
     - especificador: a fila de specs ready chegou a FILA_PARA_ESPECIFICAR;
-    - revisor: há spec ready esperando revisão;
+    - revisor: há spec ready esperando revisão, ou a próxima spec do
+      desenvolvimento tem tentativa fechada e precisa ser dividida (ADR 023);
     - verificador: o desenvolvimento mesclou algo desde a última verificação,
       e ela foi há pelo menos INTERVALO_VERIFICADOR.
     """
@@ -952,7 +961,7 @@ def raias_a_iniciar(
             continue
         if persona == "especificador" and len(prontas) > FILA_PARA_ESPECIFICAR:
             continue
-        if persona == "revisor" and not em_revisao:
+        if persona == "revisor" and not em_revisao and not dividir:
             continue
         if persona == "verificador":
             ultima = ultima_sessao("verificador", sessoes)
@@ -970,7 +979,11 @@ def rodada_das_raias(sessoes: list[dict[str, Any]], agora: datetime) -> None:
     ultima = ultima_sessao("verificador", sessoes)
     desde = ultima or agora - JANELA_PRIMEIRA_VERIFICACAO
     merges = len(merges_do_desenvolvimento(desde))
-    for persona in raias_a_iniciar(sessoes, agora, prontas, em_revisao, com_pr, merges):
+    dividir = spec_para_dividir(prontas, issues_de_tentativa()) is not None
+    escolhidas = raias_a_iniciar(
+        sessoes, agora, prontas, em_revisao, com_pr, merges, dividir
+    )
+    for persona in escolhidas:
         try:
             iniciar(persona, dry_run=False)
         except Exception as erro:  # noqa: BLE001

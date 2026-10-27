@@ -1,6 +1,6 @@
 # Skill · Escrever uma boa especificação
 
-Use no Passo 7 (raia de especificação), ao transformar uma issue em spec (Passo 6), ao revisar uma spec (raia de revisão) e ao dividir uma spec grande. Spec nascida de issue traz o link da issue no *Problema*.
+Use no Passo 7 (raia de especificação), ao transformar uma issue de feature em spec (também do Especificador), ao revisar e ao dividir uma spec (raia de revisão). O desenvolvimento não usa esta skill para escrever spec (ADR 023). Spec nascida de issue traz o link da issue no *Problema*.
 
 - **Ideia grande, entrega pequena.** Uma ideia ousada pode mudar o produto, mas a spec descreve só a primeira fatia visível dela. O resto da visão vai para o backlog, com link na seção *Fora do escopo*.
 - **Uma pergunta do usuário por spec.** Se o título precisa de "e", provavelmente são duas.

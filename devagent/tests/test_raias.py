@@ -101,6 +101,24 @@ def test_desenvolvimento_nao_escreve_achado_do_verificador(repo: Path) -> None:
     assert any("docs/verificacao/diario.md" in f for f in falhas)
 
 
+def test_desenvolvimento_nao_cria_spec(repo: Path) -> None:
+    (repo / "docs/specs/002-b.md").write_text("---\nstatus: ready\n---\n")
+    falhas = conferir(repo, "base", titulo="docs: issue vira spec").falhas
+    assert any("002-b.md" in f and "spec nova" in f for f in falhas)
+
+
+def test_desenvolvimento_nao_divide_spec(repo: Path) -> None:
+    (repo / "docs/specs/001-a.md").write_text("---\nstatus: draft\n---\n")
+    falhas = conferir(repo, "base", titulo="docs: dividir 001").falhas
+    assert any("001-a.md" in f and "draft" in f for f in falhas)
+
+
+def test_desenvolvimento_marca_done(repo: Path) -> None:
+    (repo / "docs/specs/001-a.md").write_text("---\nstatus: done\n---\n")
+    falhas = conferir(repo, "base", titulo="feat: spec 001").falhas
+    assert not any("ADR 023" in f for f in falhas)
+
+
 def test_sem_titulo_a_regra_nao_se_aplica(repo: Path) -> None:
     (repo / "app/x.py").write_text("x = 2\n")
     assert conferir(repo, "base", titulo="").falhas == []
@@ -235,10 +253,37 @@ def test_rodada_das_raias_inicia_as_escolhidas(monkeypatch) -> None:
     monkeypatch.setattr(jules, "specs_prontas", lambda: [Path("docs/specs/084-x.md")])
     monkeypatch.setattr(jules, "fila_da_revisao", lambda prontas: prontas)
     monkeypatch.setattr(jules, "raias_com_pr_aberto", set)
+    monkeypatch.setattr(jules, "spec_para_dividir", lambda prontas, issues: None)
+    monkeypatch.setattr(jules, "issues_de_tentativa", list)
     monkeypatch.setattr(jules, "merges_do_desenvolvimento", lambda desde: [])
     monkeypatch.setattr(jules, "iniciar", lambda p, dry_run: iniciadas.append(p) or 0)
     jules.rodada_das_raias([], AGORA)
     assert iniciadas == ["especificador", "revisor"]
+
+
+def test_revisor_abre_para_dividir_mesmo_sem_spec_a_revisar() -> None:
+    escolhidas = jules.raias_a_iniciar([], AGORA, [], [], {"especificacao"}, 0, True)
+    assert escolhidas == ["revisor"]
+
+
+# --- ADR 023: o desenvolvimento não cria nem edita specs ------------------------
+
+SPEC = "---\nid: 084\nstatus: ready\nrevisada: 2026-10-27\n---\n\n# Título\n"
+
+
+def test_desenvolvimento_so_pode_marcar_done() -> None:
+    feita = SPEC.replace("status: ready", "status: done")
+    assert raias.edicao_de_spec_proibida(SPEC, feita) == ""
+    assert raias.edicao_de_spec_proibida(SPEC, SPEC) == ""
+
+
+def test_desenvolvimento_nao_cria_divide_nem_edita_spec() -> None:
+    assert raias.edicao_de_spec_proibida(None, SPEC) == "spec nova"
+    assert raias.edicao_de_spec_proibida(SPEC, None) == "spec apagada"
+    editada = SPEC.replace("# Título", "# Outro título")
+    assert raias.edicao_de_spec_proibida(SPEC, editada) == "texto da spec alterado"
+    rascunho = SPEC.replace("status: ready", "status: draft")
+    assert "draft" in raias.edicao_de_spec_proibida(SPEC, rascunho)
 
 
 def test_prompt_do_revisor_aponta_a_spec(

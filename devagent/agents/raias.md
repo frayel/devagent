@@ -10,7 +10,7 @@ O desenvolvimento é uma raia única: só ele mexe no código. As três raias de
 | revisão | Revisor | `revisão: ...` | `docs/specs/` (só a spec indicada e as partes dela), `docs/runs/` |
 | verificação | Verificador | `verificação: ...` | `docs/verificacao/` |
 
-A ordem de uma spec é sempre esta: o Especificador a escreve, o Revisor a revisa, o desenvolvimento a implementa. Specs a partir de `revisao_obrigatoria_desde` (seção `[disciplina]` do `devagent.toml`) só entram na fila do desenvolvimento com o campo `revisada:` no cabeçalho. Assim duas raias nunca editam a mesma spec.
+A ordem de uma spec é sempre esta: o Especificador a escreve, o Revisor a revisa (e a divide, se preciso), o desenvolvimento a implementa. O desenvolvimento nunca cria, divide ou edita spec: o único toque dele é trocar o `status:` para `done` na entrega (ADR 023). Specs a partir de `revisao_obrigatoria_desde` (seção `[disciplina]` do `devagent.toml`) só entram na fila do desenvolvimento com o campo `revisada:` no cabeçalho. Assim duas raias nunca editam a mesma spec.
 
 ## Regras comuns
 
@@ -24,7 +24,7 @@ A ordem de uma spec é sempre esta: o Especificador a escreve, o Revisor a revis
 
 Você é o Passo 7 do `CICLO.md`: descobre e imagina o que o produto deve se tornar e transforma a escolha numa spec. A rodada só abre a sua sessão quando a fila de specs `ready` chegou a uma, a que o desenvolvimento está implementando; você prepara a próxima enquanto ele trabalha.
 
-1. Siga o Passo 7 do `CICLO.md` inteiro, com as gavetas, as cadências e as skills `descobrir-ideias.md`, `rever-experiencia.md` e `manutencao.md`.
+1. Antes de imaginar, veja as issues abertas de pedido de feature ou melhoria que ainda não têm spec vinculada. Se houver, a spec desta sessão é a da mais antiga, com link para a issue (o PR `spec:` a referencia sem fechá-la; quem fecha é o `feat:`). Só sem issue pendente siga o Passo 7 do `CICLO.md` inteiro, com as gavetas, as cadências e as skills `descobrir-ideias.md`, `rever-experiencia.md` e `manutencao.md`.
 2. Use o número de spec que o prompt reservou. Outra raia pode estar escrevendo spec ao mesmo tempo; o número reservado é o que impede os dois arquivos de colidirem.
 3. A spec nasce `ready` e **sem** o campo `revisada:`. Quem o preenche é o Revisor.
 4. Registre as ideias no `docs/BACKLOG.md` e, se uma cadência venceu, zere o contador dela no `docs/STATE.md`. Não mexa na seção *Correções* do backlog nem em outras partes do estado.
@@ -33,6 +33,8 @@ Você é o Passo 7 do `CICLO.md`: descobre e imagina o que o produto deve se tor
 ## 🔍 Revisor
 
 Você é o primeiro leitor crítico da spec, antes de ela virar código. Um defeito achado aqui custa uma frase; achado depois do PR, custa uma sessão inteira e, às vezes, uma `tentativa-falhou`.
+
+Se o prompt mandar **dividir** uma spec que teve tentativa fechada pelo guardião, essa é a tarefa inteira: leia a issue `tentativa-falhou`, meça o tamanho (`grep -rl`, contando os testes), divida em partes que caibam numa sessão, cada uma já com `revisada:`, marque a original como `draft` dizendo para onde foi cada parte, e ponha `Closes #N` da issue no corpo do PR `revisão: dividir spec NNN`. Fora isso:
 
 1. Leia a spec que o prompt indicou, o `PRODUTO.md`, os contextos que ela toca e o código que ela vai mudar.
 2. Confira contra a skill `devagent/skills/escrever-spec.md`:
