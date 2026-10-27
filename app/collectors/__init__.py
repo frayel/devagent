@@ -1,4 +1,5 @@
 from . import (
+    brapi,
     dolar_correlation,
     highlights,
     ibovespa,
@@ -16,4 +17,5 @@ __all__ = [
     "forca_relativa",
     "fator_mola",
     "anomalia_peso",
+    "brapi",
 ]
