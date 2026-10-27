@@ -18,6 +18,7 @@ def _spec(pasta: Path, nome: str, status: str) -> None:
 def sem_github(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(jules, "issues_de_tentativa", list)
     monkeypatch.setattr(jules, "issues_de_prioridade", list)
+    monkeypatch.setattr(jules, "issues_de_producao", list)
 
 
 @pytest.fixture
@@ -158,3 +159,19 @@ def test_prompt_do_desenvolvedor_traz_a_prioridade(
 ) -> None:
     monkeypatch.setattr(jules, "issues_de_prioridade", lambda: [_prioridade(418)])
     assert "Closes #418" in jules.prompt_de("desenvolvedor")
+
+
+# ADR 024: issue de produção aberta vai na frente, com número.
+def test_issue_de_producao_vai_na_frente(raiz: Path) -> None:
+    issues = [
+        {
+            "numero": 534,
+            "titulo": "Produção incorreta",
+            "labels": ["producao-incorreta"],
+        },
+        {"numero": 9, "titulo": "x", "labels": ["sistema-com-problema", "bloqueado"]},
+    ]
+    texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, issues)
+    assert texto.startswith("Há issues de produção abertas (#534)")
+    assert "#9" not in texto
+    assert "docs/specs/068b-regras.md" in texto

@@ -1,7 +1,7 @@
 ---
 id: 120b
 titulo: Validar a chave da API do Gemini ativamente
-status: ready
+status: draft
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_120b.py
@@ -49,3 +49,7 @@ N/A
 
 - Alterar a interface do `/sistema` e o texto do painel do Gemini (será feito na spec 092b).
 - Declaração de variáveis no render.yaml (feita na spec 120a).
+
+## Revisão
+
+Duplicata da 119b, nascida da segunda divisão da 092a (#543, paralela ao #542). A validação ativa da chave do Gemini segue pela 119b. (ADR 024)

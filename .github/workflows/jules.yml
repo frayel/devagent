@@ -28,7 +28,7 @@ permissions:
 jobs:
   avulso:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 8
     permissions:
       contents: read
       pull-requests: read

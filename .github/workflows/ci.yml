@@ -6,6 +6,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+    # edited: o título decide a raia (regra 8); trocar o título roda o CI de novo.
+    types: [opened, synchronize, reopened, edited]
 
 jobs:
   # Regras do ciclo que o agente esquecia (devagent/conferir_pr.py, ADR 008).
@@ -21,6 +23,9 @@ jobs:
       with:
         python-version: "3.12"
     - name: Conferir disciplina do ciclo
+      env:
+        # Lê a persona da sessão que abriu o PR (regra 8, ADR 024).
+        JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
       run: python -m devagent.conferir_pr
 
   test:

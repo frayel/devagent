@@ -56,13 +56,14 @@ from devagent.estado_github import eh_do_agente, status_ci
 from devagent.fila_specs import (
     LABEL_PRIORIDADE,
     LABEL_TENTATIVA,
+    LABELS_DE_PRODUCAO,
     fila_da_revisao,
     instrucao,
     proximo_numero,
     spec_para_dividir,
     specs_prontas,
 )
-from devagent.raias import DESENVOLVIMENTO, raia_do_titulo
+from devagent.raias import DESENVOLVIMENTO, do_agente, raia_do_titulo
 
 API = "https://jules.googleapis.com/v1alpha"
 SOURCE = os.environ.get("JULES_SOURCE", f"sources/github/{PROJETO['repositorio']}")
@@ -108,9 +109,8 @@ ESPECIALISTA = (
     "Leia e siga devagent/agents/especialistas.md: as regras comuns e a seção "
     "{nome}. Se já existir PR aberto do agente, encerre sem mudanças. Entregue no "
     'máximo um PR, com título iniciado por "{prefixo}". Se não achar nada que '
-    "valha um PR, não abra PR só com o diário: siga a regra 7, que passa a sessão "
-    "para o ciclo do desenvolvedor de devagent/CICLO.md. Não peça aprovação e não "
-    "faça perguntas."
+    "valha um PR, encerre sem commit (regra 7): não abra PR só com o diário e não "
+    "assuma o ciclo do desenvolvedor. Não peça aprovação e não faça perguntas."
 )
 PERSONAS.update(
     {
@@ -273,12 +273,8 @@ def encerrar(alvo: str, motivo: str = "") -> int:
         print(f"Encerramento enviado: {nome}")
     except urllib.error.HTTPError as erro:
         print(f"::warning::mensagem de encerramento falhou em {nome}: HTTP {erro.code}")
-    # Apagar a sessão a tira da fila; nem toda versão da API aceita.
-    try:
-        chamar("DELETE", nome)
-        print(f"Sessão apagada: {nome}")
-    except urllib.error.HTTPError as erro:
-        print(f"Sessão não apagada (HTTP {erro.code}); a mensagem basta para pará-la.")
+    # A sessão não é apagada: a última fala dela é o diagnóstico que a issue
+    # `tentativa-falhou` e o próximo ciclo leem (ADR 024).
     return 0
 
 
@@ -588,6 +584,10 @@ def issues_de_prioridade() -> list[dict[str, Any]]:
     return issues_com_label(LABEL_PRIORIDADE)
 
 
+def issues_de_producao() -> list[dict[str, Any]]:
+    return [i for label in LABELS_DE_PRODUCAO for i in issues_com_label(label)]
+
+
 def prompt_de(persona: str) -> str:
     """Prompt da sessão; o do desenvolvedor já traz a próxima spec da fila.
 
@@ -603,7 +603,7 @@ def prompt_de(persona: str) -> str:
     if persona != "desenvolvedor":
         return texto
     try:
-        issues = issues_de_tentativa() + issues_de_prioridade()
+        issues = issues_de_tentativa() + issues_de_prioridade() + issues_de_producao()
         fila = instrucao(specs_prontas(), issues=issues)
     except OSError:
         fila = ""
@@ -883,6 +883,10 @@ JANELA_PRIMEIRA_VERIFICACAO = timedelta(hours=24)
 # Com a fila neste tamanho ou menor, o especificador prepara a próxima spec:
 # a que sobra é a que o desenvolvimento está implementando.
 FILA_PARA_ESPECIFICAR = 1
+# Teto de sessões por raia auxiliar em 24 h. A cota do plano é uma só; sem
+# teto, uma raia que dispara a cada volta gasta a cota do desenvolvimento,
+# que é quem entrega código (ADR 024).
+TETO_DIARIO_DA_RAIA = {"especificador": 8, "revisor": 24, "verificador": 16}
 
 
 def ultima_sessao(persona: str, sessoes: list[dict[str, Any]]) -> datetime | None:
@@ -918,6 +922,7 @@ def merges_do_desenvolvimento(desde: datetime) -> list[dict[str, Any]]:
         if pr.get("merged_at")
         and _data({"createTime": pr["merged_at"]}, "createTime") > desde
         and raia_do_titulo(pr.get("title") or "") == DESENVOLVIMENTO
+        and do_agente((pr.get("user") or {}).get("login"))
     ]
 
 
@@ -926,7 +931,11 @@ def raias_com_pr_aberto() -> set[str]:
     abertos = github_get(
         f"/repos/{PROJETO['repositorio']}/pulls?state=open&per_page=50"
     )
-    return {raia_do_titulo(pr.get("title") or "") for pr in abertos}
+    return {
+        raia_do_titulo(pr.get("title") or "")
+        for pr in abertos
+        if do_agente((pr.get("user") or {}).get("login"))
+    }
 
 
 def raias_a_iniciar(
@@ -958,6 +967,16 @@ def raias_a_iniciar(
             and not motivo_de_zumbi(s, agora)
             for s in sessoes
         ):
+            continue
+        corte = agora - timedelta(hours=24)
+        hoje = sum(
+            1
+            for s in sessoes
+            if s.get("title", "").startswith(p["titulo"])
+            and _data(s, "createTime") >= corte
+        )
+        if hoje >= TETO_DIARIO_DA_RAIA.get(persona, 10**6):
+            print(f"{persona}: teto de {hoje} sessões em 24 h atingido.")
             continue
         if persona == "especificador" and len(prontas) > FILA_PARA_ESPECIFICAR:
             continue

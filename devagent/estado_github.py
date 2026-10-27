@@ -26,7 +26,7 @@ from typing import Any
 
 from devagent import saude
 from devagent.fila_specs import fila_da_revisao, instrucao, specs_prontas
-from devagent.raias import AUDITORIA, DESENVOLVIMENTO, raia_do_titulo
+from devagent.raias import AUDITORIA, DESENVOLVIMENTO, do_agente, raia_do_titulo
 
 API = "https://api.github.com"
 
@@ -63,9 +63,12 @@ def eh_do_agente(pr: dict[str, Any]) -> bool:
     """PR da raia de desenvolvimento: o que trava a próxima sessão dela.
 
     PRs das raias auxiliares (spec, revisão, verificação) e do auditor correm
-    em paralelo e não contam na regra de um PR aberto por vez (ADR 021).
+    em paralelo e não contam na regra de um PR aberto por vez (ADR 021). PR
+    de outro autor, como o dono do produto, também não: o agente não mexe
+    nele (ADR 024).
     """
-    return raia_do_titulo(pr["title"]) == DESENVOLVIMENTO
+    autor = (pr.get("user") or {}).get("login")
+    return do_agente(autor) and raia_do_titulo(pr["title"]) == DESENVOLVIMENTO
 
 
 def status_ci(repo: str, sha: str) -> str:
@@ -92,6 +95,7 @@ def coletar() -> dict[str, Any]:
                 "titulo": pr["title"],
                 "branch": pr["head"]["ref"],
                 "do_agente": eh_do_agente(pr),
+                "humano": not do_agente((pr.get("user") or {}).get("login")),
                 "raia": raia_do_titulo(pr["title"]),
                 "labels": [lbl["name"] for lbl in pr["labels"]],
                 "idade_horas": _horas(pr["created_at"]),
@@ -141,7 +145,11 @@ def main() -> int:
             f"      CI: {p['ci']} · merge: {p['merge']} · "
             f"{p['idade_horas']} h · comentários: {p['comentarios']}"
         )
-    raias = [p for p in estado["prs"] if not p["do_agente"] and p["raia"] != AUDITORIA]
+    raias = [
+        p
+        for p in estado["prs"]
+        if not p["do_agente"] and not p["humano"] and p["raia"] != AUDITORIA
+    ]
     if raias:
         print(
             f"\nPRs das raias paralelas (spec, revisão, verificação): {len(raias)}. "
@@ -149,7 +157,12 @@ def main() -> int:
         )
         for p in raias:
             print(f"  #{p['numero']} [{p['raia']}] {p['titulo']} · CI: {p['ci']}")
-    outros = [p for p in estado["prs"] if p["raia"] == AUDITORIA]
+    humanos = [p for p in estado["prs"] if p["humano"]]
+    if humanos:
+        print(f"\nPRs de pessoas (não são do agente; não mexa neles): {len(humanos)}")
+        for p in humanos:
+            print(f"  #{p['numero']} {p['titulo']}")
+    outros = [p for p in estado["prs"] if p["raia"] == AUDITORIA and not p["humano"]]
     if outros:
         print(f"\nPRs do auditor (ignore): {len(outros)}")
         for p in outros:
@@ -157,6 +170,14 @@ def main() -> int:
     print(f"\nIssues abertas: {len(estado['issues'])}")
     for i in estado["issues"]:
         print(f"  #{i['numero']} {i['labels']} {i['titulo']}")
+
+    # Cadências do Passo 7, calculadas das specs (ADR 024).
+    try:
+        from devagent.cadencias import calcular, resumo
+
+        print("\n" + resumo(calcular()))
+    except OSError:
+        pass
 
     # Saúde de produção (ADR 016): o que a página do produto acusa agora.
     problemas_em_producao = False

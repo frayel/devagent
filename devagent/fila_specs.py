@@ -28,6 +28,34 @@ from devagent.raias import revisada
 NUMERO = re.compile(r"0*(\d+)([a-z]*)")
 LABEL_TENTATIVA = "tentativa-falhou"
 LABEL_PRIORIDADE = "prioridade"
+# Issues que o Passo 1 trata antes de qualquer spec.
+LABELS_DE_PRODUCAO = ("deploy-falhou", "producao-incorreta", "sistema-com-problema")
+
+
+def aviso_de_producao(issues: list[dict[str, Any]]) -> str:
+    """Frase que põe as issues de produção abertas na frente (ADR 024).
+
+    Em 27/10 uma sessão escreveu "os passos 1 e 2 foram pulados conforme
+    instruções explícitas" com #521, #531 e #534 abertas: a frase da fila dizia
+    "depois dos Passos 1 e 2" sem dizer o que havia neles.
+    """
+    abertas = sorted(
+        {
+            i["numero"]
+            for i in issues
+            if set(i.get("labels", [])) & set(LABELS_DE_PRODUCAO)
+            and "bloqueado" not in i.get("labels", [])
+        }
+    )
+    if not abertas:
+        return ""
+    lista = ", ".join(f"#{n}" for n in abertas)
+    return (
+        f"Há issues de produção abertas ({lista}): o Passo 1 vem antes de tudo e "
+        "não pode ser pulado. Leia cada uma com os comentários; se já há correção "
+        "mesclada esperando a verificação (comentário `correcao-mergeada`) e nada "
+        "novo apareceu, siga para o próximo item do ciclo; senão, corrija."
+    )
 
 
 def chave(caminho: Path) -> tuple[int, str, str]:
@@ -141,6 +169,16 @@ def instrucao(
     implementa de novo: divide. Repetir a mesma spec do mesmo tamanho foi o
     laço de 21 e 22/10 (spec 075, PRs #402 e #403).
     """
+    producao = aviso_de_producao(issues or [])
+    resto = _instrucao_da_fila(prontas, raiz, issues)
+    return " ".join(t for t in (producao, resto) if t)
+
+
+def _instrucao_da_fila(
+    prontas: list[Path],
+    raiz: Path | None,
+    issues: list[dict[str, Any]] | None,
+) -> str:
     prioritaria = issue_prioritaria(issues or [])
     if prioritaria:
         depois = (

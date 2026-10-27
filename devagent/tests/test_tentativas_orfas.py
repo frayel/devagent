@@ -6,6 +6,7 @@ no #414 sem `Closes`; a #427 registrou um PR vazio do Sentinel, sem spec.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -39,8 +40,15 @@ def test_spec_ainda_ready_nao_e_orfa() -> None:
     assert guardiao_prs.motivo_tentativa_orfa(["076b", "077d"], status) == ""
 
 
-def test_spec_desconhecida_nao_e_orfa() -> None:
-    assert guardiao_prs.motivo_tentativa_orfa(["999"], {}) == ""
+def test_spec_inexistente_ou_dividida_e_orfa() -> None:
+    # #550: cita a 093 (dividida, draft) e 122 a 124, que não existem (ADR 024).
+    status = {"93": "draft"}
+    assert guardiao_prs.motivo_tentativa_orfa(["093", "122", "123"], status)
+    assert guardiao_prs.motivo_tentativa_orfa(["999"], {})
+
+
+def test_spec_ready_citada_continua_aberta() -> None:
+    assert guardiao_prs.motivo_tentativa_orfa(["093", "122"], {"93": "ready"}) == ""
 
 
 def _issue(numero: int, titulo: str, corpo: str, *labels: str) -> dict[str, Any]:
@@ -117,3 +125,40 @@ def test_achado_medio_entra_com_prioridade(
     linha_alta = next(ln for ln in saida.splitlines() if "a2.md" in ln)
     assert "'prioridade'" in linha_media and "producao-incorreta" not in linha_media
     assert "'producao-incorreta'" in linha_alta and "prioridade" not in linha_alta
+
+
+def test_redundante_quando_a_main_ja_mudou_a_spec(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # #542 e #543: as duas sessões dividiram a 092a; a segunda chegou depois.
+    import subprocess
+
+    def git(*a: str) -> None:
+        subprocess.run(["git", *a], cwd=tmp_path, check=True, capture_output=True)
+
+    git("init", "-q", "-b", "main")
+    git("config", "user.email", "t@t")
+    git("config", "user.name", "t")
+    (tmp_path / "docs/specs").mkdir(parents=True)
+    spec = tmp_path / "docs/specs/092a-x.md"
+    spec.write_text("---\nstatus: ready\n---\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "base")
+    for ramo, nova in (("a", "119a"), ("b", "120a")):
+        git("checkout", "-q", "-b", ramo, "main")
+        spec.write_text("---\nstatus: draft\n---\n")
+        (tmp_path / f"docs/specs/{nova}-x.md").write_text("---\nstatus: ready\n---\n")
+        git("add", "-A")
+        git("commit", "-q", "-m", ramo)
+    git("checkout", "-q", "main")
+    git("merge", "-q", "a")
+    git("update-ref", "refs/remotes/origin/main", "main")
+    git("update-ref", "refs/remotes/origin/b", "b")
+    monkeypatch.chdir(tmp_path)
+    assert guardiao_prs.specs_ja_mudadas_na_main("b") == ["docs/specs/092a-x.md"]
+    git("checkout", "-q", "-b", "c", "main")
+    (tmp_path / "app.py").write_text("x = 1\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "c")
+    git("update-ref", "refs/remotes/origin/c", "c")
+    assert guardiao_prs.specs_ja_mudadas_na_main("c") == []

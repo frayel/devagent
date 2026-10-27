@@ -166,6 +166,7 @@ def test_situacao_espera_pr_vermelho_em_correcao(
     pr = {
         "number": 414,
         "title": "feat: spec 076b",
+        "user": {"login": "google-labs-jules[bot]"},
         "head": {"sha": "abc"},
         "created_at": "2026-10-22T18:55:00Z",
         "updated_at": "2026-10-22T19:05:00Z",
@@ -192,6 +193,7 @@ def test_pr_vermelho_sem_sessao_viva_fica_travado(
     pr = {
         "number": 532,
         "title": "093: alertas",
+        "user": {"login": "google-labs-jules[bot]"},
         "html_url": url,
         "head": {"sha": "abc"},
         "created_at": "2026-10-22T18:55:00Z",

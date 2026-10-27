@@ -84,7 +84,7 @@ def test_destravar_encerra_sessao_de_pr_fechado(
     jules.destravar(espera_minutos=5)
     metodos = [(m, c) for m, c, _ in chamadas]
     assert ("POST", "sessions/123:sendMessage") in metodos
-    assert ("DELETE", "sessions/123") in metodos
+    assert ("DELETE", "sessions/123") not in metodos
     texto = chamadas[0][2]["prompt"]
     assert texto.startswith("Encerre esta tarefa")
 
@@ -117,7 +117,7 @@ def test_encerrar_segue_se_delete_nao_existir(
 
     monkeypatch.setattr(jules, "chamar", chamar)
     assert jules.encerrar("123") == 0
-    assert enviados == ["POST", "DELETE"]
+    assert enviados == ["POST"]
 
 
 def test_cobranca_do_guardiao_traz_a_retomada(monkeypatch: pytest.MonkeyPatch) -> None:
