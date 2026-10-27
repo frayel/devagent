@@ -12,3 +12,9 @@ services:
         sync: false
       - key: MT5_API_KEY
         sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: BRAPI_TOKEN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
