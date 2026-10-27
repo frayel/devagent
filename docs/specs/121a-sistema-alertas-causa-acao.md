@@ -1,13 +1,16 @@
 ---
 id: 121a
-titulo: Causa e ação para alertas da página de sistema
+titulo: Guia de resolução para alertas da página de sistema
 status: ready
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_121a.py
+revisada: 2026-10-27
 ---
 
 ## Problema
+Como o dono do produto descobre o que fazer com os alertas da página de sistema?
+
 A página `/sistema` lista alertas, mas deixa o dono do produto adivinhar o que fazer, não dizendo se o defeito é do pedido ou do servidor externo, nem o que seria preciso fazer.
 
 ## Comportamento esperado
