@@ -5,8 +5,11 @@ trabalho é dividido pelo que cada raia escreve, e cada raia tem no máximo uma
 sessão ativa e um PR aberto por vez:
 
     desenvolvimento  código, testes, documentação, o próprio núcleo; exclusiva
-    especificacao    specs novas (Passo 7), o backlog de ideias e as cadências
-    revisao          a próxima spec da fila, antes de ela ser implementada
+    especificacao    specs novas (Passo 7 e issues de feature), backlog, cadências
+    revisao          a próxima spec da fila e a divisão de spec que falhou
+
+O desenvolvimento não cria, não divide e não edita specs; só troca o
+`status:` para `done` ao entregar (ADR 023).
     verificacao      achados sobre o que chegou à main, em arquivos próprios
 
 As três raias auxiliares correm em paralelo com o desenvolvimento. A raia de
@@ -92,6 +95,30 @@ def fora_da_raia(raia: str, arquivos: list[str] | set[str]) -> list[str]:
         )
     permitidos = RAIAS[raia].permitidos
     return sorted(a for a in arquivos if not a.startswith(permitidos))
+
+
+PASTA_SPECS = "docs/specs/"
+_LINHA_STATUS = re.compile(r"^status:.*$", re.MULTILINE)
+
+
+def edicao_de_spec_proibida(antes: str | None, depois: str | None) -> str:
+    """Por que a raia de desenvolvimento não pode fazer esta mudança numa spec.
+
+    O desenvolvimento não cria, não apaga e não reescreve specs: isso é das
+    raias de especificação e de revisão (ADR 023). O único toque permitido é
+    trocar a linha `status:` para `done` ao entregar a spec. Devolve o motivo,
+    ou "" se a mudança é permitida.
+    """
+    if antes is None:
+        return "spec nova"
+    if depois is None:
+        return "spec apagada"
+    if _LINHA_STATUS.sub("", antes) != _LINHA_STATUS.sub("", depois):
+        return "texto da spec alterado"
+    m = re.search(r"^status:\s*([\w-]+)", depois, re.MULTILINE)
+    if m and m.group(1) != "done" and depois != antes:
+        return f"status mudado para `{m.group(1)}`"
+    return ""
 
 
 REVISADA = re.compile(r"^revisada:\s*(\S.*?)\s*$", re.MULTILINE)

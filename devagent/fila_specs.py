@@ -77,9 +77,8 @@ def fila_da_revisao(prontas: list[Path], desde: str | None = None) -> list[Path]
 def proximo_numero(raiz: Path | None = None, ocupados: set[int] | None = None) -> str:
     """Próximo número de spec livre, contando as subpastas e os já reservados.
 
-    Duas raias que escrevem spec ao mesmo tempo (a de especificação no Passo 7
-    e o desenvolvimento ao transformar uma issue em spec) recebem números
-    diferentes no prompt, para os arquivos nunca colidirem (ADR 021).
+    A raia de especificação recebe o número no prompt, pulando os já
+    prometidos a sessões recentes, para os arquivos nunca colidirem (ADR 021).
     """
     raiz = raiz or Path.cwd()
     pasta = raiz / documentos()["specs"]
@@ -178,19 +177,32 @@ def instrucao(
         return (
             f"A próxima spec da fila é {proxima.as_posix()}, mas ela já teve "
             f"tentativa fechada pelo guardião ({citadas}). Não a implemente de novo "
-            "do mesmo tamanho: depois dos Passos 1 e 2, leia a issue, divida a spec "
-            "em specs menores pelo Passo 4 (contando os testes que serão tocados), "
-            "marque a original como `draft`, ponha `Closes` para essa issue no PR e "
-            "encerre. A implementação fica para a próxima sessão."
+            "e não a divida: dividir spec é da raia de revisão, que já recebeu essa "
+            "tarefa (ADR 023). Depois dos Passos 1 e 2, siga para os Passos 5 e 6; "
+            "se nenhum gerar entrega, encerre sem PR."
         )
     return (
         f"A fila tem {len(prontas)} spec(s) ready e revisada(s); a próxima é "
         f"{proxima.as_posix()}. Depois do Passo 1 (produção quebrada, correções, "
         "issue prioridade) e do Passo 2 (PR aberto do agente), o trabalho desta "
-        "sessão é implementar essa spec pelo Passo 4: não escreva spec nova pelo "
-        "Passo 7 (é da raia de especificação) e não edite specs que ainda esperam "
-        "revisão. Se a spec for grande demais, divida-a como manda o Passo 4."
+        "sessão é implementar essa spec pelo Passo 4. Você não cria, não divide e "
+        "não edita specs (ADR 023): o único toque permitido na spec é mudar o "
+        "`status:` para `done` no PR da entrega."
     )
+
+
+def spec_para_dividir(
+    prontas: list[Path], issues: list[dict[str, Any]]
+) -> tuple[Path, list[int]] | None:
+    """A próxima spec do desenvolvimento, se ela tem tentativa fechada.
+
+    Dividi-la é tarefa do Revisor, não do desenvolvedor (ADR 023).
+    """
+    fila = fila_do_desenvolvimento(prontas)
+    if not fila:
+        return None
+    falhas = tentativas_da_spec(fila[0], issues)
+    return (fila[0], falhas) if falhas else None
 
 
 def main() -> int:

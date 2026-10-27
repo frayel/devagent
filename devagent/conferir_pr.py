@@ -36,7 +36,9 @@ Regras (mantenha em sincronia com devagent/CICLO.md, Passos 1 e 4):
        título do PR (`spec:`, `revisão:`, `verificação:`; o resto é
        desenvolvimento) e devagent/raias.py diz o que cada uma pode tocar.
        É o que deixa as raias correrem em paralelo sem conflito. Vale no CI,
-       onde o título do PR existe.
+       onde o título do PR existe. Na raia de desenvolvimento, as specs só
+       podem ter a linha `status:` trocada para `done`: criar, dividir ou
+       editar spec é das raias de especificação e de revisão (ADR 023).
 
 Uma regra nunca é afrouxada no mesmo PR que corrige o que ela aponta
 (README do núcleo, separação de poderes).
@@ -54,7 +56,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from devagent.config import CONFIG
-from devagent.raias import DESENVOLVIMENTO, fora_da_raia, raia_do_titulo
+from devagent.raias import (
+    DESENVOLVIMENTO,
+    PASTA_SPECS,
+    edicao_de_spec_proibida,
+    fora_da_raia,
+    raia_do_titulo,
+)
 
 PADRAO_DOCUMENTOS = {
     "specs": "docs/specs",
@@ -261,6 +269,23 @@ def conferir(
                 f"{onde}: {', '.join(invasoes)}. Tire-os do PR ou corrija o "
                 "prefixo do título (devagent/raias.py, ADR 021)."
             )
+        if raia == DESENVOLVIMENTO:
+            for rel in sorted(a for a in alterados if a.startswith(PASTA_SPECS)):
+                if not rel.endswith(".md"):
+                    continue
+                caminho = raiz / rel
+                depois = (
+                    caminho.read_text(encoding="utf-8") if caminho.exists() else None
+                )
+                antes = git("show", f"{mb}:{rel}", raiz=raiz)
+                motivo = edicao_de_spec_proibida(antes, depois)
+                if motivo:
+                    res.falha(
+                        f"{rel}: {motivo}. O desenvolvimento não cria, não divide "
+                        "e não edita specs; isso é das raias de especificação e "
+                        "de revisão. O único toque permitido é mudar `status:` "
+                        "para `done` ao entregar (ADR 023). Tire a spec do PR."
+                    )
 
     fechadas_novas: list[str] = []
     fechadas: list[tuple[str, str]] = []
