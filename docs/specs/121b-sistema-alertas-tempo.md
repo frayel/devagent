@@ -1,14 +1,15 @@
 ---
 id: 121b
-titulo: Persistência de alertas de sistema e issue para atenção persistente
+titulo: Persistência com issue de atenção prolongada no sistema de alertas
 status: ready
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_121b.py
+revisada: 2026-10-27
 ---
 
 ## Problema
-`devagent/saude.py` só abre a issue `sistema-com-problema` para itens de nível *Problema*. Item em *Atenção* pode ficar semanas na tela sem que nenhum passo do ciclo o veja. A issue atual também não diz quando o alerta nasceu.
+Por que os alertas de atenção do sistema não geram uma notificação se persistirem por muito tempo? `devagent/saude.py` só abre a issue `sistema-com-problema` para itens de nível *Problema*. Item em *Atenção* pode ficar semanas na tela sem que nenhum passo do ciclo o veja. A issue atual também não diz quando o alerta nasceu.
 
 ## Comportamento esperado
 1. Cada item pendente na página de sistema mostra "desde dd/mm HH:MM" (primeira leitura em que apareceu com esse nível).
