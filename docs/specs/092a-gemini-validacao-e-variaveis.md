@@ -1,7 +1,7 @@
 ---
 id: 092a
 titulo: Gemini ativo, validar a chave, declarar as variáveis
-status: ready
+status: draft
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_092a.py
@@ -50,3 +50,8 @@ API do Gemini: `GET /v1beta/models` (validação). Plano B: sem chave ou chave r
 - Trocar o modelo ou o provedor de LLM.
 - Mudar a cota diária de chamadas.
 - Cadastrar a chave: é do dono do produto, no Render.
+
+## Dividida em
+Devido ao tamanho e testes tocados, foi dividida em:
+- `119a`: Declarar as variáveis no render.yaml
+- `119b`: Validação ativa da chave do Gemini
