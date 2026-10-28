@@ -414,10 +414,50 @@ def ler_serie(ticker: str, inicio: date, fim: date) -> list[dict]:
         conn.close()
 
 
+def versao_series(tickers: list[str]) -> str:
+    init_db()
+    conn, backend = get_connection()
+    try:
+        if backend == "postgres":
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT MAX(criado_em) FROM series_diarias WHERE ticker = ANY(%s)",
+                    (tickers,),
+                )
+                row = cursor.fetchone()
+                if row and row[0]:
+                    return row[0] if isinstance(row[0], str) else str(row[0])
+                return ""
+        else:
+            cursor = conn.cursor()
+            placeholders = ",".join(["?"] * len(tickers))
+            query = f"SELECT MAX(criado_em) FROM series_diarias WHERE ticker IN ({placeholders})"
+            cursor.execute(query, tuple(tickers))
+            row = cursor.fetchone()
+            if row and row[0]:
+                return row[0]
+            return ""
+    finally:
+        conn.close()
+
+
+_diagnostico_cache = None
+_diagnostico_cache_time = None
+
+
 def diagnostico() -> dict:
     import time
     import os
     from app.database import DB_PATH
+
+    global _diagnostico_cache, _diagnostico_cache_time
+    agora = time.time()
+    if (
+        _diagnostico_cache
+        and _diagnostico_cache_time
+        and (agora - _diagnostico_cache_time < 300)
+    ):
+        return _diagnostico_cache
 
     tipo = get_backend_type()
 
@@ -463,6 +503,9 @@ def diagnostico() -> dict:
         return info
     info["latencia_ms"] = round((time.perf_counter() - inicio) * 1000)
     info["tabelas"] = tabelas
+
+    _diagnostico_cache = info
+    _diagnostico_cache_time = agora
     return info
 
 

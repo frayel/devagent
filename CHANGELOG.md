@@ -238,3 +238,4 @@
 - **108a**: Banco de dados devolve timestamps reais e data da coleta das séries.
 
 * spec 113b: Consultor em data passada exibe o resultado futuro da recomendação.
+- Redução de transferência de banco de dados no Neon (Spec 122).

@@ -455,3 +455,4 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
 
 - Spec 119b (Gemini ativo, validar a chave):
   - Validacao da chave API do Gemini via validador_gemini em background.
+- Otimização do consumo de dados via banco reduzindo histórico lido e adicionando caches em memória para o cálculo do consultor (Spec 122).

@@ -1,7 +1,7 @@
 ---
 id: 122
 titulo: Reduzir a transferência de rede do Postgres (Neon)
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_122.py

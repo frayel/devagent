@@ -26,20 +26,13 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
     global _consultor_cache, _consultor_cache_versao, _consultor_cache_time
 
     ativos = CARTEIRA_IBOVESPA + ["^BVSP"]
-    historicos = get_historico_diario(
-        ativos, JANELA, "1d", max_age_minutes=IDADE_MAXIMA_MIN
-    )
+
+    from app.banco import versao_series
 
     opinioes_recentes = get_opinioes_recentes()
     opinioes_status = get_opinioes_status()
 
-    # Calcular versão dos dados
-    max_criado = ""
-    for ticker, dados in historicos.items():
-        if "metadata" in dados and "criado_em" in dados["metadata"]:
-            ts = str(dados["metadata"]["criado_em"])
-            if ts > max_criado:
-                max_criado = ts
+    max_criado = versao_series(ativos)
 
     max_extraida = ""
     for op in opinioes_recentes:
@@ -60,13 +53,22 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
         ):
             return _consultor_cache
 
+    historicos = get_historico_diario(
+        ativos, JANELA, "1d", max_age_minutes=IDADE_MAXIMA_MIN
+    )
+
+    _consultor_cache_versao = versao_atual
+    _consultor_cache_time = datetime.now()
+
     if "^BVSP" not in historicos or not historicos["^BVSP"]:
-        return {
+        res_dict: dict = {
             "ibovespa": None,
             "opinioes_recentes": [],
             "regras_confianca": {},
             "opinioes_status": get_opinioes_status(),
         }
+        _consultor_cache = res_dict
+        return res_dict
 
     ibov_closes, _, ibov_ts = pre_processar_ativo(historicos["^BVSP"])
 
@@ -220,4 +222,5 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
         "opinioes_status": opinioes_status,
     }
 
+    _consultor_cache = res_dict
     return res_dict
