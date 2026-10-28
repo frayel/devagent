@@ -4,6 +4,7 @@ titulo: Heatmap visual da Maré do Mercado
 status: ready
 esforco: M
 aceite: tests/test_aceite_123.py
+revisada: 2026-10-28
 gaveta: experiência
 ---
 
