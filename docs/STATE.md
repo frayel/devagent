@@ -445,3 +445,4 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
 
 - Implemented Spec 098: brapi secondary source client module.
 - Fixed Issue 531: Ibovespa implausible daily variation.
+- **108a**: Banco de dados devolve timestamps reais e data da coleta das séries.

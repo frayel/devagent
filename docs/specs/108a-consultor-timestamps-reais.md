@@ -1,7 +1,7 @@
 ---
 id: 108a
 titulo: Banco de dados devolve timestamps reais e data da coleta das séries
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_108a.py
