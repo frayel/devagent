@@ -41,3 +41,8 @@
 - A ordem de fallback no coletor do Ibovespa foi implementada incorretamente (Brapi antes de Yahoo), gerando o achado 2026-10-27-spec-098-ordem-fontes-ibovespa.
 - Um trecho de código morto permaneceu no coletor da Maré, gerando o achado 2026-10-27-spec-098-codigo-morto-mare.
 - A próxima verificação deve assegurar que a ordem correta das chamadas às fontes de dados (MT5 -> Yahoo -> Brapi) foi restabelecida.
+
+- Verifiquei o PR 559 referente à correção da ordem de fallback no coletor do Ibovespa.
+- Confirmada a resolução do achado '2026-10-27-spec-098-ordem-fontes-ibovespa': `fetch_yfinance()` agora é chamado antes de `fetch_brapi()`.
+- Confirmada a resolução do achado '2026-10-27-spec-098-codigo-morto-mare': a variável depreciada foi removida.
+- Próxima verificação deve atentar à implementação e estabilidade das coleções baseadas no Yahoo Finance.

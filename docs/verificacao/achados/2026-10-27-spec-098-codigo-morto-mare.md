@@ -2,7 +2,7 @@
 id: 2026-10-27-spec-098-codigo-morto-mare
 severidade: baixa
 painel: app/collectors/mare.py
-status: aberto
+status: resolvido
 visto_em: 2026-10-27T14:30-03:00
 pr: 554
 ---
