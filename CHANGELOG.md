@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- spec 119b: Adicionado validador da chave API do Gemini em background.
 - **Consultor**: Exibe recomendações e opiniões em datas passadas (spec 113)
 - Fix: Ibovespa daily variation falling back to incorrect previous close
 - Feat: brapi secondary source client module (spec 098)

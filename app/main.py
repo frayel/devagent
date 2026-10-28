@@ -103,6 +103,9 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
     if monitor_sistema.monitor_ligado():
         tarefas.append(asyncio.create_task(monitor_sistema.laco_do_monitor()))
+    from app.services import validador_gemini
+
+    tarefas.append(asyncio.create_task(validador_gemini.laco_da_validacao()))
     yield
     for tarefa in tarefas:
         tarefa.cancel()

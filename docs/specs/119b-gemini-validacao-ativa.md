@@ -1,7 +1,7 @@
 ---
 id: 119b
 titulo: Gemini ativo, validar a chave
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_119b.py

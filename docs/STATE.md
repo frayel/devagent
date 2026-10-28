@@ -451,3 +451,6 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
 ## 2026-10-24: Consultor resultados passados
 - O sistema agora mostra o desempenho real de cada ativo avaliado em datas passadas contra o IBOV até 5 pregões.
 - A coleta automática roda também no fechamento para gravar esse histórico (spec 113b).
+
+- Spec 119b (Gemini ativo, validar a chave):
+  - Validacao da chave API do Gemini via validador_gemini em background.
