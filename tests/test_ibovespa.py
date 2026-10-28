@@ -125,6 +125,9 @@ def test_index_route():
                 "https://brapi.dev/api/quote/%5EBVSP?range=1y&interval=1d&fundamental=false"
             )
         ).respond(status_code=200, json=brapi_data)
+        respx.get(
+            "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=1y&interval=1d"
+        ).respond(status_code=500)
         collect_and_save()
 
     response = client.get("/")
