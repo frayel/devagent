@@ -753,9 +753,10 @@ def destravar(espera_minutos: int) -> int:
 
 
 # Persona de cada hora (UTC): a partir dessa hora, o especialista do dia é o
-# primeiro da fila até rodar. Em BRT: Sentinel 03h, Bolt 09h, Palette 15h.
+# primeiro da fila até rodar. Em BRT: Sentinel 03h, Bolt 09h. O Palette saiu
+# da agenda a pedido do dono; a persona continua disponível para disparo manual.
 # O vigia (sem uso) ainda inicia uma persona por hora cheia.
-PERSONA_DA_HORA = {6: "seguranca", 12: "performance", 18: "design"}
+PERSONA_DA_HORA = {6: "seguranca", 12: "performance"}
 
 # PR com CI verde ainda não mesclado só é "travado" depois deste tempo
 # (CICLO.md, Passo 2: o auto-merge falhou).
