@@ -45,3 +45,6 @@
 - Verifiquei os PRs #568 (spec 113b), #567 (spec 113a), #566 (spec 108a) e #564 (fix: anomalia_peso). Todos foram implementados de acordo com os critérios de aceite e não introduziram novos problemas visíveis.
 - Os achados '2026-10-27-spec-098-codigo-morto-mare' e '2026-10-27-spec-098-ordem-fontes-ibovespa' (identificados no PR 554) foram resolvidos e confirmados na main.
 - Próxima verificação deve continuar a observar se a infraestrutura e a experiência do usuário se mantêm íntegras nos próximos PRs.
+- Verifiquei o PR 571 referente à entrega da Spec 119b.
+- A validação ativa da chave e exposição no sistema funcionam, mas falhou ao não persistir resultados na tabela de banco de dados conforme requerido pela invariante.
+- Achado criado: '2026-10-28-spec-119b-invariante-banco'. Próxima verificação focará nas correções da validação do Gemini.
