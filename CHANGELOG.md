@@ -232,3 +232,4 @@
 - Spec 090b: Tolerância a símbolo inválido
 
 - Spec 090b: Tolerância a símbolo inválido
+- **108a**: Banco de dados devolve timestamps reais e data da coleta das séries.
