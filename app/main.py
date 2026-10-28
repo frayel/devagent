@@ -757,7 +757,12 @@ def snapshot(
 
     divergencia = get_divergencia_ibov_dolar()
     if divergencia:
-        resp["paineis"]["divergencia_ibov_dolar"] = divergencia
+        resp["paineis"]["divergencia_ibov_dolar"] = {
+            "divergencia_detectada": divergencia.get("divergencia_detectada"),
+            "correlacao": divergencia.get("correlacao"),
+            "coletado_em": divergencia.get("timestamp"),
+            "fonte": divergencia.get("fonte", "yfinance"),
+        }
 
     assimetria = get_latest_assimetria_risco_retorno_data()
     if assimetria:
@@ -873,7 +878,7 @@ def snapshot(
             alertas = []
         resp["paineis"]["sensibilidade_juros"] = {
             "fonte": sensibilidade_juros_data.fonte,
-            "time": sensibilidade_juros_data.timestamp.isoformat(),
+            "coletado_em": sensibilidade_juros_data.timestamp.isoformat(),
             "alertas": alertas,
         }
     else:
@@ -1113,7 +1118,14 @@ def snapshot(
 
     view_di = get_correlacao_di_view_data()
     if view_di:
-        resp["paineis"]["correlacao_di"] = view_di
+        resp["paineis"]["correlacao_di"] = {
+            "correlacao_intradiaria": view_di.get("correlacao_intradiaria"),
+            "correlacao_5d": view_di.get("correlacao_5d"),
+            "status_intradiaria": view_di.get("status_intradiaria"),
+            "status_5d": view_di.get("status_5d"),
+            "coletado_em": view_di.get("coletado_em"),
+            "fonte": view_di.get("fonte", "yfinance"),
+        }
 
     radar_short_squeeze_data = get_latest_radar_short_squeeze_data()
     db_radar_congestionamento = get_latest_radar_congestionamento_data()
