@@ -14,7 +14,17 @@
       </span>
       <span class="checagem-resumo num">{{ item.resumo }}</span>
     </div>
-    {% if item.detalhe %}<div class="checagem-detalhe">{{ item.detalhe }}</div>{% endif %}
+    {% if item.detalhe or (item.nivel in ('atencao', 'problema') and (item.causa or item.acao)) %}
+    <div class="checagem-detalhe">
+      {{ item.detalhe }}
+      {% if item.nivel in ('atencao', 'problema') and (item.causa or item.acao) %}
+      <div class="checagem-causa-acao">
+        {% if item.causa %}<strong>Causa:</strong> {{ item.causa }}.{% endif %}
+        {% if item.acao %}<strong>Ação:</strong> {{ item.acao }}.{% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 </li>
 {% endmacro %}
@@ -59,4 +69,10 @@ Cada verificação recebe um nível: Problema (algo quebrado que trava o produto
 </ul>
 {% endcall %}
 {% endfor %}
+
+<style>
+.checagem-causa-acao {
+  margin-top: 4px;
+}
+</style>
 {% endblock %}

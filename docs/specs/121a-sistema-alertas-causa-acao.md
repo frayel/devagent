@@ -1,7 +1,7 @@
 ---
 id: 121a
 titulo: Guia de resolução para alertas da página de sistema
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_121a.py

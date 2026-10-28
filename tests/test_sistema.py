@@ -504,3 +504,23 @@ def test_painel_vazio_em_todas_as_rodadas_e_problema():
     assert "sensibilidade_juros" in item.resumo and "mare" not in item.resumo
     oscilando = s.verificar_paineis_vazios({"mare": 1}, 3, {"mare": 4})
     assert oscilando.nivel == s.ATENCAO
+
+
+def test_item_classifica_causa_e_acao():
+    item_ok = s.Item("Tudo Certo", s.OK, "funciona")
+    assert not item_ok.causa and not item_ok.acao
+
+    item_400 = s.Item("X", s.PROBLEMA, "HTTP 404")
+    assert item_400.causa == "pedido inválido ou ativo desconhecido (HTTP 404)"
+
+    item_500 = s.Item("Y", s.PROBLEMA, "HTTP 502")
+    assert item_500.causa == "fonte indisponível ou recusando a chave (HTTP 502)"
+
+    item_db = s.Item("DB", s.PROBLEMA, "relation 'x' does not exist")
+    assert item_db.causa == "esquema do banco incompleto"
+
+    item_inativo = s.Item("Z", s.ATENCAO, "sem chamadas")
+    assert item_inativo.causa == "configurada, mas nunca chamada"
+
+    item_desc = s.Item("W", s.PROBLEMA, "erro maluco")
+    assert item_desc.causa == "causa não classificada"

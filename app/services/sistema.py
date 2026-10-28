@@ -53,6 +53,33 @@ class Item:
     detalhe: str = ""
     quando: str | None = None  # ISO 8601
     link: str | None = None
+    causa: str = ""
+    acao: str = ""
+
+    def __post_init__(self):
+        texto = f"{self.resumo} {self.detalhe}".lower()
+        if m := re.search(r"http (400|404|422)", texto):
+            self.causa = f"pedido inválido ou ativo desconhecido (HTTP {m.group(1)})"
+            self.acao = (
+                f"corrigir o pedido no coletor {self.nome}; o servidor está respondendo"
+            )
+        elif m := re.search(r"http (5\d\d|429|401|403)", texto):
+            self.causa = f"fonte indisponível ou recusando a chave (HTTP {m.group(1)})"
+            self.acao = "aguardar, ou conferir a chave no Render"
+        elif any(x in texto for x in ("relation", "column", "does not exist")):
+            self.causa = "esquema do banco incompleto"
+            self.acao = "falta migração; ver spec do Consultor"
+        elif "sem chamadas" in texto or "nunca chamada" in texto:
+            self.causa = "configurada, mas nunca chamada"
+            self.acao = "verificar o pipeline que a usa"
+        elif (
+            "fora do ar" in texto or "não respondeu" in texto or "não conecta" in texto
+        ):
+            self.causa = "fonte indisponível ou recusando a chave (rede)"
+            self.acao = "aguardar, ou conferir a chave no Render"
+        elif self.nivel in (ATENCAO, PROBLEMA):
+            self.causa = "causa não classificada"
+            self.acao = "ver o detalhe e abrir issue"
 
     @property
     def rotulo(self) -> str:
