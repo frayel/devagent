@@ -515,3 +515,17 @@
 | Análise de Assimetria Risco/Retorno | Responde: Qual ativo está mais próximo do seu fundo dos últimos 30 dias? Originalidade: Substitui análise de tendência pela distância percentual entre extremos. | yfinance | P | Baixo |
 | Saúde Técnica: Otimização do instrumentacao_coleta_tempo | Responde: O histórico de tempo está inflando a DB? Originalidade: Agrupar métricas antigas. | Banco SQLite | P | Baixo |
 | Capacidade nova: Radar de Inversão de Volatilidade | Responde: A volatilidade está secando após expansão? Originalidade: Mostra quais ativos estão com range histórico encolhendo. | yfinance | M | Baixo |
+
+## Ideias (revisão crítica do código - 2026-10-28)
+
+Itens achados na revisão que originou as specs 124 a 133 e que ainda não têm spec.
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Saúde técnica: data explícita na gravação de snapshot | `gravar_snapshot` troca `estado` e `data_referencia` conforme `ContextVar`s, um parâmetro escondido que deu origem ao bug da spec 124. Passar o pregão como argumento explícito em `save_*`, e usar o pregão (não a data UTC, que vira o dia às 21h BRT) quando a gravação acontece fora do agendador. | N/A | M | Médio |
+| Saúde técnica: registro declarativo de painéis | `app/database.py` tem cerca de 105 funções `save_*`/`get_*` quase idênticas, e `index` e `/api/snapshot` montam os mesmos ~40 painéis cada um por um caminho (`app/main.py` com ~1.900 linhas). Um registro (nome, dataclass, serialização, view) eliminaria a duplicação. Dividir por lotes de painéis. | N/A | G | Médio |
+| Saúde técnica: séries da carteira baixadas uma vez por rodada | 41 coletores percorrem a carteira, cada um com seu pedido ao Yahoo/MT5, em série e com 2 s por domínio. Depois da 122, medir quanto o cache de `series_diarias` já resolve; se não bastar, uma pré-carga no início da rodada que serve todos os coletores. | yfinance, MT5 | G | Médio |
+| Saúde técnica: rate limit assíncrono | `async_fetch_with_retry` (`app/collectors/utils.py`) chama `_enforce_rate_limit`, que usa `time.sleep`, dentro de corrotina, o que bloqueia o loop. Versão com `asyncio.sleep` e trava por domínio. | N/A | P | Baixo |
+| Saúde técnica: gravação em lote e instrumentação sem corrida | `gravar_serie` faz um `execute` por barra (usar `executemany`). `save_coleta_tempo` e `save_coleta_vazia` fazem ler-modificar-gravar num único JSON diário e podem perder atualização com o backtest em thread. | N/A | P | Baixo |
+| Saúde técnica: unificar `/consultor` e `/api/consultor` | As duas rotas repetem a montagem do histórico (com o mesmo N+1 da spec 131). Uma função de serviço única. | N/A | M | Baixo |
+| Segurança: SRI nos scripts de CDN | O CSP libera `unpkg.com` e `cdn.plot.ly` sem `integrity`. Fixar versão e hash, ou servir os arquivos de `app/static`. | N/A | P | Baixo |
