@@ -50,3 +50,6 @@
 - Achado criado: '2026-10-28-spec-119b-invariante-banco'. Próxima verificação focará nas correções da validação do Gemini.
 
 - 2026-10-28: verifiquei a Spec 121a (PR #574), encontrei falso positivo na classificação de erros de banco devido ao uso de "in" para "relation" (bate com dolar_correlation).
+
+2026-10-28: Verifiquei PRs #582 e #583.
+O achado sobre a persistência do validador do Gemini (#583/Spec 119b) foi corrigido e testado na integração com o DB. Marquei 2026-10-28-spec-119b-invariante-banco como resolvido. O PR de otimização de DB (#582) atende perfeitamente a spec 122 sem efeitos colaterais aparentes. Sem novos achados. Próxima verificação olhar as correções referentes a PRs da UI.
