@@ -384,6 +384,50 @@ def get_opinioes_recentes(limite: int = 20) -> list[dict]:
         conn.close()
 
 
+def get_opinioes_historicas(data_referencia: str, dias: int = 30) -> list[dict]:
+    init_db()
+    conn, backend = get_connection()
+    try:
+        limite_data_obj = datetime.strptime(data_referencia, "%Y-%m-%d").replace(
+            tzinfo=timezone.utc
+        ) - timedelta(days=dias)
+        limite_data = limite_data_obj.isoformat()
+
+        limite_data_fim = f"{data_referencia}T23:59:59"
+
+        cursor = conn.cursor()
+        cursor.execute(
+            sql_para(
+                backend,
+                "SELECT id, guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link, extraida_em "
+                "FROM consultor_opinioes WHERE extraida_em >= ? AND extraida_em <= ? ORDER BY extraida_em DESC",
+            ),
+            (limite_data, limite_data_fim),
+        )
+        rows = cursor.fetchall()
+
+        result = []
+        for row in rows:
+            result.append(
+                {
+                    "id": row[0],
+                    "guid": row[1],
+                    "ticker": row[2],
+                    "casa": row[3],
+                    "recomendacao": row[4],
+                    "preco_alvo": row[5],
+                    "resumo": row[6],
+                    "trecho": row[7],
+                    "data_materia": row[8],
+                    "link": row[9],
+                    "extraida_em": row[10],
+                }
+            )
+        return result
+    finally:
+        conn.close()
+
+
 def get_opinioes_ativos(dias: int = 30) -> dict:
     init_db()
     conn, backend = get_connection()

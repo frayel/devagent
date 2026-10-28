@@ -431,11 +431,15 @@ def pagina_consultor(
                     }
                 )
 
+            from app.consultor.armazenamento import get_opinioes_historicas
+
+            opinioes_historicas = get_opinioes_historicas(target_data or "")
+
             dados = {
                 "resultados": resultados,
                 "ativos_avaliados": len(hist),
                 "regras_confianca": {},
-                "opinioes_recentes": [],
+                "opinioes_recentes": opinioes_historicas,
                 "opinioes_status": {},
             }
         else:
@@ -562,22 +566,89 @@ def pagina_consultor(
 
 
 @app.get("/api/consultor")
-def api_consultor(request: Request):
+def api_consultor(
+    request: Request,
+    data: str | None = Query(default=None, alias="data"),
+    data_str: str | None = None,
+):
     exigir_senha(request)
+
+    target_data = data or data_str
+    agora = datetime.now(timezone.utc)
+    mercado_aberto = calendario.mercado_aberto(agora)
+    pregao_corr = calendario.pregao_corrente(agora)
+
+    ctx = _get_seletor_context(target_data, agora, mercado_aberto, pregao_corr)
+    if ctx["data_invalida"]:
+        return JSONResponse(
+            status_code=404, content={"erro": "Data inválida ou fora da janela."}
+        )
+
+    is_historical = ctx["is_historical"]
 
     import time
     from app.consultor.calculador import _consultor_cache_time
 
     _t0 = time.perf_counter()
     try:
-        _cache_ts_before = _consultor_cache_time
-        dados = calcular_consultor()
-        _cache_ts_after = _consultor_cache_time
-        _usou_cache = (
-            _cache_ts_before == _cache_ts_after
-            if _cache_ts_before is not None
-            else False
-        )
+        if is_historical:
+            from app.consultor.armazenamento import (
+                get_recomendacoes,
+                get_opinioes_historicas,
+            )
+
+            hist = get_recomendacoes(target_data or "")
+
+            resultados: dict[str, list[Any]] = {
+                "Comprar": [],
+                "Vender": [],
+                "Aguardar": [],
+                "No radar": [],
+                "Sem sinal": [],
+            }
+            import ast
+
+            for row in hist:
+                group = row["decisao"]
+                if group not in resultados:
+                    resultados[group] = []
+                consenso_dict = {}
+                try:
+                    if row["consenso"]:
+                        consenso_dict = ast.literal_eval(row["consenso"])
+                except Exception:
+                    pass
+                resultados[group].append(
+                    {
+                        "ticker": row["ticker"],
+                        "fechamento": row["preco"],
+                        "regra": row["regra"],
+                        "gatilho": row["gatilho"],
+                        "consenso": consenso_dict,
+                        "justificativa": "",
+                        "motivo": row["regra"],
+                        "timestamp": row["timestamp"],
+                        "mensagem_confianca": "histórico indisponível (pregão passado)",
+                    }
+                )
+            opinioes_historicas_api = get_opinioes_historicas(target_data or "")
+            dados: dict[str, Any] = {
+                "resultados": resultados,
+                "ativos_avaliados": len(hist),
+                "regras_confianca": {},
+                "opinioes_recentes": opinioes_historicas_api,
+                "opinioes_status": {},
+            }
+            _usou_cache = False
+        else:
+            _cache_ts_before = _consultor_cache_time
+            dados = calcular_consultor()
+            _cache_ts_after = _consultor_cache_time
+            _usou_cache = (
+                _cache_ts_before == _cache_ts_after
+                if _cache_ts_before is not None
+                else False
+            )
     except Exception:
         _usou_cache = False
         dados = {

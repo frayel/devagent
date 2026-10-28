@@ -153,6 +153,12 @@
             </div>
         </div>
 
+        {% if is_historical and not dados.resultados["Comprar"] and not dados.resultados["Vender"] and not dados.resultados["Aguardar"] and not dados.resultados["No radar"] and not dados.resultados["Sem sinal"] %}
+            <div class="grupo-consultor">
+                <p>Sem registro do Consultor neste pregão.</p>
+            </div>
+        {% endif %}
+
         {% for grupo in ["Comprar", "Vender", "Aguardar", "No radar"] %}
             {% if dados.resultados and dados.resultados[grupo] %}
             <div class="grupo-consultor">
