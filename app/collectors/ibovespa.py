@@ -197,10 +197,10 @@ def collect_and_save() -> bool:
         with mt5.exclusivo():
             data = fetch_yfinance()
     if not data:
-        data = fetch_brapi()
-    if not data:
         logger.info("Falling back to yfinance...")
         data = fetch_yfinance()
+    if not data:
+        data = fetch_brapi()
 
     if data:
         save_ibovespa_data(data)

@@ -234,19 +234,19 @@ def test_ibovespa_prefere_mt5_a_brapi(mt5_ligado, monkeypatch):
 
 
 @respx.mock
-def test_ibovespa_sem_mt5_segue_para_brapi(mt5_ligado, monkeypatch):
+def test_ibovespa_sem_mt5_segue_para_yfinance(mt5_ligado, monkeypatch):
     from app.collectors import ibovespa
 
     monkeypatch.setenv("BRAPI_TOKEN", "tok")
     respx.get(RATES).mock(side_effect=httpx.ConnectError("recusado"))
     chamado = []
 
-    def falso_brapi():
+    def falso_yfinance():
         chamado.append(True)
         return None
 
-    monkeypatch.setattr(ibovespa, "fetch_brapi", falso_brapi)
-    monkeypatch.setattr(ibovespa, "fetch_yfinance", lambda: None)
+    monkeypatch.setattr(ibovespa, "fetch_brapi", lambda: None)
+    monkeypatch.setattr(ibovespa, "fetch_yfinance", falso_yfinance)
     assert not ibovespa.collect_and_save()
     assert chamado
 
