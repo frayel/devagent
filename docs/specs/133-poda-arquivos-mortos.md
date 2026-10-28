@@ -5,6 +5,7 @@ status: ready
 esforco: P
 gaveta: poda
 aceite: tests/test_aceite_133.py
+revisada: 2026-10-28
 ---
 
 ## Problema

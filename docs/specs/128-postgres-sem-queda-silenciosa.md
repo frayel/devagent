@@ -5,6 +5,7 @@ status: ready
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_128.py
+revisada: 2026-10-28
 ---
 
 ## Problema
