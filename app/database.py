@@ -1877,3 +1877,18 @@ def get_simbolos_suspensos() -> list[dict]:
     from app.banco import get_simbolos_suspensos as _get_suspensos
 
     return _get_suspensos()
+
+
+def save_gemini_validation(sucesso: bool, status: int) -> None:
+    from app.banco import gravar_snapshot
+    from app.calendario import pregao_corrente
+    from datetime import datetime, timezone as tz
+
+    agora = datetime.now(tz.utc)
+    hoje = pregao_corrente(agora)
+    payload = {
+        "sucesso": sucesso,
+        "status": status,
+        "timestamp": agora.isoformat(),
+    }
+    gravar_snapshot("validador_gemini", hoje, "ao_vivo", "sistema", payload)

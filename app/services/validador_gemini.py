@@ -21,10 +21,19 @@ async def validar() -> None:
     try:
         # Usa executor para rodar de forma síncrona, já que _listar_modelos usa httpx sem async
         await asyncio.to_thread(gemini_modelo._listar_modelos, api_key)
+        from app.database import save_gemini_validation
+
+        save_gemini_validation(sucesso=True, status=200)
     except httpx.HTTPStatusError as e:
+        from app.database import save_gemini_validation
+
+        save_gemini_validation(sucesso=False, status=e.response.status_code)
         logger.warning(f"Falha na validação do Gemini: {e}")
         # _listar_modelos já anota falha via registro_fontes.falha() antes de dar raise
     except Exception as e:
+        from app.database import save_gemini_validation
+
+        save_gemini_validation(sucesso=False, status=500)
         logger.warning(f"Falha inesperada na validação do Gemini: {e}")
 
 

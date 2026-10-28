@@ -2,7 +2,7 @@
 id: 2026-10-28-spec-119b-invariante-banco
 severidade: media
 painel: app/services/validador_gemini.py
-status: aberto
+status: resolvido
 visto_em: 2026-10-28T12:00-03:00
 pr: 571
 ---
