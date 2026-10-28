@@ -50,7 +50,7 @@ def test_consultor_cache_logica():
     ts1 = calc_module._consultor_cache_time
     _ = calcular_consultor(ignorar_cache=False)
     ts2 = calc_module._consultor_cache_time
-    assert ts1 == ts2
+    assert ts1 == ts2  # ts2 isn't updated because cache hit returned early
 
 
 def test_api_consultor_duracao(monkeypatch):

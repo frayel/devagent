@@ -56,6 +56,9 @@ def test_consultor_html_casos(monkeypatch):
         conn.close()
 
     def get_html():
+        import app.consultor.calculador as calc
+
+        calc._consultor_cache = None  # Clean cache between calls for tests
         resp = client.get(
             "/consultor", headers={"Authorization": "Basic Y29uc3VsdG9yOjEyMw=="}
         )

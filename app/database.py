@@ -1608,58 +1608,110 @@ def get_latest_assimetria_risco_retorno_data() -> AssimetriaRiscoRetornoData | N
     return AssimetriaRiscoRetornoData(**payload_copy)
 
 
+_historico_diario_cache: dict = {}
+
+
+def invalidar_cache_historico(ticker: str):
+    global _historico_diario_cache
+    keys_to_delete = [k for k in _historico_diario_cache.keys() if ticker in k[0]]
+    for k in keys_to_delete:
+        del _historico_diario_cache[k]
+
+
 def get_historico_diario(
     tickers: list[str], range_str: str, interval: str, max_age_minutes: int = 15
 ) -> dict[str, dict]:
     from datetime import date, datetime, timedelta, timezone
-
-    result = {}
-    hoje = date.today()
-    inicio = hoje - timedelta(days=365 * 2)  # max
-
     from app.banco import ler_series
+    from app.calendario import mercado_aberto
+    import logging
 
-    series = ler_series(tickers, inicio, hoje)
-    for ticker, barras in series.items():
-        if barras:
-            closes = [b.get("close") for b in barras]
-            quote_dict = {"close": closes}
-            if "open" in barras[0]:
-                quote_dict["open"] = [b.get("open", 0) for b in barras]
-                quote_dict["high"] = [b.get("high", 0) for b in barras]
-                quote_dict["low"] = [b.get("low", 0) for b in barras]
-                quote_dict["volume"] = [b.get("volume", 0) for b in barras]
+    agora = datetime.now(timezone.utc)
+    is_aberto = mercado_aberto(agora)
 
-            timestamps = []
-            for b in barras:
-                data_str = b.get("data")
-                if data_str:
-                    try:
-                        # Pregões em BRT, fechamento às 17h para referência do timestamp, em UTC
-                        dt = datetime.strptime(data_str, "%Y-%m-%d").replace(
-                            hour=20, tzinfo=timezone.utc
-                        )
-                        timestamps.append(int(dt.timestamp()))
-                    except ValueError:
+    hoje = date.today()
+    if range_str == "1d":
+        inicio = hoje - timedelta(days=5)
+    elif range_str == "5d":
+        inicio = hoje - timedelta(days=10)
+    elif range_str == "1mo":
+        inicio = hoje - timedelta(days=35)
+    elif range_str == "3mo":
+        inicio = hoje - timedelta(days=100)
+    elif range_str == "6mo":
+        inicio = hoje - timedelta(days=190)
+    elif range_str == "1y":
+        inicio = hoje - timedelta(days=370)
+    elif range_str == "2y":
+        inicio = hoje - timedelta(days=730)
+    elif range_str == "ytd":
+        inicio = date(hoje.year, 1, 1) - timedelta(days=5)
+    elif range_str == "max":
+        inicio = hoje - timedelta(days=365 * 10)
+    else:
+        logging.warning(f"Range {range_str} desconhecido, usando 2y")
+        inicio = hoje - timedelta(days=730)
+
+    cache_key = (tuple(sorted(tickers)), range_str, interval)
+    if cache_key in _historico_diario_cache:
+        result = _historico_diario_cache[cache_key]
+    else:
+        result = {}
+        series = ler_series(tickers, inicio, hoje)
+        for ticker, barras in series.items():
+            if barras:
+                closes = [b.get("close") for b in barras]
+                quote_dict = {"close": closes}
+                if "open" in barras[0]:
+                    quote_dict["open"] = [b.get("open", 0) for b in barras]
+                    quote_dict["high"] = [b.get("high", 0) for b in barras]
+                    quote_dict["low"] = [b.get("low", 0) for b in barras]
+                    quote_dict["volume"] = [b.get("volume", 0) for b in barras]
+
+                timestamps = []
+                for b in barras:
+                    data_str = b.get("data")
+                    if data_str:
+                        try:
+                            dt = datetime.strptime(data_str, "%Y-%m-%d").replace(
+                                hour=20, tzinfo=timezone.utc
+                            )
+                            timestamps.append(int(dt.timestamp()))
+                        except ValueError:
+                            timestamps.append(1)
+                    else:
                         timestamps.append(1)
-                else:
-                    timestamps.append(1)
 
-            max_criado = ""
-            for b in barras:
-                criado = b.get("criado_em")
-                if criado and isinstance(criado, str) and criado > max_criado:
-                    max_criado = criado
+                max_criado = ""
+                for b in barras:
+                    criado = b.get("criado_em")
+                    if criado and isinstance(criado, str) and criado > max_criado:
+                        max_criado = criado
 
-            spark_like_item = {
-                "symbol": ticker,
-                "timestamp": timestamps,
-                "indicators": {"quote": [quote_dict]},
-                "metadata": {"criado_em": max_criado} if max_criado else {},
-            }
-            result[ticker] = spark_like_item
+                spark_like_item = {
+                    "symbol": ticker,
+                    "timestamp": timestamps,
+                    "indicators": {"quote": [quote_dict]},
+                    "metadata": {"criado_em": max_criado} if max_criado else {},
+                }
+                result[ticker] = spark_like_item
 
-    return result
+        _historico_diario_cache[cache_key] = result
+
+    final_result = {}
+    for ticker, spark_data in result.items():
+        if "metadata" in spark_data and "criado_em" in spark_data["metadata"]:
+            criado_em_str = spark_data["metadata"]["criado_em"]
+            try:
+                criado_em = datetime.fromisoformat(criado_em_str)
+                idade = (agora - criado_em).total_seconds() / 60.0
+                if is_aberto and idade > max_age_minutes:
+                    continue
+            except Exception:
+                pass
+        final_result[ticker] = spark_data
+
+    return final_result
 
 
 def save_historico_diario(
@@ -1693,6 +1745,7 @@ def save_historico_diario(
             barras.append(barra)
 
         gravar_serie(ticker, barras)
+        invalidar_cache_historico(ticker)
     except Exception:
         pass
 
