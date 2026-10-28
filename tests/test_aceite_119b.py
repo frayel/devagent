@@ -7,6 +7,7 @@ import pytest
 
 from app.services import validador_gemini
 from app.collectors import registro_fontes
+from app.database import get_latest_gemini_validacao
 
 
 @pytest.fixture(autouse=True)
@@ -33,6 +34,10 @@ def test_sucesso_na_validacao():
     assert f.recentes[-1] is True
     assert f.sucessos == 1
 
+    db_res = get_latest_gemini_validacao()
+    assert db_res is not None
+    assert db_res["valido"] is True
+
 
 def test_falha_na_validacao():
     with mock.patch(
@@ -56,6 +61,10 @@ def test_falha_na_validacao():
     assert f is not None
     assert f.recentes[-1] is False
     assert f.falhas == 1
+
+    db_res = get_latest_gemini_validacao()
+    assert db_res is not None
+    assert db_res["valido"] is False
 
 
 def test_ignorado_sem_chave():
