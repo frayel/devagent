@@ -1,3 +1,4 @@
+- Spec 121a entregue: Sistema de alertas na página `/sistema` ganhou campos `causa` e `acao` baseados na classificação dos detalhes do erro.
 # Estado do Sistema
 
 > **Coleta em produção (2026-09-27):** até esta data nenhuma coleta rodava em produção; o painel exibia "Dados não disponíveis". A coleta agora roda no próprio web service (`app/agendador.py`, ADR 004). Diagnóstico: `GET /api/coleta`.
