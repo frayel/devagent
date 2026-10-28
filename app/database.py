@@ -1877,3 +1877,17 @@ def get_simbolos_suspensos() -> list[dict]:
     from app.banco import get_simbolos_suspensos as _get_suspensos
 
     return _get_suspensos()
+
+
+def save_gemini_validacao(valido: bool, timestamp: datetime, detalhe: str) -> None:
+    from app.banco import gravar_snapshot
+
+    hoje = timestamp.astimezone(timezone.utc).date()
+    payload = {"valido": valido, "timestamp": timestamp.isoformat(), "detalhe": detalhe}
+    gravar_snapshot("validador_gemini", hoje, "ao_vivo", "Gemini", payload)
+
+
+def get_latest_gemini_validacao() -> dict | None:
+    from app.banco import ler_snapshot
+
+    return ler_snapshot("validador_gemini")
