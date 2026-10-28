@@ -239,3 +239,5 @@
 
 * spec 113b: Consultor em data passada exibe o resultado futuro da recomendação.
 - Redução de transferência de banco de dados no Neon (Spec 122).
+
+- Correcao brapi e spec 121b
