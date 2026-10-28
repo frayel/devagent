@@ -35,21 +35,42 @@ def collect_and_save() -> bool:
 
         if not response:
             return False
-        result = response.json().get("spark", {}).get("result", [])
+
+        json_resp = response.json()
+
+        if "spark" in json_resp:
+            result = json_resp.get("spark", {}).get("result", [])
+        else:
+            result = []
+            for sym, data in json_resp.items():
+                if isinstance(data, dict) and "symbol" in data:
+                    result.append(data)
+
         if not result:
             return False
 
         alertas = []
         for item in result:
-            ticker = item.get("symbol", "").replace(".SA", "")
-            if ticker not in PESOS:
-                continue
-            response_data = item.get("response", [])
-            if not response_data:
-                continue
-            meta = response_data[0].get("meta", {})
-            prev_close = meta.get("chartPreviousClose", meta.get("previousClose"))
-            regular_price = meta.get("regularMarketPrice")
+            if "spark" in json_resp:
+                ticker = item.get("symbol", "").replace(".SA", "")
+                if ticker not in PESOS:
+                    continue
+                response_data = item.get("response", [])
+                if not response_data:
+                    continue
+                meta = response_data[0].get("meta", {})
+                prev_close = meta.get("chartPreviousClose", meta.get("previousClose"))
+                regular_price = meta.get("regularMarketPrice")
+            else:
+                ticker = item.get("symbol", "").replace(".SA", "")
+                if ticker not in PESOS:
+                    continue
+                prev_close = item.get("chartPreviousClose", item.get("previousClose"))
+                close_prices = item.get("close", [])
+                regular_price = item.get("fulldayPrice")
+                if regular_price is None and close_prices:
+                    regular_price = close_prices[-1]
+
             if prev_close is None or regular_price is None:
                 continue
 

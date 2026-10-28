@@ -24,5 +24,6 @@ def get_correlacao_di_view_data() -> dict[str, Any] | None:
         "time": data.timestamp.astimezone(timezone(timedelta(hours=-3))).strftime(
             "%d/%m/%Y %H:%M:%S BRT"
         ),
+        "coletado_em": data.timestamp.isoformat(),
         "fonte": data.fonte,
     }
