@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- **Consultor**: Exibe recomendações e opiniões em datas passadas (spec 113)
 - Fix: Ibovespa daily variation falling back to incorrect previous close
 - Feat: brapi secondary source client module (spec 098)
 

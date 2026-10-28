@@ -1,7 +1,7 @@
 ---
 id: 113a
 titulo: Consultor numa data passada (exibição de recomendações e opiniões)
-status: ready
+status: done
 esforco: M
 gaveta: experiência
 aceite: tests/test_aceite_113a.py
