@@ -48,3 +48,5 @@
 - Verifiquei o PR 571 referente à entrega da Spec 119b.
 - A validação ativa da chave e exposição no sistema funcionam, mas falhou ao não persistir resultados na tabela de banco de dados conforme requerido pela invariante.
 - Achado criado: '2026-10-28-spec-119b-invariante-banco'. Próxima verificação focará nas correções da validação do Gemini.
+
+- 2026-10-28: verifiquei a Spec 121a (PR #574), encontrei falso positivo na classificação de erros de banco devido ao uso de "in" para "relation" (bate com dolar_correlation).
