@@ -234,3 +234,5 @@
 
 - Spec 090b: Tolerância a símbolo inválido
 - **108a**: Banco de dados devolve timestamps reais e data da coleta das séries.
+
+* spec 113b: Consultor em data passada exibe o resultado futuro da recomendação.

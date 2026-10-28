@@ -447,3 +447,7 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
 - Fixed Issue 531: Ibovespa implausible daily variation.
 - **108a**: Banco de dados devolve timestamps reais e data da coleta das séries.
 - **113a**: Consultor data passada exibicao (test_aceite_113a adicionado).
+
+## 2026-10-24: Consultor resultados passados
+- O sistema agora mostra o desempenho real de cada ativo avaliado em datas passadas contra o IBOV até 5 pregões.
+- A coleta automática roda também no fechamento para gravar esse histórico (spec 113b).

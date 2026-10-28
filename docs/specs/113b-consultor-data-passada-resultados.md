@@ -1,7 +1,7 @@
 ---
 id: 113b
 titulo: Consultor numa data passada (resultados e coleta diária)
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_113b.py
