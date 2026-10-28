@@ -39,7 +39,7 @@ def test_fetch_brapi_success():
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
         respx.get(
             httpx.URL(
-                "https://brapi.dev/api/quote/%5EBVSP?range=1y&interval=1d&fundamental=false"
+                "https://brapi.dev/api/quote/%5EBVSP?range=3mo&interval=1d&fundamental=false"
             )
         ).respond(status_code=200, json=brapi_data)
         data = fetch_brapi()
@@ -93,7 +93,7 @@ def test_collect_and_save_fallback():
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
         respx.get(
             httpx.URL(
-                "https://brapi.dev/api/quote/%5EBVSP?range=1y&interval=1d&fundamental=false"
+                "https://brapi.dev/api/quote/%5EBVSP?range=3mo&interval=1d&fundamental=false"
             )
         ).respond(status_code=500)
         respx.get(
@@ -122,7 +122,7 @@ def test_index_route():
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
         respx.get(
             httpx.URL(
-                "https://brapi.dev/api/quote/%5EBVSP?range=1y&interval=1d&fundamental=false"
+                "https://brapi.dev/api/quote/%5EBVSP?range=3mo&interval=1d&fundamental=false"
             )
         ).respond(status_code=200, json=brapi_data)
         respx.get(

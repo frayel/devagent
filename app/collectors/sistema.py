@@ -23,7 +23,8 @@ import os
 import re
 import subprocess
 import tomllib
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
+from app.banco import ler_snapshot, gravar_snapshot
 from pathlib import Path
 from typing import Any
 
@@ -314,6 +315,46 @@ def _erro(e: Exception) -> str:
     return str(e)[:200] or type(e).__name__
 
 
+_alertas_desde: dict[str, str] = {}
+
+
+def inicializar_alertas():
+    global _alertas_desde
+    try:
+        payload = ler_snapshot("sistema_alertas")
+        if payload and isinstance(payload, dict):
+            _alertas_desde = payload
+    except Exception as e:
+        logger.error(f"Erro ao ler snapshots de alertas: {e}")
+
+
+inicializar_alertas()
+
+
+def atualizar_alertas(itens: list):
+    global _alertas_desde
+    agora = datetime.now(timezone.utc).isoformat()
+    novos_alertas = {}
+    for g in itens:
+        for i in g.get("itens", []):
+            if i.get("nivel") in ("atencao", "problema", "inativo"):
+                chave = f"{g['titulo']}/{i['nome']}"
+                if chave in _alertas_desde:
+                    novos_alertas[chave] = _alertas_desde[chave]
+                else:
+                    novos_alertas[chave] = agora
+
+    mudou = _alertas_desde != novos_alertas
+    _alertas_desde = novos_alertas
+    if mudou:
+        try:
+            gravar_snapshot(
+                "sistema_alertas", date.today(), "ativo", "sistema", _alertas_desde
+            )
+        except Exception as e:
+            logger.error(f"Erro ao gravar snapshots de alertas: {e}")
+
+
 def atualizar(client: httpx.Client | None = None) -> None:
     """Refaz o retrato. Falha de uma parte não apaga o retrato anterior dela."""
     proprio = client is None
@@ -331,6 +372,31 @@ def atualizar(client: httpx.Client | None = None) -> None:
                 logger.warning("Monitor do sistema: %s falhou (%s)", parte, _erro(e))
                 retrato[f"{parte}_erro"] = _erro(e)
         retrato["atualizado_em"] = datetime.now(timezone.utc).isoformat()
+        from app.services.sistema import montar
+
+        try:
+            res = montar(
+                agora=datetime.now(timezone.utc),
+                inicio=datetime.now(timezone.utc),
+                remoto=retrato,
+                sha_local=None,
+                banco={"tipo": "sqlite"},
+                coleta_ligada=False,
+                estado_coleta={},
+                intervalo_coleta=datetime.now() - datetime.now(),
+                vazios={},
+                horas_vazios=0,
+                tempos={},
+                historico_pregoes=[],
+                fontes={},
+                pausa_mt5=None,
+                prontas=[],
+                monitor_ligado=False,
+            )
+            atualizar_alertas(res.get("grupos", []))
+        except Exception as e:
+            logger.error(f"Erro ao atualizar alertas_desde no monitor: {e}")
+        retrato["_alertas_desde"] = _alertas_desde
     finally:
         if proprio:
             client.close()

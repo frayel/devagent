@@ -121,11 +121,30 @@ def ler(
 
 
 def pendentes(dados: dict[str, Any], nivel: str) -> list[dict[str, Any]]:
-    return [
-        p
-        for p in (dados.get("geral") or {}).get("pendentes", [])
-        if p.get("nivel") == nivel
-    ]
+    from datetime import datetime, timezone, timedelta
+
+    agora = datetime.now(timezone.utc)
+
+    lista = []
+    for p in (dados.get("geral") or {}).get("pendentes", []):
+        n = p.get("nivel")
+        desde = p.get("desde")
+
+        efetivo = n
+        if n in ("atencao", "inativo") and desde:
+            try:
+                dt = datetime.fromisoformat(desde)
+                if agora - dt > timedelta(hours=24):
+                    efetivo = "problema"
+            except ValueError:
+                pass
+
+        if nivel == "problema" and efetivo == "problema":
+            lista.append(p)
+        elif nivel == "atencao" and efetivo == "atencao":
+            lista.append(p)
+
+    return lista
 
 
 def _linha(p: dict[str, Any]) -> str:
@@ -170,6 +189,7 @@ def corpo_da_issue(dados: dict[str, Any], endereco: str) -> str:
         "## Problemas",
         *[
             f"- **{p.get('grupo', '')} · {p.get('nome', '')}**: {p.get('resumo', '')}"
+            + (f"\n  (desde {p['desde']})" if p.get("desde") else "")
             + (f"\n  {p['detalhe']}" if p.get("detalhe") else "")
             + (f"\n  {p['link']}" if p.get("link") else "")
             for p in problemas

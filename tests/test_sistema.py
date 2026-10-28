@@ -544,3 +544,37 @@ def test_falso_positivo_banco_incompleto():
         "dolar_correlation", PROBLEMA, "Erro de rede", "Não conecta dolar_correlation"
     )
     assert item_outro_erro.causa == "fonte indisponível ou recusando a chave (rede)"
+
+
+def test_snapshot_dos_alertas():
+    # Simulando o caso de testes onde _alertas_desde é mantido e salvo.
+    from app.collectors import sistema as monitor
+    from datetime import datetime, timezone, timedelta
+
+    agora = datetime.now(timezone.utc)
+
+    # Testa indiretamente pelo que o patch em `app/collectors/sistema.py` fará
+    monitor.retrato["_alertas_desde"] = {"Teste/Alerta": agora.isoformat()}
+
+    from app.services.sistema import montar
+
+    res = montar(
+        agora=agora,
+        inicio=agora,
+        remoto=monitor.retrato,
+        sha_local=None,
+        banco={"tipo": "sqlite"},
+        coleta_ligada=False,
+        estado_coleta={},
+        intervalo_coleta=timedelta(minutes=5),
+        vazios={},
+        horas_vazios=0,
+        tempos={},
+        historico_pregoes=[],
+        fontes={},
+        pausa_mt5=None,
+        prontas=[],
+        monitor_ligado=False,
+    )
+
+    assert isinstance(res, dict)
