@@ -430,6 +430,52 @@ def pagina_consultor(
                         "mensagem_confianca": "histórico indisponível (pregão passado)",
                     }
                 )
+                from app.consultor.armazenamento import get_connection, init_db
+                from app.consultor.placar import _calcular_excesso
+
+                init_db()
+                c_conn, _ = get_connection()
+                try:
+                    cur = c_conn.cursor()
+                    cur.execute(
+                        "SELECT data_pregao FROM consultor_fechamentos ORDER BY data_pregao ASC"
+                    )
+                    dps = sorted(list(set([x[0] for x in cur.fetchall()])))
+                    dp_rec = row["timestamp"][:10]
+                    msg = "ainda sem resultado"
+                    if dp_rec in dps:
+                        idx = dps.index(dp_rec)
+                        offset = min(5, len(dps) - 1 - idx)
+                        if offset > 0:
+                            dp_futuro = dps[idx + offset]
+                            cur.execute(
+                                "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
+                                (dp_futuro, row["ticker"]),
+                            )
+                            p_futuro_row = cur.fetchone()
+                            cur.execute(
+                                "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
+                                (dp_rec, "^BVSP"),
+                            )
+                            ibov_hoje_row = cur.fetchone()
+                            cur.execute(
+                                "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
+                                (dp_futuro, "^BVSP"),
+                            )
+                            ibov_futuro_row = cur.fetchone()
+
+                            if p_futuro_row and ibov_hoje_row and ibov_futuro_row:
+                                p_futuro = p_futuro_row[0]
+                                ibov_hoje = ibov_hoje_row[0]
+                                ibov_futuro = ibov_futuro_row[0]
+                                excesso = _calcular_excesso(
+                                    row["preco"], p_futuro, ibov_hoje, ibov_futuro
+                                )
+                                sinal = "+" if excesso > 0 else ""
+                                msg = f"{sinal}{excesso * 100:.1f}% contra o IBOV em {offset} pregões"
+                finally:
+                    c_conn.close()
+                resultados[group][-1]["mensagem_confianca"] = msg
 
             from app.consultor.armazenamento import get_opinioes_historicas
 
@@ -631,6 +677,52 @@ def api_consultor(
                         "mensagem_confianca": "histórico indisponível (pregão passado)",
                     }
                 )
+                from app.consultor.armazenamento import get_connection, init_db
+                from app.consultor.placar import _calcular_excesso
+
+                init_db()
+                c_conn, _ = get_connection()
+                try:
+                    cur = c_conn.cursor()
+                    cur.execute(
+                        "SELECT data_pregao FROM consultor_fechamentos ORDER BY data_pregao ASC"
+                    )
+                    dps = sorted(list(set([x[0] for x in cur.fetchall()])))
+                    dp_rec = row["timestamp"][:10]
+                    msg = "ainda sem resultado"
+                    if dp_rec in dps:
+                        idx = dps.index(dp_rec)
+                        offset = min(5, len(dps) - 1 - idx)
+                        if offset > 0:
+                            dp_futuro = dps[idx + offset]
+                            cur.execute(
+                                "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
+                                (dp_futuro, row["ticker"]),
+                            )
+                            p_futuro_row = cur.fetchone()
+                            cur.execute(
+                                "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
+                                (dp_rec, "^BVSP"),
+                            )
+                            ibov_hoje_row = cur.fetchone()
+                            cur.execute(
+                                "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
+                                (dp_futuro, "^BVSP"),
+                            )
+                            ibov_futuro_row = cur.fetchone()
+
+                            if p_futuro_row and ibov_hoje_row and ibov_futuro_row:
+                                p_futuro = p_futuro_row[0]
+                                ibov_hoje = ibov_hoje_row[0]
+                                ibov_futuro = ibov_futuro_row[0]
+                                excesso = _calcular_excesso(
+                                    row["preco"], p_futuro, ibov_hoje, ibov_futuro
+                                )
+                                sinal = "+" if excesso > 0 else ""
+                                msg = f"{sinal}{excesso * 100:.1f}% contra o IBOV em {offset} pregões"
+                finally:
+                    c_conn.close()
+                resultados[group][-1]["mensagem_confianca"] = msg
             opinioes_historicas_api = get_opinioes_historicas(target_data or "")
             dados: dict[str, Any] = {
                 "resultados": resultados,

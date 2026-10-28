@@ -346,6 +346,7 @@ def test_mascara_token_no_estado(monkeypatch):
         "consultor_historico",
         "exaustao_queda",
         "fator_mola",
+        "consultor_fechamento",
     ):
         monkeypatch.setattr(f"app.collectors.{nome}.collect_and_save", lambda: True)
 

@@ -105,6 +105,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
         "clima_global": "pre_abertura",
         "consultor_opinioes": "continua",
         "consultor_historico": "semanal",
+        "consultor_fechamento": "fechamento",
     }
     agora_brt = datetime.now(timezone.utc).astimezone(BRT)
     esta_aberto = calendario.mercado_aberto(datetime.now(timezone.utc))
@@ -171,6 +172,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
         "assimetria_risco_retorno",
         "consultor_historico",
         "consultor_opinioes",
+        "consultor_fechamento",
     ):
         janela = janelas.get(nome, "pregao")
         deve_coletar = False
@@ -188,6 +190,14 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 agora_brt.time() >= time(7, 0) and agora_brt.time() <= FIM_PREGAO
             ):
                 deve_coletar = True
+        elif janela == "fechamento":
+            if (
+                eh_dia_pregao
+                and passou_do_fechamento
+                and agora_brt.time() <= time(20, 0)
+            ):
+                deve_coletar = True
+                estado_coleta = "final"
         else:  # pregao
             if esta_aberto:
                 deve_coletar = True
