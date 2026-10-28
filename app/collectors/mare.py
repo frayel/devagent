@@ -90,7 +90,7 @@ def _ibov_yahoo(client: httpx.Client) -> dict[date, float]:
 def _ibov_brapi(client: httpx.Client) -> dict[date, float]:
     from app.collectors import brapi
 
-    dados = brapi.cotacao("^BVSP", range="2y", interval="1d", fundamental="false")
+    dados = brapi.cotacao("^BVSP", range="3mo", interval="1d", fundamental="false")
     if not dados:
         return {}
     historico = dados.get("historicalDataPrice", [])

@@ -23,7 +23,7 @@ def fetch_brapi() -> IbovespaData | None:
     from app.collectors import brapi
 
     try:
-        result = brapi.cotacao("^BVSP", range="1y", interval="1d", fundamental="false")
+        result = brapi.cotacao("^BVSP", range="3mo", interval="1d", fundamental="false")
         if not result:
             logger.error("Invalid response from brapi")
             return None

@@ -52,6 +52,7 @@ class Item:
     resumo: str
     detalhe: str = ""
     quando: str | None = None  # ISO 8601
+    desde: str | None = None
     link: str | None = None
     causa: str = ""
     acao: str = ""
@@ -1001,6 +1002,18 @@ def montar(
     ]
     if workflows:
         grupos.append(_grupo("Workflows do GitHub", workflows))
+
+    if "_alertas_desde" in remoto:
+        for g in grupos:
+            for i in g["itens"]:
+                chave = f"{g['titulo']}/{i['nome']}"
+                if remoto["_alertas_desde"] and chave in remoto["_alertas_desde"]:
+                    i["desde"] = remoto["_alertas_desde"][chave]
+                    from datetime import datetime
+
+                    dt = datetime.fromisoformat(i["desde"])
+                    i["resumo"] = f"(desde {dt.strftime('%d/%m %H:%M')}) " + i["resumo"]
+
     return {
         "gerado_em": agora.isoformat(),
         "remoto_em": remoto.get("atualizado_em"),

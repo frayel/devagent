@@ -1,5 +1,3 @@
-"""Leitura da página de saúde de produção (ADR 016)."""
-
 import urllib.error
 
 import pytest
@@ -119,3 +117,30 @@ def test_main_sai_com_1_quando_ha_problema(monkeypatch, capsys):
 
     monkeypatch.setattr(saude, "ler", fora)
     assert saude.main([]) == 3
+
+
+def test_item_em_atencao_ha_mais_de_24h_vira_problema():
+    from datetime import datetime, timezone, timedelta
+
+    agora = datetime.now(timezone.utc)
+    antigo = (agora - timedelta(hours=25)).isoformat()
+    recente = (agora - timedelta(hours=23)).isoformat()
+
+    dados = {
+        "geral": {
+            "pendentes": [
+                {"nivel": "atencao", "grupo": "A", "nome": "1", "desde": antigo},
+                {"nivel": "atencao", "grupo": "A", "nome": "2", "desde": recente},
+                {"nivel": "atencao", "grupo": "A", "nome": "3"},
+            ]
+        }
+    }
+
+    problemas = saude.pendentes(dados, "problema")
+    assert len(problemas) == 1
+    assert problemas[0]["nome"] == "1"
+
+    atencoes = saude.pendentes(dados, "atencao")
+    assert len(atencoes) == 2
+    assert atencoes[0]["nome"] == "2"
+    assert atencoes[1]["nome"] == "3"

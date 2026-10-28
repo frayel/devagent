@@ -1,7 +1,7 @@
 ---
 id: 121b
 titulo: Persistência com issue de atenção prolongada no sistema de alertas
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_121b.py
