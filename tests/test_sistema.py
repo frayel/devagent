@@ -524,3 +524,23 @@ def test_item_classifica_causa_e_acao():
 
     item_desc = s.Item("W", s.PROBLEMA, "erro maluco")
     assert item_desc.causa == "causa não classificada"
+
+
+def test_falso_positivo_banco_incompleto():
+    from app.services.sistema import Item, OK, PROBLEMA
+
+    # Painel com "correlation" mas que está OK e não tem erro de banco
+    item_ok = Item(
+        "dolar_correlation", OK, "Resumo qualquer", "detalhe dolar_correlation"
+    )
+    assert item_ok.causa == ""
+
+    # Erro de banco autêntico
+    item_erro = Item("coleta", PROBLEMA, "Erro", "relation 'ativos' does not exist")
+    assert item_erro.causa == "esquema do banco incompleto"
+
+    # Erro qualquer que tem 'correlation' mas não é OK
+    item_outro_erro = Item(
+        "dolar_correlation", PROBLEMA, "Erro de rede", "Não conecta dolar_correlation"
+    )
+    assert item_outro_erro.causa == "fonte indisponível ou recusando a chave (rede)"

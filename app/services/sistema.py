@@ -66,7 +66,9 @@ class Item:
         elif m := re.search(r"http (5\d\d|429|401|403)", texto):
             self.causa = f"fonte indisponível ou recusando a chave (HTTP {m.group(1)})"
             self.acao = "aguardar, ou conferir a chave no Render"
-        elif any(x in texto for x in ("relation", "column", "does not exist")):
+        elif self.nivel != OK and re.search(
+            r"\b(relation|column|does not exist)\b", texto
+        ):
             self.causa = "esquema do banco incompleto"
             self.acao = "falta migração; ver spec do Consultor"
         elif "sem chamadas" in texto or "nunca chamada" in texto:
