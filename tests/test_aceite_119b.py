@@ -1,3 +1,4 @@
+import asyncio
 import os
 from unittest import mock
 
@@ -13,8 +14,7 @@ def _limpar_registro():
     registro_fontes.limpar()
 
 
-@pytest.mark.asyncio
-async def test_sucesso_na_validacao():
+def test_sucesso_na_validacao():
     with mock.patch(
         "app.services.validador_gemini.gemini_modelo._listar_modelos"
     ) as mock_listar:
@@ -26,7 +26,7 @@ async def test_sucesso_na_validacao():
         mock_listar.side_effect = fake_listar
 
         with mock.patch.dict(os.environ, {"GEMINI_API_KEY": "fake-key"}):
-            await validador_gemini.validar()
+            asyncio.run(validador_gemini.validar())
 
     f = registro_fontes.fontes().get("Gemini")
     assert f is not None
@@ -34,8 +34,7 @@ async def test_sucesso_na_validacao():
     assert f.sucessos == 1
 
 
-@pytest.mark.asyncio
-async def test_falha_na_validacao():
+def test_falha_na_validacao():
     with mock.patch(
         "app.services.validador_gemini.gemini_modelo._listar_modelos"
     ) as mock_listar:
@@ -51,7 +50,7 @@ async def test_falha_na_validacao():
         mock_listar.side_effect = fake_listar
 
         with mock.patch.dict(os.environ, {"GEMINI_API_KEY": "fake-key"}):
-            await validador_gemini.validar()
+            asyncio.run(validador_gemini.validar())
 
     f = registro_fontes.fontes().get("Gemini")
     assert f is not None
@@ -59,13 +58,12 @@ async def test_falha_na_validacao():
     assert f.falhas == 1
 
 
-@pytest.mark.asyncio
-async def test_ignorado_sem_chave():
+def test_ignorado_sem_chave():
     with mock.patch(
         "app.services.validador_gemini.gemini_modelo._listar_modelos"
     ) as mock_listar:
         with mock.patch.dict(os.environ, {}, clear=True):
-            await validador_gemini.validar()
+            asyncio.run(validador_gemini.validar())
 
     assert not mock_listar.called
     assert "Gemini" not in registro_fontes.fontes()
