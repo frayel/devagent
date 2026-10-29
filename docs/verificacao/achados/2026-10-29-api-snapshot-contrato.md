@@ -2,7 +2,7 @@
 id: 2026-10-29-api-snapshot-contrato
 severidade: media
 painel: /api/snapshot (exaustao_queda e exaustao_alta)
-status: aberto
+status: resolvido
 visto_em: 2026-10-29T10:15:00-03:00
 pr: 609
 ---

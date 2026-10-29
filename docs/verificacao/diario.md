@@ -53,3 +53,7 @@
 - Verifiquei o PR 609 (fix: resolve snapshot timeout from missing exaustao_queda key).
 - Identifiquei que, ao tentar resolver a ausência da chave, a inserção do código gerou um erro na montagem do JSON do `api/snapshot` por um timeout no teste, ou o dicionário retorna `{}`.
 - Embora o PR tenha resolvido o problema original e testes passem, a issue #608 indica que o endpoint `api/snapshot` sofreu "The read operation timed out" em produção. O timeout não é resolvido apenas adicionando chaves duplicadas.
+- Verifiquei o PR 617 (fix: corrige contrato api/snapshot).
+- Confirmada a resolução do achado '2026-10-29-api-snapshot-contrato'. O contrato agora respeita o ISO 8601 para as datas de `coletado_em` e garante a estrutura adequada para a falta de chaves em paineis.
+- Nenhum novo defeito foi introduzido.
+- Próxima verificação deve continuar observando regressões nas entregas seguintes.
