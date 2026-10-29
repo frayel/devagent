@@ -25,7 +25,14 @@ from datetime import datetime, timezone
 from typing import Any
 
 from devagent import saude
-from devagent.fila_specs import fila_da_revisao, instrucao, specs_prontas
+from devagent.fila_specs import (
+    LABELS_DE_PRODUCAO,
+    correcao_mergeada,
+    fila_da_revisao,
+    instrucao,
+    producao_pendente,
+    specs_prontas,
+)
 from devagent.raias import AUDITORIA, DESENVOLVIMENTO, do_agente, raia_do_titulo
 
 API = "https://api.github.com"
@@ -52,6 +59,27 @@ def _get(path: str) -> Any:
     req = urllib.request.Request(f"{API}{path}", headers=headers)
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.load(resp)
+
+
+def marcar_correcoes(repo: str, issues: list[dict[str, Any]]) -> None:
+    """Marca `correcao_mergeada` nas issues de produção, lendo os comentários.
+
+    É o código, não o agente, que decide se a issue espera só a verificação
+    (ADR 026). Sem acesso aos comentários, a issue fica pendente.
+    """
+    for i in issues:
+        if not set(i.get("labels", [])) & set(LABELS_DE_PRODUCAO):
+            continue
+        try:
+            comentarios = _get(
+                f"/repos/{repo}/issues/{i['numero']}/comments?per_page=100"
+            )
+        except (urllib.error.URLError, OSError, ValueError):
+            i["correcao_mergeada"] = False
+            continue
+        i["correcao_mergeada"] = correcao_mergeada(
+            [c.get("body") or "" for c in comentarios]
+        )
 
 
 def _horas(iso: str) -> float:
@@ -117,6 +145,7 @@ def coletar() -> dict[str, Any]:
         for i in _get(f"/repos/{repo}/issues?state=open&per_page=100")
         if "pull_request" not in i
     ]
+    marcar_correcoes(repo, issues)
     return {"repo": repo, "prs": prs, "issues": issues}
 
 
@@ -220,7 +249,7 @@ def main() -> int:
             "\n>> Existe PR do agente aberto: siga o Passo 2 (destravar o PR). "
             "Não comece trabalho novo."
         )
-    elif prontas:
+    elif prontas or producao_pendente(estado["issues"]):
         print(f"\n>> {instrucao(prontas, issues=estado['issues'])}")
     return 0
 

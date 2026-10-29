@@ -1,6 +1,6 @@
 import sqlite3
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 import os
 from datetime import datetime, timezone, timedelta
 
@@ -167,9 +167,10 @@ class MareData:
     fluxo: float | None
     calma: float | None
     volume: float | None
-    ativos_json: str
     historico_json: str
     fonte: str
+    # Heatmap da spec 123. Snapshots gravados antes dela não têm o campo.
+    ativos_json: str = "[]"
 
 
 @dataclass
@@ -958,7 +959,10 @@ def get_latest_mare_data() -> MareData | None:
     payload = ler_snapshot("mare")
     if not payload:
         return None
-    payload_copy = dict(payload)
+    # Só os campos que a dataclass conhece: snapshot de outra versão do
+    # coletor (campo novo ou removido) não pode derrubar a página (#592).
+    campos = {f.name for f in fields(MareData)}
+    payload_copy = {k: v for k, v in payload.items() if k in campos}
     if isinstance(payload_copy.get("timestamp"), str):
         payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
     return MareData(**payload_copy)

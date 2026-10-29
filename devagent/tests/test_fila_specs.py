@@ -161,7 +161,7 @@ def test_prompt_do_desenvolvedor_traz_a_prioridade(
     assert "Closes #418" in jules.prompt_de("desenvolvedor")
 
 
-# ADR 024: issue de produção aberta vai na frente, com número.
+# ADRs 024 e 026: issue de produção sem correção mesclada é a sessão inteira.
 def test_issue_de_producao_vai_na_frente(raiz: Path) -> None:
     issues = [
         {
@@ -172,6 +172,78 @@ def test_issue_de_producao_vai_na_frente(raiz: Path) -> None:
         {"numero": 9, "titulo": "x", "labels": ["sistema-com-problema", "bloqueado"]},
     ]
     texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, issues)
-    assert texto.startswith("Há issues de produção abertas (#534)")
+    assert texto.startswith(
+        "Há issues de produção abertas sem correção mesclada (#534)"
+    )
+    assert "corrigir a #534" in texto
+    assert "Closes #534" in texto
     assert "#9" not in texto
+    # A fila não compete com a produção quebrada (#577, 28/10).
+    assert "068b-regras.md" not in texto
+
+
+def test_producao_tira_a_prioridade_do_prompt(raiz: Path) -> None:
+    issues = [
+        {
+            "numero": 577,
+            "titulo": "Produção incorreta",
+            "labels": ["producao-incorreta"],
+        },
+        {"numero": 573, "titulo": "Gemini", "labels": ["prioridade"]},
+    ]
+    texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, issues)
+    assert "#577" in texto
+    assert "#573" not in texto
+
+
+def test_correcao_mergeada_devolve_a_fila(raiz: Path) -> None:
+    issues = [
+        {
+            "numero": 534,
+            "titulo": "Produção incorreta",
+            "labels": ["producao-incorreta"],
+            "correcao_mergeada": True,
+        }
+    ]
+    texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, issues)
+    assert texto.startswith("As issues de produção abertas (#534) já têm correção")
     assert "docs/specs/068b-regras.md" in texto
+
+
+def test_correcao_mergeada_le_os_comentarios() -> None:
+    marca = fila_specs.MARCA_CORRECAO
+    assert not fila_specs.correcao_mergeada([])
+    assert not fila_specs.correcao_mergeada(["<!-- falhas: a -->"])
+    assert fila_specs.correcao_mergeada(["<!-- falhas: a -->", f"PR #1 {marca}"])
+    # Falha nova depois da correção: volta a ser pendente.
+    assert not fila_specs.correcao_mergeada(
+        [f"PR #1 {marca}", "**A correção mergeada não resolveu:** ..."]
+    )
+    assert not fila_specs.correcao_mergeada(
+        [f"PR #1 {marca}", "Os problemas mudaram. A descrição foi atualizada."]
+    )
+    assert fila_specs.correcao_mergeada(
+        [f"PR #1 {marca}", "comentário qualquer", f"PR #2 {marca}"]
+    )
+
+
+def test_marcar_correcoes_so_le_issues_de_producao(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from devagent import estado_github
+
+    lidas: list[str] = []
+
+    def get(caminho: str) -> list[dict[str, str]]:
+        lidas.append(caminho)
+        return [{"body": f"PR #1 {fila_specs.MARCA_CORRECAO}"}]
+
+    monkeypatch.setattr(estado_github, "_get", get)
+    issues = [
+        {"numero": 1, "labels": ["producao-incorreta"]},
+        {"numero": 2, "labels": ["bug"]},
+    ]
+    estado_github.marcar_correcoes("dono/repo", issues)
+    assert issues[0]["correcao_mergeada"] is True
+    assert "correcao_mergeada" not in issues[1]
+    assert lidas == ["/repos/dono/repo/issues/1/comments?per_page=100"]

@@ -52,7 +52,7 @@ from typing import Any
 from devagent.conferir_pr import documentos, entradas_correcoes
 from devagent.config import PROJETO
 from devagent.estado_github import _get as github_get
-from devagent.estado_github import eh_do_agente, status_ci
+from devagent.estado_github import eh_do_agente, marcar_correcoes, status_ci
 from devagent.fila_specs import (
     LABEL_PRIORIDADE,
     LABEL_TENTATIVA,
@@ -607,7 +607,9 @@ def issues_de_prioridade() -> list[dict[str, Any]]:
 
 
 def issues_de_producao() -> list[dict[str, Any]]:
-    return [i for label in LABELS_DE_PRODUCAO for i in issues_com_label(label)]
+    issues = [i for label in LABELS_DE_PRODUCAO for i in issues_com_label(label)]
+    marcar_correcoes(PROJETO["repositorio"], issues)
+    return issues
 
 
 def prompt_de(persona: str) -> str:
