@@ -208,6 +208,7 @@ class Leitura:
     componentes: dict[str, float | None]
     pesos: dict[str, float] = field(default_factory=dict)
     ausentes: list[str] = field(default_factory=list)
+    heatmap: list[dict] = field(default_factory=list)
 
 
 def _acoes_validas(
@@ -252,6 +253,7 @@ class _Calculadora:
 
     def leitura(self, dia: date, fracao: float) -> Leitura:
         fluxo = volume = None
+        heatmap: list[dict[str, float | str]] = []
         if self.amostra_ok and dia in self.financeiro:
             pares = self._variacoes(dia)
             fluxo = componente_fluxo(pares)
@@ -271,9 +273,33 @@ class _Calculadora:
             volume = componente_volume(
                 self.financeiro[dia], media, fracao, altas, baixas
             )
+
+            ativos: list[dict[str, float | str]] = []
+            for ticker, serie in self.acoes.items():
+                if dia not in serie:
+                    continue
+                anteriores = [d for d in serie if d < dia]
+                if not anteriores:
+                    continue
+                fech_ant = serie[max(anteriores)][0]
+                fech, vol = serie[dia]
+                if fech_ant > 0:
+                    ativos.append(
+                        {
+                            "ticker": ticker,
+                            "variacao": float((fech / fech_ant - 1) * 100),
+                            "financeiro": float(fech * vol),
+                        }
+                    )
+            ativos.sort(key=lambda x: float(x["financeiro"]), reverse=True)  # type: ignore
+            total_fin = sum(float(a["financeiro"]) for a in ativos[:10])  # type: ignore
+            for i, a in enumerate(ativos[:10]):
+                a["peso"] = float(a["financeiro"]) / total_fin if total_fin > 0 else 0.0  # type: ignore
+                heatmap.append(a)
+
         componentes = {"fluxo": fluxo, "calma": self._calma(dia), "volume": volume}
         valor, pesos, ausentes = indice(componentes)
-        return Leitura(dia, valor, componentes, pesos, ausentes)
+        return Leitura(dia, valor, componentes, pesos, ausentes, heatmap)
 
 
 def calcular(
@@ -326,6 +352,7 @@ def snapshot(dado: Any) -> dict[str, Any]:
         "pesos": {k: round(v, 4) for k, v in pesos.items()},
         "parcial": bool(ausentes),
         "ausentes": ausentes,
+        "heatmap": json.loads(getattr(dado, "ativos_json", "[]") or "[]"),
         "historico": json.loads(dado.historico_json or "[]"),
     }
 
@@ -355,6 +382,7 @@ def view(dado: Any) -> dict[str, Any] | None:
             for k in ("fluxo", "calma", "volume")
         ],
         "parcial": snap["parcial"],
+        "heatmap": snap.get("heatmap", []),
         "ausentes": ", ".join(NOMES[k] for k in snap["ausentes"]),
         "sparkline": build_sparkline(serie),
         "resumo_serie": (

@@ -56,6 +56,19 @@
             </div>
             {% endfor %}
         </div>
+        {% if mare.heatmap %}
+        <div class="heatmap" style="display: flex; flex-wrap: wrap; gap: 2px; margin-top: var(--e3);">
+            {% for ativo in mare.heatmap %}
+            {% set cor = 'var(--cor-alta)' if ativo.variacao > 0 else 'var(--cor-baixa)' if ativo.variacao < 0 else 'var(--cor-neutro)' %}
+            <div title="{{ ativo.ticker }}: {{ '%.2f' | format(ativo.variacao) | replace('.', ',') }}%"
+                 style="flex-grow: {{ ativo.peso }}; width: max(30px, {{ ativo.peso * 100 }}%); background-color: {{ cor }};
+                        opacity: {{ 0.3 + 0.7 * ([ativo.variacao|abs / 5, 1]|min) }};
+                        color: white; font-size: 0.7rem; text-align: center; padding: 4px 2px; border-radius: 2px; overflow: hidden; white-space: nowrap;">
+                {{ ativo.ticker }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
         {% if mare.sparkline %}
         <div class="spark">
             <svg viewBox="0 0 200 48" preserveAspectRatio="none" role="img" aria-label="{{ mare.resumo_serie }}"><polyline class="spark-linha" points="{{ mare.sparkline.pontos }}"/></svg>
