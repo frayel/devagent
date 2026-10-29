@@ -1,0 +1,47 @@
+--- app/main.py
++++ app/main.py
+@@ -141,6 +141,10 @@
+
+ @app.middleware("http")
+ async def add_security_headers(request: Request, call_next):
++    import secrets
++
++    nonce = secrets.token_urlsafe(16)
++    request.state.nonce = nonce
+     response = await call_next(request)
+     response.headers["X-Content-Type-Options"] = "nosniff"
+     response.headers["X-Frame-Options"] = "DENY"
+@@ -152,7 +156,7 @@
+     response.headers["Content-Security-Policy"] = (
+         "default-src 'self'; "
+         "script-src 'self' https://unpkg.com https://cdn.plot.ly; "
+-        "style-src 'self' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=' 'sha256-pgn1TCGZX6O77zDvy0oTODMOxemn0oj0LeCnQTRj7Kg='; "
++        f"style-src 'self' 'nonce-{nonce}' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=' 'sha256-pgn1TCGZX6O77zDvy0oTODMOxemn0oj0LeCnQTRj7Kg='; "
+         "img-src 'self' data:; "
+         "object-src 'none'; "
+         "base-uri 'self'; "
+--- app/templates/index.html
++++ app/templates/index.html
+@@ -57,14 +57,18 @@
+             </div>
+         </div>
+         {% if mare.heatmap %}
+-        <div class="heatmap" style="display: flex; flex-wrap: wrap; gap: 2px; margin-top: var(--e3);">
++        <style nonce="{{ request.state.nonce }}">
++            .heatmap { display: flex; flex-wrap: wrap; gap: 2px; margin-top: var(--e3); }
++            {% for ativo in mare.heatmap %}
++            {% set cor = 'var(--cor-alta)' if ativo.variacao > 0 else 'var(--cor-baixa)' if ativo.variacao < 0 else 'var(--cor-neutro)' %}
++            .hm-{{ loop.index }} { flex-grow: {{ ativo.peso }}; width: max(30px, {{ ativo.peso * 100 }}%); background-color: {{ cor }}; opacity: {{ 0.3 + 0.7 * ([ativo.variacao|abs / 5, 1]|min) }}; color: white; font-size: 0.7rem; text-align: center; padding: 4px 2px; border-radius: 2px; overflow: hidden; white-space: nowrap; }
++            {% endfor %}
++        </style>
++        <div class="heatmap">
+             {% for ativo in mare.heatmap %}
+-            {% set cor = 'var(--cor-alta)' if ativo.variacao > 0 else 'var(--cor-baixa)' if ativo.variacao < 0 else 'var(--cor-neutro)' %}
+             <div title="{{ ativo.ticker }}: {{ '%.2f' | format(ativo.variacao) | replace('.', ',') }}%"
+-                 style="flex-grow: {{ ativo.peso }}; width: max(30px, {{ ativo.peso * 100 }}%); background-color: {{ cor }};
+-                        opacity: {{ 0.3 + 0.7 * ([ativo.variacao|abs / 5, 1]|min) }};
+-                        color: white; font-size: 0.7rem; text-align: center; padding: 4px 2px; border-radius: 2px; overflow: hidden; white-space: nowrap;">
++                 class="hm-{{ loop.index }}">
+                 {{ ativo.ticker }}
+             </div>
+             {% endfor %}

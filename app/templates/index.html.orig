@@ -1,0 +1,955 @@
+{% extends "base.html" %}
+{% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado, gauge, sparkline %}
+
+{% block content %}
+<!-- Manchete Dinâmica -->
+<div class="span-12 manchete-container">
+    <p class="manchete-texto texto-centro">{{ manchete }}</p>
+</div>
+
+<div class="span-12" id="abas-navegacao">
+    <button class="aba-btn ativo" data-aba="visao-geral">Visão Geral</button>
+    <button class="aba-btn" data-aba="sentimento-risco">Sentimento & Risco</button>
+    <button class="aba-btn" data-aba="rankings">Rankings & Destaques</button>
+    <button class="aba-btn" data-aba="alertas">Alertas Intraday</button>
+    <button class="aba-btn aba-sinais" data-aba="sinais">Só Sinais</button>
+    <button class="aba-btn aba-densidade" id="btn-densidade">Compacto</button>
+</div>
+
+<!-- Linha 1: Ibovespa e Maré do mercado -->
+{% call painel("Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "", "visao-macro painel-ibovespa visao-geral") %}
+    {% if data %}
+        {{ kpi(data.current_price|default("") + " pontos", "", (variacao((data.variation ~ " (" ~ data.variation_percent ~ ")") | e, data.variation_raw|default(0))) | safe, True) }}
+        {% if data.history_dict and data.history_dict.dates %}
+        <div id="grafico-ibovespa" class="grafico"
+             data-dates='{{ data.history_dict.dates | tojson | e }}'
+             data-closes='{{ data.history_dict.closes | tojson | e }}'
+             data-is-positive='{{ 'true' if data.is_positive else 'false' }}' role="img" aria-label="{{ data.get('resumo_serie', '') }}">
+        </div>
+        {% endif %}
+        {% if data.mm21 or data.mm200 %}
+        <div class="gauges espaco-topo">
+            <div>{{ gauge(data.mm21_dist_pct, "MM21 " ~ data.mm21 if data.mm21 else "MM21", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 21 pregões", escala=False) }}</div>
+            <div>{{ gauge(data.mm200_dist_pct, "MM200 " ~ data.mm200 if data.mm200 else "MM200", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 200 pregões", escala=False) }}</div>
+        </div>
+        <div class="g-escala num"><span>-10%</span><span>+10%</span></div>
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Maré do mercado", 4, "Índice de 0 a 100. Fluxo (40%): parcela do volume financeiro da cesta de 30 ações que foi para ações em alta, uma aproximação do fluxo de ordens, que não tem fonte gratuita. Calma (35%): 100 menos o percentil da volatilidade de queda de 10 pregões do Ibovespa nos 252 anteriores; só os dias de queda contam, então uma alta forte não reduz a calma. Volume (25%): ritmo do volume contra a média de 21 pregões, ajustado pela hora do pregão, no sentido da maioria. A Maré descreve o humor do momento. Não é recomendação de compra ou venda.", mare.fonte if mare else "", mare.time if mare else "", "visao-macro painel-mare visao-geral") %}
+    {% if mare %}
+        {% if mare.parcial %}<span class="selo alerta">parcial · sem {{ mare.ausentes }}</span>{% endif %}
+        {{ gauge(mare.valor, "", 0, 100, "{:.0f}", faixas=mare.faixas, resumo="Maré do mercado, de 0 a 100", grande=False, escala=["0", "100"]) }}
+        <div class="mare-componentes">
+            {% for c in mare.componentes %}
+            <div class="comp">
+                <span>{{ c.nome }} <span class="comp-peso num">{{ c.peso }}%</span></span>
+                {% if c.valor is none %}
+                <span class="comp-ausente">ausente</span><span></span>
+                {% else %}
+                <svg class="comp-barra" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="comp-trilho" width="100" height="6"/><rect class="comp-valor" width="{{ c.valor }}" height="6"/></svg>
+                <span class="num comp-num">{{ c.valor }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% if mare.heatmap %}
+        <div class="heatmap" style="display: flex; flex-wrap: wrap; gap: 2px; margin-top: var(--e3);">
+            {% for ativo in mare.heatmap %}
+            {% set cor = 'var(--cor-alta)' if ativo.variacao > 0 else 'var(--cor-baixa)' if ativo.variacao < 0 else 'var(--cor-neutro)' %}
+            <div title="{{ ativo.ticker }}: {{ '%.2f' | format(ativo.variacao) | replace('.', ',') }}%"
+                 style="flex-grow: {{ ativo.peso }}; width: max(30px, {{ ativo.peso * 100 }}%); background-color: {{ cor }};
+                        opacity: {{ 0.3 + 0.7 * ([ativo.variacao|abs / 5, 1]|min) }};
+                        color: white; font-size: 0.7rem; text-align: center; padding: 4px 2px; border-radius: 2px; overflow: hidden; white-space: nowrap;">
+                {{ ativo.ticker }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if mare.sparkline %}
+        <div class="spark">
+            <svg viewBox="0 0 200 48" preserveAspectRatio="none" role="img" aria-label="{{ mare.resumo_serie }}"><polyline class="spark-linha" points="{{ mare.sparkline.pontos }}"/></svg>
+            {% if mare.comparacao %}<span class="num">{{ mare.comparacao }}</span>{% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+    {% if apetite_risco or rotacao_capital %}
+    <div class="gauges-pequenos espaco-topo">
+        {% if apetite_risco %}
+        <div class="texto-centro">
+            {% set apetite_class = 'texto-alta' if apetite_risco.estado == 'Tomando risco' else 'texto-baixa' if apetite_risco.estado == 'Defensivo' else 'texto-neutro' %}
+            {% set apetite_valor = ('<span class="' ~ apetite_class ~ ' texto-medio">' ~ apetite_risco.estado ~ '</span>') | safe %}
+            {% set apetite_rotulo = 'Apetite a Risco <span class="sub bloco">(SMLL - IBOV)</span>' | safe %}
+            {{ kpi(apetite_valor, apetite_rotulo, gauge(apetite_risco.diferenca, "SMLL − IBOV hoje", -2.0, 2.0, "{:+.2f} p.p.", divergente=True, resumo="Small caps menos Ibovespa hoje", escala=False), True) }}
+        </div>
+        {% endif %}
+
+        {% if rotacao_capital %}
+        <div class="texto-centro">
+            {% set rotacao_class = 'texto-alta' if rotacao_capital.estado == 'Para Bancos' or rotacao_capital.estado == 'Para Commodities' else 'texto-neutro' %}
+            {% set rotacao_valor = ('<span class="' ~ rotacao_class ~ ' texto-medio">' ~ rotacao_capital.estado ~ '</span>') | safe %}
+            {% set rotacao_rotulo = 'Rotação <span class="sub bloco">(Bancos - Cmdts)</span>' | safe %}
+            {{ kpi(rotacao_valor, rotacao_rotulo, gauge(rotacao_capital.diferenca, "bancos − commodities", -3.0, 3.0, "{:+.2f} p.p.", divergente=True, resumo="Variação de bancos menos commodities hoje", escala=["Para Commodities", "Para Bancos"]), True) }}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+{% endcall %}
+
+{% call painel("Clima Global", 6, "", clima_global.fonte if clima_global else "", clima_global.timestamp.strftime('%d/%m/%Y %H:%M:%S BRT') if clima_global else "", "painel-clima-global visao-geral escondido" if not clima_global else "painel-clima-global visao-geral") %}
+    {% if clima_global %}
+        <div class="conteudo-centralizado">
+            {% set color_class = 'neutra' %}
+            {% if clima_global.status == 'Apetite a Risco' %}
+                {% set color_class = 'alta' %}
+            {% elif clima_global.status == 'Aversão a Risco' %}
+                {% set color_class = 'baixa' %}
+            {% endif %}
+            <div class="destaque {{ color_class }}">{{ clima_global.status }}</div>
+            <div class="kpi-group">
+                {{ kpi("", "S&P 500 Fut", (variacao(("{:+.2f}%".format(clima_global.sp500_pct).replace('.', ',')) | e, clima_global.sp500_pct)) | safe) }}
+                {{ kpi("", "VIX", (variacao(("{:+.2f}%".format(clima_global.vix_pct).replace('.', ',')) | e, clima_global.vix_pct)) | safe) }}
+            </div>
+        </div>
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% set motores_span = 6 if clima_global else 12 %}
+{% call painel("Motores do Índice", motores_span, "Desempenho dos 3 principais grupos de ações que ditam o rumo do Ibovespa.", "B3", "", "painel-motores-indice visao-geral escondido" if not motores_cards else "painel-motores-indice visao-geral") %}
+    {% if motores_cards %}
+        <div class="motores-grid">
+            {% for motor in motores_cards %}
+            <div class="motor-card">
+                {{ kpi("", motor.nome, (variacao(("{:+.2f}%".format(motor.variacao).replace('.', ',')) | e, motor.variacao)) | safe) }}
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro sentimento-risco") %}
+    {% if highlights and highlights.dispersion_pct is not none %}
+        {{ gauge(highlights.dispersion_pct, "em alta", 0, 100, "{:.0f}%", resumo="Dispersão, ações em alta") }}
+        <div class="legenda num">
+            <span>{{ highlights.up_count }} subiram</span>
+            <span>{{ highlights.down_count }} caíram</span>
+        </div>
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Índice de Coesão", 4, "Das 10 ações mais pesadas do Ibovespa, quantas estão na mesma direção (alta ou baixa) do índice hoje.", coesao.fonte if coesao else "", coesao.time if coesao else "", "visao-macro sentimento-risco") %}
+    {% if coesao %}
+        {{ gauge(coesao.concordantes, coesao.estado, 0, coesao.total, "{:.0f}", resumo="Índice de Coesão, ações na direção do índice", cor=coesao.cor, escala=["0", coesao.total ~ " ações"]) }}
+        <p class="sub texto-centro">{{ coesao.proporcao }} na mesma direção do Ibovespa</p>
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Fator Peso Pesado", 4, "Mostra a proporção do movimento do Ibovespa no dia que é explicada apenas pelas 5 ações de maior peso (VALE3, PETR4, ITUB4, PETR3, BBAS3). Calculado pela soma da contribuição em pontos de cada uma (variação % * peso da ação) sobre a variação total do índice.", fator_peso_pesado_data.fonte if fator_peso_pesado_data else "", fator_peso_pesado_data.coletado_em if fator_peso_pesado_data else "", "visao-macro visao-geral") %}
+    {% if fator_peso_pesado_data %}
+        {% if fator_peso_pesado_data.mercado_lateral %}
+            {{ kpi("Mercado lateral", "", "do movimento do Ibovespa é explicado pelas 5 maiores ações (VALE, PETR e ITUB)") }}
+        {% else %}
+            {% set prop = fator_peso_pesado_data.proporcao %}
+            {% if prop > 0 %}
+                {% set val = "+" ~ ('%.1f' % prop).replace('.', ',') ~ "%" %}
+            {% elif prop < 0 %}
+                {% set val = ('%.1f' % prop).replace('.', ',') ~ "%" %}
+            {% else %}
+                {% set val = "0,0%" %}
+            {% endif %}
+            {{ kpi(val, "", '<div class="texto-2 espaco-topo-curto">do movimento do Ibovespa é explicado pelas 5 maiores ações (VALE, PETR e ITUB)</div>' | safe, is_hero=True) }}
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+<!-- Linha 3: humor e rotação do dia -->
+
+{% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje, e qual atrai mais volume financeiro.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial visao-geral escondido' if not concentracao_setorial else 'visao-macro painel-concentracao-setorial visao-geral') %}
+  {% if not concentracao_setorial %}
+    {{ estado('indisponivel') }}
+  {% else %}
+    <div class="duas">
+      {% if concentracao_setorial.variacao_media <= 0 %}
+        <div class="kpi-container alinha-centro">
+          {{ kpi("Nenhum setor em alta", "", ('<p class="sub">Melhor média: ' ~ concentracao_setorial.setor_destaque ~ ', ' ~ ("%.2f"|format(concentracao_setorial.variacao_media)).replace('.', ',') ~ '%</p>') | safe) }}
+        </div>
+      {% else %}
+        <div class="kpi-container alinha-centro">
+          {{ kpi(concentracao_setorial.setor_destaque, "", (variacao(("{:+.2f}%".format(concentracao_setorial.variacao_media).replace('.', ',')) | e, concentracao_setorial.variacao_media) | safe) ~ '<p class="sub">Líder em alta</p>' | safe) }}
+        </div>
+      {% endif %}
+
+      {% set volume_str %}
+          {% if concentracao_setorial and concentracao_setorial.get('volume_lider', 0.0) >= 1000000000 %}
+            R$ {{ ("%.2f"|format(concentracao_setorial.get('volume_lider', 0.0) / 1000000000)).replace('.', ',') }} bi
+          {% elif concentracao_setorial and concentracao_setorial.get('volume_lider', 0.0) >= 1000000 %}
+            R$ {{ ("%.2f"|format(concentracao_setorial.get('volume_lider', 0.0) / 1000000)).replace('.', ',') }} mi
+          {% elif concentracao_setorial %}
+            R$ {{ ("%.2f"|format(concentracao_setorial.get('volume_lider', 0.0))).replace('.', ',') }}
+          {% else %}
+            R$ 0,00
+          {% endif %}
+      {% endset %}
+      <div class="kpi-container alinha-centro">
+        {{ kpi(concentracao_setorial.get('setor_lider_volume', 'N/A') or 'N/A', "Maior volume (R$)", (volume_str | safe)) }}
+      </div>
+    </div>
+  {% endif %}
+{% endcall %}
+
+{% call painel("Pressão Vendedora", 12, "Mostra a contribuição dos 5 ativos com o pior desempenho absoluto para a queda do Ibovespa no dia atual.", concentracao_vendedora.fonte if concentracao_vendedora else "", concentracao_vendedora.time if concentracao_vendedora else "", "visao-macro visao-geral escondido" if not concentracao_vendedora else "visao-macro visao-geral") %}
+    {% if concentracao_vendedora %}
+        <div class="destaque-texto">{{ concentracao_vendedora.resumo.mensagem }}</div>
+        {% set linhas = [] %}
+        {% for a in concentracao_vendedora.top3 %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': ("%.0f pts"|format(a.pontos))},
+                {'num': True, 'conteudo': ("%.0f%%"|format(a.peso * 100))}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Impacto', 'num': True}, {'titulo': 'Peso Est.', 'num': True}], 'a') }}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Concentração de Ganhos", 12, "Mostra quantas ações explicam 50% dos pontos de variação do índice hoje.", concentracao.fonte if concentracao else "", concentracao.time if concentracao else "", "visao-macro visao-geral escondido" if not concentracao else "visao-macro visao-geral") %}
+    {% if concentracao %}
+        {% if concentracao.resumo.estado == 'estavel' %}
+            <div class="vazio">{{ concentracao.resumo.mensagem }}</div>
+        {% else %}
+            <div class="destaque-texto">{{ concentracao.resumo.mensagem }}</div>
+            {% set linhas = [] %}
+            {% for a in concentracao.top3 %}
+                {% set celulas = [
+                    {'tk': True, 'conteudo': a.ticker},
+                    {'num': True, 'conteudo': ("%.0f pts"|format(a.pontos))},
+                    {'num': True, 'conteudo': ("%.0f%%"|format(a.peso * 100))}
+                ] %}
+                {% set _ = linhas.append(celulas) %}
+            {% endfor %}
+            {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Impacto', 'num': True}, {'titulo': 'Peso Est.', 'num': True}], 'a') }}
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Maiores altas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro rankings") %}
+    {% if highlights and highlights.highs %}
+        {% set linhas = [] %}
+        {% for a in highlights.highs %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': a.price_formatted},
+                {'num': True, 'barra': True, 'valor_barra': a.change_percent, 'conteudo': variacao((a.change_percent_formatted) | e, a.change_percent)},
+                {'conteudo': sparkline(a.sparkline, "Evolução de " ~ a.ticker)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}, {'titulo': '10d'}], 'a') }}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Maiores baixas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro rankings") %}
+    {% if highlights and highlights.lows %}
+        {% set linhas = [] %}
+        {% for a in highlights.lows %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': a.price_formatted},
+                {'num': True, 'barra': True, 'valor_barra': (a.change_percent * -1) if a.change_percent < 0 else a.change_percent, 'conteudo': variacao((a.change_percent_formatted) | e, a.change_percent)},
+                {'conteudo': sparkline(a.sparkline, "Evolução de " ~ a.ticker)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}, {'titulo': '10d'}], 'b') }}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+<!-- Linha Força Relativa -->
+{% call painel("Força Relativa (30 dias)", 4, "Comparação da rentabilidade acumulada de 30 ações de alta liquidez frente ao Ibovespa em 30 pregões.", forca_relativa.fonte if forca_relativa else "", forca_relativa.time if forca_relativa else "", "visao-micro rankings") %}
+    {% if forca_relativa %}
+        {% set linhas = [] %}
+        {% set linha_maior = [
+            {'tk': True, 'conteudo': forca_relativa.maior.ticker},
+            {'num': True, 'barra': True, 'valor_barra': forca_relativa.maior.forca_relativa * 100, 'conteudo': variacao(((("%.2f" | format(forca_relativa.maior.forca_relativa * 100)).replace('.', ',') ~ "%")) | e, forca_relativa.maior.forca_relativa)},
+            {'conteudo': sparkline(forca_relativa.maior.sparkline_svg, "Evolução de " ~ forca_relativa.maior.ticker)}
+        ] %}
+        {% set _ = linhas.append(linha_maior) %}
+        {% set linha_menor = [
+            {'tk': True, 'conteudo': forca_relativa.menor.ticker},
+            {'num': True, 'barra': True, 'valor_barra': forca_relativa.menor.forca_relativa * 100, 'conteudo': variacao(((("%.2f" | format(forca_relativa.menor.forca_relativa * 100)).replace('.', ',') ~ "%")) | e, forca_relativa.menor.forca_relativa)},
+            {'conteudo': sparkline(forca_relativa.menor.sparkline_svg, "Evolução de " ~ forca_relativa.menor.ticker)}
+        ] %}
+        {% set _ = linhas.append(linha_menor) %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'vs IBOV', 'num': True}, {'titulo': '10d'}], 'forca-relativa') }}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel('Inflexão de Tendência', 4, 'Ações que caíram >5% em 15 dias, mas hoje revertem com alta > 2%.', radar_inflexao.fonte if radar_inflexao else '', radar_inflexao.coletado_em if radar_inflexao else '', 'visao-micro rankings') %}
+    {% if not radar_inflexao %}
+        {{ estado('indisponivel') }}
+    {% elif not radar_inflexao.alertas %}
+        <div class="vazio">Nenhuma ação com inflexão no momento.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in radar_inflexao.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': variacao((('+' ~ a.variacao_hoje ~ '%')) | e, a.variacao_hoje)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Variação', 'num': True}], 'radar-inflexao') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel('Anomalia de Peso', 4, 'Ações que mais impactam o Ibovespa no dia (estimativa em pontos).', anomalia_peso.fonte if anomalia_peso else '', anomalia_peso.coletado_em if anomalia_peso else '', 'visao-micro rankings escondido' if not anomalia_peso else 'visao-micro rankings') %}
+    {% if not anomalia_peso %}
+        {{ estado('indisponivel') }}
+    {% elif not anomalia_peso.alertas %}
+        <div class="vazio">Nenhuma anomalia no momento.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in anomalia_peso.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': variacao((('+' if a.impacto > 0 else '') ~ ('%.2f'|format(a.impacto)).replace('.', ',') ~ ' pts') | e, a.impacto)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Impacto', 'num': True}], 'anomalia-peso') }}
+    {% endif %}
+{% endcall %}
+
+
+{% if (not volume_alerts or not volume_alerts.alerts) and (not variacao_subita or not variacao_subita.alertas) and (not concentracao_ordens or not concentracao_ordens.alertas) and (not exaustao_queda or not exaustao_queda.alertas) and (not exaustao_alta or not exaustao_alta.alertas) and (not exaustao_tendencia or not exaustao_tendencia.alertas) and (not radar_absorcao_cruzada or not radar_absorcao_cruzada.alertas) and (not liquidez_abertura or not liquidez_abertura.alertas) and (not radar_congestionamento or not radar_congestionamento.alertas) and (not faca_caindo or not faca_caindo.alertas) and (not anomalias_spread or not anomalias_spread.alertas) and (not short_squeeze or not short_squeeze.alertas) and (not falso_rompimento or not falso_rompimento.alertas) and (not radar_divergencia_volume or not radar_divergencia_volume.alertas) and (not esforco_resultado or not esforco_resultado.alertas) and (not scanner_capitulacao or not scanner_capitulacao.alertas) and (not armadilha_abertura or not armadilha_abertura.alertas) and (not compradores_fundo or not compradores_fundo.alertas) and (not radar_anomalia_fechamento or not radar_anomalia_fechamento.alertas) and (not radar_inflexao or not radar_inflexao.alertas) %}
+<section class="painel span-12 visao-micro alertas aviso-vazio">
+    <div class="vazio">Sem alertas ativos no momento.</div>
+</section>
+{% endif %}
+{% call painel("Radar de volume", 4, "Volume do dia dividido pela média dos últimos 21 pregões. Aparecem as razões acima de 1,5×.", volume_alerts.fonte if volume_alerts else "", volume_alerts.time if volume_alerts else "", 'visao-micro alertas escondido' if not volume_alerts or not volume_alerts.alerts else 'visao-micro alertas') %}
+    {% if volume_alerts %}
+        {% if volume_alerts.alerts %}
+            {% set linhas = [] %}
+            {% for a in volume_alerts.alerts %}
+                {% set celulas = [
+                    {'tk': True, 'conteudo': a.ticker},
+                    {'num': True, 'conteudo': a.price_formatted},
+                    {'num': True, 'barra': True, 'valor_barra': a.ratio, 'conteudo': ('<span>' | safe) ~ a.ratio_formatted ~ ('</span>' | safe)}
+                ] %}
+                {% set _ = linhas.append(celulas) %}
+            {% endfor %}
+            {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': '× média 21d', 'num': True}], 'l') }}
+        {% else %}
+            <div class="vazio">Nenhuma ação apresentando volume anormal no momento.</div>
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Variação Súbita", 4, "Ações que dispararam ou derreteram (> 1.5%) na última hora.", variacao_subita.fonte if variacao_subita else "", variacao_subita.time if variacao_subita else "", 'visao-micro alertas escondido' if not variacao_subita or not variacao_subita.alertas else 'visao-micro alertas') %}
+    {% if not variacao_subita %}
+        {{ estado("indisponivel") }}
+    {% elif not variacao_subita.alertas %}
+        <div class="vazio">Nenhum movimento brusco recente detectado.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in variacao_subita.alertas %}
+            {% set s = 1 if a.change_percent > 0 else -1 if a.change_percent < 0 else 0 %}
+            {% set val = ("%.2f%%" | format(a.change_percent | abs))|replace(".", ",") %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': (variacao((val) | e, s)) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Última hora', 'num': True}], 'rk-subita') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Concentração de Ordens", 4, "Ações de alta liquidez com maior concentração de volume financeiro por negócio (Ticket Médio Intraday).", concentracao_ordens.fonte if concentracao_ordens else "", concentracao_ordens.coletado_em if concentracao_ordens else "", 'visao-micro alertas escondido' if not concentracao_ordens or not concentracao_ordens.alertas else 'visao-micro alertas') %}
+    {% if not concentracao_ordens %}
+        {{ estado("indisponivel") }}
+    {% elif not concentracao_ordens.alertas %}
+        <div class="vazio">Nenhuma concentração identificada.</div>
+    {% else %}
+        <table class="tabela-compacta">
+            <thead>
+                <tr>
+                    <th>Ativo</th>
+                    <th class="num">Ticket Médio (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in concentracao_ordens.alertas %}
+                <tr>
+                    <td><strong>{{ a.ticker }}</strong></td>
+                    <td class="num">{{ "{:,.2f}".format(a.ticket_medio).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endcall %}
+
+
+    {% call painel("Exaustão de Alta", 4, "Ações que subiram mais de 2% no dia, mas cuja sombra superior é pelo menos o dobro do corpo, indicando forte rejeição.", exaustao_alta.fonte if exaustao_alta else "", exaustao_alta.coletado_em if exaustao_alta else "", 'visao-micro alertas escondido' if not exaustao_alta or not exaustao_alta.alertas else 'visao-micro alertas') %}
+    {% if not exaustao_alta %}
+        <p class="alerta-vazio">Dados não disponíveis.</p>
+    {% elif not exaustao_alta.alertas %}
+        <p class="alerta-vazio">Nenhum ativo em exaustão</p>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in exaustao_alta.alertas %}
+            {% set _ = linhas.append([
+                {'texto': a.ticker, 'ticker': True},
+                {'texto': ("%.2f%%"|format(a.variacao))|replace(".", ","), 'destaque': True, 'cor': 'alta' if a.variacao > 0 else 'baixa'}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Variação', 'num': True}], 'exaustao_alta') }}
+    {% endif %}
+    {% endcall %}
+
+    {% call painel("Exaustão de Queda", 4, "Ações que fecharam em queda por 3 dias, abriram com gap de baixa e se recuperaram com volume projetado acima da média.", exaustao_queda.fonte if exaustao_queda else "", exaustao_queda.coletado_em if exaustao_queda else "", 'visao-micro alertas escondido' if not exaustao_queda or not exaustao_queda.alertas else 'visao-micro alertas') %}
+    {% if not exaustao_queda %}
+        <p class="vazio">Sem sinal no momento.</p>
+    {% elif not exaustao_queda.alertas %}
+        <p class="vazio">Nenhuma ação em exaustão de queda hoje.</p>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in exaustao_queda.alertas %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': (variacao((("%.2f%%" | format(a.queda_acumulada))|replace(".", ",")) | e, -1)) | safe},
+                {'num': True, 'conteudo': (variacao((("%.2f%%" | format(a.recuperacao_intraday))|replace(".", ",")) | e, 1)) | safe}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda Acumulada (3d)', 'num': True}, {'titulo': 'Recuperação Intraday', 'num': True}], 'ex-queda') }}
+    {% endif %}
+    {% endcall %}
+
+    {% call painel("Exaustão de Tendência", 4, "Ativos subindo há dias consecutivos, mas com volume financeiro em queda constante.", exaustao_tendencia.fonte if exaustao_tendencia else "", exaustao_tendencia.coletado_em if exaustao_tendencia else "", 'visao-micro alertas escondido' if not exaustao_tendencia or not exaustao_tendencia.alertas else 'visao-micro alertas') %}
+    {% if not exaustao_tendencia %}
+        {{ estado("indisponivel") }}
+    {% elif not exaustao_tendencia.alertas %}
+        <div class="vazio">Nenhum sinal de exaustão no momento.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in exaustao_tendencia.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': ("%d dias" % a.dias_consecutivos) },
+                {'num': True, 'conteudo': (variacao((("%.2f%%" | format(a.variacao_acumulada))|replace(".", ",")) | e, 1 if a.variacao_acumulada > 0 else -1 if a.variacao_acumulada < 0 else 0)) | safe }
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Dias Consecutivos', 'num': True}, {'titulo': 'Var. Acumulada', 'num': True}], 'exaustao_tendencia') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Radar de Absorção Cruzada", 4, "Ações que tiveram forte queda intradiária (>1.5%) mas no fundo encontraram volume anormal (2x a média), indicando possível absorção.", radar_absorcao_cruzada.fonte if radar_absorcao_cruzada else "", radar_absorcao_cruzada.coletado_em if radar_absorcao_cruzada else "", 'visao-micro alertas escondido' if not radar_absorcao_cruzada or not radar_absorcao_cruzada.alertas else 'visao-micro alertas') %}
+    {% if not radar_absorcao_cruzada %}
+        {{ estado("indisponivel") }}
+    {% elif not radar_absorcao_cruzada.alertas %}
+        <div class="vazio">Nenhuma absorção detectada no momento.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in radar_absorcao_cruzada.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': variacao((('+%.0f%%' | format(a.ratio * 100))) | e, a.ratio)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Volume Relativo', 'num': True}], 'radar-absorcao-cruzada') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Radar de Liquidez", 4, "Ações que concentraram volume anormal de negociação logo nos primeiros momentos do pregão.", liquidez_abertura.fonte if liquidez_abertura else "", liquidez_abertura.coletado_em if liquidez_abertura else "", 'visao-micro alertas escondido' if not liquidez_abertura or not liquidez_abertura.alertas else 'visao-micro alertas') %}
+    {% if liquidez_abertura and liquidez_abertura.alertas %}
+        <table class="tabela-compacta">
+            <thead>
+                <tr>
+                    <th>Ativo</th>
+                    <th class="direita">Projeção Vol.</th>
+                    <th class="direita">Var. Hoje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alerta in liquidez_abertura.alertas %}
+                <tr>
+                    <td><strong>{{ alerta.ticker }}</strong></td>
+                    <td class="direita">{{ ("%.0f"|format(alerta.ratio * 100)) }}%</td>
+                    <td class="direita {% if alerta.var_pct > 0 %}alta{% elif alerta.var_pct < 0 %}baixa{% endif %}">
+                        {% if alerta.var_pct > 0 %}▲ {% elif alerta.var_pct < 0 %}▼ {% endif %}{{ ("%.2f"|format(alerta.var_pct|abs))|replace(".", ",") }}%
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="dado-vazio">Nenhum pico de liquidez de abertura detectado.</p>
+    {% endif %}
+{% endcall %}
+
+
+        {% call painel("Radar de Congestionamento", 4, "Ações que estão operando na faixa mais estreita (menor volatilidade) dos últimos 20 dias, indicando possível rompimento.", radar_congestionamento.fonte if radar_congestionamento else "", radar_congestionamento.coletado_em if radar_congestionamento else "", 'visao-micro alertas escondido' if not radar_congestionamento or not radar_congestionamento.alertas else 'visao-micro alertas') %}
+    {% if not radar_congestionamento %}
+        {{ estado("indisponivel") }}
+    {% elif not radar_congestionamento.alertas %}
+        <div class="vazio">Nenhuma ação em compressão extrema.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in radar_congestionamento.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': ("%.2f%%" | format(a.bandwidth * 100)).replace('.', ',')},
+                {'conteudo': sparkline({"pontos": a.sparkline_path}, "Evolução de " ~ a.ticker)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Banda', 'num': True}, {'titulo': '20d'}], 'radar-congestionamento') }}
+    {% endif %}
+{% endcall %}
+
+<!-- Linha 3 -->
+
+<!-- Escudo contra Quedas -->
+{% call painel("Escudo contra Quedas", 4, "Ações que mais fecharam no positivo nos últimos pregões de queda do Ibovespa.", escudo_quedas.fonte if escudo_quedas else "", escudo_quedas.time if escudo_quedas else "", "visao-micro sentimento-risco") %}
+    {% if escudo_quedas %}
+        <p class="sub">Pregões de queda: {{ escudo_quedas.qtd_quedas_ibov }} (últimos 30)</p>
+        {% if escudo_quedas.top3 %}
+            {% set linhas = [] %}
+            {% for a in escudo_quedas.top3 %}
+                {% set celulas = [
+                    {'tk': True, 'conteudo': a.ticker},
+                    {'conteudo': ('<span>' | safe) ~ a.dias_positivos ~ (' dias</span>' | safe)},
+                    {'num': True, 'conteudo': ('<span>' | safe) ~ (a.retorno_medio * 100)|round(2) ~ ('%</span>' | safe)}
+                ] %}
+                {% set _ = linhas.append(celulas) %}
+            {% endfor %}
+            {{ tabela_ativos(linhas, [], '') }}
+        {% else %}
+            <div class="vazio">Nenhum escudo relevante.</div>
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Radar de Faca Caindo", 4, "Ações com mais dias consecutivos de queda, indicando a duração da sequência e a perda acumulada (nos últimos 10 pregões).", faca_caindo.fonte if faca_caindo else "", faca_caindo.time if faca_caindo else "", 'visao-micro alertas escondido' if not faca_caindo or not faca_caindo.alertas else 'visao-micro alertas') %}
+    {% if not faca_caindo %}
+        {{ estado("indisponivel") }}
+    {% elif not faca_caindo.alertas %}
+        <div class="vazio">Nenhuma sequência de quedas detectada.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in faca_caindo.alertas %}
+            {% set val = ("%.2f%%" | format(a.variacao_acumulada | abs)) | replace('.', ',') %}
+            {% set s = -1 if a.variacao_acumulada < 0 else 1 if a.variacao_acumulada > 0 else 0 %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': ('<span>' | safe) ~ a.dias ~ (' dias</span>' | safe)},
+                {'conteudo': (variacao((val) | e, s)) | safe, 'num': True, 'barra': True, 'valor_barra': a.variacao_acumulada | abs}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Quedas'}, {'titulo': 'Retorno', 'num': True}], 'faca-caindo') }}
+    {% endif %}
+{% endcall %}
+
+<div class="span-4">
+    {% call painel("Anomalias de Spread", 4, "Ações de alta liquidez com spread (ask - bid) anormalmente superior à média, indicando possível retirada de ordens por formadores de mercado (pânico incipiente).", anomalias_spread.fonte if anomalias_spread else "", anomalias_spread.coletado_em if anomalias_spread else "", 'visao-micro alertas escondido' if not anomalias_spread or not anomalias_spread.alertas else 'visao-micro alertas') %}
+        {% if not anomalias_spread %}
+            <div class="estado vazia"><span class="icone">--</span> Sem dados</div>
+        {% elif not anomalias_spread.alertas %}
+            <div class="estado normal"><span class="icone">✓</span> Spreads normais hoje</div>
+        {% else %}
+            <table class="ranking">
+                <thead>
+                    <tr>
+                        <th class="esq">Ativo</th>
+                        <th class="dir">Spread</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in anomalias_spread.alertas %}
+                    <tr>
+                        <td class="esq">{{ a.ticker }}</td>
+                        <td class="dir">
+                            <span class="var alta">{{ ("%.2f"|format(a.spread_percent))|replace(".", ",") }}%</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endcall %}
+</div>
+
+{% call painel("Radar de Short Squeeze", 4, "Ações que vêm de forte queda recente mas hoje reagem com alta violenta e volume atípico (capitulação vendida).", short_squeeze.fonte if short_squeeze else "", short_squeeze.coletado_em if short_squeeze else "", 'visao-micro alertas escondido' if not short_squeeze or not short_squeeze.alertas else 'visao-micro alertas') %}
+    {% if not short_squeeze %}
+        {{ estado("indisponivel") }}
+    {% elif not short_squeeze.alertas %}
+        <div class="vazio">Nenhum squeeze detectado hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in short_squeeze.alertas %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': (variacao((("%.2f%%" | format(a.queda_10d))|replace(".", ",")) | e, -1)) | safe, 'num': True},
+                {'conteudo': ('<span>' | safe) ~ (a.mult_vol | e) ~ ('x vol</span>' | safe)},
+                {'conteudo': (variacao((("%.2f%%" | format(a.alta_hoje))|replace(".", ",")) | e, 1)) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda 10d', 'num': True}, {'titulo': 'Volume'}, {'titulo': 'Alta', 'num': True}], 'short-squeeze') }}
+    {% endif %}
+{% endcall %}
+        {% call painel("Falso Rompimento", 4, "Ações que romperam a máxima anterior, mas reverteram para baixo com volume alto (Bull Trap).", falso_rompimento.fonte if falso_rompimento else "", falso_rompimento.coletado_em if falso_rompimento else "", 'visao-micro alertas escondido' if not falso_rompimento or not falso_rompimento.alertas else 'visao-micro alertas') %}
+            {% if not falso_rompimento %}
+                <div class="dado-indisponivel">Dado indisponível agora</div>
+            {% elif not falso_rompimento.alertas %}
+                <div class="dado-indisponivel">Nenhum falso rompimento detectado</div>
+            {% else %}
+                <table class="ranking">
+                    <thead>
+                        <tr>
+                            <th>Ativo</th>
+                            <th class="numero">Variação (%)</th>
+                            <th class="numero">Vol (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in falso_rompimento.alertas %}
+                        <tr>
+                            <td>{{ a.ticker }}</td>
+                            <td class="numero negativo">
+                                {% if a.variacao > 0 %}▲ {% else %}▼ {% endif %}{{ "%.2f"|format(a.variacao)|replace('.', ',') }}%
+                            </td>
+                            <td class="numero positivo">
+                                {% if a.var_volume > 0 %}▲ {% else %}▼ {% endif %}{{ "%.2f"|format(a.var_volume)|replace('.', ',') }}%
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        {% endcall %}
+
+        {% call painel("Divergência Volume/Preço", 4, "Ações que subiram nos últimos 5 dias, mas cujo volume negociado secou (exaustão).", radar_divergencia_volume.fonte if radar_divergencia_volume else "", radar_divergencia_volume.coletado_em if radar_divergencia_volume else "", 'visao-micro alertas escondido' if not radar_divergencia_volume or not radar_divergencia_volume.alertas else 'visao-micro alertas') %}
+            {% if not radar_divergencia_volume %}
+                <div class="dado-indisponivel">Dado indisponível agora</div>
+            {% elif not radar_divergencia_volume.alertas %}
+                <div class="dado-indisponivel">Nenhuma divergência detectada</div>
+            {% else %}
+                <table class="ranking">
+                    <thead>
+                        <tr>
+                            <th>Ativo</th>
+                            <th class="numero">Alta (%)</th>
+                            <th class="numero">Vol (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in radar_divergencia_volume.alertas %}
+                        <tr>
+                            <td>{{ a.ticker }}</td>
+                            <td class="numero positivo">
+                                {% if a.alta_acumulada > 0 %}▲ {% else %}▼ {% endif %}{{ "%.2f"|format(a.alta_acumulada)|replace('.', ',') }}%
+                            </td>
+                            <td class="numero negativo">
+                                {% if a.var_volume > 0 %}▲ {% else %}▼ {% endif %}{{ "%.2f"|format(a.var_volume)|replace('.', ',') }}%
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        {% endcall %}
+
+{% call painel("Índice de Esforço vs Resultado", 4, "Ações com volume muito acima da média (esforço alto) mas cuja amplitude de preço (abertura vs atual) permaneceu perto de zero, indicando absorção institucional.", esforco_resultado.fonte if esforco_resultado else "", esforco_resultado.coletado_em if esforco_resultado else "", 'visao-micro alertas escondido' if not esforco_resultado or not esforco_resultado.alertas else 'visao-micro alertas') %}
+    {% if not esforco_resultado %}
+        {{ estado("indisponivel") }}
+    {% elif not esforco_resultado.alertas %}
+        <div class="vazio">Nenhuma anomalia detectada hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in esforco_resultado.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': ("%.1fx" | format(a.vol_ratio)) | replace('.', ',')},
+                {'num': True, 'conteudo': (variacao((("%.2f%%" | format(a.price_var))|replace(".", ",")) | e, 1 if a.price_var > 0 else -1 if a.price_var < 0 else 0)) | safe}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Volume', 'num': True}, {'titulo': 'Variação', 'num': True}], 'esforco-resultado') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Relógio de Volatilidade Intraday", 4, "Horário de maior indecisão e oscilação intradiária (" ~ (relogio.ticker if relogio else "") ~ ").", relogio.fonte if relogio else "", relogio.coletado_em if relogio else "", "alertas") %}
+    {% if not relogio %}
+        {{ estado("indisponivel") }}
+    {% else %}
+        <div class="destaque">
+            <h3>{{ relogio.hora_str }}</h3>
+            <p>Amplitude de {{ ("%.2f"|format(relogio.amplitude_percentual))|replace(".", ",") }}%</p>
+        </div>
+    {% endif %}
+{% endcall %}
+
+{% call painel("Scanner de Capitulação", 4, "Ações caindo >2% mas com pico extremo recente de volume e longa sombra inferior (sinal de absorção).", scanner_capitulacao.fonte if scanner_capitulacao else "", scanner_capitulacao.time if scanner_capitulacao else "", 'visao-micro alertas escondido' if not scanner_capitulacao or not scanner_capitulacao.alertas else 'visao-micro alertas') %}
+    {% if not scanner_capitulacao %}
+        {{ estado("indisponivel") }}
+    {% elif not scanner_capitulacao.alertas %}
+        <div class="vazio">Nenhum clímax de capitulação detectado hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in scanner_capitulacao.alertas %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': ('<span>' | safe) ~ (a.texto | e) ~ ('</span>' | safe)},
+                {'conteudo': (variacao((("%.2f%%" | format(a.queda_pct))|replace(".", ",")) | e, -1)) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Sinal'}, {'titulo': 'Queda', 'num': True}], 'scanner-capitulacao') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Assimetria Risco/Retorno", 4, "Ações muito próximas da sua mínima de 30 dias (<=2%) e distantes da sua máxima (>=10%).", assimetria_risco_retorno.fonte if assimetria_risco_retorno else "", assimetria_risco_retorno.coletado_em if assimetria_risco_retorno else "", "visao-micro rankings") %}
+    {% if assimetria_risco_retorno %}
+        {% if assimetria_risco_retorno.alertas|length == 0 %}
+            <div class="vazio">Nenhuma ação neste perfil hoje.</div>
+        {% else %}
+            {% set linhas = [] %}
+            {% for alerta in assimetria_risco_retorno.alertas %}
+                {% set _ = linhas.append({
+                    'ticker': alerta.ticker,
+                    'magnitudes': [alerta.dist_max_pct],
+                    'var_formatada': "{:.1f}% min".format(alerta.dist_min_pct).replace(".", ","),
+                    'sinal': 1
+                }) %}
+            {% endfor %}
+            {{ tabela_ativos(linhas, [{'titulo': 'Distância', 'num': true}]) }}
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Atrasadas do Rally", 4, "Ações que ficaram para trás nos últimos 5 pregões em momentos de alta > 2% do Ibovespa.", atrasadas_rally.fonte if atrasadas_rally else "", atrasadas_rally.time if atrasadas_rally else "", "visao-micro rankings") %}
+    {% if atrasadas_rally %}
+        {% if not atrasadas_rally.rally_valido %}
+            <div class="vazio">Ibovespa sem rally recente</div>
+        {% elif atrasadas_rally.top3 %}
+            {% set linhas = [] %}
+            {% for item in atrasadas_rally.top3 %}
+                {% set val = ("%.2f%%" | format(item.retorno | abs)) | replace('.', ',') %}
+                {% set s = 1 if item.retorno > 0 else -1 if item.retorno < 0 else 0 %}
+                {% set _ = linhas.append([
+                    {'conteudo': item.ticker, 'tk': True},
+                    {'conteudo': (variacao((val) | e, s)) | safe, 'num': True, 'barra': True, 'valor_barra': item.retorno | abs}
+                ]) %}
+            {% endfor %}
+            {{ tabela_ativos(linhas, [{"titulo": "Ativo"}, {"titulo": "5d (Ativo)", "num": True}], "atrasadas-rally") }}
+        {% else %}
+            <div class="vazio">Nenhuma ação encontrada.</div>
+        {% endif %}
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Sensibilidade a Juros", 4, "Top 3 ativos (Varejo/Construção/Tech) com maior correlação inversa com os juros futuros (DI1F27) nos últimos 30 pregões.", sensibilidade_juros.fonte if sensibilidade_juros else "", sensibilidade_juros.time if sensibilidade_juros else "", "visao-macro alertas") %}
+    {% if sensibilidade_juros and sensibilidade_juros.alertas %}
+        {% set linhas = [] %}
+        {% for a in sensibilidade_juros.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'barra': True, 'valor_barra': (a.correlation * -1) if a.correlation < 0 else a.correlation, 'conteudo': ('<span>' | safe) ~ a.correlation_formatted ~ ('</span>' | safe)}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [], 'a') }}
+    {% else %}
+        <div class="vazio">Dado indisponível</div>
+    {% endif %}
+{% endcall %}
+
+{% call painel("Sensibilidade ao dólar", 6, "Correlação de Pearson entre retornos diários da ação e do dólar (DOL$ no MT5, BRL=X no Yahoo) nos últimos 30 pregões.", dolar_correlation.fonte if dolar_correlation else "", dolar_correlation.time if dolar_correlation else "", "visao-macro alertas") %}
+    {% if dolar_correlation %}
+        <div class="duas">
+            <div>
+                <p class="sub">Andam com o dólar</p>
+                {% if dolar_correlation.positivas %}
+                    {% set linhas = [] %}
+                    {% for a in dolar_correlation.positivas %}
+                        {% set celulas = [
+                            {'tk': True, 'conteudo': a.ticker},
+                            {'num': True, 'barra': True, 'valor_barra': a.correlation, 'conteudo': ('<span>+' | safe) ~ a.correlation_formatted ~ ('</span>' | safe)}
+                        ] %}
+                        {% set _ = linhas.append(celulas) %}
+                    {% endfor %}
+                    {{ tabela_ativos(linhas, [], 'a') }}
+                {% else %}
+                    <div class="vazio">Sem correlações positivas relevantes.</div>
+                {% endif %}
+            </div>
+            <div>
+                <p class="sub">Andam contra o dólar</p>
+                {% if dolar_correlation.negativas %}
+                    {% set linhas = [] %}
+                    {% for a in dolar_correlation.negativas %}
+                        {% set celulas = [
+                            {'tk': True, 'conteudo': a.ticker},
+                            {'num': True, 'barra': True, 'valor_barra': (a.correlation * -1) if a.correlation < 0 else a.correlation, 'conteudo': ('<span>' | safe) ~ a.correlation_formatted ~ ('</span>' | safe)}
+                        ] %}
+                        {% set _ = linhas.append(celulas) %}
+                    {% endfor %}
+                    {{ tabela_ativos(linhas, [], 'b') }}
+                {% else %}
+                    <div class="vazio">Sem correlações negativas relevantes.</div>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        {{ estado('indisponivel') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel('Armadilhas de Abertura', 4, 'Ações que abriram em forte alta (gap) mas perderam força e já operam abaixo do fechamento anterior.', armadilha_abertura.fonte if armadilha_abertura else '', armadilha_abertura.time if armadilha_abertura else '', 'visao-micro alertas escondido' if not armadilha_abertura or not armadilha_abertura.alertas else 'visao-micro alertas') %}
+    {% if not armadilha_abertura %}
+        {{ estado('indisponivel') }}
+    {% elif not armadilha_abertura.alertas %}
+        <div class='vazio'>Nenhuma armadilha detectada hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in armadilha_abertura.alertas %}
+            {% set val = ('<span>R$ ' ~ (('%.2f' | format(a.preco_atual)) | replace('.', ',')) ~ '</span>') %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': 'Gap Trap'},
+                {'conteudo': val | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Padrão'}, {'titulo': 'Preço', 'num': True}], 'armadilha-abertura') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Compradores de Fundo", 4, "Ações que abriram caindo > 1.5% e já reverteram para positivo.", compradores_fundo.fonte if compradores_fundo else "", compradores_fundo.time if compradores_fundo else "", 'visao-micro alertas escondido' if not compradores_fundo or not compradores_fundo.alertas else 'visao-micro alertas') %}
+    {% if not compradores_fundo %}
+        {{ estado("indisponivel") }}
+    {% elif not compradores_fundo.alertas %}
+        <div class="vazio">Nenhuma reversão identificada hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in compradores_fundo.alertas %}
+            {% set val = ("%.2f%%" | format(a.queda_maxima | abs))|replace(".", ",") %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': (variacao((val) | e, -1)) | safe, 'num': True},
+                {'conteudo': ('<span>' | safe) ~ (("R$ %.2f" | format(a.preco_atual)) | replace('.', ',') | e) ~ ('</span>' | safe), 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda Máx.'}, {'titulo': 'Atual', 'num': True}], 'compradores-fundo') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Sempre Verde", 4, "Ações que fecharam no verde todos os dias nos últimos 5 pregões.", sobrevivencia_semanal.fonte if sobrevivencia_semanal else "", sobrevivencia_semanal.time if sobrevivencia_semanal else "", "visao-micro rankings") %}
+    {% if not sobrevivencia_semanal %}
+        {{ estado("indisponivel") }}
+    {% elif not sobrevivencia_semanal.alertas %}
+        <div class="vazio">Nenhum ativo sobreviveu invicto nos últimos 5 dias.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in sobrevivencia_semanal.alertas %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': ('<span>' | safe) ~ a.dias_consecutivos ~ (' dias</span>' | safe), 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Altas seguidas', 'num': True}], 'sobrevivencia-semanal') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Radar de Anomalia de Fechamento", 4, "Ações que tiveram variação anormal de preço no leilão de fechamento de ontem.", radar_anomalia_fechamento.fonte if radar_anomalia_fechamento else "", radar_anomalia_fechamento.coletado_em if radar_anomalia_fechamento else "", 'visao-micro alertas escondido' if not radar_anomalia_fechamento or not radar_anomalia_fechamento.alertas else 'visao-micro alertas') %}
+    {% if not radar_anomalia_fechamento %}
+        {{ estado("indisponivel") }}
+    {% elif not radar_anomalia_fechamento.alertas %}
+        <div class="vazio">Sem anomalias no fechamento recente.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in radar_anomalia_fechamento.alertas %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': ("%.2f" | format(a.preco_antes))|replace(".", ","), 'num': True},
+                {'conteudo': ("%.2f" | format(a.fechamento))|replace(".", ","), 'num': True},
+                {'conteudo': (variacao((("%.2f%%" | format(a.diferenca_pct))|replace(".", ",")) | e, a.diferenca_pct)) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': '16:50', 'num': True}, {'titulo': 'Fech.', 'num': True}, {'titulo': 'Dif', 'num': True}], 'radar-anomalia') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Radar de Inflexão", 4, "Ações que caíram muito e hoje estão subindo forte, indicando possível quebra de inércia.", radar_inflexao.fonte if radar_inflexao else "", radar_inflexao.coletado_em if radar_inflexao else "", 'visao-micro alertas escondido' if not radar_inflexao or not radar_inflexao.alertas else 'visao-micro alertas') %}
+    {% if not radar_inflexao %}
+        {{ estado("indisponivel") }}
+    {% elif not radar_inflexao.alertas %}
+        <div class="vazio">Nenhuma inflexão detectada hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in radar_inflexao.alertas %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': (variacao((("%.2f%%" | format(a.retorno_acumulado))|replace(".", ",")) | e, -1)) | safe, 'num': True},
+                {'conteudo': (variacao((("%.2f%%" | format(a.variacao_hoje))|replace(".", ",")) | e, 1)) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda'}, {'titulo': 'Hoje', 'num': True}], 'radar-inflexao') }}
+    {% endif %}
+{% endcall %}
+
+{% call painel("Volatilidade Silenciosa", 4, "Ações com forte oscilação intraday (alta amplitude) mas que fecharam próximas da abertura (variação ≤ 0.5%).", volatilidade_silenciosa.fonte if volatilidade_silenciosa else "", volatilidade_silenciosa.coletado_em if volatilidade_silenciosa else "", "visao-micro sentimento-risco") %}
+    {% if not volatilidade_silenciosa %}
+        {{ estado("indisponivel") }}
+    {% elif not volatilidade_silenciosa.alertas %}
+        <div class="vazio">Não houve volatilidade silenciosa no pregão atual.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in volatilidade_silenciosa.alertas %}
+            {% set celulas = [
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': ("%.1f%%" | format(a.amplitude)) | replace('.', ','), 'barra': True, 'valor_barra': a.amplitude},
+                {'num': True, 'conteudo': (variacao((("%.2f%%" | format(a.variacao))|replace(".", ",")) | e, 1 if a.variacao > 0 else -1 if a.variacao < 0 else 0)) | safe}
+            ] %}
+            {% set _ = linhas.append(celulas) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Amplitude', 'num': True}, {'titulo': 'Variação', 'num': True}], 'volatilidade-silenciosa') }}
+    {% endif %}
+{% endcall %}
+
+{% endblock %}
