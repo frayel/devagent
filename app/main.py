@@ -1461,21 +1461,14 @@ def snapshot(
     else:
         resp["paineis"]["anomalias_spread"] = []
 
-    exaustao_queda = None
     exaustao_queda_data = get_latest_exaustao_queda_data()
     if exaustao_queda_data:
         alertas = json.loads(exaustao_queda_data.alertas_json)
-        if alertas:
-            exaustao_queda = {
-                "coletado_em": exaustao_queda_data.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": exaustao_queda_data.fonte,
-                "alertas": alertas,
-            }
-    # unused avoid f841
-    if exaustao_queda:
-        resp["paineis"]["exaustao_queda"] = exaustao_queda
+        resp["paineis"]["exaustao_queda"] = {
+            "coletado_em": exaustao_queda_data.timestamp.isoformat(),
+            "fonte": exaustao_queda_data.fonte,
+            "alertas": alertas,
+        }
     else:
         resp["paineis"]["exaustao_queda"] = {}
 

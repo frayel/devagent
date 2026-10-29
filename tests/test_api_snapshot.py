@@ -38,3 +38,20 @@ def test_api_snapshot_correlacao_di():
     data = response.json()
     if "correlacao_di" in data["paineis"]:
         assert "correlacao_di" in data["paineis"]
+
+
+def test_api_snapshot_exaustao_queda():
+    response = client.get("/api/snapshot")
+    assert response.status_code == 200
+    data = response.json()
+    assert "exaustao_queda" in data["paineis"]
+
+
+def test_api_snapshot_exaustao_queda_contrato():
+    response = client.get("/api/snapshot")
+    assert response.status_code == 200
+    data = response.json()
+    assert "exaustao_queda" in data["paineis"]
+    if data["paineis"]["exaustao_queda"]:
+        assert "coletado_em" in data["paineis"]["exaustao_queda"]
+        assert "fonte" in data["paineis"]["exaustao_queda"]
