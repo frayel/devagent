@@ -60,4 +60,4 @@ Crie uma branch nova a partir da `main`, traga as mudanças do PR antigo (`git c
 
 ## 6. O que o guardião faz se nada disso acontecer
 
-O workflow `pr-guardiao.yml` comenta `@jules` a cada falha de CI (até 3 vezes), fecha o PR se não houver commit novo em 3 horas depois da cobrança, fecha PRs com conflito grande e abre uma issue `tentativa-falhou` explicando o motivo. Se tudo o que o PR muda já está na `main`, fecha sem abrir issue (ADR 014). Antes de refazer um trabalho, leia essas issues (Passo 4).
+O workflow `pr-guardiao.yml` comenta `@jules` a cada falha de CI (até 3 vezes), fecha o PR se não houver commit novo em 3 horas depois da cobrança, fecha PRs com conflito grande e abre uma issue `tentativa-falhou` explicando o motivo. Se tudo o que o PR muda já está na `main`, fecha sem abrir issue (ADR 014). PR de especialista ou de verificação sem achado fecha na hora, sem cobrança e sem issue (ADRs 019 e 025). Antes de refazer um trabalho, leia essas issues (Passo 4).

@@ -7,9 +7,14 @@ name: Jules
 # livre (sem sessão ativa, sem PR esperando merge, dentro do ritmo da cota),
 # destrava sessões paradas e encerra em menos de 1 minuto (ADR 012).
 # O relógio fica fora do GitHub: o cron-job.org chama a API de
-# workflow_dispatch com acao=rodada a cada 5 min. O cron do próprio GitHub foi
-# desligado porque descartava a maior parte dos disparos agendados.
+# workflow_dispatch com acao=rodada a cada 5 min. O cron do próprio GitHub
+# descarta a maior parte dos disparos frequentes, por isso não é o relógio
+# principal; fica só como reserva, para a esteira não parar inteira se o token
+# do cron-job.org expirar ou o serviço cair (ADR 025). Disparo duplicado não
+# causa dano: as execuções são serializadas pelo grupo `jules`.
 on:
+  schedule:
+    - cron: "11,41 * * * *"
   workflow_dispatch:
     inputs:
       acao:
