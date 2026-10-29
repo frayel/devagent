@@ -263,6 +263,23 @@ _estado_snapshot = contextvars.ContextVar("estado_snapshot", default="ao_vivo")
 _data_referencia_snapshot: contextvars.ContextVar[date | None] = contextvars.ContextVar(
     "data_referencia_snapshot", default=None
 )
+_lendo_pregao_var: contextvars.ContextVar[date | None] = contextvars.ContextVar(
+    "lendo_pregao_var", default=None
+)
+
+
+class lendo_pregao:
+    def __init__(self, data: date | None):
+        self.data = data
+        self.token = None
+
+    def __enter__(self):
+        self.token = _lendo_pregao_var.set(self.data)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.token:
+            _lendo_pregao_var.reset(self.token)
 
 
 def gravar_snapshot(
@@ -308,6 +325,8 @@ def gravar_snapshot(
 
 
 def ler_snapshot(painel: str, data_referencia: date | None = None) -> dict | None:
+    if not data_referencia:
+        data_referencia = _lendo_pregao_var.get()
     init_db()
     conn, backend = get_connection()
     try:

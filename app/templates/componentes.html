@@ -75,6 +75,8 @@
 <div class="vazio">
   {% if tipo == 'carregando' %}
   Carregando dados...
+  {% elif tipo == 'sem_registro' %}
+  Sem registro neste pregão
   {% elif tipo == 'indisponivel' %}
   Dado indisponível agora.<br>A fonte não respondeu na última coleta.
   {% elif tipo == 'desatualizado' %}

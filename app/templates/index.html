@@ -35,7 +35,7 @@
         <div class="g-escala num"><span>-10%</span><span>+10%</span></div>
         {% endif %}
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
@@ -76,7 +76,7 @@
         </div>
         {% endif %}
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
     {% if apetite_risco or rotacao_capital %}
     <div class="gauges-pequenos espaco-topo">
@@ -118,7 +118,7 @@
             </div>
         </div>
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
@@ -133,7 +133,7 @@
             {% endfor %}
         </div>
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
@@ -145,7 +145,7 @@
             <span>{{ highlights.down_count }} caíram</span>
         </div>
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
@@ -154,7 +154,7 @@
         {{ gauge(coesao.concordantes, coesao.estado, 0, coesao.total, "{:.0f}", resumo="Índice de Coesão, ações na direção do índice", cor=coesao.cor, escala=["0", coesao.total ~ " ações"]) }}
         <p class="sub texto-centro">{{ coesao.proporcao }} na mesma direção do Ibovespa</p>
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
@@ -174,7 +174,7 @@
             {{ kpi(val, "", '<div class="texto-2 espaco-topo-curto">do movimento do Ibovespa é explicado pelas 5 maiores ações (VALE, PETR e ITUB)</div>' | safe, is_hero=True) }}
         {% endif %}
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
@@ -182,7 +182,7 @@
 
 {% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje, e qual atrai mais volume financeiro.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial visao-geral escondido' if not concentracao_setorial else 'visao-macro painel-concentracao-setorial visao-geral') %}
   {% if not concentracao_setorial %}
-    {{ estado('indisponivel') }}
+    {{ estado('sem_registro' if is_historical else 'indisponivel') }}
   {% else %}
     <div class="duas">
       {% if concentracao_setorial.variacao_media <= 0 %}
@@ -227,7 +227,7 @@
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Impacto', 'num': True}, {'titulo': 'Peso Est.', 'num': True}], 'a') }}
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
@@ -249,7 +249,7 @@
             {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Impacto', 'num': True}, {'titulo': 'Peso Est.', 'num': True}], 'a') }}
         {% endif %}
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
@@ -267,7 +267,7 @@
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}, {'titulo': '10d'}], 'a') }}
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
@@ -285,7 +285,7 @@
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}, {'titulo': '10d'}], 'b') }}
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
@@ -307,13 +307,13 @@
         {% set _ = linhas.append(linha_menor) %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'vs IBOV', 'num': True}, {'titulo': '10d'}], 'forca-relativa') }}
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
 {% call painel('Inflexão de Tendência', 4, 'Ações que caíram >5% em 15 dias, mas hoje revertem com alta > 2%.', radar_inflexao.fonte if radar_inflexao else '', radar_inflexao.coletado_em if radar_inflexao else '', 'visao-micro rankings') %}
     {% if not radar_inflexao %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not radar_inflexao.alertas %}
         <div class="vazio">Nenhuma ação com inflexão no momento.</div>
     {% else %}
@@ -331,7 +331,7 @@
 
 {% call painel('Anomalia de Peso', 4, 'Ações que mais impactam o Ibovespa no dia (estimativa em pontos).', anomalia_peso.fonte if anomalia_peso else '', anomalia_peso.coletado_em if anomalia_peso else '', 'visao-micro rankings escondido' if not anomalia_peso else 'visao-micro rankings') %}
     {% if not anomalia_peso %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not anomalia_peso.alertas %}
         <div class="vazio">Nenhuma anomalia no momento.</div>
     {% else %}
@@ -370,13 +370,13 @@
             <div class="vazio">Nenhuma ação apresentando volume anormal no momento.</div>
         {% endif %}
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
 {% call painel("Variação Súbita", 4, "Ações que dispararam ou derreteram (> 1.5%) na última hora.", variacao_subita.fonte if variacao_subita else "", variacao_subita.time if variacao_subita else "", 'visao-micro alertas escondido' if not variacao_subita or not variacao_subita.alertas else 'visao-micro alertas') %}
     {% if not variacao_subita %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not variacao_subita.alertas %}
         <div class="vazio">Nenhum movimento brusco recente detectado.</div>
     {% else %}
@@ -395,7 +395,7 @@
 
 {% call painel("Concentração de Ordens", 4, "Ações de alta liquidez com maior concentração de volume financeiro por negócio (Ticket Médio Intraday).", concentracao_ordens.fonte if concentracao_ordens else "", concentracao_ordens.coletado_em if concentracao_ordens else "", 'visao-micro alertas escondido' if not concentracao_ordens or not concentracao_ordens.alertas else 'visao-micro alertas') %}
     {% if not concentracao_ordens %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not concentracao_ordens.alertas %}
         <div class="vazio">Nenhuma concentração identificada.</div>
     {% else %}
@@ -456,7 +456,7 @@
 
     {% call painel("Exaustão de Tendência", 4, "Ativos subindo há dias consecutivos, mas com volume financeiro em queda constante.", exaustao_tendencia.fonte if exaustao_tendencia else "", exaustao_tendencia.coletado_em if exaustao_tendencia else "", 'visao-micro alertas escondido' if not exaustao_tendencia or not exaustao_tendencia.alertas else 'visao-micro alertas') %}
     {% if not exaustao_tendencia %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not exaustao_tendencia.alertas %}
         <div class="vazio">Nenhum sinal de exaustão no momento.</div>
     {% else %}
@@ -475,7 +475,7 @@
 
 {% call painel("Radar de Absorção Cruzada", 4, "Ações que tiveram forte queda intradiária (>1.5%) mas no fundo encontraram volume anormal (2x a média), indicando possível absorção.", radar_absorcao_cruzada.fonte if radar_absorcao_cruzada else "", radar_absorcao_cruzada.coletado_em if radar_absorcao_cruzada else "", 'visao-micro alertas escondido' if not radar_absorcao_cruzada or not radar_absorcao_cruzada.alertas else 'visao-micro alertas') %}
     {% if not radar_absorcao_cruzada %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not radar_absorcao_cruzada.alertas %}
         <div class="vazio">Nenhuma absorção detectada no momento.</div>
     {% else %}
@@ -521,7 +521,7 @@
 
         {% call painel("Radar de Congestionamento", 4, "Ações que estão operando na faixa mais estreita (menor volatilidade) dos últimos 20 dias, indicando possível rompimento.", radar_congestionamento.fonte if radar_congestionamento else "", radar_congestionamento.coletado_em if radar_congestionamento else "", 'visao-micro alertas escondido' if not radar_congestionamento or not radar_congestionamento.alertas else 'visao-micro alertas') %}
     {% if not radar_congestionamento %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not radar_congestionamento.alertas %}
         <div class="vazio">Nenhuma ação em compressão extrema.</div>
     {% else %}
@@ -559,13 +559,13 @@
             <div class="vazio">Nenhum escudo relevante.</div>
         {% endif %}
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
 {% call painel("Radar de Faca Caindo", 4, "Ações com mais dias consecutivos de queda, indicando a duração da sequência e a perda acumulada (nos últimos 10 pregões).", faca_caindo.fonte if faca_caindo else "", faca_caindo.time if faca_caindo else "", 'visao-micro alertas escondido' if not faca_caindo or not faca_caindo.alertas else 'visao-micro alertas') %}
     {% if not faca_caindo %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not faca_caindo.alertas %}
         <div class="vazio">Nenhuma sequência de quedas detectada.</div>
     {% else %}
@@ -614,7 +614,7 @@
 
 {% call painel("Radar de Short Squeeze", 4, "Ações que vêm de forte queda recente mas hoje reagem com alta violenta e volume atípico (capitulação vendida).", short_squeeze.fonte if short_squeeze else "", short_squeeze.coletado_em if short_squeeze else "", 'visao-micro alertas escondido' if not short_squeeze or not short_squeeze.alertas else 'visao-micro alertas') %}
     {% if not short_squeeze %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not short_squeeze.alertas %}
         <div class="vazio">Nenhum squeeze detectado hoje.</div>
     {% else %}
@@ -694,7 +694,7 @@
 
 {% call painel("Índice de Esforço vs Resultado", 4, "Ações com volume muito acima da média (esforço alto) mas cuja amplitude de preço (abertura vs atual) permaneceu perto de zero, indicando absorção institucional.", esforco_resultado.fonte if esforco_resultado else "", esforco_resultado.coletado_em if esforco_resultado else "", 'visao-micro alertas escondido' if not esforco_resultado or not esforco_resultado.alertas else 'visao-micro alertas') %}
     {% if not esforco_resultado %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not esforco_resultado.alertas %}
         <div class="vazio">Nenhuma anomalia detectada hoje.</div>
     {% else %}
@@ -713,7 +713,7 @@
 
 {% call painel("Relógio de Volatilidade Intraday", 4, "Horário de maior indecisão e oscilação intradiária (" ~ (relogio.ticker if relogio else "") ~ ").", relogio.fonte if relogio else "", relogio.coletado_em if relogio else "", "alertas") %}
     {% if not relogio %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% else %}
         <div class="destaque">
             <h3>{{ relogio.hora_str }}</h3>
@@ -724,7 +724,7 @@
 
 {% call painel("Scanner de Capitulação", 4, "Ações caindo >2% mas com pico extremo recente de volume e longa sombra inferior (sinal de absorção).", scanner_capitulacao.fonte if scanner_capitulacao else "", scanner_capitulacao.time if scanner_capitulacao else "", 'visao-micro alertas escondido' if not scanner_capitulacao or not scanner_capitulacao.alertas else 'visao-micro alertas') %}
     {% if not scanner_capitulacao %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not scanner_capitulacao.alertas %}
         <div class="vazio">Nenhum clímax de capitulação detectado hoje.</div>
     {% else %}
@@ -757,7 +757,7 @@
             {{ tabela_ativos(linhas, [{'titulo': 'Distância', 'num': true}]) }}
         {% endif %}
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
@@ -780,7 +780,7 @@
             <div class="vazio">Nenhuma ação encontrada.</div>
         {% endif %}
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
@@ -837,13 +837,13 @@
             </div>
         </div>
     {% else %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
 {% call painel('Armadilhas de Abertura', 4, 'Ações que abriram em forte alta (gap) mas perderam força e já operam abaixo do fechamento anterior.', armadilha_abertura.fonte if armadilha_abertura else '', armadilha_abertura.time if armadilha_abertura else '', 'visao-micro alertas escondido' if not armadilha_abertura or not armadilha_abertura.alertas else 'visao-micro alertas') %}
     {% if not armadilha_abertura %}
-        {{ estado('indisponivel') }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not armadilha_abertura.alertas %}
         <div class='vazio'>Nenhuma armadilha detectada hoje.</div>
     {% else %}
@@ -862,7 +862,7 @@
 
 {% call painel("Compradores de Fundo", 4, "Ações que abriram caindo > 1.5% e já reverteram para positivo.", compradores_fundo.fonte if compradores_fundo else "", compradores_fundo.time if compradores_fundo else "", 'visao-micro alertas escondido' if not compradores_fundo or not compradores_fundo.alertas else 'visao-micro alertas') %}
     {% if not compradores_fundo %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not compradores_fundo.alertas %}
         <div class="vazio">Nenhuma reversão identificada hoje.</div>
     {% else %}
@@ -881,7 +881,7 @@
 
 {% call painel("Sempre Verde", 4, "Ações que fecharam no verde todos os dias nos últimos 5 pregões.", sobrevivencia_semanal.fonte if sobrevivencia_semanal else "", sobrevivencia_semanal.time if sobrevivencia_semanal else "", "visao-micro rankings") %}
     {% if not sobrevivencia_semanal %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not sobrevivencia_semanal.alertas %}
         <div class="vazio">Nenhum ativo sobreviveu invicto nos últimos 5 dias.</div>
     {% else %}
@@ -898,7 +898,7 @@
 
 {% call painel("Radar de Anomalia de Fechamento", 4, "Ações que tiveram variação anormal de preço no leilão de fechamento de ontem.", radar_anomalia_fechamento.fonte if radar_anomalia_fechamento else "", radar_anomalia_fechamento.coletado_em if radar_anomalia_fechamento else "", 'visao-micro alertas escondido' if not radar_anomalia_fechamento or not radar_anomalia_fechamento.alertas else 'visao-micro alertas') %}
     {% if not radar_anomalia_fechamento %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not radar_anomalia_fechamento.alertas %}
         <div class="vazio">Sem anomalias no fechamento recente.</div>
     {% else %}
@@ -917,7 +917,7 @@
 
 {% call painel("Radar de Inflexão", 4, "Ações que caíram muito e hoje estão subindo forte, indicando possível quebra de inércia.", radar_inflexao.fonte if radar_inflexao else "", radar_inflexao.coletado_em if radar_inflexao else "", 'visao-micro alertas escondido' if not radar_inflexao or not radar_inflexao.alertas else 'visao-micro alertas') %}
     {% if not radar_inflexao %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not radar_inflexao.alertas %}
         <div class="vazio">Nenhuma inflexão detectada hoje.</div>
     {% else %}
@@ -935,7 +935,7 @@
 
 {% call painel("Volatilidade Silenciosa", 4, "Ações com forte oscilação intraday (alta amplitude) mas que fecharam próximas da abertura (variação ≤ 0.5%).", volatilidade_silenciosa.fonte if volatilidade_silenciosa else "", volatilidade_silenciosa.coletado_em if volatilidade_silenciosa else "", "visao-micro sentimento-risco") %}
     {% if not volatilidade_silenciosa %}
-        {{ estado("indisponivel") }}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not volatilidade_silenciosa.alertas %}
         <div class="vazio">Não houve volatilidade silenciosa no pregão atual.</div>
     {% else %}

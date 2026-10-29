@@ -913,614 +913,637 @@ def snapshot(
 
     import app.banco
 
-    old_data_ref = app.banco._data_referencia_snapshot.get()
-    _ = old_data_ref
-
-    if is_historical:
-        app.banco._data_referencia_snapshot.set(data_ref)
-
-    resp: dict[str, Any] = {
-        "gerado_em": agora.isoformat(),
-        "estado_mercado": estado_mercado,
-        "data_referencia": data_ref.isoformat(),
-        "paineis": {},
-    }
-
-    divergencia = get_divergencia_ibov_dolar()
-    if divergencia:
-        resp["paineis"]["divergencia_ibov_dolar"] = {
-            "divergencia_detectada": divergencia.get("divergencia_detectada"),
-            "correlacao": divergencia.get("correlacao"),
-            "coletado_em": divergencia.get("timestamp"),
-            "fonte": divergencia.get("fonte", "yfinance"),
+    with app.banco.lendo_pregao(data_ref if is_historical else None):
+        resp: dict[str, Any] = {
+            "gerado_em": agora.isoformat(),
+            "estado_mercado": estado_mercado,
+            "data_referencia": data_ref.isoformat(),
+            "paineis": {},
         }
 
-    assimetria = get_latest_assimetria_risco_retorno_data()
-    if assimetria:
-        resp["paineis"]["assimetria_risco_retorno"] = {
-            "coletado_em": assimetria.timestamp.isoformat(),
-            "fonte": getattr(assimetria, "fonte", "yfinance"),
-            "alertas": json.loads(assimetria.alertas_json),
-        }
-
-    data = get_latest_ibovespa_data()
-    if data:
-        variation_pct = (
-            ((data.current_price - data.previous_close) / data.previous_close) * 100
-            if data.previous_close
-            else 0.0
-        )
-
-        history_data = (
-            json.loads(data.history_json)
-            if data.history_json
-            else {"dates": [], "closes": []}
-        )
-
-        resp["paineis"]["ibovespa"] = {
-            "valor": data.current_price,
-            "fechamento_anterior": data.previous_close,
-            "variacao_pct": variation_pct,
-            "coletado_em": data.timestamp.isoformat(),
-            "fonte": getattr(data, "fonte", "brapi"),
-            "historico": {
-                "datas": history_data.get("dates", []),
-                "fechamentos": history_data.get("closes", []),
-            },
-            "medias_moveis": {
-                "mm21": data.mm21,
-                "mm200": data.mm200,
-            },
-        }
-
-    highlights_data = get_latest_highlights_data()
-    if highlights_data:
-        highs = (
-            json.loads(highlights_data.highs_json) if highlights_data.highs_json else []
-        )
-        lows = (
-            json.loads(highlights_data.lows_json) if highlights_data.lows_json else []
-        )
-        altas_baixas_panel = {
-            "coletado_em": highlights_data.timestamp.isoformat(),
-            "fonte": getattr(highlights_data, "fonte", "brapi"),
-            "altas": highs,
-            "baixas": lows,
-        }
-
-        up_count = getattr(highlights_data, "up_count", None)
-        down_count = getattr(highlights_data, "down_count", None)
-        total_count = getattr(highlights_data, "total_count", None)
-
-        if up_count is not None and down_count is not None and total_count:
-            altas_baixas_panel["dispersao"] = {
-                "em_alta": up_count,
-                "em_baixa": down_count,
-                "proporcao_alta_pct": (up_count / total_count) * 100,
+        divergencia = get_divergencia_ibov_dolar()
+        if divergencia:
+            resp["paineis"]["divergencia_ibov_dolar"] = {
+                "divergencia_detectada": divergencia.get("divergencia_detectada"),
+                "correlacao": divergencia.get("correlacao"),
+                "coletado_em": divergencia.get("timestamp"),
+                "fonte": divergencia.get("fonte", "yfinance"),
             }
 
-        resp["paineis"]["altas_baixas"] = altas_baixas_panel
+        elif is_historical:
+            resp["paineis"]["divergencia_ibov_dolar"] = None
+        assimetria = get_latest_assimetria_risco_retorno_data()
+        if assimetria:
+            resp["paineis"]["assimetria_risco_retorno"] = {
+                "coletado_em": assimetria.timestamp.isoformat(),
+                "fonte": getattr(assimetria, "fonte", "yfinance"),
+                "alertas": json.loads(assimetria.alertas_json),
+            }
 
-    volume_alerts_data = get_latest_volume_alerts_data()
-    if volume_alerts_data:
-        alerts = (
-            json.loads(volume_alerts_data.alerts_json)
-            if volume_alerts_data.alerts_json
-            else []
-        )
-        resp["paineis"]["radar_volume"] = {
-            "coletado_em": volume_alerts_data.timestamp.isoformat(),
-            "fonte": getattr(volume_alerts_data, "fonte", "yfinance"),
-            "alertas": alerts,
-        }
-    else:
-        resp["paineis"]["radar_volume"] = {}
+        elif is_historical:
+            resp["paineis"]["assimetria_risco_retorno"] = None
+        data = get_latest_ibovespa_data()
+        if data:
+            variation_pct = (
+                ((data.current_price - data.previous_close) / data.previous_close) * 100
+                if data.previous_close
+                else 0.0
+            )
 
-    dolar_corr_data = get_latest_dolar_correlation_data()
-    if dolar_corr_data:
-        positivas = (
-            json.loads(dolar_corr_data.positivas_json)
-            if dolar_corr_data.positivas_json
-            else []
-        )
-        negativas = (
-            json.loads(dolar_corr_data.negativas_json)
-            if dolar_corr_data.negativas_json
-            else []
-        )
-        resp["paineis"]["sensibilidade_dolar"] = {
-            "coletado_em": dolar_corr_data.timestamp.isoformat(),
-            "fonte": getattr(dolar_corr_data, "fonte", "yfinance"),
-            "positivas": positivas,
-            "negativas": negativas,
-        }
-    else:
-        resp["paineis"]["sensibilidade_dolar"] = {}
+            history_data = (
+                json.loads(data.history_json)
+                if data.history_json
+                else {"dates": [], "closes": []}
+            )
 
-    sensibilidade_juros_data = get_latest_sensibilidade_juros_data()
-    if sensibilidade_juros_data:
-        try:
-            alertas = (
-                json.loads(sensibilidade_juros_data.alertas_json)
-                if sensibilidade_juros_data.alertas_json
+            resp["paineis"]["ibovespa"] = {
+                "valor": data.current_price,
+                "fechamento_anterior": data.previous_close,
+                "variacao_pct": variation_pct,
+                "coletado_em": data.timestamp.isoformat(),
+                "fonte": getattr(data, "fonte", "brapi"),
+                "historico": {
+                    "datas": history_data.get("dates", []),
+                    "fechamentos": history_data.get("closes", []),
+                },
+                "medias_moveis": {
+                    "mm21": data.mm21,
+                    "mm200": data.mm200,
+                },
+            }
+
+        elif is_historical:
+            resp["paineis"]["ibovespa"] = None
+        highlights_data = get_latest_highlights_data()
+        if highlights_data:
+            highs = (
+                json.loads(highlights_data.highs_json)
+                if highlights_data.highs_json
                 else []
             )
-        except Exception:
-            alertas = []
-        resp["paineis"]["sensibilidade_juros"] = {
-            "fonte": sensibilidade_juros_data.fonte,
-            "coletado_em": sensibilidade_juros_data.timestamp.isoformat(),
-            "alertas": alertas,
-        }
-    else:
-        resp["paineis"]["sensibilidade_juros"] = {}
-
-    forca_relativa_data = get_latest_forca_relativa_data()
-    if forca_relativa_data:
-        try:
-            maior = json.loads(forca_relativa_data.maior_json)
-            menor = json.loads(forca_relativa_data.menor_json)
-            resp["paineis"]["forca_relativa"] = {
-                "coletado_em": forca_relativa_data.timestamp.isoformat(),
-                "fonte": getattr(forca_relativa_data, "fonte", "yfinance"),
-                "maior": maior,
-                "menor": menor,
+            lows = (
+                json.loads(highlights_data.lows_json)
+                if highlights_data.lows_json
+                else []
+            )
+            altas_baixas_panel = {
+                "coletado_em": highlights_data.timestamp.isoformat(),
+                "fonte": getattr(highlights_data, "fonte", "brapi"),
+                "altas": highs,
+                "baixas": lows,
             }
-        except json.JSONDecodeError:
+
+            up_count = getattr(highlights_data, "up_count", None)
+            down_count = getattr(highlights_data, "down_count", None)
+            total_count = getattr(highlights_data, "total_count", None)
+
+            if up_count is not None and down_count is not None and total_count:
+                altas_baixas_panel["dispersao"] = {
+                    "em_alta": up_count,
+                    "em_baixa": down_count,
+                    "proporcao_alta_pct": (up_count / total_count) * 100,
+                }
+
+            resp["paineis"]["altas_baixas"] = altas_baixas_panel
+
+        elif is_historical:
+            resp["paineis"]["altas_baixas"] = None
+        volume_alerts_data = get_latest_volume_alerts_data()
+        if volume_alerts_data:
+            alerts = (
+                json.loads(volume_alerts_data.alerts_json)
+                if volume_alerts_data.alerts_json
+                else []
+            )
+            resp["paineis"]["radar_volume"] = {
+                "coletado_em": volume_alerts_data.timestamp.isoformat(),
+                "fonte": getattr(volume_alerts_data, "fonte", "yfinance"),
+                "alertas": alerts,
+            }
+        else:
+            resp["paineis"]["radar_volume"] = {}
+
+        dolar_corr_data = get_latest_dolar_correlation_data()
+        if dolar_corr_data:
+            positivas = (
+                json.loads(dolar_corr_data.positivas_json)
+                if dolar_corr_data.positivas_json
+                else []
+            )
+            negativas = (
+                json.loads(dolar_corr_data.negativas_json)
+                if dolar_corr_data.negativas_json
+                else []
+            )
+            resp["paineis"]["sensibilidade_dolar"] = {
+                "coletado_em": dolar_corr_data.timestamp.isoformat(),
+                "fonte": getattr(dolar_corr_data, "fonte", "yfinance"),
+                "positivas": positivas,
+                "negativas": negativas,
+            }
+        else:
+            resp["paineis"]["sensibilidade_dolar"] = {}
+
+        sensibilidade_juros_data = get_latest_sensibilidade_juros_data()
+        if sensibilidade_juros_data:
+            try:
+                alertas = (
+                    json.loads(sensibilidade_juros_data.alertas_json)
+                    if sensibilidade_juros_data.alertas_json
+                    else []
+                )
+            except Exception:
+                alertas = []
+            resp["paineis"]["sensibilidade_juros"] = {
+                "fonte": sensibilidade_juros_data.fonte,
+                "coletado_em": sensibilidade_juros_data.timestamp.isoformat(),
+                "alertas": alertas,
+            }
+        else:
+            resp["paineis"]["sensibilidade_juros"] = {}
+
+        forca_relativa_data = get_latest_forca_relativa_data()
+        if forca_relativa_data:
+            try:
+                maior = json.loads(forca_relativa_data.maior_json)
+                menor = json.loads(forca_relativa_data.menor_json)
+                resp["paineis"]["forca_relativa"] = {
+                    "coletado_em": forca_relativa_data.timestamp.isoformat(),
+                    "fonte": getattr(forca_relativa_data, "fonte", "yfinance"),
+                    "maior": maior,
+                    "menor": menor,
+                }
+            except json.JSONDecodeError:
+                resp["paineis"]["forca_relativa"] = {}
+        else:
             resp["paineis"]["forca_relativa"] = {}
-    else:
-        resp["paineis"]["forca_relativa"] = {}
 
-    escudo_quedas_data = get_latest_escudo_quedas_data()
-    if escudo_quedas_data:
-        try:
-            parsed = json.loads(escudo_quedas_data.top3_json)
-            resp["paineis"]["escudo_quedas"] = {
-                "coletado_em": escudo_quedas_data.timestamp.isoformat(),
-                "fonte": getattr(escudo_quedas_data, "fonte", "yfinance"),
-                "qtd_quedas_ibov": parsed.get("qtd_quedas_ibov", 0),
-                "top3": parsed.get("top3", []),
-            }
-        except Exception:
+        escudo_quedas_data = get_latest_escudo_quedas_data()
+        if escudo_quedas_data:
+            try:
+                parsed = json.loads(escudo_quedas_data.top3_json)
+                resp["paineis"]["escudo_quedas"] = {
+                    "coletado_em": escudo_quedas_data.timestamp.isoformat(),
+                    "fonte": getattr(escudo_quedas_data, "fonte", "yfinance"),
+                    "qtd_quedas_ibov": parsed.get("qtd_quedas_ibov", 0),
+                    "top3": parsed.get("top3", []),
+                }
+            except Exception:
+                resp["paineis"]["escudo_quedas"] = {}
+        else:
             resp["paineis"]["escudo_quedas"] = {}
-    else:
-        resp["paineis"]["escudo_quedas"] = {}
 
-    motores_data = get_latest_motores_indice_data()
-    if motores_data:
-        resp["paineis"]["motores_indice"] = json.loads(motores_data.motores_json)
+        motores_data = get_latest_motores_indice_data()
+        if motores_data:
+            resp["paineis"]["motores_indice"] = json.loads(motores_data.motores_json)
 
-    clima_global_data = get_latest_clima_global_data()
-    if clima_global_data:
-        resp["paineis"]["clima_global"] = {
-            "coletado_em": clima_global_data.timestamp.astimezone(
-                timezone(timedelta(hours=-3))
-            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-            "sp500_pct": clima_global_data.sp500_pct,
-            "vix_pct": clima_global_data.vix_pct,
-            "status": clima_global_data.status,
-            "fonte": clima_global_data.fonte,
-        }
-    else:
-        resp["paineis"]["clima_global"] = None
-    coesao_data = get_latest_coesao_data()
-    if coesao_data:
-        resp["paineis"]["coesao"] = {
-            "coletado_em": coesao_data.timestamp.isoformat(),
-            "fonte": coesao_data.fonte,
-            "concordantes": coesao_data.concordantes,
-            "total": coesao_data.total,
-        }
-    else:
-        resp["paineis"]["coesao"] = {}
-
-    atrasadas_rally_data = get_latest_atrasadas_rally_data()
-    if atrasadas_rally_data:
-        try:
-            parsed = json.loads(atrasadas_rally_data.top3_json)
-            top3 = parsed if isinstance(parsed, list) else []
-            resp["paineis"]["atrasadas_rally"] = {
-                "coletado_em": atrasadas_rally_data.timestamp.isoformat(),
-                "fonte": getattr(atrasadas_rally_data, "fonte", "yfinance"),
-                "rally_valido": atrasadas_rally_data.rally_valido,
-                "top3": top3,
+        elif is_historical:
+            resp["paineis"]["motores_indice"] = None
+        clima_global_data = get_latest_clima_global_data()
+        if clima_global_data:
+            resp["paineis"]["clima_global"] = {
+                "coletado_em": clima_global_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "sp500_pct": clima_global_data.sp500_pct,
+                "vix_pct": clima_global_data.vix_pct,
+                "status": clima_global_data.status,
+                "fonte": clima_global_data.fonte,
             }
-        except Exception:
+        else:
+            resp["paineis"]["clima_global"] = None
+        coesao_data = get_latest_coesao_data()
+        if coesao_data:
+            resp["paineis"]["coesao"] = {
+                "coletado_em": coesao_data.timestamp.isoformat(),
+                "fonte": coesao_data.fonte,
+                "concordantes": coesao_data.concordantes,
+                "total": coesao_data.total,
+            }
+        else:
+            resp["paineis"]["coesao"] = {}
+
+        atrasadas_rally_data = get_latest_atrasadas_rally_data()
+        if atrasadas_rally_data:
+            try:
+                parsed = json.loads(atrasadas_rally_data.top3_json)
+                top3 = parsed if isinstance(parsed, list) else []
+                resp["paineis"]["atrasadas_rally"] = {
+                    "coletado_em": atrasadas_rally_data.timestamp.isoformat(),
+                    "fonte": getattr(atrasadas_rally_data, "fonte", "yfinance"),
+                    "rally_valido": atrasadas_rally_data.rally_valido,
+                    "top3": top3,
+                }
+            except Exception:
+                resp["paineis"]["atrasadas_rally"] = {}
+        else:
             resp["paineis"]["atrasadas_rally"] = {}
-    else:
-        resp["paineis"]["atrasadas_rally"] = {}
 
-    concentracao_data = get_latest_concentracao_data()
-    if concentracao_data:
-        try:
-            resp["paineis"]["concentracao"] = {
-                "coletado_em": concentracao_data.timestamp.isoformat(),
-                "fonte": concentracao_data.fonte,
-                "resumo": json.loads(concentracao_data.resumo_json),
-                "top3": json.loads(concentracao_data.top3_json),
-            }
-        except Exception:
-            resp["paineis"]["concentracao"] = {}
+        concentracao_data = get_latest_concentracao_data()
+        if concentracao_data:
+            try:
+                resp["paineis"]["concentracao"] = {
+                    "coletado_em": concentracao_data.timestamp.isoformat(),
+                    "fonte": concentracao_data.fonte,
+                    "resumo": json.loads(concentracao_data.resumo_json),
+                    "top3": json.loads(concentracao_data.top3_json),
+                }
+            except Exception:
+                resp["paineis"]["concentracao"] = {}
 
-    concentracao_vendedora_data = get_latest_concentracao_vendedora_data()
-    if concentracao_vendedora_data:
-        try:
-            resp["paineis"]["concentracao_vendedora"] = {
-                "coletado_em": concentracao_vendedora_data.timestamp.isoformat(),
-                "fonte": concentracao_vendedora_data.fonte,
-                "resumo": json.loads(concentracao_vendedora_data.resumo_json),
-                "top3": json.loads(concentracao_vendedora_data.top3_json),
-            }
-        except Exception:
+        elif is_historical:
+            resp["paineis"]["concentracao"] = None
+        concentracao_vendedora_data = get_latest_concentracao_vendedora_data()
+        if concentracao_vendedora_data:
+            try:
+                resp["paineis"]["concentracao_vendedora"] = {
+                    "coletado_em": concentracao_vendedora_data.timestamp.isoformat(),
+                    "fonte": concentracao_vendedora_data.fonte,
+                    "resumo": json.loads(concentracao_vendedora_data.resumo_json),
+                    "top3": json.loads(concentracao_vendedora_data.top3_json),
+                }
+            except Exception:
+                resp["paineis"]["concentracao_vendedora"] = {}
+        else:
             resp["paineis"]["concentracao_vendedora"] = {}
-    else:
-        resp["paineis"]["concentracao_vendedora"] = {}
 
-    concentracao_setorial_data = get_latest_concentracao_setorial_data()
-    if concentracao_setorial_data:
-        resp["paineis"]["concentracao_setorial"] = {
-            "coletado_em": concentracao_setorial_data.timestamp.astimezone(
-                timezone(timedelta(hours=-3))
-            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-            "fonte": concentracao_setorial_data.fonte,
-            "setor_destaque": concentracao_setorial_data.setor_destaque,
-            "variacao_media": concentracao_setorial_data.variacao_media,
-            "ha_setor_em_alta": concentracao_setorial_data.variacao_media > 0,
-            "setor_lider_volume": concentracao_setorial_data.setor_lider_volume,
-            "volume_lider": concentracao_setorial_data.volume_lider,
-        }
-    else:
-        resp["paineis"]["concentracao_setorial"] = {}
-
-    # Maré do mercado (spec 027). Sem coleta válida, chave vazia.
-    mare_data = get_latest_mare_data()
-    resp["paineis"]["mare"] = mare_servico.snapshot(mare_data) if mare_data else {}
-
-    apetite_risco_data = get_latest_apetite_risco_data()
-    if apetite_risco_data:
-        resp["paineis"]["apetite_risco"] = {
-            "coletado_em": apetite_risco_data.timestamp.isoformat(),
-            "fonte": apetite_risco_data.fonte,
-            "estado": apetite_risco_data.estado,
-            "diferenca": apetite_risco_data.diferenca,
-        }
-    else:
-        resp["paineis"]["apetite_risco"] = {}
-
-    variacao_subita_data = get_latest_variacao_subita_data()
-    if variacao_subita_data:
-        try:
-            alertas = json.loads(variacao_subita_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["variacao_subita"] = {
-            "coletado_em": variacao_subita_data.timestamp.isoformat(),
-            "fonte": variacao_subita_data.fonte,
-            "alertas": alertas,
-        }
-    else:
-        resp["paineis"]["variacao_subita"] = {}
-
-    rotacao_capital_data = get_latest_rotacao_capital_data()
-    if rotacao_capital_data:
-        resp["paineis"]["rotacao_capital"] = {
-            "coletado_em": rotacao_capital_data.timestamp.isoformat(),
-            "fonte": rotacao_capital_data.fonte,
-            "estado": rotacao_capital_data.estado,
-            "variacoes": {
-                "bancos": rotacao_capital_data.var_bancos,
-                "commodities": rotacao_capital_data.var_commodities,
-            },
-        }
-    else:
-        resp["paineis"]["rotacao_capital"] = {}
-
-    from app.database import get_latest_faca_caindo_data
-    from app.database import get_latest_volatilidade_silenciosa_data
-
-    faca_caindo_data = get_latest_faca_caindo_data()
-    if faca_caindo_data:
-        try:
-            alertas = json.loads(faca_caindo_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["faca_caindo"] = {
-            "coletado_em": faca_caindo_data.timestamp.isoformat(),
-            "fonte": faca_caindo_data.fonte,
-            "alertas": alertas,
-        }
-    else:
-        resp["paineis"]["faca_caindo"] = {}
-
-    compradores_fundo_data = get_latest_compradores_fundo_data()
-    if compradores_fundo_data:
-        try:
-            alertas = json.loads(compradores_fundo_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["compradores_fundo"] = {
-            "coletado_em": compradores_fundo_data.timestamp.isoformat(),
-            "fonte": compradores_fundo_data.fonte,
-            "alertas": alertas,
-        }
-    else:
-        resp["paineis"]["compradores_fundo"] = {}
-
-    concentracao_ordens_data = get_latest_concentracao_ordens_data()
-    if concentracao_ordens_data:
-        try:
-            alertas = json.loads(concentracao_ordens_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["concentracao_ordens"] = {
-            "fonte": concentracao_ordens_data.fonte,
-            "coletado_em": concentracao_ordens_data.timestamp.isoformat(),
-            "alertas": alertas,
-        }
-    else:
-        resp["paineis"]["concentracao_ordens"] = {}
-
-    armadilha_abertura_data = get_latest_armadilha_abertura_data()
-    if armadilha_abertura_data:
-        try:
-            alertas = json.loads(armadilha_abertura_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["armadilha_abertura"] = {
-            "coletado_em": armadilha_abertura_data.timestamp.isoformat(),
-            "fonte": armadilha_abertura_data.fonte,
-            "alertas": alertas,
-        }
-    else:
-        resp["paineis"]["armadilha_abertura"] = {}
-
-    from app.database import (
-        get_latest_radar_inflexao_data,
-        get_latest_anomalia_peso_data,
-        get_latest_radar_short_squeeze_data,
-        get_latest_radar_congestionamento_data,
-        get_latest_esforco_resultado_data,
-        get_latest_radar_divergencia_volume_data,
-        get_latest_radar_absorcao_cruzada_data,
-        get_latest_fator_peso_pesado_data,
-        get_latest_liquidez_abertura_data,
-        get_latest_falso_rompimento_data,
-    )
-
-    view_di = get_correlacao_di_view_data()
-    if view_di:
-        resp["paineis"]["correlacao_di"] = {
-            "correlacao_intradiaria": view_di.get("correlacao_intradiaria"),
-            "correlacao_5d": view_di.get("correlacao_5d"),
-            "status_intradiaria": view_di.get("status_intradiaria"),
-            "status_5d": view_di.get("status_5d"),
-            "coletado_em": view_di.get("coletado_em"),
-            "fonte": view_di.get("fonte", "yfinance"),
-        }
-
-    radar_short_squeeze_data = get_latest_radar_short_squeeze_data()
-    db_radar_congestionamento = get_latest_radar_congestionamento_data()
-    if radar_short_squeeze_data:
-        try:
-            alertas = json.loads(radar_short_squeeze_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["short_squeeze"] = {
-            "coletado_em": radar_short_squeeze_data.timestamp.isoformat(),
-            "fonte": radar_short_squeeze_data.fonte,
-            "alertas": alertas,
-        }
-    else:
-        resp["paineis"]["short_squeeze"] = []
-
-    resp["paineis"]["radar_congestionamento"] = (
-        [
-            {
-                "ticker": a.ticker,
-                "bandwidth": a.bandwidth,
-                "sparkline_path": a.sparkline_path,
+        concentracao_setorial_data = get_latest_concentracao_setorial_data()
+        if concentracao_setorial_data:
+            resp["paineis"]["concentracao_setorial"] = {
+                "coletado_em": concentracao_setorial_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": concentracao_setorial_data.fonte,
+                "setor_destaque": concentracao_setorial_data.setor_destaque,
+                "variacao_media": concentracao_setorial_data.variacao_media,
+                "ha_setor_em_alta": concentracao_setorial_data.variacao_media > 0,
+                "setor_lider_volume": concentracao_setorial_data.setor_lider_volume,
+                "volume_lider": concentracao_setorial_data.volume_lider,
             }
-            for a in db_radar_congestionamento.alertas
-        ]
-        if db_radar_congestionamento
-        else None
-    )
+        else:
+            resp["paineis"]["concentracao_setorial"] = {}
 
-    radar_inflexao_data = get_latest_radar_inflexao_data()
-    if radar_inflexao_data:
-        try:
-            alertas = json.loads(radar_inflexao_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["radar_inflexao"] = {
-            "coletado_em": radar_inflexao_data.timestamp.isoformat(),
-            "fonte": radar_inflexao_data.fonte,
-            "alertas": alertas,
-        }
-    else:
-        resp["paineis"]["radar_inflexao"] = []
-    esforco_resultado_data = get_latest_esforco_resultado_data()
-    if esforco_resultado_data:
-        try:
-            alertas = json.loads(esforco_resultado_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["esforco_resultado"] = alertas
-    else:
-        resp["paineis"]["esforco_resultado"] = []
+        # Maré do mercado (spec 027). Sem coleta válida, chave vazia.
+        mare_data = get_latest_mare_data()
+        resp["paineis"]["mare"] = mare_servico.snapshot(mare_data) if mare_data else {}
 
-    radar_divergencia_volume_data = get_latest_radar_divergencia_volume_data()
-    if radar_divergencia_volume_data:
-        try:
-            alertas = json.loads(radar_divergencia_volume_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["divergencia_volume"] = alertas
-    else:
-        resp["paineis"]["divergencia_volume"] = []
+        apetite_risco_data = get_latest_apetite_risco_data()
+        if apetite_risco_data:
+            resp["paineis"]["apetite_risco"] = {
+                "coletado_em": apetite_risco_data.timestamp.isoformat(),
+                "fonte": apetite_risco_data.fonte,
+                "estado": apetite_risco_data.estado,
+                "diferenca": apetite_risco_data.diferenca,
+            }
+        else:
+            resp["paineis"]["apetite_risco"] = {}
 
-    falso_rompimento_data = get_latest_falso_rompimento_data()
-    if falso_rompimento_data:
-        try:
-            alertas = json.loads(falso_rompimento_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["falso_rompimento"] = alertas
-    else:
-        resp["paineis"]["falso_rompimento"] = []
+        variacao_subita_data = get_latest_variacao_subita_data()
+        if variacao_subita_data:
+            try:
+                alertas = json.loads(variacao_subita_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["variacao_subita"] = {
+                "coletado_em": variacao_subita_data.timestamp.isoformat(),
+                "fonte": variacao_subita_data.fonte,
+                "alertas": alertas,
+            }
+        else:
+            resp["paineis"]["variacao_subita"] = {}
 
-    radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
-    fator_peso_pesado_data = get_latest_fator_peso_pesado_data()
+        rotacao_capital_data = get_latest_rotacao_capital_data()
+        if rotacao_capital_data:
+            resp["paineis"]["rotacao_capital"] = {
+                "coletado_em": rotacao_capital_data.timestamp.isoformat(),
+                "fonte": rotacao_capital_data.fonte,
+                "estado": rotacao_capital_data.estado,
+                "variacoes": {
+                    "bancos": rotacao_capital_data.var_bancos,
+                    "commodities": rotacao_capital_data.var_commodities,
+                },
+            }
+        else:
+            resp["paineis"]["rotacao_capital"] = {}
 
-    if fator_peso_pesado_data:
-        resp["paineis"]["fator_peso_pesado"] = {
-            "proporcao": fator_peso_pesado_data.proporcao,
-            "mercado_lateral": fator_peso_pesado_data.mercado_lateral,
-            "coletado_em": fator_peso_pesado_data.timestamp.astimezone(
-                timezone(timedelta(hours=-3))
-            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-            "fonte": fator_peso_pesado_data.fonte,
-        }
-    if radar_absorcao_cruzada_data:
-        try:
-            alertas = json.loads(radar_absorcao_cruzada_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["radar_absorcao_cruzada"] = {
-            "coletado_em": radar_absorcao_cruzada_data.timestamp.isoformat(),
-            "fonte": radar_absorcao_cruzada_data.fonte,
-            "alertas": alertas,
-        }
-    else:
-        resp["paineis"]["radar_absorcao_cruzada"] = []
+        from app.database import get_latest_faca_caindo_data
+        from app.database import get_latest_volatilidade_silenciosa_data
 
-    liquidez_abertura_data = get_latest_liquidez_abertura_data()
-    if liquidez_abertura_data:
-        try:
-            alertas = json.loads(liquidez_abertura_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["liquidez_abertura"] = alertas
-    else:
-        resp["paineis"]["liquidez_abertura"] = []
+        faca_caindo_data = get_latest_faca_caindo_data()
+        if faca_caindo_data:
+            try:
+                alertas = json.loads(faca_caindo_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["faca_caindo"] = {
+                "coletado_em": faca_caindo_data.timestamp.isoformat(),
+                "fonte": faca_caindo_data.fonte,
+                "alertas": alertas,
+            }
+        else:
+            resp["paineis"]["faca_caindo"] = {}
 
-    anomalia_peso_data = get_latest_anomalia_peso_data()
-    if anomalia_peso_data:
-        try:
-            alertas = json.loads(anomalia_peso_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["anomalia_peso"] = alertas
-        resp["paineis"]["anomalia_peso"] = []
+        compradores_fundo_data = get_latest_compradores_fundo_data()
+        if compradores_fundo_data:
+            try:
+                alertas = json.loads(compradores_fundo_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["compradores_fundo"] = {
+                "coletado_em": compradores_fundo_data.timestamp.isoformat(),
+                "fonte": compradores_fundo_data.fonte,
+                "alertas": alertas,
+            }
+        else:
+            resp["paineis"]["compradores_fundo"] = {}
 
-    anomalia_peso_data = get_latest_anomalia_peso_data()
-    if anomalia_peso_data:
-        try:
-            alertas = json.loads(anomalia_peso_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["anomalia_peso"] = alertas
-    else:
-        resp["paineis"]["anomalia_peso"] = []
+        concentracao_ordens_data = get_latest_concentracao_ordens_data()
+        if concentracao_ordens_data:
+            try:
+                alertas = json.loads(concentracao_ordens_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["concentracao_ordens"] = {
+                "fonte": concentracao_ordens_data.fonte,
+                "coletado_em": concentracao_ordens_data.timestamp.isoformat(),
+                "alertas": alertas,
+            }
+        else:
+            resp["paineis"]["concentracao_ordens"] = {}
 
-    sobrevivencia_semanal_data = get_latest_sobrevivencia_semanal_data()
-    if sobrevivencia_semanal_data:
-        try:
-            alertas = json.loads(sobrevivencia_semanal_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["sobrevivencia_semanal"] = {
-            "coletado_em": sobrevivencia_semanal_data.timestamp.isoformat(),
-            "fonte": sobrevivencia_semanal_data.fonte,
-            "alertas": alertas,
-        }
-    else:
-        resp["paineis"]["sobrevivencia_semanal"] = {}
+        armadilha_abertura_data = get_latest_armadilha_abertura_data()
+        if armadilha_abertura_data:
+            try:
+                alertas = json.loads(armadilha_abertura_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["armadilha_abertura"] = {
+                "coletado_em": armadilha_abertura_data.timestamp.isoformat(),
+                "fonte": armadilha_abertura_data.fonte,
+                "alertas": alertas,
+            }
+        else:
+            resp["paineis"]["armadilha_abertura"] = {}
 
-    volatilidade_silenciosa_data = get_latest_volatilidade_silenciosa_data()
-    if volatilidade_silenciosa_data:
-        try:
-            alertas = json.loads(volatilidade_silenciosa_data.alertas_json)
-        except Exception:
-            alertas = []
-        resp["paineis"]["volatilidade_silenciosa"] = {
-            "coletado_em": volatilidade_silenciosa_data.timestamp.isoformat(),
-            "fonte": volatilidade_silenciosa_data.fonte,
-            "alertas": alertas,
-        }
-    else:
-        resp["paineis"]["volatilidade_silenciosa"] = {}
+        from app.database import (
+            get_latest_radar_inflexao_data,
+            get_latest_anomalia_peso_data,
+            get_latest_radar_short_squeeze_data,
+            get_latest_radar_congestionamento_data,
+            get_latest_esforco_resultado_data,
+            get_latest_radar_divergencia_volume_data,
+            get_latest_radar_absorcao_cruzada_data,
+            get_latest_fator_peso_pesado_data,
+            get_latest_liquidez_abertura_data,
+            get_latest_falso_rompimento_data,
+        )
 
-    anomalias_spread_data = get_latest_radar_anomalias_spread_data()
-    if anomalias_spread_data:
-        try:
-            alertas = json.loads(anomalias_spread_data.alertas_json)
-            resp["paineis"]["anomalias_spread"] = alertas
-        except Exception:
+        view_di = get_correlacao_di_view_data()
+        if view_di:
+            resp["paineis"]["correlacao_di"] = {
+                "correlacao_intradiaria": view_di.get("correlacao_intradiaria"),
+                "correlacao_5d": view_di.get("correlacao_5d"),
+                "status_intradiaria": view_di.get("status_intradiaria"),
+                "status_5d": view_di.get("status_5d"),
+                "coletado_em": view_di.get("coletado_em"),
+                "fonte": view_di.get("fonte", "yfinance"),
+            }
+
+        elif is_historical:
+            resp["paineis"]["correlacao_di"] = None
+        radar_short_squeeze_data = get_latest_radar_short_squeeze_data()
+        db_radar_congestionamento = get_latest_radar_congestionamento_data()
+        if radar_short_squeeze_data:
+            try:
+                alertas = json.loads(radar_short_squeeze_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["short_squeeze"] = {
+                "coletado_em": radar_short_squeeze_data.timestamp.isoformat(),
+                "fonte": radar_short_squeeze_data.fonte,
+                "alertas": alertas,
+            }
+        else:
+            resp["paineis"]["short_squeeze"] = []
+
+        resp["paineis"]["radar_congestionamento"] = (
+            [
+                {
+                    "ticker": a.ticker,
+                    "bandwidth": a.bandwidth,
+                    "sparkline_path": a.sparkline_path,
+                }
+                for a in db_radar_congestionamento.alertas
+            ]
+            if db_radar_congestionamento
+            else None
+        )
+
+        radar_inflexao_data = get_latest_radar_inflexao_data()
+        if radar_inflexao_data:
+            try:
+                alertas = json.loads(radar_inflexao_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["radar_inflexao"] = {
+                "coletado_em": radar_inflexao_data.timestamp.isoformat(),
+                "fonte": radar_inflexao_data.fonte,
+                "alertas": alertas,
+            }
+        else:
+            resp["paineis"]["radar_inflexao"] = []
+        esforco_resultado_data = get_latest_esforco_resultado_data()
+        if esforco_resultado_data:
+            try:
+                alertas = json.loads(esforco_resultado_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["esforco_resultado"] = alertas
+        else:
+            resp["paineis"]["esforco_resultado"] = []
+
+        radar_divergencia_volume_data = get_latest_radar_divergencia_volume_data()
+        if radar_divergencia_volume_data:
+            try:
+                alertas = json.loads(radar_divergencia_volume_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["divergencia_volume"] = alertas
+        else:
+            resp["paineis"]["divergencia_volume"] = []
+
+        falso_rompimento_data = get_latest_falso_rompimento_data()
+        if falso_rompimento_data:
+            try:
+                alertas = json.loads(falso_rompimento_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["falso_rompimento"] = alertas
+        else:
+            resp["paineis"]["falso_rompimento"] = []
+
+        radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
+        fator_peso_pesado_data = get_latest_fator_peso_pesado_data()
+
+        if fator_peso_pesado_data:
+            resp["paineis"]["fator_peso_pesado"] = {
+                "proporcao": fator_peso_pesado_data.proporcao,
+                "mercado_lateral": fator_peso_pesado_data.mercado_lateral,
+                "coletado_em": fator_peso_pesado_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": fator_peso_pesado_data.fonte,
+            }
+        elif is_historical:
+            resp["paineis"]["fator_peso_pesado"] = None
+        if radar_absorcao_cruzada_data:
+            try:
+                alertas = json.loads(radar_absorcao_cruzada_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["radar_absorcao_cruzada"] = {
+                "coletado_em": radar_absorcao_cruzada_data.timestamp.isoformat(),
+                "fonte": radar_absorcao_cruzada_data.fonte,
+                "alertas": alertas,
+            }
+        else:
+            resp["paineis"]["radar_absorcao_cruzada"] = []
+
+        liquidez_abertura_data = get_latest_liquidez_abertura_data()
+        if liquidez_abertura_data:
+            try:
+                alertas = json.loads(liquidez_abertura_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["liquidez_abertura"] = alertas
+        else:
+            resp["paineis"]["liquidez_abertura"] = []
+
+        anomalia_peso_data = get_latest_anomalia_peso_data()
+        if anomalia_peso_data:
+            try:
+                alertas = json.loads(anomalia_peso_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["anomalia_peso"] = alertas
+            resp["paineis"]["anomalia_peso"] = []
+
+        elif is_historical:
+            resp["paineis"]["anomalia_peso"] = None
+        anomalia_peso_data = get_latest_anomalia_peso_data()
+        if anomalia_peso_data:
+            try:
+                alertas = json.loads(anomalia_peso_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["anomalia_peso"] = alertas
+        else:
+            resp["paineis"]["anomalia_peso"] = []
+
+        sobrevivencia_semanal_data = get_latest_sobrevivencia_semanal_data()
+        if sobrevivencia_semanal_data:
+            try:
+                alertas = json.loads(sobrevivencia_semanal_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["sobrevivencia_semanal"] = {
+                "coletado_em": sobrevivencia_semanal_data.timestamp.isoformat(),
+                "fonte": sobrevivencia_semanal_data.fonte,
+                "alertas": alertas,
+            }
+        else:
+            resp["paineis"]["sobrevivencia_semanal"] = {}
+
+        volatilidade_silenciosa_data = get_latest_volatilidade_silenciosa_data()
+        if volatilidade_silenciosa_data:
+            try:
+                alertas = json.loads(volatilidade_silenciosa_data.alertas_json)
+            except Exception:
+                alertas = []
+            resp["paineis"]["volatilidade_silenciosa"] = {
+                "coletado_em": volatilidade_silenciosa_data.timestamp.isoformat(),
+                "fonte": volatilidade_silenciosa_data.fonte,
+                "alertas": alertas,
+            }
+        else:
+            resp["paineis"]["volatilidade_silenciosa"] = {}
+
+        anomalias_spread_data = get_latest_radar_anomalias_spread_data()
+        if anomalias_spread_data:
+            try:
+                alertas = json.loads(anomalias_spread_data.alertas_json)
+                resp["paineis"]["anomalias_spread"] = alertas
+            except Exception:
+                resp["paineis"]["anomalias_spread"] = []
+        else:
             resp["paineis"]["anomalias_spread"] = []
-    else:
-        resp["paineis"]["anomalias_spread"] = []
 
-    exaustao_queda_data = get_latest_exaustao_queda_data()
-    if exaustao_queda_data:
-        alertas = json.loads(exaustao_queda_data.alertas_json)
-        resp["paineis"]["exaustao_queda"] = {
-            "coletado_em": exaustao_queda_data.timestamp.isoformat(),
-            "fonte": exaustao_queda_data.fonte,
-            "alertas": alertas,
-        }
-
-    exaustao_alta_data = get_latest_exaustao_alta_data()
-    if exaustao_alta_data:
-        resp["paineis"]["exaustao_alta"] = {
-            "coletado_em": exaustao_alta_data.timestamp.isoformat(),
-            "fonte": getattr(exaustao_alta_data, "fonte", "yfinance"),
-            "alertas": json.loads(exaustao_alta_data.alertas_json),
-        }
-
-    exaustao_tendencia_data = get_latest_exaustao_tendencia_data()
-    if exaustao_tendencia_data:
-        try:
-            resp["paineis"]["exaustao_tendencia"] = {
-                "coletado_em": exaustao_tendencia_data.timestamp.isoformat(),
-                "fonte": getattr(exaustao_tendencia_data, "fonte", "yfinance"),
-                "alertas": json.loads(exaustao_tendencia_data.alertas_json),
+        exaustao_queda_data = get_latest_exaustao_queda_data()
+        if exaustao_queda_data:
+            alertas = json.loads(exaustao_queda_data.alertas_json)
+            resp["paineis"]["exaustao_queda"] = {
+                "coletado_em": exaustao_queda_data.timestamp.isoformat(),
+                "fonte": exaustao_queda_data.fonte,
+                "alertas": alertas,
             }
-        except Exception:
-            pass
 
-    relogio = get_latest_relogio_volatilidade_data()
-    if relogio:
-        try:
-            alertas = json.loads(relogio.alertas_json)
-            resp["paineis"]["relogio_volatilidade"] = {
-                "coletado_em": relogio.timestamp.isoformat(),
-                "fonte": relogio.fonte,
-                "ticker": alertas.get("ticker", ""),
-                "variacao": alertas.get("variacao", 0.0),
-                "amplitude_percentual": alertas.get("amplitude_percentual", 0.0),
-                "minima": alertas.get("minima", 0.0),
-                "maxima": alertas.get("maxima", 0.0),
-                "status": "pico_as_" + str(alertas.get("pico_horario", "")),
+        elif is_historical:
+            resp["paineis"]["exaustao_queda"] = None
+        exaustao_alta_data = get_latest_exaustao_alta_data()
+        if exaustao_alta_data:
+            resp["paineis"]["exaustao_alta"] = {
+                "coletado_em": exaustao_alta_data.timestamp.isoformat(),
+                "fonte": getattr(exaustao_alta_data, "fonte", "yfinance"),
+                "alertas": json.loads(exaustao_alta_data.alertas_json),
             }
-        except Exception:
+
+        elif is_historical:
+            resp["paineis"]["exaustao_alta"] = None
+        exaustao_tendencia_data = get_latest_exaustao_tendencia_data()
+        if exaustao_tendencia_data:
+            try:
+                resp["paineis"]["exaustao_tendencia"] = {
+                    "coletado_em": exaustao_tendencia_data.timestamp.isoformat(),
+                    "fonte": getattr(exaustao_tendencia_data, "fonte", "yfinance"),
+                    "alertas": json.loads(exaustao_tendencia_data.alertas_json),
+                }
+            except Exception:
+                pass
+
+        elif is_historical:
+            resp["paineis"]["exaustao_tendencia"] = None
+        relogio = get_latest_relogio_volatilidade_data()
+        if relogio:
+            try:
+                alertas = json.loads(relogio.alertas_json)
+                resp["paineis"]["relogio_volatilidade"] = {
+                    "coletado_em": relogio.timestamp.isoformat(),
+                    "fonte": relogio.fonte,
+                    "ticker": alertas.get("ticker", ""),
+                    "variacao": alertas.get("variacao", 0.0),
+                    "amplitude_percentual": alertas.get("amplitude_percentual", 0.0),
+                    "minima": alertas.get("minima", 0.0),
+                    "maxima": alertas.get("maxima", 0.0),
+                    "status": "pico_as_" + str(alertas.get("pico_horario", "")),
+                }
+            except Exception:
+                resp["paineis"]["relogio_volatilidade"] = {}
+        else:
             resp["paineis"]["relogio_volatilidade"] = {}
-    else:
-        resp["paineis"]["relogio_volatilidade"] = {}
 
-    anomalia_fechamento = get_radar_anomalia_fechamento_view()
-    if anomalia_fechamento and "alertas" in anomalia_fechamento:
-        resp["paineis"]["anomalia_fechamento"] = anomalia_fechamento
+        anomalia_fechamento = get_radar_anomalia_fechamento_view()
+        if anomalia_fechamento and "alertas" in anomalia_fechamento:
+            resp["paineis"]["anomalia_fechamento"] = anomalia_fechamento
 
-    resp["consultor"] = {
-        "atualizado_em": datetime.now(timezone(timedelta(hours=-3))).isoformat(),
-        "ativos_avaliados": len(CARTEIRA_IBOVESPA),
-        "composicao_vigente_ate": COMPOSICAO_VIGENTE_ATE.isoformat(),
-    }
+        elif is_historical:
+            resp["paineis"]["anomalia_fechamento"] = None
+        resp["consultor"] = {
+            "atualizado_em": datetime.now(timezone(timedelta(hours=-3))).isoformat(),
+            "ativos_avaliados": len(CARTEIRA_IBOVESPA),
+            "composicao_vigente_ate": COMPOSICAO_VIGENTE_ATE.isoformat(),
+        }
 
-    if is_historical:
-        app.banco._data_referencia_snapshot.set(old_data_ref)
-    return resp
+        return resp
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -1545,392 +1568,387 @@ async def index(
     import app.banco
 
     # Store old values to restore
-    old_data_ref = app.banco._data_referencia_snapshot.get()
-    _ = old_data_ref
+    with app.banco.lendo_pregao(data_ref if is_historical else None):
+        motores_data = get_latest_motores_indice_data()
+        motores_cards = json.loads(motores_data.motores_json) if motores_data else None
 
-    if is_historical:
-        app.banco._data_referencia_snapshot.set(data_ref)
-
-    motores_data = get_latest_motores_indice_data()
-    motores_cards = json.loads(motores_data.motores_json) if motores_data else None
-
-    clima_global_data = get_latest_clima_global_data()
-    clima_global = None
-    correlacao_di = get_correlacao_di_view_data()
-    if clima_global_data:
-        clima_global = {
-            "coletado_em": clima_global_data.timestamp.astimezone(
-                timezone(timedelta(hours=-3))
-            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-            "timestamp": clima_global_data.timestamp.astimezone(
-                timezone(timedelta(hours=-3))
-            ),
-            "sp500_pct": clima_global_data.sp500_pct,
-            "vix_pct": clima_global_data.vix_pct,
-            "status": clima_global_data.status,
-            "fonte": clima_global_data.fonte,
-        }
-    ibovespa_data = get_ibovespa_view_data()
-
-    highlights_data = get_latest_highlights_data()
-    highs_dict = {}
-    if (
-        highlights_data
-        and highlights_data.total_count
-        and highlights_data.up_count is not None
-    ):
-        highs_dict["dispersion_pct"] = (
-            highlights_data.up_count / highlights_data.total_count
-        ) * 100
-
-    apetite_risco_data = get_latest_apetite_risco_data()
-    risco_dict = {}
-    if apetite_risco_data:
-        risco_dict["estado"] = apetite_risco_data.estado
-
-    data_ibov = get_ibovespa_view_data()
-    highlights = get_highlights_view_data()
-    volume_alerts = get_volume_alerts_view_data()
-    dolar_correlation = get_dolar_correlation_view_data()
-    sensibilidade_juros = get_sensibilidade_juros_view_data()
-    forca_relativa = get_forca_relativa_view_data()
-    escudo_quedas = get_escudo_quedas_view_data()
-
-    manchete = gerar_manchete(ibovespa_data, highs_dict, risco_dict)
-
-    coesao = get_coesao_view_data()
-    atrasadas_rally = get_atrasadas_rally_view_data()
-
-    concentracao = get_concentracao_view_data()
-    concentracao_vendedora = get_concentracao_vendedora_view_data()
-
-    apetite_risco = get_apetite_risco_view_data()
-    concentracao_setorial_data = get_latest_concentracao_setorial_data()
-    concentracao_setorial = None
-    if concentracao_setorial_data:
-        concentracao_setorial = {
-            "setor_destaque": concentracao_setorial_data.setor_destaque,
-            "variacao_media": concentracao_setorial_data.variacao_media,
-            "coletado_em": concentracao_setorial_data.timestamp.astimezone(
-                timezone(timedelta(hours=-3))
-            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-            "fonte": concentracao_setorial_data.fonte,
-            "setor_lider_volume": concentracao_setorial_data.setor_lider_volume,
-            "volume_lider": concentracao_setorial_data.volume_lider,
-        }
-
-    variacao_subita = get_variacao_subita_view_data()
-    radar_anomalia_fechamento = get_radar_anomalia_fechamento_view()
-    rotacao_capital = get_rotacao_capital_view()
-    faca_caindo = get_faca_caindo_view()
-    compradores_fundo = get_compradores_fundo_view()
-    armadilha_abertura = get_armadilha_abertura_view()
-    from app.database import (
-        get_latest_radar_inflexao_data,
-        get_latest_anomalia_peso_data,
-        get_latest_radar_congestionamento_data,
-        get_latest_esforco_resultado_data,
-        get_latest_radar_divergencia_volume_data,
-        get_latest_radar_absorcao_cruzada_data,
-        get_latest_fator_peso_pesado_data,
-        get_latest_liquidez_abertura_data,
-        get_latest_falso_rompimento_data,
-        get_latest_concentracao_ordens_data,
-    )
-
-    radar_data = get_latest_radar_inflexao_data()
-    radar_inflexao = None
-    if radar_data:
-        try:
-            alertas = json.loads(radar_data.alertas_json)
-            radar_inflexao = {
-                "coletado_em": radar_data.timestamp.astimezone(
+        clima_global_data = get_latest_clima_global_data()
+        clima_global = None
+        correlacao_di = get_correlacao_di_view_data()
+        if clima_global_data:
+            clima_global = {
+                "coletado_em": clima_global_data.timestamp.astimezone(
                     timezone(timedelta(hours=-3))
                 ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": radar_data.fonte,
-                "alertas": alertas,
+                "timestamp": clima_global_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ),
+                "sp500_pct": clima_global_data.sp500_pct,
+                "vix_pct": clima_global_data.vix_pct,
+                "status": clima_global_data.status,
+                "fonte": clima_global_data.fonte,
             }
-        except Exception:
-            pass
+        ibovespa_data = get_ibovespa_view_data()
 
-    sobrevivencia_semanal = get_sobrevivencia_semanal_view()
-    volatilidade_silenciosa = get_volatilidade_silenciosa_view()
+        highlights_data = get_latest_highlights_data()
+        highs_dict = {}
+        if (
+            highlights_data
+            and highlights_data.total_count
+            and highlights_data.up_count is not None
+        ):
+            highs_dict["dispersion_pct"] = (
+                highlights_data.up_count / highlights_data.total_count
+            ) * 100
 
-    mare = mare_servico.get_mare_view()
+        apetite_risco_data = get_latest_apetite_risco_data()
+        risco_dict = {}
+        if apetite_risco_data:
+            risco_dict["estado"] = apetite_risco_data.estado
 
-    from app.services.radar_short_squeeze import get_radar_short_squeeze_view
+        data_ibov = get_ibovespa_view_data()
+        highlights = get_highlights_view_data()
+        volume_alerts = get_volume_alerts_view_data()
+        dolar_correlation = get_dolar_correlation_view_data()
+        sensibilidade_juros = get_sensibilidade_juros_view_data()
+        forca_relativa = get_forca_relativa_view_data()
+        escudo_quedas = get_escudo_quedas_view_data()
 
-    short_squeeze = get_radar_short_squeeze_view()
-    anomalia_data = get_latest_anomalia_peso_data()
-    radar_congestionamento_data = get_latest_radar_congestionamento_data()
+        manchete = gerar_manchete(ibovespa_data, highs_dict, risco_dict)
 
-    esforco_resultado_data = get_latest_esforco_resultado_data()
-    esforco_resultado = None
-    if esforco_resultado_data:
-        try:
-            alertas = json.loads(esforco_resultado_data.alertas_json)
-            esforco_resultado = {
-                "coletado_em": esforco_resultado_data.timestamp.astimezone(
+        coesao = get_coesao_view_data()
+        atrasadas_rally = get_atrasadas_rally_view_data()
+
+        concentracao = get_concentracao_view_data()
+        concentracao_vendedora = get_concentracao_vendedora_view_data()
+
+        apetite_risco = get_apetite_risco_view_data()
+        concentracao_setorial_data = get_latest_concentracao_setorial_data()
+        concentracao_setorial = None
+        if concentracao_setorial_data:
+            concentracao_setorial = {
+                "setor_destaque": concentracao_setorial_data.setor_destaque,
+                "variacao_media": concentracao_setorial_data.variacao_media,
+                "coletado_em": concentracao_setorial_data.timestamp.astimezone(
                     timezone(timedelta(hours=-3))
                 ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": esforco_resultado_data.fonte,
-                "alertas": alertas,
+                "fonte": concentracao_setorial_data.fonte,
+                "setor_lider_volume": concentracao_setorial_data.setor_lider_volume,
+                "volume_lider": concentracao_setorial_data.volume_lider,
             }
-        except Exception:
-            pass
 
-    concentracao_ordens_data = get_latest_concentracao_ordens_data()
-    concentracao_ordens = None
-    if concentracao_ordens_data:
-        try:
-            alertas = json.loads(concentracao_ordens_data.alertas_json)
-        except Exception:
-            alertas = []
+        variacao_subita = get_variacao_subita_view_data()
+        radar_anomalia_fechamento = get_radar_anomalia_fechamento_view()
+        rotacao_capital = get_rotacao_capital_view()
+        faca_caindo = get_faca_caindo_view()
+        compradores_fundo = get_compradores_fundo_view()
+        armadilha_abertura = get_armadilha_abertura_view()
+        from app.database import (
+            get_latest_radar_inflexao_data,
+            get_latest_anomalia_peso_data,
+            get_latest_radar_congestionamento_data,
+            get_latest_esforco_resultado_data,
+            get_latest_radar_divergencia_volume_data,
+            get_latest_radar_absorcao_cruzada_data,
+            get_latest_fator_peso_pesado_data,
+            get_latest_liquidez_abertura_data,
+            get_latest_falso_rompimento_data,
+            get_latest_concentracao_ordens_data,
+        )
 
-        def formatar_data(t):
-            return t.strftime("%d/%m/%Y %H:%M:%S BRT")
+        radar_data = get_latest_radar_inflexao_data()
+        radar_inflexao = None
+        if radar_data:
+            try:
+                alertas = json.loads(radar_data.alertas_json)
+                radar_inflexao = {
+                    "coletado_em": radar_data.timestamp.astimezone(
+                        timezone(timedelta(hours=-3))
+                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                    "fonte": radar_data.fonte,
+                    "alertas": alertas,
+                }
+            except Exception:
+                pass
 
-        concentracao_ordens = {
-            "alertas": alertas,
-            "coletado_em": formatar_data(concentracao_ordens_data.timestamp),
-            "fonte": concentracao_ordens_data.fonte,
-        }
+        sobrevivencia_semanal = get_sobrevivencia_semanal_view()
+        volatilidade_silenciosa = get_volatilidade_silenciosa_view()
 
-    exaustao_queda = None
-    exaustao_queda_data = get_latest_exaustao_queda_data()
-    if exaustao_queda_data:
-        try:
-            alertas = json.loads(exaustao_queda_data.alertas_json)
-            exaustao_queda = {
+        mare = mare_servico.get_mare_view()
+
+        from app.services.radar_short_squeeze import get_radar_short_squeeze_view
+
+        short_squeeze = get_radar_short_squeeze_view()
+        anomalia_data = get_latest_anomalia_peso_data()
+        radar_congestionamento_data = get_latest_radar_congestionamento_data()
+
+        esforco_resultado_data = get_latest_esforco_resultado_data()
+        esforco_resultado = None
+        if esforco_resultado_data:
+            try:
+                alertas = json.loads(esforco_resultado_data.alertas_json)
+                esforco_resultado = {
+                    "coletado_em": esforco_resultado_data.timestamp.astimezone(
+                        timezone(timedelta(hours=-3))
+                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                    "fonte": esforco_resultado_data.fonte,
+                    "alertas": alertas,
+                }
+            except Exception:
+                pass
+
+        concentracao_ordens_data = get_latest_concentracao_ordens_data()
+        concentracao_ordens = None
+        if concentracao_ordens_data:
+            try:
+                alertas = json.loads(concentracao_ordens_data.alertas_json)
+            except Exception:
+                alertas = []
+
+            def formatar_data(t):
+                return t.strftime("%d/%m/%Y %H:%M:%S BRT")
+
+            concentracao_ordens = {
                 "alertas": alertas,
-                "coletado_em": formatar_data(exaustao_queda_data.timestamp),
-                "fonte": getattr(exaustao_queda_data, "fonte", "yfinance"),
+                "coletado_em": formatar_data(concentracao_ordens_data.timestamp),
+                "fonte": concentracao_ordens_data.fonte,
             }
-        except Exception:
-            pass
 
-    exaustao_alta_data = get_latest_exaustao_alta_data()
-    exaustao_alta = None
-    if exaustao_alta_data:
-        try:
-            alertas = json.loads(exaustao_alta_data.alertas_json)
-            exaustao_alta = {
-                "alertas": alertas,
-                "coletado_em": formatar_data(exaustao_alta_data.timestamp),
-                "fonte": getattr(exaustao_alta_data, "fonte", "yfinance"),
-            }
-        except Exception:
-            pass
+        exaustao_queda = None
+        exaustao_queda_data = get_latest_exaustao_queda_data()
+        if exaustao_queda_data:
+            try:
+                alertas = json.loads(exaustao_queda_data.alertas_json)
+                exaustao_queda = {
+                    "alertas": alertas,
+                    "coletado_em": formatar_data(exaustao_queda_data.timestamp),
+                    "fonte": getattr(exaustao_queda_data, "fonte", "yfinance"),
+                }
+            except Exception:
+                pass
 
-    exaustao_tendencia_data = get_latest_exaustao_tendencia_data()
-    exaustao_tendencia = None
-    if exaustao_tendencia_data:
-        try:
-            alertas = json.loads(exaustao_tendencia_data.alertas_json)
-            exaustao_tendencia = {
-                "coletado_em": exaustao_tendencia_data.timestamp.astimezone(
+        exaustao_alta_data = get_latest_exaustao_alta_data()
+        exaustao_alta = None
+        if exaustao_alta_data:
+            try:
+                alertas = json.loads(exaustao_alta_data.alertas_json)
+                exaustao_alta = {
+                    "alertas": alertas,
+                    "coletado_em": formatar_data(exaustao_alta_data.timestamp),
+                    "fonte": getattr(exaustao_alta_data, "fonte", "yfinance"),
+                }
+            except Exception:
+                pass
+
+        exaustao_tendencia_data = get_latest_exaustao_tendencia_data()
+        exaustao_tendencia = None
+        if exaustao_tendencia_data:
+            try:
+                alertas = json.loads(exaustao_tendencia_data.alertas_json)
+                exaustao_tendencia = {
+                    "coletado_em": exaustao_tendencia_data.timestamp.astimezone(
+                        timezone(timedelta(hours=-3))
+                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                    "fonte": exaustao_tendencia_data.fonte,
+                    "alertas": alertas,
+                }
+            except Exception:
+                pass
+
+        falso_rompimento_data = get_latest_falso_rompimento_data()
+        falso_rompimento = None
+        if falso_rompimento_data:
+            try:
+                alertas = json.loads(falso_rompimento_data.alertas_json)
+                falso_rompimento = {
+                    "coletado_em": falso_rompimento_data.timestamp.astimezone(
+                        timezone(timedelta(hours=-3))
+                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                    "fonte": falso_rompimento_data.fonte,
+                    "alertas": alertas,
+                }
+            except Exception:
+                pass
+
+        radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
+        fator_peso_pesado_data_raw = get_latest_fator_peso_pesado_data()
+        fator_peso_pesado_data = None
+        if fator_peso_pesado_data_raw:
+            fator_peso_pesado_data = {
+                "proporcao": fator_peso_pesado_data_raw.proporcao,
+                "mercado_lateral": fator_peso_pesado_data_raw.mercado_lateral,
+                "coletado_em": fator_peso_pesado_data_raw.timestamp.astimezone(
                     timezone(timedelta(hours=-3))
                 ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": exaustao_tendencia_data.fonte,
-                "alertas": alertas,
+                "fonte": fator_peso_pesado_data_raw.fonte,
             }
-        except Exception:
-            pass
 
-    falso_rompimento_data = get_latest_falso_rompimento_data()
-    falso_rompimento = None
-    if falso_rompimento_data:
-        try:
-            alertas = json.loads(falso_rompimento_data.alertas_json)
-            falso_rompimento = {
-                "coletado_em": falso_rompimento_data.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": falso_rompimento_data.fonte,
-                "alertas": alertas,
-            }
-        except Exception:
-            pass
+        radar_absorcao_cruzada = None
+        if radar_absorcao_cruzada_data:
+            try:
+                alertas = json.loads(radar_absorcao_cruzada_data.alertas_json)
+                radar_absorcao_cruzada = {
+                    "coletado_em": radar_absorcao_cruzada_data.timestamp.astimezone(
+                        timezone(timedelta(hours=-3))
+                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                    "fonte": radar_absorcao_cruzada_data.fonte,
+                    "alertas": alertas,
+                }
+            except Exception:
+                pass
 
-    radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
-    fator_peso_pesado_data_raw = get_latest_fator_peso_pesado_data()
-    fator_peso_pesado_data = None
-    if fator_peso_pesado_data_raw:
-        fator_peso_pesado_data = {
-            "proporcao": fator_peso_pesado_data_raw.proporcao,
-            "mercado_lateral": fator_peso_pesado_data_raw.mercado_lateral,
-            "coletado_em": fator_peso_pesado_data_raw.timestamp.astimezone(
-                timezone(timedelta(hours=-3))
-            ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-            "fonte": fator_peso_pesado_data_raw.fonte,
-        }
+        liquidez_abertura_data = get_latest_liquidez_abertura_data()
+        liquidez_abertura = None
+        if liquidez_abertura_data:
+            try:
+                alertas = json.loads(liquidez_abertura_data.alertas_json)
+                liquidez_abertura = {
+                    "coletado_em": liquidez_abertura_data.timestamp.astimezone(
+                        timezone(timedelta(hours=-3))
+                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                    "fonte": liquidez_abertura_data.fonte,
+                    "alertas": alertas,
+                }
+            except Exception:
+                pass
 
-    radar_absorcao_cruzada = None
-    if radar_absorcao_cruzada_data:
-        try:
-            alertas = json.loads(radar_absorcao_cruzada_data.alertas_json)
-            radar_absorcao_cruzada = {
-                "coletado_em": radar_absorcao_cruzada_data.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": radar_absorcao_cruzada_data.fonte,
-                "alertas": alertas,
-            }
-        except Exception:
-            pass
+        radar_divergencia_volume_data = get_latest_radar_divergencia_volume_data()
+        radar_divergencia_volume = None
+        if radar_divergencia_volume_data:
+            try:
+                alertas = json.loads(radar_divergencia_volume_data.alertas_json)
+                radar_divergencia_volume = {
+                    "coletado_em": radar_divergencia_volume_data.timestamp.astimezone(
+                        timezone(timedelta(hours=-3))
+                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                    "fonte": radar_divergencia_volume_data.fonte,
+                    "alertas": alertas,
+                }
+            except Exception:
+                pass
+        anomalia_peso = None
+        if anomalia_data:
+            try:
+                alertas = json.loads(anomalia_data.alertas_json)
+                anomalia_peso = {
+                    "coletado_em": anomalia_data.timestamp.astimezone(
+                        timezone(timedelta(hours=-3))
+                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                    "fonte": anomalia_data.fonte,
+                    "alertas": alertas,
+                }
+            except Exception:
+                pass
 
-    liquidez_abertura_data = get_latest_liquidez_abertura_data()
-    liquidez_abertura = None
-    if liquidez_abertura_data:
-        try:
-            alertas = json.loads(liquidez_abertura_data.alertas_json)
-            liquidez_abertura = {
-                "coletado_em": liquidez_abertura_data.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": liquidez_abertura_data.fonte,
-                "alertas": alertas,
-            }
-        except Exception:
-            pass
+        anomalias_spread_data = get_latest_radar_anomalias_spread_data()
+        anomalias_spread = None
+        if anomalias_spread_data:
+            try:
+                alertas = json.loads(anomalias_spread_data.alertas_json)
+                anomalias_spread = {
+                    "alertas": alertas,
+                    "coletado_em": anomalias_spread_data.timestamp.astimezone(
+                        timezone(timedelta(hours=-3))
+                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                    "fonte": anomalias_spread_data.fonte,
+                }
+            except Exception:
+                pass
 
-    radar_divergencia_volume_data = get_latest_radar_divergencia_volume_data()
-    radar_divergencia_volume = None
-    if radar_divergencia_volume_data:
-        try:
-            alertas = json.loads(radar_divergencia_volume_data.alertas_json)
-            radar_divergencia_volume = {
-                "coletado_em": radar_divergencia_volume_data.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": radar_divergencia_volume_data.fonte,
-                "alertas": alertas,
-            }
-        except Exception:
-            pass
-    anomalia_peso = None
-    if anomalia_data:
-        try:
-            alertas = json.loads(anomalia_data.alertas_json)
-            anomalia_peso = {
-                "coletado_em": anomalia_data.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": anomalia_data.fonte,
-                "alertas": alertas,
-            }
-        except Exception:
-            pass
+        anomalias_spread_data = get_latest_radar_anomalias_spread_data()
+        anomalias_spread = None
+        if anomalias_spread_data:
+            try:
+                alertas = json.loads(anomalias_spread_data.alertas_json)
+                anomalias_spread = {
+                    "alertas": alertas,
+                    "coletado_em": anomalias_spread_data.timestamp.astimezone(
+                        timezone(timedelta(hours=-3))
+                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                    "fonte": anomalias_spread_data.fonte,
+                }
+            except Exception:
+                pass
+        relogio_data = get_latest_relogio_volatilidade_data()
+        relogio = None
+        if relogio_data:
+            try:
+                alertas = json.loads(relogio_data.alertas_json)
 
-    anomalias_spread_data = get_latest_radar_anomalias_spread_data()
-    anomalias_spread = None
-    if anomalias_spread_data:
-        try:
-            alertas = json.loads(anomalias_spread_data.alertas_json)
-            anomalias_spread = {
-                "alertas": alertas,
-                "coletado_em": anomalias_spread_data.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": anomalias_spread_data.fonte,
-            }
-        except Exception:
-            pass
-
-    anomalias_spread_data = get_latest_radar_anomalias_spread_data()
-    anomalias_spread = None
-    if anomalias_spread_data:
-        try:
-            alertas = json.loads(anomalias_spread_data.alertas_json)
-            anomalias_spread = {
-                "alertas": alertas,
-                "coletado_em": anomalias_spread_data.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": anomalias_spread_data.fonte,
-            }
-        except Exception:
-            pass
-    relogio_data = get_latest_relogio_volatilidade_data()
-    relogio = None
-    if relogio_data:
-        try:
-            alertas = json.loads(relogio_data.alertas_json)
-
-            pico_horario = alertas.get("pico_horario", 0)
-            hora_str = (
-                datetime.fromtimestamp(pico_horario, tz=dt_timezone.utc).strftime(
-                    "%H:%M"
+                pico_horario = alertas.get("pico_horario", 0)
+                hora_str = (
+                    datetime.fromtimestamp(pico_horario, tz=dt_timezone.utc).strftime(
+                        "%H:%M"
+                    )
+                    if pico_horario
+                    else "--:--"
                 )
-                if pico_horario
-                else "--:--"
-            )
-            relogio = {
-                "coletado_em": relogio_data.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": relogio_data.fonte,
-                "ticker": alertas.get("ticker", ""),
-                "variacao": alertas.get("variacao", 0.0),
-                "amplitude_percentual": alertas.get("amplitude_percentual", 0.0),
-                "hora_str": hora_str,
-            }
-        except Exception:
-            pass
+                relogio = {
+                    "coletado_em": relogio_data.timestamp.astimezone(
+                        timezone(timedelta(hours=-3))
+                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                    "fonte": relogio_data.fonte,
+                    "ticker": alertas.get("ticker", ""),
+                    "variacao": alertas.get("variacao", 0.0),
+                    "amplitude_percentual": alertas.get("amplitude_percentual", 0.0),
+                    "hora_str": hora_str,
+                }
+            except Exception:
+                pass
 
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={
-            "datas_seletor": datas_seletor,
-            "data_invalida": data_invalida,
-            "datas_disponiveis": datas_disponiveis,
-            "is_historical": is_historical,
-            "estado_mercado": estado_mercado,
-            "data_referencia": data_ref,
-            "mercado_aberto": mercado_aberto,
-            "manchete": manchete,
-            "data": data_ibov,
-            "highlights": highlights,
-            "volume_alerts": volume_alerts,
-            "dolar_correlation": dolar_correlation,
-            "sensibilidade_juros": sensibilidade_juros,
-            "forca_relativa": forca_relativa,
-            "escudo_quedas": escudo_quedas,
-            "coesao": coesao,
-            "atrasadas_rally": atrasadas_rally,
-            "concentracao": concentracao,
-            "concentracao_vendedora": concentracao_vendedora,
-            "apetite_risco": apetite_risco,
-            "concentracao_setorial": concentracao_setorial,
-            "variacao_subita": variacao_subita,
-            "radar_anomalia_fechamento": radar_anomalia_fechamento,
-            "rotacao_capital": rotacao_capital,
-            "faca_caindo": faca_caindo,
-            "compradores_fundo": compradores_fundo,
-            "armadilha_abertura": armadilha_abertura,
-            "radar_inflexao": radar_inflexao,
-            "short_squeeze": short_squeeze,
-            "sobrevivencia_semanal": sobrevivencia_semanal,
-            "volatilidade_silenciosa": volatilidade_silenciosa,
-            "scanner_capitulacao": scanner_capitulacao.view_model(),
-            "anomalia_peso": anomalia_peso,
-            "radar_congestionamento": radar_congestionamento_data,
-            "esforco_resultado": esforco_resultado,
-            "radar_divergencia_volume": radar_divergencia_volume,
-            "falso_rompimento": falso_rompimento,
-            "radar_absorcao_cruzada": radar_absorcao_cruzada,
-            "concentracao_ordens": concentracao_ordens,
-            "fator_peso_pesado_data": fator_peso_pesado_data,
-            "liquidez_abertura": liquidez_abertura,
-            "mare": mare,
-            "motores_cards": motores_cards,
-            "clima_global": clima_global,
-            "correlacao_di": correlacao_di,
-            "relogio": relogio,
-            "anomalias_spread": anomalias_spread,
-            "exaustao_tendencia": exaustao_tendencia,
-            "exaustao_queda": exaustao_queda,
-            "exaustao_alta": exaustao_alta,
-        },
-    )
+        return templates.TemplateResponse(
+            request=request,
+            name="index.html",
+            context={
+                "datas_seletor": datas_seletor,
+                "data_invalida": data_invalida,
+                "datas_disponiveis": datas_disponiveis,
+                "is_historical": is_historical,
+                "estado_mercado": estado_mercado,
+                "data_referencia": data_ref,
+                "mercado_aberto": mercado_aberto,
+                "manchete": manchete,
+                "data": data_ibov,
+                "highlights": highlights,
+                "volume_alerts": volume_alerts,
+                "dolar_correlation": dolar_correlation,
+                "sensibilidade_juros": sensibilidade_juros,
+                "forca_relativa": forca_relativa,
+                "escudo_quedas": escudo_quedas,
+                "coesao": coesao,
+                "atrasadas_rally": atrasadas_rally,
+                "concentracao": concentracao,
+                "concentracao_vendedora": concentracao_vendedora,
+                "apetite_risco": apetite_risco,
+                "concentracao_setorial": concentracao_setorial,
+                "variacao_subita": variacao_subita,
+                "radar_anomalia_fechamento": radar_anomalia_fechamento,
+                "rotacao_capital": rotacao_capital,
+                "faca_caindo": faca_caindo,
+                "compradores_fundo": compradores_fundo,
+                "armadilha_abertura": armadilha_abertura,
+                "radar_inflexao": radar_inflexao,
+                "short_squeeze": short_squeeze,
+                "sobrevivencia_semanal": sobrevivencia_semanal,
+                "volatilidade_silenciosa": volatilidade_silenciosa,
+                "scanner_capitulacao": scanner_capitulacao.view_model(),
+                "anomalia_peso": anomalia_peso,
+                "radar_congestionamento": radar_congestionamento_data,
+                "esforco_resultado": esforco_resultado,
+                "radar_divergencia_volume": radar_divergencia_volume,
+                "falso_rompimento": falso_rompimento,
+                "radar_absorcao_cruzada": radar_absorcao_cruzada,
+                "concentracao_ordens": concentracao_ordens,
+                "fator_peso_pesado_data": fator_peso_pesado_data,
+                "liquidez_abertura": liquidez_abertura,
+                "mare": mare,
+                "motores_cards": motores_cards,
+                "clima_global": clima_global,
+                "correlacao_di": correlacao_di,
+                "relogio": relogio,
+                "anomalias_spread": anomalias_spread,
+                "exaustao_tendencia": exaustao_tendencia,
+                "exaustao_queda": exaustao_queda,
+                "exaustao_alta": exaustao_alta,
+            },
+        )
