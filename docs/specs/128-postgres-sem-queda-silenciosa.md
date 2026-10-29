@@ -11,7 +11,7 @@ revisada: 2026-10-28
 ## Problema
 `_determine_backend` (`app/banco.py`) testa o Postgres com duas tentativas de 10 s. Se as duas falham, devolve `sqlite_efemero`, e `get_backend_type` guarda esse resultado até o processo morrer. Na prática:
 
-1. **Os dados se perdem.** Uma oscilação do Neon na hora do boot faz a instância inteira gravar num SQLite que some no próximo restart, até o próximo deploy ou hibernação. Coletas, snapshots `final` e recomendações do Consultor desse período desaparecem.
+1. **Os dados se perdem.** Uma oscilação do Postgres na hora do boot faz a instância inteira gravar num SQLite que some no próximo restart, até o próximo deploy ou hibernação. Coletas, snapshots `final` e recomendações do Consultor desse período desaparecem.
 2. **O boot trava.** O teste roda já na importação de `app.main`, por causa do global `templates.env.globals["render_no_db"]`. Com o Postgres fora, o processo leva até cerca de 22 s para subir.
 3. **O código contradiz a regra que ele mesmo cita.** O comentário em `get_connection` registra a decisão de revisão: "se um banco está configurado explicitamente, falhas de conexão devem propagar (fail fast) em vez de cair em silêncio para outro backend". O `_determine_backend` faz o contrário.
 

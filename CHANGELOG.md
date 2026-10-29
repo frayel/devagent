@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- **Sistema**: o item Banco de dados mostra a versão do servidor e o tamanho do banco em uso. Documentação atualizada: o Postgres de produção não é mais o Neon (ADR 009).
 - Fix (#592): a página inicial respondia 500 com snapshot da Maré gravado antes da spec 123 (`ativos_json` obrigatório). O campo ganhou padrão e a leitura ignora chaves de outras versões.
 - spec 119b: Adicionado validador da chave API do Gemini em background.
 - **Consultor**: Exibe recomendações e opiniões em datas passadas (spec 113)

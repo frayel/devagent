@@ -293,9 +293,10 @@ def verificar_historico_pregoes(datas: list[str], agora: datetime) -> Item:
 def verificar_banco(info: dict[str, Any]) -> Item:
     if info.get("erro"):
         return Item("Banco de dados", PROBLEMA, "não conecta", info["erro"])
-    resumo = (
-        f"{info['tipo']} · {info.get('tamanho', '?')} · {info.get('latencia_ms', 0)} ms"
-    )
+    # Versão e tamanho do banco em uso, para quem troca de provedor ver na hora
+    # o que está conectado.
+    tipo = f"{info['tipo']} {info['versao']}" if info.get("versao") else info["tipo"]
+    resumo = f"{tipo} · {info.get('tamanho', '?')} · {info.get('latencia_ms', 0)} ms"
     if info["tipo"] == "SQLite" and info.get("database_url"):
         return Item(
             "Banco de dados",
@@ -303,9 +304,14 @@ def verificar_banco(info: dict[str, Any]) -> Item:
             resumo,
             "DATABASE_URL está configurado, mas o Postgres não respondeu quando a instância subiu; "
             "a aplicação está gravando no SQLite local, que se perde quando o Render reinicia. "
-            "Reinicie o serviço depois de conferir o Neon.",
+            "Reinicie o serviço depois de conferir o Postgres.",
         )
-    return Item("Banco de dados", OK, resumo, f"{info.get('tabelas', 0)} tabelas")
+    return Item(
+        "Banco de dados",
+        OK,
+        resumo,
+        f"{info.get('tabelas', 0)} tabelas · tamanho em disco: {info.get('tamanho', '?')}",
+    )
 
 
 def verificar_agendador(
