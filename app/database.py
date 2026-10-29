@@ -167,6 +167,7 @@ class MareData:
     fluxo: float | None
     calma: float | None
     volume: float | None
+    ativos_json: str
     historico_json: str
     fonte: str
 

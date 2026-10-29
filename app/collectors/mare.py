@@ -33,10 +33,6 @@ URL_CESTA = "https://{domain}.finance.yahoo.com/v8/finance/chart/{simbolo}?range
 URL_IBOV = (
     "https://query2.finance.yahoo.com/v8/finance/chart/%5EBVSP?range=2y&interval=1d"
 )
-URL_IBOV_BRAPI_DEPRECATED = (
-    "https://brapi.dev/api/quote/%5EBVSP?token={token}&range=2y&interval=1d"
-    "&fundamental=false"
-)
 
 
 def _dia(ts: int | float) -> date:
@@ -141,6 +137,7 @@ def coletar(agora: datetime | None = None) -> MareData | None:
         fluxo=c["fluxo"],
         calma=c["calma"],
         volume=c["volume"],
+        ativos_json=json.dumps(atual.heatmap),
         historico_json=json.dumps(
             [{"data": h.dia.isoformat(), "valor": h.valor} for h in historico]
         ),

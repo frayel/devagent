@@ -407,6 +407,7 @@ def _gravar(valor=68, fluxo=74.2, calma=61.0, volume=67.4, n_hist=21):
             fluxo=fluxo,
             calma=calma,
             volume=volume,
+            ativos_json="[]",
             historico_json=json.dumps(historico),
             fonte="yfinance",
         )

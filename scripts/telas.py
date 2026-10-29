@@ -234,6 +234,7 @@ def _semear(db_path: str) -> None:
             fluxo=74.0,
             calma=61.0,
             volume=67.0,
+            ativos_json="[]",
             historico_json=json.dumps(historico),
             fonte="demonstracao",
         )

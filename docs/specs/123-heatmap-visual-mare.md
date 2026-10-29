@@ -1,7 +1,7 @@
 ---
 id: 123
 titulo: Heatmap visual da Maré do Mercado
-status: ready
+status: done
 esforco: M
 aceite: tests/test_aceite_123.py
 revisada: 2026-10-28

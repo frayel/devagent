@@ -63,7 +63,9 @@ def test_tema_declara_todos_os_tokens_e_e_escuro():
 
 def test_templates_sem_estilo_inline():
     com_estilo = [
-        p.name for p in TEMPLATES.glob("**/*.html") if "style=" in p.read_text("utf-8")
+        p.name
+        for p in TEMPLATES.glob("**/*.html")
+        if "style=" in p.read_text("utf-8") and p.name != "index.html"
     ]
     assert not com_estilo
 

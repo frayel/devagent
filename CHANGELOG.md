@@ -240,4 +240,7 @@
 * spec 113b: Consultor em data passada exibe o resultado futuro da recomendação.
 - Redução de transferência de banco de dados no Neon (Spec 122).
 
-- Correcao brapi e spec 121b
+- Correcao brapi e spec 121b- Spec 123 (Heatmap visual da Maré do Mercado):
+  - Adiciona propriedade `ativos_json` ao DB para rastrear principais ativos.
+  - Altera front-end `app/templates/index.html` para expor via estilo inline o top-10 do fluxo e volume no pregão diário no painel da maré.
+- Fecha Issues #557 (Remoção código morto da Maré) e #570.
