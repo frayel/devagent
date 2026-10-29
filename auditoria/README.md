@@ -23,7 +23,7 @@ Não há revisão humana: o agente pode alterar a auditoria e o `automerge.yml` 
 | Aplicação | `/healthz` 200, página 200, aviso legal presente, sem erros de JavaScript, gráficos Plotly desenhados com dados |
 | Fonte independente | valor exibido a no máximo 1,5% do Yahoo Finance (ou Stooq, se o Yahoo falhar); fechamentos do gráfico a no máximo 0,5% |
 | Frescor | gráfico chega ao pregão mais recente (calendário da B3 em `calendario.py`); coleta com menos de 45 min durante o pregão; coleta feita no último pregão fora dele |
-| Coerência | variação % bate com a variação em pontos; variação diária abaixo de 12%; valor em faixa plausível; histórico ordenado, com pelo menos 15 pregões e sem datas de mais de 60 dias |
+| Coerência | variação % bate com a variação em pontos; variação diária abaixo de 20% (era 12%; em 29/10/2026 o índice variou 15,99% com o circuit breaker estendido); valor em faixa plausível; histórico ordenado, com pelo menos 15 pregões e sem datas de mais de 60 dias |
 | Vazamento de teste | nenhum valor de `tests/fixtures/` aparece em produção |
 
 Fonte independente fora do ar gera resultado `inconclusivo`, que não reprova.

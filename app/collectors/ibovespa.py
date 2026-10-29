@@ -12,6 +12,12 @@ from app.collectors.utils import fetch_with_retry
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Variação diária acima disto é tratada como dado errado da fonte e descartada.
+# Era 12%: em 29/10/2026 o Ibovespa variou 15,99% de verdade, com os limites
+# do circuit breaker da B3 estendidos naquele dia, e o coletor descartou o
+# dado das duas fontes.
+VARIACAO_DIARIA_MAXIMA = 20.0  # %
+
 
 def calc_mm(closes: list[float], window: int) -> float | None:
     if len(closes) < window:
@@ -58,7 +64,7 @@ def fetch_brapi() -> IbovespaData | None:
 
         if previous_close:
             var_pct = ((current_price - previous_close) / previous_close) * 100
-            if abs(var_pct) > 12.0:
+            if abs(var_pct) > VARIACAO_DIARIA_MAXIMA:
                 logger.error(
                     f"brapi.dev returned implausible variation: {var_pct:.2f}%"
                 )
@@ -167,7 +173,7 @@ def fetch_yfinance() -> IbovespaData | None:
 
         if previous_close:
             var_pct = ((current_price - previous_close) / previous_close) * 100
-            if abs(var_pct) > 12.0:
+            if abs(var_pct) > VARIACAO_DIARIA_MAXIMA:
                 logger.error(f"yfinance returned implausible variation: {var_pct:.2f}%")
                 return None
 

@@ -804,21 +804,42 @@ def persona_da_vez(sessoes: list[dict[str, Any]], agora: datetime) -> str:
     return "desenvolvedor"
 
 
-def intervalo_do_desenvolvedor() -> timedelta:
+def intervalo_do_desenvolvedor(
+    sessoes: list[dict[str, Any]] | None = None, agora: datetime | None = None
+) -> timedelta:
     """Menor espaço entre duas sessões do desenvolvedor.
 
     JULES_INTERVALO_MINUTOS manda, se existir. Senão, com JULES_LIMITE_DIARIO,
-    a cota que sobra depois da reserva é espalhada pelas 24 h, para não ser
-    gasta numa rajada e deixar o agente parado o resto do dia. Sem nenhuma
-    das duas, não há espera: a próxima sessão começa quando a anterior acaba.
+    a cota que ainda resta na janela de 24 h (depois da reserva e de todas as
+    sessões já abertas, inclusive as das raias e dos especialistas) é
+    espalhada até a sessão mais antiga da janela sair dela e devolver uma vaga
+    (ADR 028). Antes, o intervalo era 24 h / (limite − reserva), como se a cota
+    fosse só do desenvolvedor: as raias gastavam da mesma cota e ela acabava
+    antes da hora. Sem a lista de sessões, vale a conta antiga. Sem nenhuma das
+    duas variáveis, não há espera.
     """
     fixo = os.environ.get("JULES_INTERVALO_MINUTOS", "").strip()
     if fixo.isdigit():
         return timedelta(minutes=int(fixo))
     limite = os.environ.get("JULES_LIMITE_DIARIO", "").strip()
-    if limite.isdigit() and int(limite) > RESERVA_DIARIA:
+    if not limite.isdigit() or int(limite) <= RESERVA_DIARIA:
+        return timedelta(0)
+    if sessoes is None:
         return timedelta(minutes=24 * 60 / (int(limite) - RESERVA_DIARIA))
-    return timedelta(0)
+    agora = agora or datetime.now(timezone.utc)
+    janela = timedelta(hours=24)
+    na_janela = sorted(
+        _data(s, "createTime")
+        for s in sessoes
+        if _data(s, "createTime") >= agora - janela
+    )
+    if not na_janela:
+        return timedelta(0)
+    restante = int(limite) - RESERVA_DIARIA - len(na_janela)
+    if restante <= 0:
+        # cota_esgotada já segura a sessão; até a próxima vaga, espera.
+        return na_janela[0] + janela - agora
+    return (na_janela[0] + janela - agora) / restante
 
 
 # PR com CI vermelho e atividade recente está sendo corrigido pela própria
@@ -884,7 +905,7 @@ def motivo_para_esperar(
 ) -> str:
     if persona != "desenvolvedor":
         return ""
-    intervalo = intervalo_do_desenvolvedor()
+    intervalo = intervalo_do_desenvolvedor(sessoes, agora)
     titulo = PERSONAS["desenvolvedor"]["titulo"]
     datas = [
         _data(s, "createTime") for s in sessoes if s.get("title", "").startswith(titulo)
@@ -905,9 +926,12 @@ def motivo_para_esperar(
 INTERVALO_VERIFICADOR = timedelta(minutes=90)
 # Sem verificação anterior, olha só o que chegou à main neste período.
 JANELA_PRIMEIRA_VERIFICACAO = timedelta(hours=24)
-# Com a fila neste tamanho ou menor, o especificador prepara a próxima spec:
-# a que sobra é a que o desenvolvimento está implementando.
-FILA_PARA_ESPECIFICAR = 1
+# Com a fila de specs ready (revisadas ou à espera da revisão) neste tamanho ou
+# menor, o especificador prepara a próxima. Com 1, a spec nova só nascia
+# quando o desenvolvimento pegava a última, e ele esperava a escrita e a
+# revisão dela; com 2, há sempre uma pronta enquanto a outra é implementada
+# (ADR 029).
+FILA_PARA_ESPECIFICAR = 2
 # Teto de sessões por raia auxiliar em 24 h. A cota do plano é uma só; sem
 # teto, uma raia que dispara a cada volta gasta a cota do desenvolvimento,
 # que é quem entrega código (ADR 024).

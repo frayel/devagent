@@ -121,6 +121,29 @@ def test_variacao_incoerente_reprova():
     assert "ibov.variacao_coerente" in _falhas(checar_coerencia(p))
 
 
+def _painel_com_variacao(pct: float) -> Painel:
+    p = _painel_saudavel()
+    anterior = p.fechamentos[-2]
+    p.fechamento_anterior = anterior
+    p.valor = anterior * (1 + pct / 100)
+    p.variacao = p.valor - anterior
+    p.variacao_pct = pct
+    p.fechamentos[-1] = p.valor
+    return p
+
+
+def test_variacao_real_de_16_por_cento_passa():
+    """29/10/2026: o índice variou 15,99% com o circuit breaker estendido."""
+    falhas = _falhas(checar_coerencia(_painel_com_variacao(15.99)))
+    assert "ibov.variacao_plausivel" not in falhas
+    assert "ibov.historico_vs_valor" not in falhas
+
+
+def test_variacao_acima_de_20_por_cento_reprova():
+    falhas = _falhas(checar_coerencia(_painel_com_variacao(25.0)))
+    assert "ibov.variacao_plausivel" in falhas
+
+
 def test_coleta_parada_no_pregao_reprova():
     p = _painel_saudavel()
     quarta_14h = datetime(2026, 9, 23, 17, 0, tzinfo=timezone.utc)

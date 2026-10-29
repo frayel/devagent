@@ -107,7 +107,7 @@ Produção quebrada vem antes de qualquer outra coisa. Verifique, nesta ordem:
 5. **Ambiente de produção simulado.** Em um virtualenv limpo, `make install-prod` e `make smoke`. É o mesmo teste do job `smoke` do CI.
 6. **Correções prioritárias.** Se as verificações acima passaram, trate **uma** correção pendente, nesta ordem:
    1. a primeira entrada da seção *Correções* de `docs/BACKLOG.md`, que um humano ou o agente registrou como defeito conhecido;
-   2. a issue aberta mais antiga com label `prioridade` (exceto as com `bloqueado`), classificada pela tabela do Passo 6. Os achados de severidade média e baixa da auditoria chegam com esse label (ADR 020): bug visível em produção passa na frente da fila de specs. Quando houver uma, o `estado_github` e o prompt da sessão dizem qual é.
+   2. a issue aberta mais antiga com label `prioridade` (exceto as com `bloqueado`), classificada pela tabela do Passo 6. Os achados de severidade média e baixa da auditoria chegam com esse label (ADR 020): bug visível em produção passa na frente da fila de specs. Toda issue `bug` aberta há mais de 24 h também ganha o label, pela varredura do guardião (ADR 030): nenhum bug fica para sempre atrás das specs. Quando houver uma, o `estado_github` e o prompt da sessão dizem qual é.
 
    Se já existe um PR do agente aberto, destrave-o antes (Passo 2): a regra de continuidade vale aqui também. Ao terminar uma entrada do backlog, remova-a da seção *Correções* no mesmo PR `fix:` e registre a correção no `CHANGELOG.md`. Se a correção depender de configuração no painel da plataforma de deploy, registre o bloqueio como descrito acima, escreva `bloqueado` na entrada do backlog e encerre. Entradas que citam `bloqueado` são puladas nas execuções seguintes.
 
@@ -178,7 +178,7 @@ Se a issue mais antiga já tem spec vinculada, pule-a e escolha a seguinte. Se n
 
 ### Passo 7 · Descobrir e imaginar
 
-**Este passo é da raia de especificação** (ADR 021). O desenvolvimento não o executa: se você chegou aqui como desenvolvedor, não há nada para você nesta volta. Encerre sem PR; o Especificador já foi ou será chamado quando a fila de specs `ready` chegar a uma. O que segue é o roteiro que ele segue, com as diferenças de `devagent/agents/raias.md` (número reservado no prompt, só os arquivos da raia, PR `spec:`).
+**Este passo é da raia de especificação** (ADR 021). O desenvolvimento não o executa: se você chegou aqui como desenvolvedor, não há nada para você nesta volta. Encerre sem PR; o Especificador já foi ou será chamado quando a fila de specs `ready` tiver duas ou menos (ADR 029). O que segue é o roteiro que ele segue, com as diferenças de `devagent/agents/raias.md` (número reservado no prompt, só os arquivos da raia, PR `spec:`).
 
 Esta é a fase criativa do ciclo. Aqui você não é executor de backlog: é quem decide o que o sistema deve se tornar. Siga a skill `devagent/skills/descobrir-ideias.md`.
 

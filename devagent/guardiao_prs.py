@@ -32,6 +32,8 @@ Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
       ou as specs citadas estão `draft` ou não existem (ADR 024).
     - Antes do merge (--antes-do-merge): PR que altera spec que a main já
       alterou depois que a branch saiu dela fecha como redundante (ADR 024).
+    - Bug aberto há mais de 24 h ganha o label `prioridade` e passa a ser
+      tratado no Passo 1.6, antes da fila de specs (ADR 030).
     - Só PRs e branches do Jules: PR ou branch de pessoa fica intocado.
 """
 
@@ -703,6 +705,68 @@ def fechar_tentativas_orfas() -> None:
         print(f"Issue #{issue['number']} fechada: tentativa órfã")
 
 
+# Bug aberto há mais que isto ganha `prioridade` (ADR 030).
+BUG_ENVELHECE_HORAS = 24
+LABEL_BUG = "bug"
+LABEL_PRIORIDADE = "prioridade"
+
+
+def bugs_para_priorizar(issues: list[dict[str, Any]], momento: datetime) -> list[int]:
+    """Issues `bug` abertas há mais de BUG_ENVELHECE_HORAS, ainda sem prioridade.
+
+    Bug sem `prioridade` cai no Passo 6, que só roda com a fila de specs vazia:
+    em 28/10 a #557 e a #570 (achados de severidade baixa do Verificador)
+    esperavam atrás de 12 specs, sem previsão (ADR 030). As `bloqueado`
+    esperam uma pessoa e ficam de fora.
+    """
+    limite = timedelta(hours=BUG_ENVELHECE_HORAS)
+    numeros = []
+    for i in issues:
+        labels = {lbl["name"] for lbl in i.get("labels", [])}
+        if LABEL_BUG not in labels or labels & {LABEL_PRIORIDADE, "bloqueado"}:
+            continue
+        if momento - data(i["createdAt"]) > limite:
+            numeros.append(i["number"])
+    return sorted(numeros)
+
+
+def priorizar_bugs_antigos() -> None:
+    issues = gh_json(
+        "issue",
+        "list",
+        "--state",
+        "open",
+        "--label",
+        LABEL_BUG,
+        "--json",
+        "number,createdAt,labels",
+        "--limit",
+        "100",
+    )
+    for numero in bugs_para_priorizar(issues, agora()):
+        sh(
+            "gh",
+            "issue",
+            "edit",
+            str(numero),
+            "--add-label",
+            LABEL_PRIORIDADE,
+            check=False,
+        )
+        sh(
+            "gh",
+            "issue",
+            "comment",
+            str(numero),
+            "--body",
+            f"Aberta há mais de {BUG_ENVELHECE_HORAS} h: ganhou o label "
+            f"`{LABEL_PRIORIDADE}` e entra no Passo 1.6, antes da fila de specs "
+            "(ADR 030).",
+            check=False,
+        )
+        print(f"Issue #{numero}: bug antigo ganhou prioridade")
+
+
 def varredura() -> None:
     # Um passo auxiliar com defeito não pode cegar os outros: de 28/09 a 30/09
     # uma falha aqui derrubou a varredura inteira em toda execução.
@@ -714,6 +778,10 @@ def varredura() -> None:
         fechar_tentativas_orfas()
     except Exception as erro:  # noqa: BLE001
         print(f"::warning::fechar_tentativas_orfas falhou: {erro}")
+    try:
+        priorizar_bugs_antigos()
+    except Exception as erro:  # noqa: BLE001
+        print(f"::warning::priorizar_bugs_antigos falhou: {erro}")
     prs = prs_do_agente()
     fechados: set[int] = set()
 
