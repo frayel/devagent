@@ -1,3 +1,6 @@
+- Analisei o PR #619 (fix: corrige painel e endpoint do Ibovespa e exaustão (#614)).
+- Encontrei defeitos na API /api/snapshot onde `exaustao_queda` e `exaustao_alta` perdem a conformidade com o contrato em vez de serem objetos com chaves válidas ("coletado_em" no formato ".isoformat()", e "fonte"). Além disso, notei código copiado para `index()`.
+- O PR 619 visava corrigir um timeout ("The read operation timed out") na rota `/api/snapshot`.
 - O PR 489 implementou a Spec 086 com sucesso, provendo os timestamps reais para a página do consultor e os avisos de defasagem de sinais e opiniões. O teste de aceite da spec 086 foi incluído no commit e passou, bem como os avisos constam nas telas e nas rotas da API.
 - Confirmada a resolução dos achados 'radar-exaustao-alta' (PR anterior) e 'spec-086-nao-implementada' (PR 489).
 - Sem problemas de segurança identificados.
