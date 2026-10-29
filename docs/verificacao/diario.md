@@ -50,3 +50,6 @@
 - Achado criado: '2026-10-28-spec-119b-invariante-banco'. Próxima verificação focará nas correções da validação do Gemini.
 
 - 2026-10-28: verifiquei a Spec 121a (PR #574), encontrei falso positivo na classificação de erros de banco devido ao uso de "in" para "relation" (bate com dolar_correlation).
+- Verifiquei o PR 609 (fix: resolve snapshot timeout from missing exaustao_queda key).
+- Identifiquei que, ao tentar resolver a ausência da chave, a inserção do código gerou um erro na montagem do JSON do `api/snapshot` por um timeout no teste, ou o dicionário retorna `{}`.
+- Embora o PR tenha resolvido o problema original e testes passem, a issue #608 indica que o endpoint `api/snapshot` sofreu "The read operation timed out" em produção. O timeout não é resolvido apenas adicionando chaves duplicadas.
