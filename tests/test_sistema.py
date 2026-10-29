@@ -328,8 +328,9 @@ def test_issues_e_prs_que_pedem_acao():
         ],
     )
     issues = s.verificar_issues(github, AGORA)
+    # deploy-falhou já tem issue e workflow próprios: aparece, mas como Atenção.
     assert (
-        issues.nivel == s.PROBLEMA
+        issues.nivel == s.ATENCAO
         and "#1" in issues.detalhe
         and "#2" not in issues.detalhe
     )
@@ -578,3 +579,22 @@ def test_snapshot_dos_alertas():
     )
 
     assert isinstance(res, dict)
+
+
+def test_issue_de_producao_nao_vira_problema_do_sistema():
+    # Em 28/10 a #579 (sistema-com-problema) listava a #577 (producao-incorreta)
+    # como problema próprio e só podia fechar depois dela.
+    github = _github(
+        issues=[
+            {
+                "numero": 577,
+                "titulo": "Produção incorreta: ibov.coleta_recente",
+                "labels": ["producao-incorreta"],
+                "criado_em": "",
+                "url": "",
+            }
+        ]
+    )
+    item = s.verificar_issues(github, AGORA)
+    assert item.nivel == s.ATENCAO
+    assert "#577" in item.detalhe
