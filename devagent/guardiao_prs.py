@@ -11,6 +11,10 @@ Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
     - CI falhou: comenta @jules com o log, até MAX_TENTATIVAS. Depois fecha o PR.
     - Especialista sem achado: PR de Sentinel, Palette ou Bolt vazio ou só com
       o diário fecha sem issue; não é trabalho perdido (ADRs 019 e 020).
+    - Verificação sem achado: PR `verificação:` que não cria arquivo em
+      docs/verificacao/achados/ fecha na hora, sem issue. O CI já o reprova
+      (regra 8 do conferir_pr) e, aberto, ele segura a raia até a cobrança
+      vencer, 3 h depois (ADR 025).
     - Falha irrecuperável: PR vazio ou só com registros de execução não tem
       nada a corrigir na branch (a sessão perdeu o trabalho). Fecha na hora,
       sem cobrar o agente, e abre `tentativa-falhou` (ADR 018). Cobrar só
@@ -42,9 +46,16 @@ import tempfile
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from devagent.conferir_pr import FECHA_ISSUE, PADRAO_REGISTROS, documentos, status_de
+from devagent.conferir_pr import (
+    FECHA_ISSUE,
+    PADRAO_REGISTROS,
+    PASTA_ACHADOS,
+    documentos,
+    status_de,
+)
 from devagent.config import VERIFICACAO
-from devagent.raias import do_agente, do_desenvolvimento
+from devagent.raias import VERIFICACAO as RAIA_VERIFICACAO
+from devagent.raias import do_agente, do_desenvolvimento, raia_do_titulo
 
 MAX_TENTATIVAS = 3
 SEM_REACAO_HORAS = 3
@@ -225,17 +236,68 @@ def sem_achado_de_especialista(pr: dict[str, Any], arquivos: list[str] | None) -
     return all(a.startswith(PADRAO_REGISTROS) for a in arquivos)
 
 
-def fechar_sem_achado(pr: dict[str, Any]) -> None:
+def achados_novos_do_pr(numero: int) -> list[str] | None:
+    """Arquivos que o PR cria em docs/verificacao/achados/. None se não deu para ler."""
+    try:
+        dados = gh_json(
+            "api", f"repos/{{owner}}/{{repo}}/pulls/{numero}/files?per_page=100"
+        )
+    except (RuntimeError, json.JSONDecodeError):
+        return None
+    return [
+        d["filename"]
+        for d in dados
+        if d.get("status") == "added" and d["filename"].startswith(PASTA_ACHADOS)
+    ]
+
+
+def sem_achado_de_verificacao(pr: dict[str, Any], novos: list[str] | None) -> bool:
+    """PR do Verificador que não traz achado novo (ADR 025).
+
+    Em 28/10 o #586 só marcava como resolvido um achado antigo. O CI o
+    reprovou pela regra 8 e ele ocupou a raia 4 h, até a cobrança vencer; o
+    #565 ocupou 4 h pelo mesmo motivo. A issue do achado já fecha pelo
+    `Closes #N` do PR que corrige, então mudar o status não é entrega.
+    """
+    if novos is None:
+        return False
+    return raia_do_titulo(pr.get("title") or "") == RAIA_VERIFICACAO and not novos
+
+
+def fechar_sem_achado(pr: dict[str, Any], verificacao: bool = False) -> None:
     numero = pr["number"]
-    comentar(
-        numero,
-        "Fechando este PR: a varredura do especialista não achou nada a mudar e "
-        "o PR não traz nada além do diário. Não há trabalho perdido nem spec a refazer, então "
-        "não abro issue `tentativa-falhou`. Pela regra 7 de "
-        "`devagent/agents/especialistas.md`, sem achado a sessão encerra sem PR.",
-    )
+    if verificacao:
+        texto = (
+            "Fechando este PR: ele não cria nenhum achado em "
+            f"`{PASTA_ACHADOS}`, e o job `disciplina` reprova PR de verificação "
+            "sem achado novo. Não há trabalho perdido, então não abro issue "
+            "`tentativa-falhou`. Pela regra 7 do Verificador "
+            "(`devagent/agents/raias.md`), sem achado a sessão encerra sem commit; "
+            "a raia fica livre para a próxima rodada (ADR 025)."
+        )
+    else:
+        texto = (
+            "Fechando este PR: a varredura do especialista não achou nada a mudar e "
+            "o PR não traz nada além do diário. Não há trabalho perdido nem spec a "
+            "refazer, então não abro issue `tentativa-falhou`. Pela regra 7 de "
+            "`devagent/agents/especialistas.md`, sem achado a sessão encerra sem PR."
+        )
+    comentar(numero, texto)
     sh("gh", "pr", "close", str(numero), "--delete-branch", check=False)
-    print(f"PR #{numero} fechado: especialista sem achado")
+    motivo = "verificação" if verificacao else "especialista"
+    print(f"PR #{numero} fechado: {motivo} sem achado")
+
+
+def fechou_sem_achado(pr: dict[str, Any], arquivos: list[str] | None) -> bool:
+    """Fecha o PR de especialista ou de verificação sem achado. True se fechou."""
+    if sem_achado_de_especialista(pr, arquivos):
+        fechar_sem_achado(pr)
+        return True
+    if raia_do_titulo(pr.get("title") or "") == RAIA_VERIFICACAO:
+        if sem_achado_de_verificacao(pr, achados_novos_do_pr(pr["number"])):
+            fechar_sem_achado(pr, verificacao=True)
+            return True
+    return False
 
 
 # Spec citada num texto: marcador do guardião, caminho do arquivo ou "spec 076b".
@@ -376,8 +438,7 @@ def ci_falhou(branch: str, run_id: str) -> None:
     log = sh("gh", "run", "view", run_id, "--log-failed", check=False)
     log = "\n".join(log.splitlines()[-120:])
     arquivos = arquivos_do_pr(pr["number"])
-    if sem_achado_de_especialista(pr, arquivos):
-        fechar_sem_achado(pr)
+    if fechou_sem_achado(pr, arquivos):
         return
     irrecuperavel = motivo_irrecuperavel(arquivos, pr.get("body") or "")
     if irrecuperavel:
@@ -669,8 +730,7 @@ def varredura() -> None:
         if pr["number"] in fechados:
             continue
         arquivos = arquivos_do_pr(pr["number"])
-        if sem_achado_de_especialista(pr, arquivos):
-            fechar_sem_achado(pr)
+        if fechou_sem_achado(pr, arquivos):
             continue
         irrecuperavel = motivo_irrecuperavel(arquivos, pr.get("body") or "")
         if irrecuperavel:

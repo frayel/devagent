@@ -100,6 +100,8 @@ def _rodada(monkeypatch, relogio, sessoes, prs=("livre", "")):
     monkeypatch.setattr(jules, "situacao_dos_prs", lambda *a: prs)
     # As raias paralelas têm testes próprios (test_raias.py).
     monkeypatch.setattr(jules, "rodada_das_raias", lambda s, a: None)
+    # Fila com trabalho; a trava sem trabalho tem testes próprios (ADR 025).
+    monkeypatch.setattr(jules, "trabalho_do_desenvolvedor", lambda situacao: "spec")
     monkeypatch.delenv("JULES_LIMITE_DIARIO", raising=False)
     monkeypatch.delenv("JULES_INTERVALO_MINUTOS", raising=False)
     return chamadas
