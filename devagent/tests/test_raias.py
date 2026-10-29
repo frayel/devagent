@@ -207,8 +207,10 @@ def _decidir(
     )
 
 
-def test_especificador_so_com_a_fila_em_uma() -> None:
-    assert "especificador" not in _decidir(prontas=2)
+def test_especificador_mantem_estoque_de_duas() -> None:
+    # ADR 029: com 1, o desenvolvimento esperava a escrita e a revisão da próxima.
+    assert "especificador" not in _decidir(prontas=3)
+    assert "especificador" in _decidir(prontas=2)
     assert "especificador" in _decidir(prontas=1)
     assert "especificador" in _decidir(prontas=0)
 
