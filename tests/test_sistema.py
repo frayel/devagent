@@ -76,7 +76,8 @@ def test_disparos_perdidos_desconta_a_hora_de_folga():
 
 def test_workflows_do_repositorio_le_os_crons_dos_arquivos():
     workflows = {w["arquivo"]: w for w in monitor.workflows_do_repositorio()}
-    assert workflows["jules.yml"]["crons"] == []
+    # Só o cron de reserva (ADR 025 do núcleo); o relógio principal é externo.
+    assert workflows["jules.yml"]["crons"] == ["11,41 * * * *"]
     assert len(workflows["auditoria-producao.yml"]["crons"]) == 3
     assert workflows["ci.yml"]["nome"] == "CI"
 
@@ -276,6 +277,25 @@ def test_workflow_falho_no_pr_e_atencao_e_agendado_falho_e_problema():
     itens = {i.nome: i for i in s.verificar_workflows(github, AGORA)}
     assert itens["CI"].nivel == s.ATENCAO
     assert itens["Auditoria de produção"].nivel == s.PROBLEMA
+
+
+def test_cron_de_reserva_do_jules_nao_acusa_agendamento_perdido():
+    # O GitHub descarta a maior parte dos disparos frequentes; o cron do
+    # jules.yml é só reserva do relógio externo e não pode virar alerta.
+    jules = ".github/workflows/jules.yml"
+    github = _github(
+        workflows=[
+            {
+                "arquivo": "jules.yml",
+                "caminho": jules,
+                "nome": "Jules",
+                "crons": ["11,41 * * * *"],
+            }
+        ],
+        runs=[_run(jules, "workflow_dispatch", "success", timedelta(minutes=3))],
+        ultimo_agendado={jules: _run(jules, "schedule", "success", timedelta(days=2))},
+    )
+    assert [i.nome for i in s.verificar_workflows(github, AGORA)] == []
 
 
 def test_agendamentos_descartados_pelo_github_pedem_atencao():
