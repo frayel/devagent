@@ -52,7 +52,10 @@ USER_AGENT = "PainelB3-Auditor/1.0 (+https://github.com/frayel/devagent)"
 TOLERANCIA_PRECO = 0.015  # 1,5% entre o valor exibido e a fonte independente
 TOLERANCIA_FECHAMENTO = 0.005  # 0,5% nos fechamentos de pregões encerrados
 IDADE_MAXIMA_NO_PREGAO = timedelta(minutes=45)
-VARIACAO_DIARIA_MAXIMA = 12.0  # % (circuit breaker da B3 começa em 10%)
+# % por dia. Era 12% (o circuit breaker da B3 começa em 10%). Em 29/10/2026 o
+# Ibovespa variou 15,99% de verdade, com os limites do circuit breaker
+# estendidos naquele dia; a 12% a auditoria reprovaria o dado certo.
+VARIACAO_DIARIA_MAXIMA = 20.0
 FAIXA_PLAUSIVEL = (40_000.0, 600_000.0)
 HISTORICO_MINIMO = 15  # pregões no gráfico de 30 dias
 
