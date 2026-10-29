@@ -41,6 +41,14 @@ def test_api_snapshot_correlacao_di():
 
 
 def test_api_snapshot_exaustao_queda():
+    from app.database import ExaustaoQuedaData, save_exaustao_queda_data
+    from datetime import datetime, timezone
+
+    save_exaustao_queda_data(
+        ExaustaoQuedaData(
+            timestamp=datetime.now(timezone.utc), fonte="teste", alertas_json="[]"
+        )
+    )
     response = client.get("/api/snapshot")
     assert response.status_code == 200
     data = response.json()
@@ -51,7 +59,13 @@ def test_api_snapshot_exaustao_queda_contrato():
     response = client.get("/api/snapshot")
     assert response.status_code == 200
     data = response.json()
-    assert "exaustao_queda" in data["paineis"]
-    if data["paineis"]["exaustao_queda"]:
+    if "exaustao_queda" in data["paineis"]:
         assert "coletado_em" in data["paineis"]["exaustao_queda"]
         assert "fonte" in data["paineis"]["exaustao_queda"]
+        # ISO format test
+        from datetime import datetime
+
+        try:
+            datetime.fromisoformat(data["paineis"]["exaustao_queda"]["coletado_em"])
+        except ValueError:
+            assert False, "Date is not ISO 8601"
