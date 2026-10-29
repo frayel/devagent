@@ -167,12 +167,50 @@ def test_ritmo_da_cota_espalha_o_desenvolvedor(monkeypatch, relogio):
         _sessao("seguranca", "2026-10-01T06:00:00Z"),
     ]
     chamadas = _rodada(monkeypatch, relogio, sessoes)
-    monkeypatch.setenv("JULES_LIMITE_DIARIO", "15")  # 11 sessões em 24 h: ~131 min
+    # Limite 15, reserva 4, 2 já usadas: restam 9 vagas até a sessão das 05:00
+    # sair da janela (05:00 do dia seguinte). A conta se refaz a cada volta:
+    # a espera vence quando 9 × (t − 05:00) = 29:00 − t, às 07:24 (ADR 028).
+    monkeypatch.setenv("JULES_LIMITE_DIARIO", "15")
     jules.rodada(espera_minutos=5)
     assert chamadas == [("destravar", "05:40")]
-    relogio.agora = datetime(2026, 10, 1, 7, 12, tzinfo=timezone.utc)
+    relogio.agora = datetime(2026, 10, 1, 7, 20, tzinfo=timezone.utc)
     jules.rodada(espera_minutos=5)
-    assert ("iniciar", ("07:12", "desenvolvedor")) in chamadas
+    assert ("iniciar", ("07:20", "desenvolvedor")) not in chamadas
+    relogio.agora = datetime(2026, 10, 1, 7, 30, tzinfo=timezone.utc)
+    jules.rodada(espera_minutos=5)
+    assert ("iniciar", ("07:30", "desenvolvedor")) in chamadas
+
+
+def test_ritmo_conta_as_sessoes_das_raias(monkeypatch):
+    # ADR 028: as raias gastam da mesma cota; o desenvolvedor espaça mais.
+    monkeypatch.setenv("JULES_LIMITE_DIARIO", "100")
+    monkeypatch.delenv("JULES_INTERVALO_MINUTOS", raising=False)
+    agora = datetime(2026, 10, 29, 12, 0, tzinfo=timezone.utc)
+    so_dev = [_sessao("desenvolvedor", "2026-10-29T00:00:00Z")]
+    raias = so_dev + [
+        _sessao("verificador", f"2026-10-29T{h:02d}:00:00Z") for h in range(1, 12)
+    ]
+    # 12 h até a sessão das 00:00 sair: 95 vagas contra 84.
+    assert jules.intervalo_do_desenvolvedor(so_dev, agora) == timedelta(hours=12) / 95
+    assert jules.intervalo_do_desenvolvedor(raias, agora) == timedelta(hours=12) / 84
+
+
+def test_ritmo_sem_vaga_espera_a_proxima(monkeypatch):
+    monkeypatch.setenv("JULES_LIMITE_DIARIO", "6")  # 2 vagas além da reserva
+    monkeypatch.delenv("JULES_INTERVALO_MINUTOS", raising=False)
+    agora = datetime(2026, 10, 29, 12, 0, tzinfo=timezone.utc)
+    sessoes = [
+        _sessao("desenvolvedor", "2026-10-29T02:00:00Z"),
+        _sessao("revisor", "2026-10-29T03:00:00Z"),
+    ]
+    assert jules.intervalo_do_desenvolvedor(sessoes, agora) == timedelta(hours=14)
+
+
+def test_ritmo_sem_historico_nao_espera(monkeypatch):
+    monkeypatch.setenv("JULES_LIMITE_DIARIO", "100")
+    monkeypatch.delenv("JULES_INTERVALO_MINUTOS", raising=False)
+    agora = datetime(2026, 10, 29, 12, 0, tzinfo=timezone.utc)
+    assert jules.intervalo_do_desenvolvedor([], agora) == timedelta(0)
 
 
 def test_intervalo_fixo_tem_precedencia(monkeypatch):

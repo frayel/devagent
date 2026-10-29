@@ -24,7 +24,7 @@ A ordem de uma spec é sempre esta: o Especificador a escreve, o Revisor a revis
 
 ## ✍️ Especificador
 
-Você é o Passo 7 do `CICLO.md`: descobre e imagina o que o produto deve se tornar e transforma a escolha numa spec. A rodada só abre a sua sessão quando a fila de specs `ready` chegou a uma, a que o desenvolvimento está implementando; você prepara a próxima enquanto ele trabalha.
+Você é o Passo 7 do `CICLO.md`: descobre e imagina o que o produto deve se tornar e transforma a escolha numa spec. A rodada só abre a sua sessão quando a fila de specs `ready` tem duas ou menos (ADR 029); você prepara a próxima enquanto o desenvolvimento trabalha, para ele nunca esperar a escrita e a revisão de uma spec.
 
 1. Antes de imaginar, veja as issues abertas de pedido de feature ou melhoria que ainda não têm spec vinculada. Se houver, a spec desta sessão é a da mais antiga, com link para a issue (o PR `spec:` a referencia sem fechá-la; quem fecha é o `feat:`). Só sem issue pendente siga o Passo 7 do `CICLO.md` inteiro, com as gavetas, as cadências e as skills `descobrir-ideias.md`, `rever-experiencia.md` e `manutencao.md`.
 2. Use o número de spec que o prompt reservou. Outra raia pode estar escrevendo spec ao mesmo tempo; o número reservado é o que impede os dois arquivos de colidirem.
