@@ -32,29 +32,83 @@ LABEL_PRIORIDADE = "prioridade"
 LABELS_DE_PRODUCAO = ("deploy-falhou", "producao-incorreta", "sistema-com-problema")
 
 
-def aviso_de_producao(issues: list[dict[str, Any]]) -> str:
-    """Frase que põe as issues de produção abertas na frente (ADR 024).
+# Comentário que o automerge.yml deixa numa issue de produção quando o PR que
+# declara corrigi-la é mesclado. Depois dele, só sinais de falha nova contam.
+MARCA_CORRECAO = "<!-- correcao-mergeada -->"
+SINAIS_DE_FALHA_NOVA = (
+    "<!-- falhas: ",
+    "A correção mergeada não resolveu",
+    "Os problemas mudaram",
+)
 
-    Em 27/10 uma sessão escreveu "os passos 1 e 2 foram pulados conforme
-    instruções explícitas" com #521, #531 e #534 abertas: a frase da fila dizia
-    "depois dos Passos 1 e 2" sem dizer o que havia neles.
-    """
-    abertas = sorted(
-        {
-            i["numero"]
+
+def correcao_mergeada(comentarios: list[str]) -> bool:
+    """A issue tem correção mesclada e nada falhou de novo depois dela."""
+    ultima = -1
+    for i, texto in enumerate(comentarios):
+        if MARCA_CORRECAO in texto:
+            ultima = i
+    if ultima < 0:
+        return False
+    return not any(
+        sinal in texto
+        for texto in comentarios[ultima + 1 :]
+        for sinal in SINAIS_DE_FALHA_NOVA
+    )
+
+
+def _de_producao(issues: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return sorted(
+        (
+            i
             for i in issues
             if set(i.get("labels", [])) & set(LABELS_DE_PRODUCAO)
             and "bloqueado" not in i.get("labels", [])
-        }
+        ),
+        key=lambda i: i["numero"],
     )
+
+
+def producao_pendente(issues: list[dict[str, Any]]) -> list[int]:
+    """Issues de produção abertas sem correção mesclada esperando a verificação.
+
+    O campo `correcao_mergeada` vem de quem leu os comentários da issue
+    (`correcao_mergeada()`); sem ele, a issue conta como pendente.
+    """
+    return [i["numero"] for i in _de_producao(issues) if not i.get("correcao_mergeada")]
+
+
+def aviso_de_producao(issues: list[dict[str, Any]]) -> str:
+    """Frase que põe as issues de produção abertas na frente (ADRs 024 e 026).
+
+    Em 27/10 uma sessão escreveu "os passos 1 e 2 foram pulados conforme
+    instruções explícitas" com #521, #531 e #534 abertas: a frase da fila dizia
+    "depois dos Passos 1 e 2" sem dizer o que havia neles. Em 28/10 a #577
+    (painel principal sem coleta) ficou 7 h aberta enquanto quatro PRs tratavam outra
+    coisa: o aviso deixava uma saída ("se já há correção mesclada... siga") e a
+    frase da fila, mais imperativa, mandava implementar spec (ADR 026).
+    """
+    abertas = [i["numero"] for i in _de_producao(issues)]
     if not abertas:
         return ""
+    pendentes = producao_pendente(issues)
+    if pendentes:
+        lista = ", ".join(f"#{n}" for n in pendentes)
+        alvo = pendentes[0]
+        return (
+            f"Há issues de produção abertas sem correção mesclada ({lista}): o "
+            f"trabalho desta sessão é corrigir a #{alvo} pelo Passo 1, num PR "
+            f"`fix:` com `Closes #{alvo}` e teste de regressão. Leia a issue com "
+            "os comentários e ache a causa raiz; se ela depende de algo fora do "
+            "repositório, descreva o ajuste exato no corpo do PR. Não implemente "
+            "spec, não trate issue `prioridade` e não abra outro trabalho nesta "
+            "sessão."
+        )
     lista = ", ".join(f"#{n}" for n in abertas)
     return (
-        f"Há issues de produção abertas ({lista}): o Passo 1 vem antes de tudo e "
-        "não pode ser pulado. Leia cada uma com os comentários; se já há correção "
-        "mesclada esperando a verificação (comentário `correcao-mergeada`) e nada "
-        "novo apareceu, siga para o próximo item do ciclo; senão, corrija."
+        f"As issues de produção abertas ({lista}) já têm correção mesclada "
+        "esperando a verificação (comentário `correcao-mergeada`) e nada falhou "
+        "de novo depois dela: siga para o próximo item do ciclo."
     )
 
 
@@ -163,6 +217,7 @@ def instrucao(
 ) -> str:
     """Frase que diz o trabalho da sessão; vazia se não há prioridade nem fila.
 
+    Issue de produção sem correção mesclada é a única coisa da frase (ADR 026).
     Issue `prioridade` aberta vem antes da fila (Passo 1.6, ADR 020).
 
     Se a próxima spec já tem tentativa fechada pelo guardião, a sessão não a
@@ -170,6 +225,10 @@ def instrucao(
     laço de 21 e 22/10 (spec 075, PRs #402 e #403).
     """
     producao = aviso_de_producao(issues or [])
+    if producao_pendente(issues or []):
+        # Produção quebrada é a sessão inteira: nada de fila nem prioridade
+        # competindo pela atenção do agente (ADR 026).
+        return producao
     resto = _instrucao_da_fila(prontas, raiz, issues)
     return " ".join(t for t in (producao, resto) if t)
 
