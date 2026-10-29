@@ -49,19 +49,21 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from devagent.conferir_pr import documentos
+from devagent.conferir_pr import documentos, entradas_correcoes
 from devagent.config import PROJETO
 from devagent.estado_github import _get as github_get
-from devagent.estado_github import eh_do_agente, status_ci
+from devagent.estado_github import eh_do_agente, marcar_correcoes, status_ci
 from devagent.fila_specs import (
     LABEL_PRIORIDADE,
     LABEL_TENTATIVA,
     LABELS_DE_PRODUCAO,
     fila_da_revisao,
+    fila_do_desenvolvimento,
     instrucao,
     proximo_numero,
     spec_para_dividir,
     specs_prontas,
+    tentativas_da_spec,
 )
 from devagent.raias import DESENVOLVIMENTO, do_agente, raia_do_titulo
 
@@ -576,6 +578,26 @@ def issues_com_label(label: str) -> list[dict[str, Any]]:
     ]
 
 
+def issues_abertas() -> list[dict[str, Any]]:
+    """Todas as issues abertas, no mesmo formato de `issues_com_label`.
+
+    Levanta erro sem acesso ao GitHub: quem chama decide o que fazer.
+    """
+    brutas = github_get(
+        f"/repos/{PROJETO['repositorio']}/issues?state=open&per_page=100"
+    )
+    return [
+        {
+            "numero": i["number"],
+            "titulo": i["title"],
+            "labels": [lbl["name"] for lbl in i["labels"]],
+            "corpo": i.get("body") or "",
+        }
+        for i in brutas
+        if "pull_request" not in i
+    ]
+
+
 def issues_de_tentativa() -> list[dict[str, Any]]:
     return issues_com_label(LABEL_TENTATIVA)
 
@@ -585,7 +607,9 @@ def issues_de_prioridade() -> list[dict[str, Any]]:
 
 
 def issues_de_producao() -> list[dict[str, Any]]:
-    return [i for label in LABELS_DE_PRODUCAO for i in issues_com_label(label)]
+    issues = [i for label in LABELS_DE_PRODUCAO for i in issues_com_label(label)]
+    marcar_correcoes(PROJETO["repositorio"], issues)
+    return issues
 
 
 def prompt_de(persona: str) -> str:
@@ -1066,6 +1090,45 @@ def rodada(espera_minutos: int) -> int:
     return destravar(espera_minutos)
 
 
+# Issues que o desenvolvimento não trata: lidas no Passo 4, esperando pessoa,
+# ou pedidos de feature, que são do Especificador (ADR 023).
+FORA_DO_DESENVOLVIMENTO = {LABEL_TENTATIVA, "bloqueado", "enhancement", "feature"}
+
+
+def trabalho_do_desenvolvedor(situacao: str) -> str:
+    """O que uma sessão do desenvolvedor teria para fazer agora; "" se nada.
+
+    Sem nada, a sessão chega ao Passo 7, que é da raia de especificação, e
+    encerra sem PR: gasta uma tarefa da cota e não entrega (ADR 025). Na
+    dúvida (GitHub ou fila ilegíveis), devolve um motivo: melhor uma sessão
+    à toa do que a esteira parada.
+    """
+    if situacao == "travado":
+        return "PR do agente travado (Passo 2)"
+    try:
+        abertas = issues_abertas()
+    except (urllib.error.URLError, OSError, ValueError):
+        return "issues ilegíveis"
+    trataveis = [i for i in abertas if not set(i["labels"]) & FORA_DO_DESENVOLVIMENTO]
+    if trataveis:
+        return f"issue #{trataveis[0]['numero']}"
+    doc = documentos()
+    try:
+        backlog = (Path.cwd() / doc["backlog"]).read_text(encoding="utf-8")
+    except OSError:
+        backlog = ""
+    if entradas_correcoes(backlog, doc["secao_correcoes"]):
+        return "correção pendente no backlog (Passo 1.6)"
+    try:
+        fila = fila_do_desenvolvimento(specs_prontas())
+    except OSError:
+        return "fila de specs ilegível"
+    tentativas = [i for i in abertas if LABEL_TENTATIVA in i["labels"]]
+    if fila and not tentativas_da_spec(fila[0], tentativas):
+        return f"spec {fila[0].name} (Passo 4)"
+    return ""
+
+
 def rodada_do_desenvolvimento(sessoes: list[dict[str, Any]], agora: datetime) -> None:
     """A vez do desenvolvedor ou do especialista do dia, se o caminho estiver livre."""
     try:
@@ -1083,9 +1146,17 @@ def rodada_do_desenvolvimento(sessoes: list[dict[str, Any]], agora: datetime) ->
             print(f"{persona} adiado: {desc} precisa do desenvolvedor.")
             persona = "desenvolvedor"
         motivo = motivo_para_esperar(persona, sessoes, agora)
+        trabalho = trabalho_do_desenvolvedor(situacao)
         if motivo:
             print(motivo)
+        elif persona == "desenvolvedor" and not trabalho:
+            print(
+                "desenvolvedor: nenhum trabalho na fila (spec revisada, issue, "
+                "correção ou PR travado); sessão não iniciada (ADR 025)."
+            )
         else:
+            if trabalho:
+                print(f"{persona}: {trabalho}.")
             iniciar(persona, dry_run=False)
 
 
