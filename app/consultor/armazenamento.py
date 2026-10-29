@@ -117,7 +117,6 @@ def init_db():
                     );
                 """)
             conn.commit()
-            conn.close()
         else:
             cursor = conn.cursor()
             # SQLite tables
@@ -220,9 +219,10 @@ def init_db():
             except Exception:
                 pass
             conn.commit()
-            conn.close()
     except Exception:
         pass
+    finally:
+        conn.close()
 
 
 def save_materia(

@@ -96,6 +96,10 @@ INICIO = datetime.now(timezone.utc)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    from app import banco as banco_module
+
+    # Pool do Postgres (spec 129): abre aqui e fecha no desligamento.
+    await asyncio.to_thread(banco_module.abrir_pool)
     tarefas = []
     if agendador.coleta_ligada():
         tarefas.append(asyncio.create_task(agendador.laco_de_coleta()))
@@ -109,6 +113,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
     for tarefa in tarefas:
         tarefa.cancel()
+    await asyncio.to_thread(banco_module.fechar_pool)
 
 
 logger = logging.getLogger(__name__)
