@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+- Fix: o coletor do Ibovespa aceita variação diária de até 20% (era 12%). Em 29/10/2026 o índice variou 15,99% de verdade, com o circuit breaker estendido, e o dado era descartado.
+- Fix: a página `/sistema` não conta mais issue `producao-incorreta` ou `deploy-falhou` como Problema próprio; elas aparecem como Atenção, e a `sistema-com-problema` deixa de depender delas para fechar.
 - Fix (#592): a página inicial respondia 500 com snapshot da Maré gravado antes da spec 123 (`ativos_json` obrigatório). O campo ganhou padrão e a leitura ignora chaves de outras versões.
 - spec 119b: Adicionado validador da chave API do Gemini em background.
 - **Consultor**: Exibe recomendações e opiniões em datas passadas (spec 113)
