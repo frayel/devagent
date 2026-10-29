@@ -445,6 +445,20 @@ _diagnostico_cache = None
 _diagnostico_cache_time = None
 
 
+def versao_postgres(numero: object) -> str | None:
+    """`server_version` do psycopg (160004) no formato do Postgres (16.4).
+
+    A partir do 10, o número é maior * 10000 + menor; antes, maior * 10000 +
+    meio * 100 + menor.
+    """
+    if not isinstance(numero, int) or numero <= 0:
+        return None
+    maior, resto = divmod(numero, 10000)
+    if maior >= 10:
+        return f"{maior}.{resto}"
+    return f"{maior}.{resto // 100}.{resto % 100}"
+
+
 def diagnostico() -> dict:
     import time
     import os
@@ -470,6 +484,12 @@ def diagnostico() -> dict:
         conn, backend = get_connection()
         try:
             if backend == "postgres":
+                # Versão vem da própria conexão, sem consulta a mais.
+                versao = versao_postgres(
+                    getattr(getattr(conn, "info", None), "server_version", None)
+                )
+                if versao:
+                    info["versao"] = versao
                 with conn.cursor() as cursor:
                     cursor.execute(
                         "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public'"
@@ -483,6 +503,9 @@ def diagnostico() -> dict:
                         else f"{tamanho // 1024} KB"
                     )
             else:
+                import sqlite3
+
+                info["versao"] = sqlite3.sqlite_version
                 cursor = conn.cursor()
                 tabelas = cursor.execute(
                     "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'"

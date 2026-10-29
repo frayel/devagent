@@ -34,7 +34,7 @@ Toda recomendação exibida precisa mostrar: a fonte, a data da coleta, o métod
 | Interface | tema escuro, tokens em `app/static/tema.css`, macros em `app/templates/componentes.html` | guia em `docs/DESIGN.md` |
 | Dados de mercado | MetaTrader 5 via mt5api (preferencial), brapi.dev (API), yfinance (tickers `.SA`) | fontes estruturadas primeiro |
 | Scraping | httpx + selectolax; Playwright só se inevitável | leve por padrão |
-| Armazenamento | Postgres externo (Neon) por `DATABASE_URL` como banco único de produção, com snapshots por painel e pregão; SQLite só em testes e desenvolvimento local (ADRs 006 e 007; migração nas specs 073 a 076) | o disco do plano gratuito se perde a cada hibernação |
+| Armazenamento | Postgres externo por `DATABASE_URL` como banco único de produção (o Neon saiu em 29/10/2026, ADR 009), com snapshots por painel e pregão; SQLite só em testes e desenvolvimento local (ADRs 006 e 007; migração nas specs 073 a 076) | o disco do plano gratuito se perde a cada hibernação |
 | Extração de opiniões | Gemini por REST com `httpx`, só para extrair dados de matérias; nunca decide (ADR 005) | texto livre dos portais não se presta a regex |
 | Agendamento de coleta | laço no próprio web service (`app/agendador.py`, ADR 004) | no plano gratuito o disco é efêmero e não é compartilhado com um Cron Job |
 | Testes | pytest, respx para mockar HTTP | testes não acessam a internet |
@@ -165,7 +165,7 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `MT5_FUSO_SERVIDOR` | Render, opcional | fuso do servidor da corretora em horas; padrão `-3` |
 | `COLETA_AUTOMATICA` | Render, opcional | `0` desliga a coleta dentro do web service |
 | `DATABASE_PATH` | opcional | caminho do banco SQLite (padrão `data.db`) |
-| `DATABASE_URL` | Render, secreto | Postgres de produção (Neon; ADRs 006 e 007). Sem ele, a aplicação usa SQLite e avisa que os dados se perdem ao reiniciar |
+| `DATABASE_URL` | Render, secreto | Postgres de produção (ADRs 006, 007 e 009). A página `/sistema` mostra a versão e o tamanho do banco conectado. Sem ele, a aplicação usa SQLite e avisa que os dados se perdem ao reiniciar |
 | `CONSULTOR_SENHA` | Render, secreto, opcional | protege `/consultor`, `/api/consultor`, `/sistema` e `/api/sistema` com HTTP Basic (usuário `consultor`). Sem ela, as páginas são públicas (ADR 005). O secret `SAUDE_SENHA` do GitHub precisa ter o mesmo valor, para a auditoria ler `/api/sistema` |
 | `GEMINI_API_KEY` | Render, secreto, opcional | liga a extração de opiniões de casas de análise. Sem ela, o consultor usa só sinais técnicos e mostra um aviso |
 | `GEMINI_MODELO` | Render, opcional | força um modelo do Gemini; sem ela, o app descobre o Flash-Lite estável mais novo pela API |
@@ -191,7 +191,7 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `docs/context/operacao.md` | particularidades operacionais deste produto no Render | antes de mexer em deploy ou coleta |
 | `docs/context/referencias-academicas.md` | artigos científicos sobre preço, volume e microestrutura, incluindo estudos da B3, com a ideia que cada um sugere | no Passo 7 e antes de spec com sinal técnico, volume, pares ou livro |
 | `docs/skills/criar-coletor.md` | procedimento para nova fonte de dados | ao implementar coletor |
-| `docs/decisions/` | ADRs do produto: `004` coleta dentro do web service; `005` consultor (página própria, regras determinísticas, LLM só extrai); `006` persistência do consultor; `007` Postgres como banco único e snapshots por painel; `008` data de referência, congelamento após o fechamento e histórico de 5 pregões | antes de mudar stack ou arquitetura |
+| `docs/decisions/` | ADRs do produto: `004` coleta dentro do web service; `005` consultor (página própria, regras determinísticas, LLM só extrai); `006` persistência do consultor; `007` Postgres como banco único e snapshots por painel; `008` data de referência, congelamento após o fechamento e histórico de 5 pregões; `009` Postgres próprio no lugar do Neon | antes de mudar stack ou arquitetura |
 | `auditoria/README.md` | o que o auditor verifica e o contrato `/api/snapshot` | ao tratar issue `producao-incorreta` e ao publicar painel novo |
 
 Ao criar um arquivo novo em `docs/context/` ou `docs/skills/`, acrescente-o a esta tabela no mesmo PR.

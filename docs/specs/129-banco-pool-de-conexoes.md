@@ -9,7 +9,7 @@ revisada: 2026-10-28
 ---
 
 ## Problema
-Cada leitura e cada gravação em `app/banco.py` (e em `app/consultor/armazenamento.py`, `app/consultor/placar.py`, `app/services/consultor_opinioes.py`) chama `get_connection()`, que abre uma conexão nova com `psycopg.connect(db_url, connect_timeout=10)` e a fecha no fim. Com o Neon, cada conexão nova custa um handshake TCP e TLS.
+Cada leitura e cada gravação em `app/banco.py` (e em `app/consultor/armazenamento.py`, `app/consultor/placar.py`, `app/services/consultor_opinioes.py`) chama `get_connection()`, que abre uma conexão nova com `psycopg.connect(db_url, connect_timeout=10)` e a fecha no fim. Com o Postgres externo, cada conexão nova custa um handshake TCP e TLS.
 
 A página inicial faz cerca de 40 leituras de `snapshots_paineis`, ou seja, cerca de 40 handshakes por visita. A rodada de coleta faz o mesmo para cada um dos 46 coletores, mais as leituras de controle do agendador.
 
@@ -39,5 +39,5 @@ Nenhum.
 
 ## Fora do escopo
 - Reescrever os chamadores para `with pool.connection()`.
-- Ajustar o tamanho do pool ao plano do Neon (fica para depois de medir).
+- Ajustar o tamanho do pool ao limite de conexões do Postgres de produção (fica para depois de medir).
 - Depende da spec 128: implementar depois dela.
