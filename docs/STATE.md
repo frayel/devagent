@@ -9,6 +9,12 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
 
 ## Implementado
 
+- Spec 129 (Pool de conexões do Postgres):
+  - `app/banco.py`: `get_connection()` empresta uma conexão de um `psycopg_pool.ConnectionPool` (1 a 5 conexões, espera de 10 s, conexão testada antes de ser entregue); o `close()` do invólucro devolve ao pool. Os chamadores não mudaram.
+  - O pool abre e fecha no `lifespan` de `app/main.py`; o SQLite segue sem pool.
+  - `/sistema`, item Banco de dados: mostra quanto custa abrir uma conexão e fica em Atenção a partir de 500 ms, com a ação de usar o endereço interno do Postgres.
+  - Implementada antes da spec 128 (disjuntor), porque a `/sistema` levava segundos com cada conexão nova custando cerca de 1,6 s em produção.
+
 - Spec 095 (Testes sem rede):
   - Bloqueio de conexões socket no pytest (`conftest.py`).
   - Marker `pytest.mark.rede`.

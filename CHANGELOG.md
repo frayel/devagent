@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Spec 129: o Postgres passa a usar um pool de conexões. Antes, cada leitura abria uma conexão nova (em 29/10, cerca de 1,6 s cada), e a `/sistema` e a página inicial demoravam segundos. O item Banco de dados da `/sistema` mostra o custo de abrir conexão e acusa Atenção acima de 500 ms.
 - **Sistema**: o item Banco de dados mostra a versão do servidor e o tamanho do banco em uso. Documentação atualizada: o Postgres de produção não é mais o Neon (ADR 009).
 - Fix: o coletor do Ibovespa aceita variação diária de até 20% (era 12%). Em 29/10/2026 o índice variou 15,99% de verdade, com o circuit breaker estendido, e o dado era descartado.
 - Fix: a página `/sistema` não conta mais issue `producao-incorreta` ou `deploy-falhou` como Problema próprio; elas aparecem como Atenção, e a `sistema-com-problema` deixa de depender delas para fechar.

@@ -85,6 +85,11 @@ class Item:
         ):
             self.causa = "fonte indisponível ou recusando a chave (rede)"
             self.acao = "aguardar, ou conferir a chave no Render"
+        elif "abrir conexão com o postgres leva" in texto:
+            self.causa = "conexão lenta com o banco (endereço externo ou outra região)"
+            self.acao = (
+                "usar no DATABASE_URL o endereço interno do Postgres, na mesma região"
+            )
         elif self.nivel in (ATENCAO, PROBLEMA):
             self.causa = "causa não classificada"
             self.acao = "ver o detalhe e abrir issue"
@@ -295,6 +300,9 @@ def verificar_historico_pregoes(datas: list[str], agora: datetime) -> Item:
     return Item("Histórico de pregões", OK, resumo, detalhe)
 
 
+CONEXAO_LENTA_MS = 500
+
+
 def verificar_banco(info: dict[str, Any]) -> Item:
     if info.get("erro"):
         return Item("Banco de dados", PROBLEMA, "não conecta", info["erro"])
@@ -311,12 +319,21 @@ def verificar_banco(info: dict[str, Any]) -> Item:
             "a aplicação está gravando no SQLite local, que se perde quando o Render reinicia. "
             "Reinicie o serviço depois de conferir o Postgres.",
         )
-    return Item(
-        "Banco de dados",
-        OK,
-        resumo,
-        f"{info.get('tabelas', 0)} tabelas · tamanho em disco: {info.get('tamanho', '?')}",
-    )
+    detalhe = f"{info.get('tabelas', 0)} tabelas · tamanho em disco: {info.get('tamanho', '?')}"
+    if info.get("conexao_ms") is not None:
+        detalhe += f" · abrir conexão: {info['conexao_ms']} ms"
+    # Sem pool aberto ainda, a latência medida inclui abrir a conexão.
+    abrir = info.get("conexao_ms", info.get("latencia_ms", 0))
+    if info["tipo"] == "Postgres" and abrir >= CONEXAO_LENTA_MS:
+        return Item(
+            "Banco de dados",
+            ATENCAO,
+            resumo,
+            f"{detalhe}. Abrir conexão com o Postgres leva {abrir} ms, e cada página "
+            "faz várias leituras. Confira se o DATABASE_URL usa o endereço interno do "
+            "provedor e se o banco está na mesma região do serviço web.",
+        )
+    return Item("Banco de dados", OK, resumo, detalhe)
 
 
 def verificar_agendador(

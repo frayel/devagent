@@ -1,7 +1,7 @@
 ---
 id: 129
 titulo: Pool de conexões do Postgres
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_129.py
@@ -28,10 +28,10 @@ Nenhuma.
 Nenhum.
 
 ## Critérios de aceite
-- [ ] Com o pool trocado por um falso, 40 chamadas seguidas de `ler_snapshot` abrem no máximo 5 conexões físicas (espião em `connect`).
-- [ ] `conn.close()` do invólucro devolve a conexão ao pool (o pool falso registra a devolução e nenhuma conexão física é fechada).
-- [ ] O desligamento do app fecha o pool.
-- [ ] Os testes com SQLite (`tests/test_banco.py`, `tests/test_consultor_armazenamento.py`) continuam verdes sem alteração.
+- [x] Com o pool trocado por um falso, 40 chamadas seguidas de `ler_snapshot` abrem no máximo 5 conexões físicas (espião em `connect`).
+- [x] `conn.close()` do invólucro devolve a conexão ao pool (o pool falso registra a devolução e nenhuma conexão física é fechada).
+- [x] O desligamento do app fecha o pool.
+- [x] Os testes com SQLite (`tests/test_banco.py`, `tests/test_consultor_armazenamento.py`) continuam verdes sem alteração.
 - Arquivos tocados: `app/banco.py`, `app/main.py` (lifespan), `requirements.txt` e o novo `tests/test_aceite_129.py`.
 
 ## Invariantes de produção

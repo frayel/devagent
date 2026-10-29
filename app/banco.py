@@ -1,6 +1,7 @@
 import contextvars
 import json
 import os
+import threading
 import time
 from typing import Literal
 from datetime import datetime, date
@@ -70,13 +71,94 @@ def get_connection():
         # For individual connections, if it fails, maybe we just throw? Or we return postgres connection and if it fails it fails.
         # But wait, the reviewer says "If a database is explicitly configured, connection failures must propagate (fail fast) rather than silently failing over to a completely different database backend."
         if db_url:
-            import psycopg
-
-            return psycopg.connect(db_url, connect_timeout=10), "postgres"
+            return _ConexaoDoPool(_obter_pool(db_url)), "postgres"
 
     from app.database import get_connection as get_sqlite_connection
 
     return get_sqlite_connection(), "sqlite_efemero"
+
+
+# Pool de conexões do Postgres (spec 129). Abrir conexão nova custa handshake
+# TCP, TLS e autenticação; a página inicial faz dezenas de leituras por visita.
+POOL_MIN = 1
+POOL_MAX = 5
+POOL_ESPERA_S = 10
+
+_pool = None
+_pool_lock = threading.Lock()
+
+
+def _criar_pool(db_url: str):
+    from psycopg_pool import ConnectionPool
+
+    return ConnectionPool(
+        db_url,
+        min_size=POOL_MIN,
+        max_size=POOL_MAX,
+        timeout=POOL_ESPERA_S,
+        kwargs={"connect_timeout": 10},
+        # Conexão parada pode ter sido derrubada pelo servidor: testa antes de entregar.
+        check=ConnectionPool.check_connection,
+        open=True,
+    )
+
+
+def _obter_pool(db_url: str):
+    global _pool
+    if _pool is None:
+        with _pool_lock:
+            if _pool is None:
+                _pool = _criar_pool(db_url)
+    return _pool
+
+
+def abrir_pool() -> None:
+    """Abre o pool na subida do app (lifespan), se o backend é Postgres."""
+    db_url = os.environ.get("DATABASE_URL")
+    if db_url and get_backend_type() == "postgres":
+        _obter_pool(db_url)
+
+
+def fechar_pool() -> None:
+    global _pool
+    with _pool_lock:
+        pool, _pool = _pool, None
+    if pool is not None:
+        pool.close()
+
+
+def estatisticas_pool() -> dict:
+    return _pool.get_stats() if _pool is not None else {}
+
+
+class _ConexaoDoPool:
+    """Conexão emprestada do pool: `close()` a devolve, sem fechá-la.
+
+    Mantém a interface de `conn, backend = get_connection()` e `conn.close()`
+    nos chamadores. O pool desfaz a transação aberta na devolução.
+    """
+
+    def __init__(self, pool):
+        self._pool = pool
+        self._conn = None
+        self._conn = pool.getconn()
+
+    def __getattr__(self, nome):
+        if self._conn is None:
+            raise RuntimeError("conexão já devolvida ao pool")
+        return getattr(self._conn, nome)
+
+    def close(self) -> None:
+        conn, self._conn = self._conn, None
+        if conn is not None:
+            self._pool.putconn(conn)
+
+    def __del__(self):
+        # Rede de segurança: chamador que esqueceu o close() não esgota o pool.
+        try:
+            self.close()
+        except Exception:
+            pass
 
 
 _db_initialized = False
@@ -526,6 +608,11 @@ def diagnostico() -> dict:
         return info
     info["latencia_ms"] = round((time.perf_counter() - inicio) * 1000)
     info["tabelas"] = tabelas
+    # Com o pool, a latência acima não inclui abrir conexão; o custo de abrir
+    # vem das estatísticas do pool (média das conexões já abertas).
+    stats = estatisticas_pool()
+    if stats.get("connections_num"):
+        info["conexao_ms"] = round(stats["connections_ms"] / stats["connections_num"])
 
     _diagnostico_cache = info
     _diagnostico_cache_time = agora
