@@ -76,7 +76,8 @@ def test_disparos_perdidos_desconta_a_hora_de_folga():
 
 def test_workflows_do_repositorio_le_os_crons_dos_arquivos():
     workflows = {w["arquivo"]: w for w in monitor.workflows_do_repositorio()}
-    assert workflows["jules.yml"]["crons"] == []
+    # Só o cron de reserva (ADR 025 do núcleo); o relógio principal é externo.
+    assert workflows["jules.yml"]["crons"] == ["11,41 * * * *"]
     assert len(workflows["auditoria-producao.yml"]["crons"]) == 3
     assert workflows["ci.yml"]["nome"] == "CI"
 
@@ -278,6 +279,25 @@ def test_workflow_falho_no_pr_e_atencao_e_agendado_falho_e_problema():
     assert itens["Auditoria de produção"].nivel == s.PROBLEMA
 
 
+def test_cron_de_reserva_do_jules_nao_acusa_agendamento_perdido():
+    # O GitHub descarta a maior parte dos disparos frequentes; o cron do
+    # jules.yml é só reserva do relógio externo e não pode virar alerta.
+    jules = ".github/workflows/jules.yml"
+    github = _github(
+        workflows=[
+            {
+                "arquivo": "jules.yml",
+                "caminho": jules,
+                "nome": "Jules",
+                "crons": ["11,41 * * * *"],
+            }
+        ],
+        runs=[_run(jules, "workflow_dispatch", "success", timedelta(minutes=3))],
+        ultimo_agendado={jules: _run(jules, "schedule", "success", timedelta(days=2))},
+    )
+    assert [i.nome for i in s.verificar_workflows(github, AGORA)] == []
+
+
 def test_agendamentos_descartados_pelo_github_pedem_atencao():
     aud = ".github/workflows/auditoria-producao.yml"
     antigo = _run(aud, "schedule", "success", timedelta(days=4))
@@ -328,8 +348,9 @@ def test_issues_e_prs_que_pedem_acao():
         ],
     )
     issues = s.verificar_issues(github, AGORA)
+    # deploy-falhou já tem issue e workflow próprios: aparece, mas como Atenção.
     assert (
-        issues.nivel == s.PROBLEMA
+        issues.nivel == s.ATENCAO
         and "#1" in issues.detalhe
         and "#2" not in issues.detalhe
     )
@@ -578,3 +599,22 @@ def test_snapshot_dos_alertas():
     )
 
     assert isinstance(res, dict)
+
+
+def test_issue_de_producao_nao_vira_problema_do_sistema():
+    # Em 28/10 a #579 (sistema-com-problema) listava a #577 (producao-incorreta)
+    # como problema próprio e só podia fechar depois dela.
+    github = _github(
+        issues=[
+            {
+                "numero": 577,
+                "titulo": "Produção incorreta: ibov.coleta_recente",
+                "labels": ["producao-incorreta"],
+                "criado_em": "",
+                "url": "",
+            }
+        ]
+    )
+    item = s.verificar_issues(github, AGORA)
+    assert item.nivel == s.ATENCAO
+    assert "#577" in item.detalhe

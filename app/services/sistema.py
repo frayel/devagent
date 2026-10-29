@@ -37,8 +37,13 @@ INTEGRACOES: tuple[tuple[str, str | None, str], ...] = (
     ("Gemini", "GEMINI_API_KEY", "extração de opiniões do Consultor"),
 )
 
-# Labels de issue que o ciclo do agente trata como bloqueio (CICLO.md, Passo 1).
-LABELS_PROBLEMA = ("deploy-falhou", "producao-incorreta")
+# Labels de issue que o ciclo do agente trata antes de tudo (CICLO.md, Passo 1).
+# Elas já têm issue e workflow próprios (deploy-check.yml e a auditoria), que as
+# abrem e fecham. Contadas aqui como Problema, viravam também um problema da
+# issue `sistema-com-problema`, que só fechava depois delas: em 28/10 a #579
+# listava a #577 como problema próprio. Ficam como Atenção, visíveis na página;
+# o sintoma (coleta vazia, deploy falho) continua acusado pelos outros itens.
+LABELS_COM_ISSUE_PROPRIA = ("deploy-falhou", "producao-incorreta")
 LABELS_ATENCAO = ("prioridade", "tentativa-falhou", "bloqueado")
 
 JULES_ESPERANDO = {"AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK"}
@@ -819,13 +824,12 @@ def verificar_issues(github: dict[str, Any], agora: datetime) -> Item:
     linhas = []
     for issue in github.get("issues", []):
         labels = set(issue["labels"])
-        if labels & set(LABELS_PROBLEMA):
-            nivel = PROBLEMA
-        elif labels & set(LABELS_ATENCAO):
-            nivel = _pior([nivel, ATENCAO])
-        else:
+        if not labels & set(LABELS_COM_ISSUE_PROPRIA + LABELS_ATENCAO):
             continue
-        marca = ", ".join(sorted(labels & set(LABELS_PROBLEMA + LABELS_ATENCAO)))
+        nivel = _pior([nivel, ATENCAO])
+        marca = ", ".join(
+            sorted(labels & set(LABELS_COM_ISSUE_PROPRIA + LABELS_ATENCAO))
+        )
         linhas.append(f"#{issue['numero']} [{marca}] {issue['titulo']}")
     if not linhas:
         return Item("Issues que pedem ação", OK, "nenhuma")

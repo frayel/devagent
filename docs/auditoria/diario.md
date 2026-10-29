@@ -2,6 +2,5 @@
 
 Memória entre execuções do auditor LLM. No máximo 20 linhas: condense em vez de acumular.
 
-- 2026-10-10 a 2026-10-23 · Problemas de rodapés, fuso horário, 'clima_global' e 'detector_acao_orfa' resolvidos.
-- 2026-10-26 a 2026-10-28 · Achado da variação implausível do Ibovespa resolvido (0 falhas no determinístico em 27/10).
-- 2026-10-28 · Inspeção do `/api/snapshot` encontrou o contrato quebrado para alguns painéis (falta `fonte` e `coletado_em`). Achado reportado. Próxima checagem: avaliar normalização de todas as chaves em `paineis` que sejam arrays.
+- 2026-10-10 a 2026-10-28 · Problemas antigos (fuso, radar, variação do Ibovespa) e achado do dia 26/10 resolvidos (0 falhas). Achado de contrato do snapshot reportado em 28/10.
+- 2026-10-29 · Produção inacessível retornando erro HTTP 500 na home e no snapshot. Novo achado grave relatado. Não foi possível verificar resolução do achado anterior.
