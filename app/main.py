@@ -1475,7 +1475,9 @@ def snapshot(
             }
     # unused avoid f841
     if exaustao_queda:
-        pass
+        resp["paineis"]["exaustao_queda"] = exaustao_queda
+    else:
+        resp["paineis"]["exaustao_queda"] = {}
 
     exaustao_alta_data = get_latest_exaustao_alta_data()
     if exaustao_alta_data:

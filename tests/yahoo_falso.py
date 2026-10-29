@@ -100,6 +100,44 @@ def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
         volumes[-1] = 0  # testacao_orfa: volume 0 (acao orfa)
     elif "DIV" in simbolo:  # For radar divergencia test
         volumes = [100000, 100000, 100000, 10000, 10000]
+    elif "EXQ" in simbolo:
+        fechamentos = [10.0] * n
+        volumes = [100000] * n
+        fechamentos[-5] = 10.0
+        fechamentos[-4] = 9.0
+        fechamentos[-3] = 8.0
+        fechamentos[-2] = 7.0
+        fechamentos[-1] = 6.8
+        for i in range(1, 23):
+            volumes[-i] = 100000
+        volumes[-1] = 5000000
+        opens = [10.0] * n
+        opens[-1] = 6.5
+        return {
+            "meta": {
+                "symbol": simbolo,
+                "currency": "BRL",
+                "regularMarketPrice": fechamentos[-1],
+                "chartPreviousClose": fechamentos[-2] if len(fechamentos) > 1 else 10.0,
+                "previousClose": fechamentos[-2] if len(fechamentos) > 1 else 10.0,
+                "regularMarketDayLow": 5.0,
+                "regularMarketDayHigh": 7.0,
+                "regularMarketVolume": volumes[-1],
+                "regularMarketTime": 0,
+            },
+            "timestamp": [0] * n,
+            "indicators": {
+                "quote": [
+                    {
+                        "open": opens,
+                        "high": [11.0] * n,
+                        "low": [5.0] * n,
+                        "close": fechamentos,
+                        "volume": volumes,
+                    }
+                ]
+            },
+        }
     elif "EXAUSTAO" in simbolo:
         # Create n elements where the last 5 days are consecutive price up, volume down
         fechamentos = [10.0] * n
