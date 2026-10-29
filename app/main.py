@@ -1469,8 +1469,6 @@ def snapshot(
             "fonte": exaustao_queda_data.fonte,
             "alertas": alertas,
         }
-    else:
-        resp["paineis"]["exaustao_queda"] = {}
 
     exaustao_alta_data = get_latest_exaustao_alta_data()
     if exaustao_alta_data:
@@ -1701,18 +1699,15 @@ async def index(
     exaustao_queda = None
     exaustao_queda_data = get_latest_exaustao_queda_data()
     if exaustao_queda_data:
-        alertas = json.loads(exaustao_queda_data.alertas_json)
-        if alertas:
+        try:
+            alertas = json.loads(exaustao_queda_data.alertas_json)
             exaustao_queda = {
-                "coletado_em": exaustao_queda_data.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": exaustao_queda_data.fonte,
                 "alertas": alertas,
+                "coletado_em": formatar_data(exaustao_queda_data.timestamp),
+                "fonte": getattr(exaustao_queda_data, "fonte", "yfinance"),
             }
-    # unused avoid f841
-    if exaustao_queda:
-        pass
+        except Exception:
+            pass
 
     exaustao_alta_data = get_latest_exaustao_alta_data()
     exaustao_alta = None
@@ -1720,11 +1715,9 @@ async def index(
         try:
             alertas = json.loads(exaustao_alta_data.alertas_json)
             exaustao_alta = {
-                "coletado_em": exaustao_alta_data.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": exaustao_alta_data.fonte,
                 "alertas": alertas,
+                "coletado_em": formatar_data(exaustao_alta_data.timestamp),
+                "fonte": getattr(exaustao_alta_data, "fonte", "yfinance"),
             }
         except Exception:
             pass
