@@ -47,5 +47,5 @@ def test_esforco_resultado_collector():
         assert response.status_code == 200
         snap = response.json()
         assert "esforco_resultado" in snap["paineis"]
-        assert len(snap["paineis"]["esforco_resultado"]) > 0
-        assert snap["paineis"]["esforco_resultado"][0]["ticker"] == "PETR4"
+        assert len(snap["paineis"]["esforco_resultado"]["alertas"]) > 0
+        assert snap["paineis"]["esforco_resultado"]["alertas"][0]["ticker"] == "PETR4"

@@ -1345,9 +1345,13 @@ def snapshot(
             alertas = json.loads(esforco_resultado_data.alertas_json)
         except Exception:
             alertas = []
-        resp["paineis"]["esforco_resultado"] = alertas
+        resp["paineis"]["esforco_resultado"] = {
+            "alertas": alertas,
+            "fonte": getattr(esforco_resultado_data, "fonte", "nd"),
+            "coletado_em": esforco_resultado_data.timestamp.isoformat(),
+        }
     else:
-        resp["paineis"]["esforco_resultado"] = []
+        pass
 
     radar_divergencia_volume_data = get_latest_radar_divergencia_volume_data()
     if radar_divergencia_volume_data:
@@ -1355,9 +1359,13 @@ def snapshot(
             alertas = json.loads(radar_divergencia_volume_data.alertas_json)
         except Exception:
             alertas = []
-        resp["paineis"]["divergencia_volume"] = alertas
+        resp["paineis"]["divergencia_volume"] = {
+            "alertas": alertas,
+            "fonte": getattr(radar_divergencia_volume_data, "fonte", "nd"),
+            "coletado_em": radar_divergencia_volume_data.timestamp.isoformat(),
+        }
     else:
-        resp["paineis"]["divergencia_volume"] = []
+        pass
 
     falso_rompimento_data = get_latest_falso_rompimento_data()
     if falso_rompimento_data:
@@ -1365,9 +1373,13 @@ def snapshot(
             alertas = json.loads(falso_rompimento_data.alertas_json)
         except Exception:
             alertas = []
-        resp["paineis"]["falso_rompimento"] = alertas
+        resp["paineis"]["falso_rompimento"] = {
+            "alertas": alertas,
+            "fonte": getattr(falso_rompimento_data, "fonte", "nd"),
+            "coletado_em": falso_rompimento_data.timestamp.isoformat(),
+        }
     else:
-        resp["paineis"]["falso_rompimento"] = []
+        pass
 
     radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
     fator_peso_pesado_data = get_latest_fator_peso_pesado_data()
@@ -1400,9 +1412,13 @@ def snapshot(
             alertas = json.loads(liquidez_abertura_data.alertas_json)
         except Exception:
             alertas = []
-        resp["paineis"]["liquidez_abertura"] = alertas
+        resp["paineis"]["liquidez_abertura"] = {
+            "alertas": alertas,
+            "fonte": getattr(liquidez_abertura_data, "fonte", "nd"),
+            "coletado_em": liquidez_abertura_data.timestamp.isoformat(),
+        }
     else:
-        resp["paineis"]["liquidez_abertura"] = []
+        pass
 
     anomalia_peso_data = get_latest_anomalia_peso_data()
     if anomalia_peso_data:
@@ -1419,9 +1435,13 @@ def snapshot(
             alertas = json.loads(anomalia_peso_data.alertas_json)
         except Exception:
             alertas = []
-        resp["paineis"]["anomalia_peso"] = alertas
+        resp["paineis"]["anomalia_peso"] = {
+            "alertas": alertas,
+            "fonte": getattr(anomalia_peso_data, "fonte", "nd"),
+            "coletado_em": anomalia_peso_data.timestamp.isoformat(),
+        }
     else:
-        resp["paineis"]["anomalia_peso"] = []
+        pass
 
     sobrevivencia_semanal_data = get_latest_sobrevivencia_semanal_data()
     if sobrevivencia_semanal_data:
@@ -1455,11 +1475,19 @@ def snapshot(
     if anomalias_spread_data:
         try:
             alertas = json.loads(anomalias_spread_data.alertas_json)
-            resp["paineis"]["anomalias_spread"] = alertas
+            resp["paineis"]["anomalias_spread"] = {
+                "alertas": alertas,
+                "fonte": getattr(anomalias_spread_data, "fonte", "nd"),
+                "coletado_em": anomalias_spread_data.timestamp.isoformat(),
+            }
         except Exception:
-            resp["paineis"]["anomalias_spread"] = []
+            resp["paineis"]["anomalias_spread"] = {
+                "alertas": [],
+                "fonte": getattr(anomalias_spread_data, "fonte", "nd"),
+                "coletado_em": anomalias_spread_data.timestamp.isoformat(),
+            }
     else:
-        resp["paineis"]["anomalias_spread"] = []
+        pass
 
     exaustao_queda = None
     exaustao_queda_data = get_latest_exaustao_queda_data()

@@ -56,5 +56,5 @@ def test_falso_rompimento_collector():
         assert response.status_code == 200
         snap = response.json()
         assert "falso_rompimento" in snap["paineis"]
-        assert len(snap["paineis"]["falso_rompimento"]) > 0
-        assert "ticker" in snap["paineis"]["falso_rompimento"][0]
+        assert len(snap["paineis"]["falso_rompimento"]["alertas"]) > 0
+        assert "ticker" in snap["paineis"]["falso_rompimento"]["alertas"][0]

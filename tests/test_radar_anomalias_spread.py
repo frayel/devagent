@@ -99,5 +99,5 @@ def test_snapshot_route(monkeypatch):
     assert response.status_code == 200
     data = response.json()
     assert "anomalias_spread" in data["paineis"]
-    assert len(data["paineis"]["anomalias_spread"]) == 1
-    assert data["paineis"]["anomalias_spread"][0]["ticker"] == "PETR4"
+    assert len(data["paineis"]["anomalias_spread"]["alertas"]) == 1
+    assert data["paineis"]["anomalias_spread"]["alertas"][0]["ticker"] == "PETR4"

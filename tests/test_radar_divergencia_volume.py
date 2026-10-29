@@ -49,5 +49,5 @@ def test_radar_divergencia_volume_collector():
         assert response.status_code == 200
         snap = response.json()
         assert "divergencia_volume" in snap["paineis"]
-        assert len(snap["paineis"]["divergencia_volume"]) > 0
-        assert "ticker" in snap["paineis"]["divergencia_volume"][0]
+        assert len(snap["paineis"]["divergencia_volume"]["alertas"]) > 0
+        assert "ticker" in snap["paineis"]["divergencia_volume"]["alertas"][0]
