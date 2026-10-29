@@ -1,0 +1,9 @@
+fix: corrige falha de CSP por estilos inline no heatmap
+
+Remove os atributos style inline das barras do heatmap, que
+violavam a restrição de 'unsafe-inline' do Content-Security-Policy.
+Adiciona um nonce gerado aleatoriamente por requisição
+(secrets.token_urlsafe) para habilitar as classes CSS dinâmicas
+geradas no arquivo index.html.
+
+Closes #614
