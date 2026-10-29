@@ -2,8 +2,6 @@
 
 ## Correções (prioridade sobre qualquer feature)
 
-027). Implementar a spec 122 (`docs/specs/122-banco-reduzir-transferencia.md`): o Neon passou de 4 GB de transferência em poucos dias porque `get_historico_diario` lê sempre dois anos de séries e o consultor relê tudo a cada visita. Fechar a spec no mesmo PR `fix:` que remove esta entrada.
-
 026). Implementar a spec 083 (`docs/specs/083-brapi-fonte-secundaria.md`): brapi como fonte secundária, uma chamada por ativo, orçamento de requisições e disjuntor para 403/429. Fechar a spec no mesmo PR `fix:` que remove esta entrada.
 
 ## Features
