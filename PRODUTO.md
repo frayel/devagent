@@ -103,7 +103,7 @@ Soma-se ao checklist de `devagent/CICLO.md`:
 - Falha de uma fonte degrada só o seu painel, sem derrubar a página?
 - O painel novo aparece no `/api/snapshot` conforme o contrato em `auditoria/README.md`?
 - Qualquer biblioteca usada em produção está em `requirements.txt`, e não só em `requirements-dev.txt`?
-- Se o PR acrescenta painel, seção ou tela: incrementou o contador da cadência de experiência no `docs/STATE.md` e reavaliou a distribuição da grade (seção 3 do `docs/DESIGN.md`) em vez de só empilhar o painel no fim?
+- Se o PR acrescenta painel, seção ou tela: reavaliou a distribuição da grade (seção 3 do `docs/DESIGN.md`) em vez de só empilhar o painel no fim? (A cadência de experiência não é editada à mão: sai da `gaveta:` das specs, ADR 024 do núcleo.)
 - Se o PR muda a interface: rodou `make telas`, **abriu as duas imagens de `telas/`** e respondeu o checklist visual da seção 8 do `docs/DESIGN.md` no corpo do PR e no relatório? Algum "não" significa que o PR não está pronto.
 
 ## 7. Convenções
@@ -132,7 +132,7 @@ Para `devagent/skills/rever-experiencia.md`: as capturas saem de `make telas` (p
 
 Para `devagent/skills/manutencao.md`:
 
-- **Onde medir.** Repetição: os módulos de `app/collectors/` e `app/services/`, as tabelas `*_cache` em `app/database.py` e os testes correspondentes em `tests/`. Custo de coleta: `app/agendador.py`, o diagnóstico em `GET /api/coleta` (última rodada e último erro) e a página `/sistema` (`GET /api/sistema`), que junta coleta, integrações, deploy e fluxo de desenvolvimento. Partes vazias: os painéis com a classe `.escondido` nas capturas de `make telas` e as chaves sem dados em `/api/snapshot`. Fragilidade: os relatórios em `docs/runs/` e as issues `tentativa-falhou`.
+- **Onde medir.** Repetição: os módulos de `app/collectors/` e `app/services/`, as funções `save_*`/`get_*` de `app/database.py`, as tabelas `snapshots_paineis` e `series_diarias` de `app/banco.py` e os testes correspondentes em `tests/`. Custo de coleta: `app/agendador.py`, o diagnóstico em `GET /api/coleta` (última rodada e último erro) e a página `/sistema` (`GET /api/sistema`), que junta coleta, integrações, deploy e fluxo de desenvolvimento. Partes vazias: os painéis com a classe `.escondido` nas capturas de `make telas` e as chaves sem dados em `/api/snapshot`. Fragilidade: os relatórios em `docs/runs/` e as issues `tentativa-falhou`.
 - **Critério de poda.** Um painel que, numa janela de 10 pregões, ficou sem dados ou escondido em mais da metade das coletas feitas durante o pregão é candidato a poda: remover, fundir num vizinho ou mudar de forma. Enquanto o sistema não registrar esse histórico por painel, a primeira rodada de manutenção cria o registro (um contador por chave do `/api/snapshot` já basta), sem nova dependência.
 - **Ponto de atenção conhecido.** Quase todo painel tem coletor próprio, tabela de cache própria e chamadas próprias à mesma fonte externa, muitas vezes pedindo as mesmas séries. É o primeiro lugar a medir.
 
@@ -166,7 +166,7 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `COLETA_AUTOMATICA` | Render, opcional | `0` desliga a coleta dentro do web service |
 | `DATABASE_PATH` | opcional | caminho do banco SQLite (padrão `data.db`) |
 | `DATABASE_URL` | Render, secreto | Postgres de produção (ADRs 006, 007 e 009). A página `/sistema` mostra a versão e o tamanho do banco conectado. Sem ele, a aplicação usa SQLite e avisa que os dados se perdem ao reiniciar |
-| `CONSULTOR_SENHA` | Render, secreto, opcional | protege `/consultor` e `/api/consultor` com HTTP Basic (usuário `consultor`). Sem ela, a página é pública (ADR 005) |
+| `CONSULTOR_SENHA` | Render, secreto, opcional | protege `/consultor`, `/api/consultor`, `/sistema` e `/api/sistema` com HTTP Basic (usuário `consultor`). Sem ela, as páginas são públicas (ADR 005). O secret `SAUDE_SENHA` do GitHub precisa ter o mesmo valor, para a auditoria ler `/api/sistema` |
 | `GEMINI_API_KEY` | Render, secreto, opcional | liga a extração de opiniões de casas de análise. Sem ela, o consultor usa só sinais técnicos e mostra um aviso |
 | `GEMINI_MODELO` | Render, opcional | força um modelo do Gemini; sem ela, o app descobre o Flash-Lite estável mais novo pela API |
 | `GEMINI_MAX_CHAMADAS_DIA` | Render, opcional | teto diário de chamadas ao Gemini; padrão `200` |
