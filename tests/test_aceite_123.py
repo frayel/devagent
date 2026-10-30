@@ -34,6 +34,6 @@ def test_heatmap_mare(setup_db):
     assert "VALE3" in html
     assert "ITUB4" in html
 
-    assert "var(--cor-alta)" in html
-    assert "var(--cor-baixa)" in html
-    assert "var(--cor-neutro)" in html
+    assert "var(--alta)" in html
+    assert "var(--baixa)" in html
+    assert "var(--borda)" in html

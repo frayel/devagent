@@ -135,6 +135,11 @@ def test_csp_no_unsafe_inline_style():
     )
 
 
+def test_no_inline_styles():
+    response = client.get("/")
+    assert 'style="' not in response.text
+
+
 def test_payload_too_large():
     large_payload = "a" * 1_000_001
     response = client.post("/healthz", data=large_payload)

@@ -8,6 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
         is.forEach(i => i.style.width = (18 + 70 * (parseFloat(i.dataset.v) / max)) + '%');
     });
 
+    document.querySelectorAll('.heatmap-ativo').forEach(el => {
+        const peso = parseFloat(el.dataset.peso);
+        el.style.setProperty('--ativo-peso', peso);
+        el.style.setProperty('--ativo-cor', el.dataset.cor);
+        el.style.setProperty('--ativo-opacidade', el.dataset.opacidade);
+    });
+
     // Abas de Navegação Contextual
     const abas = document.querySelectorAll('.aba-btn');
     const todosPaineis = document.querySelectorAll('.painel');
