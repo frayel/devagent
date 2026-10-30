@@ -1,0 +1,7 @@
+O auditor de produção relatou a quebra devido à injeção de CSS em atributos `style`
+no componente Heatmap e no javascript de painéis com barras transversais. A alteração
+agora popula propriedades CSS customizadas usando vars `--*` declaradas dinamicamente via o método
+`style.setProperty()` na UI. Também moveu a folha de estilos contida no `sistema.html`
+para o `tema.css`.
+
+Closes #621
