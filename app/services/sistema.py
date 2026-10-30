@@ -504,7 +504,7 @@ def _item_da_fonte(nome: str, fonte: Any, papel: str, agora: datetime) -> Item:
         for ep_path, ep_data in fonte.endpoints.items():
             if ep_data.get("falhas", 0) >= 3 and ep_data.get("ultimo_status") == 404:
                 simbolos_ok = ep_data.get("simbolos_ok", set())
-                if len(simbolos_ok) > 0 or ep_data.get("falhas", 0) >= 3:
+                if len(simbolos_ok) == 0 or ep_data.get("ok", 0) > 0:
                     endpoints_com_problema.append(ep_path)
 
     ultimas = recentes[-5:]
