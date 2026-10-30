@@ -56,3 +56,7 @@
 - Verifiquei os PRs da main recentes até o #622. O PR 617 corrigiu o formato ISO das datas e omissão de contrato (`api/snapshot`), mas na versão atual (após inserção do heatmap da Maré na Spec 123 que veio ao longo destas entregas), a página principal começou a sofrer bloqueios pesados do CSP devido ao uso de `style="..."` inline, visível na rodada do PR 622.
 - O achado `2026-10-29-api-snapshot-contrato` (aberto pelo PR 609) foi verificado como resolvido, pois os PRs 613/617 corrigiram a falha do contrato ISO. O achado será mantido como resolvido.
 - Adicionei um novo achado de segurança/leiaute ('2026-10-29-csp-unsafe-inline-index') que quebra a exibição do novo painel Heatmap.
+- Verifiquei o PR #626 que corrige a issue #625.
+- O PR removeu com sucesso o uso de CSS inline (`style=...`) no Heatmap da Maré, substituindo-os por variáveis CSS injetadas via `data-*` attributes processados pelo `ui.js`.
+- Confirmei via `make audit` localmente que a violação da CSP (`unsafe-inline`) foi resolvida, com `pagina.sem_erros_js` retornando sucesso (0 erros).
+- A quebra de layout bloqueante na visualização do Heatmap foi eliminada. Alterei o status do achado `2026-10-29-csp-unsafe-inline-index` para resolvido.
