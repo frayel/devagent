@@ -2,7 +2,8 @@
 id: 2026-10-28-api-snapshot-chaves-ausentes
 severidade: media
 painel: varios
-status: aberto
+status: resolvido
+resolvido_em: 2026-10-29
 visto_em: 2026-10-28T01:10-03:00
 ---
 
@@ -36,3 +37,6 @@ retorna:
 
 ## Invariante proposta
 Verificar no auditor determinístico se todas as chaves sob `paineis` que sejam objetos no JSON de `/api/snapshot` contêm `fonte` e `coletado_em` não nulos.
+
+## Resolução
+Verificado em 2026-10-29. Ao fazer requisições para `https://devagent-vb52.onrender.com/api/snapshot`, as chaves `correlacao_di` e `divergencia_ibov_dolar` agora incluem `fonte` e `coletado_em`.

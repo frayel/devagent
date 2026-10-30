@@ -2,7 +2,8 @@
 id: 2026-10-29-producao-fora-do-ar
 severidade: alta
 painel: todos
-status: aberto
+status: resolvido
+resolvido_em: 2026-10-29
 visto_em: 2026-10-29T01:13-03:00
 ---
 
@@ -37,3 +38,6 @@ Internal Server Error
 
 ## Invariante proposta
 O auditor determinístico já verifica se a página inicial e a API devolvem 200, então não é necessária uma invariante nova (a regra `app.home Página inicial responde 200` falha automaticamente).
+
+## Resolução
+Verificado em 2026-10-29. A página inicial `https://devagent-vb52.onrender.com/` e a rota `https://devagent-vb52.onrender.com/api/snapshot` agora respondem com HTTP 200, e a aplicação carrega corretamente. O auditor determinístico executou com 0 falhas (26 checagens verificadas).
