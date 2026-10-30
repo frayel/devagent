@@ -27,7 +27,8 @@ def test_csp_issue_no_errors():
         # Wait for server to start
         for _ in range(10):
             try:
-                if httpx.get("http://127.0.0.1:8005/healthz").status_code == 200:
+                res = httpx.get("http://127.0.0.1:8005/healthz")
+                if res.status_code == 200:
                     break
                 time.sleep(1)
             except httpx.RequestError:
