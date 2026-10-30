@@ -2,7 +2,7 @@
 id: 2026-10-29-csp-unsafe-inline-index
 severidade: alta
 painel: app/templates/index.html (Heatmap da Maré)
-status: aberto
+status: resolvido
 visto_em: 2026-10-29T21:48:14-03:00
 pr: 622
 ---
