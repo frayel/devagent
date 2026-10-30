@@ -1660,6 +1660,8 @@ def get_historico_diario(
     cache_key = (tuple(sorted(tickers)), range_str, interval)
     if cache_key in _historico_diario_cache:
         result = _historico_diario_cache[cache_key]
+        # Move to end for basic LRU-like behavior
+        _historico_diario_cache[cache_key] = _historico_diario_cache.pop(cache_key)
     else:
         result = {}
         series = ler_series(tickers, inicio, hoje)
@@ -1702,6 +1704,8 @@ def get_historico_diario(
                 result[ticker] = spark_like_item
 
         _historico_diario_cache[cache_key] = result
+        if len(_historico_diario_cache) > 128:
+            _historico_diario_cache.pop(next(iter(_historico_diario_cache)))
 
     final_result = {}
     for ticker, spark_data in result.items():
