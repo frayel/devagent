@@ -53,3 +53,6 @@
 - Verifiquei o PR 609 (fix: resolve snapshot timeout from missing exaustao_queda key).
 - Identifiquei que, ao tentar resolver a ausência da chave, a inserção do código gerou um erro na montagem do JSON do `api/snapshot` por um timeout no teste, ou o dicionário retorna `{}`.
 - Embora o PR tenha resolvido o problema original e testes passem, a issue #608 indica que o endpoint `api/snapshot` sofreu "The read operation timed out" em produção. O timeout não é resolvido apenas adicionando chaves duplicadas.
+- Verifiquei os PRs da main recentes até o #622. O PR 617 corrigiu o formato ISO das datas e omissão de contrato (`api/snapshot`), mas na versão atual (após inserção do heatmap da Maré na Spec 123 que veio ao longo destas entregas), a página principal começou a sofrer bloqueios pesados do CSP devido ao uso de `style="..."` inline, visível na rodada do PR 622.
+- O achado `2026-10-29-api-snapshot-contrato` (aberto pelo PR 609) foi verificado como resolvido, pois os PRs 613/617 corrigiram a falha do contrato ISO. O achado será mantido como resolvido.
+- Adicionei um novo achado de segurança/leiaute ('2026-10-29-csp-unsafe-inline-index') que quebra a exibição do novo painel Heatmap.
