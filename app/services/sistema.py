@@ -265,7 +265,7 @@ def verificar_instancia(inicio: datetime, agora: datetime) -> Item:
 
 
 def verificar_historico_pregoes(datas: list[str], agora: datetime) -> Item:
-    from app.calendario import pregao_anterior, ultimo_pregao_fechado
+    from app.calendario import pregao_anterior, pregao_corrente
 
     if not datas:
         return Item(
@@ -276,7 +276,7 @@ def verificar_historico_pregoes(datas: list[str], agora: datetime) -> Item:
         )
 
     # The seletor lists 5 previous pregoes + today/last closed.
-    u = ultimo_pregao_fechado(agora)
+    u = pregao_corrente(agora)
     esperados = [u.strftime("%Y-%m-%d")]
     curr = u
     for _ in range(4):
