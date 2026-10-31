@@ -56,3 +56,6 @@
 - Verifiquei os PRs da main recentes até o #622. O PR 617 corrigiu o formato ISO das datas e omissão de contrato (`api/snapshot`), mas na versão atual (após inserção do heatmap da Maré na Spec 123 que veio ao longo destas entregas), a página principal começou a sofrer bloqueios pesados do CSP devido ao uso de `style="..."` inline, visível na rodada do PR 622.
 - O achado `2026-10-29-api-snapshot-contrato` (aberto pelo PR 609) foi verificado como resolvido, pois os PRs 613/617 corrigiram a falha do contrato ISO. O achado será mantido como resolvido.
 - Adicionei um novo achado de segurança/leiaute ('2026-10-29-csp-unsafe-inline-index') que quebra a exibição do novo painel Heatmap.
+* 31/10 (1 PR): 641 trocou `ultimo_pregao_fechado` por `pregao_corrente` no health check histórico. Testei a lógica com script `test_script3.py`.
+  O uso de `pregao_corrente` num dia no meio da tarde gera falso positivo esperando os dados do dia que ainda não terminou, pois `pregao_corrente`
+  aponta para hoje se já passou da meia noite, mesmo antes da coleta. Criei achado de alta severidade pois é um falso positivo perturbador.

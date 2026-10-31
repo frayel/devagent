@@ -772,6 +772,7 @@ def auditar(
             r += checar_volatilidade_silenciosa(snap_dict)
             r += checar_clima_global(snap_dict)
 
+            r += checar_contrato_snapshot(snap_dict)
             f_radar = checar_radar_inflexao(snap_dict)
             f_ss = checar_short_squeeze(snap_dict)
             if f_ss:
@@ -813,6 +814,38 @@ def auditar(
     if navegador:
         r += checar_navegador(url + "/", saida)
     return r
+
+
+def checar_contrato_snapshot(snapshot: dict) -> list[Resultado]:
+    """Verifica se todas as chaves em 'paineis' que sao objetos contem 'fonte' e 'coletado_em'."""
+    paineis = snapshot.get("paineis", {})
+    if not isinstance(paineis, dict):
+        return [Resultado("api.snapshot", FALHA, "'paineis' deve ser um objeto")]
+
+    falhas = []
+    for chave, valor in paineis.items():
+        if isinstance(valor, dict):
+            if "fonte" not in valor:
+                falhas.append(f"'{chave}' não possui 'fonte'")
+            if "coletado_em" not in valor:
+                falhas.append(f"'{chave}' não possui 'coletado_em'")
+
+    if falhas:
+        return [
+            Resultado(
+                "api.contrato_chaves",
+                FALHA,
+                "Painéis omitindo fonte ou coletado_em",
+                "; ".join(falhas),
+            )
+        ]
+    return [
+        Resultado(
+            "api.contrato_chaves",
+            OK,
+            "Todos os painéis válidos contêm fonte e coletado_em",
+        )
+    ]
 
 
 def main(argv: list[str] | None = None) -> int:
