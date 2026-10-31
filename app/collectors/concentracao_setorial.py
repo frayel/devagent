@@ -30,7 +30,7 @@ SETOR_MAP = {
     "ELET3": "Energia elétrica",
     "EQTL3": "Energia elétrica",
     "CMIG4": "Energia elétrica",
-    "CPLE6": "Energia elétrica",
+    "CPLE3": "Energia elétrica",
     "ENEV3": "Energia elétrica",
     "EGIE3": "Energia elétrica",
     "SBSP3": "Saneamento",

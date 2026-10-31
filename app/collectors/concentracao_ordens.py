@@ -31,7 +31,7 @@ TICKERS = [
     "HAPV3",
     "RDOR3",
     "CMIG4",
-    "CPLE6",
+    "CPLE3",
     "TOTS3",
     "EGIE3",
     "CSAN3",

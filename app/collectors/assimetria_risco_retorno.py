@@ -32,7 +32,7 @@ TICKERS = [
     "BBSE3",
     "JBSS3",
     "ELET3",
-    "CPLE6",
+    "CPLE3",
     "BRFS3",
     "ENEV3",
     "TIMS3",

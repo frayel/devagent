@@ -31,7 +31,7 @@ CARTEIRA_IBOVESPA = [
     "CMIG4",
     "CIEL3",
     "COGN3",
-    "CPLE6",
+    "CPLE3",
     "CSAN3",
     "CPFE3",
     "CMIN3",
