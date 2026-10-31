@@ -65,3 +65,7 @@
 - Verifiquei o PR 650 (fix: resolve missing snapshots on non-trading days Closes #647).
 - A modificação atualizou o `app/calendario.py` e os testes, bem como o script `verificar_historico_pregoes`.
 - Identifiquei que a função `verificar_historico_pregoes` continua usando `pregao_corrente` em vez de `ultimo_pregao_fechado`. Durante horários onde o mercado ainda não atingiu a consolidação, isso gera falsos positivos indicando que faltam snapshots de dias recuados que caíram da janela. O erro foi acentuado pela lógica ajustada para dias de fim de semana (que caem para sexta), mas durante as madrugadas de 29/10, cobrava o fechamento do dia recuando a janela e apontando 26 e 27 como ausentes. Criei o achado '2026-10-31-historico-pregoes' com severidade alta por impactar e poluir ativamente a saúde da produção.
+- Verifiquei o PR 655 (fix: use ultimo_pregao_fechado in health check).
+- Confirmada a resolução do achado '2026-10-31-historico-pregoes'. O método verificar_historico_pregoes agora usa corretamente ultimo_pregao_fechado, eliminando os falsos positivos durante o andamento do pregão.
+- A auditoria não encontrou novos defeitos introduzidos por esta alteração.
+- Próxima verificação deve analisar o cumprimento dos contratos de API no restante da aplicação.
