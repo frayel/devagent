@@ -620,11 +620,12 @@ def test_issue_de_producao_nao_vira_problema_do_sistema():
     assert "#577" in item.detalhe
 
 
-def test_verificar_historico_pregoes_usa_pregao_corrente():
+def test_verificar_historico_pregoes_usa_ultimo_fechado():
     agora = datetime.fromisoformat("2026-10-30T19:50:12.351351+00:00")
     # This corresponds to 16:50 BRT on a Friday (pregao).
-    # Expected days: 30, 29, 28, 27, 26 (all weekdays)
-    datas = ["2026-10-30", "2026-10-29", "2026-10-28", "2026-10-27", "2026-10-26"]
+    # Since it is before 18:15, the last closed pregao is Thursday, 29th.
+    # Expected days: 29, 28, 27, 26, 25(Sunday -> Friday 23)
+    datas = ["2026-10-29", "2026-10-28", "2026-10-27", "2026-10-26", "2026-10-23"]
     item = s.verificar_historico_pregoes(datas, agora)
     assert item.nivel == "ok"
     assert "Faltam snapshots" not in item.detalhe
