@@ -59,7 +59,7 @@ def test_coletor_com_alertas():
     ).mock(return_value=mock_yfinance_response(with_alerts=True))
     respx.get(
         re.compile(
-            r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols=CSAN3\.SA,PRIO3\.SA,RDOR3\.SA,RAIL3\.SA,SBSP3\.SA,VIVT3\.SA,CMIG4\.SA,LREN3\.SA,CPLE6\.SA,UGPA3\.SA,ENEV3\.SA,TIMS3\.SA,TOTS3\.SA,EGIE3\.SA,HAPV3\.SA&range=1d&interval=15m"
+            r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols=CSAN3\.SA,PRIO3\.SA,RDOR3\.SA,RAIL3\.SA,SBSP3\.SA,VIVT3\.SA,CMIG4\.SA,LREN3\.SA,CPLE3\.SA,UGPA3\.SA,ENEV3\.SA,TIMS3\.SA,TOTS3\.SA,EGIE3\.SA,HAPV3\.SA&range=1d&interval=15m"
         )
     ).mock(return_value=httpx.Response(200, json={"spark": {"result": []}}))
 
@@ -92,7 +92,7 @@ def test_coletor_sem_alertas():
     ).mock(return_value=mock_yfinance_response(with_alerts=False))
     respx.get(
         re.compile(
-            r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols=CSAN3\.SA,PRIO3\.SA,RDOR3\.SA,RAIL3\.SA,SBSP3\.SA,VIVT3\.SA,CMIG4\.SA,LREN3\.SA,CPLE6\.SA,UGPA3\.SA,ENEV3\.SA,TIMS3\.SA,TOTS3\.SA,EGIE3\.SA,HAPV3\.SA&range=1d&interval=15m"
+            r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols=CSAN3\.SA,PRIO3\.SA,RDOR3\.SA,RAIL3\.SA,SBSP3\.SA,VIVT3\.SA,CMIG4\.SA,LREN3\.SA,CPLE3\.SA,UGPA3\.SA,ENEV3\.SA,TIMS3\.SA,TOTS3\.SA,EGIE3\.SA,HAPV3\.SA&range=1d&interval=15m"
         )
     ).mock(return_value=httpx.Response(200, json={"spark": {"result": []}}))
 

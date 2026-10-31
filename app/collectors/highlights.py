@@ -38,7 +38,7 @@ TICKERS = [
     "VIVT3",
     "CMIG4",
     "LREN3",
-    "CPLE6",
+    "CPLE3",
     "UGPA3",
     "ENEV3",
     "TIMS3",

@@ -1,2 +1,0 @@
-Fix: Ibovespa implausible daily variation falling back to incorrect previous close (Fixes #531)
-Feat: Implement brapi secondary source client module (spec 098)
