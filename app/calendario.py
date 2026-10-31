@@ -78,13 +78,7 @@ def pregao_corrente(agora: datetime) -> date:
         # We consider the day as the current pregao even before opening (pre-abertura)
         # However, before midnight it would be the same day anyway.
         return d
-    # If weekend or holiday, return the *next* trading day as the "current" context?
-    # Wait, the spec says:
-    # "durante o pregão, o dia corrente; entre a meia-noite e a abertura, o último pregão fechado."
-    # Wait, the spec says "data_referencia de cada snapshot passa a ser o pregão a que o dado pertence: durante o pregão, o dia corrente; entre a meia-noite e a abertura, o último pregão fechado."
-    # Actually, spec says: pregao_corrente(agora), ultimo_pregao_fechado(agora)
-    # Let's define them exactly.
-    return d
+    return ultimo_pregao_fechado(agora)
 
 
 def ultimo_pregao_fechado(agora: datetime) -> date:
