@@ -61,3 +61,7 @@
 - Confirmei a resolução do achado '2026-10-29-csp-unsafe-inline-index'. O heatmap foi refeito para usar as variáveis no style do div e a class para formatação sem usar style in-line restrito pela política do CSP.
 - Adicionalmente, verifiquei que o log de auditoria indica problemas de conectividade/timeout que precisam ser analisados se for uma falha real da porta e tempo de subida.
 - Adicionei um novo achado de robustez/contrato da API ('2026-10-31-api-contrato-chaves') por falha de aderência do endpoint snapshot omitindo as chaves `fonte` e `coletado_em` nos painéis recém injetados e ausentes.
+
+- Verifiquei o PR 650 (fix: resolve missing snapshots on non-trading days Closes #647).
+- A modificação atualizou o `app/calendario.py` e os testes, bem como o script `verificar_historico_pregoes`.
+- Identifiquei que a função `verificar_historico_pregoes` continua usando `pregao_corrente` em vez de `ultimo_pregao_fechado`. Durante horários onde o mercado ainda não atingiu a consolidação, isso gera falsos positivos indicando que faltam snapshots de dias recuados que caíram da janela. O erro foi acentuado pela lógica ajustada para dias de fim de semana (que caem para sexta), mas durante as madrugadas de 29/10, cobrava o fechamento do dia recuando a janela e apontando 26 e 27 como ausentes. Criei o achado '2026-10-31-historico-pregoes' com severidade alta por impactar e poluir ativamente a saúde da produção.
