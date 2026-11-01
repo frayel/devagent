@@ -336,9 +336,11 @@ def ler_snapshot(painel: str, data_referencia: date | None = None) -> dict | Non
         data_referencia = _lendo_pregao_var.get()
 
     cache_key = (painel, data_referencia)
-    if cache_key in _snapshot_cache:
-        _snapshot_cache[cache_key] = _snapshot_cache.pop(cache_key)
-        return _snapshot_cache[cache_key]
+    with _snapshot_cache_lock:
+        if cache_key in _snapshot_cache:
+            val = _snapshot_cache.pop(cache_key)
+            _snapshot_cache[cache_key] = val
+            return val
 
     init_db()
     conn, backend = get_connection()
