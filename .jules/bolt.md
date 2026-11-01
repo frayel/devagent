@@ -12,3 +12,7 @@
 - **2026-11-01:** Adicionei um cache LRU em memória via `dict` com `threading.Lock` na função `ler_snapshot` em `app/banco.py`. Isso resolve um gargalo onde `/api/snapshot` e `/` abriam 25 novas conexões de banco de dados sequencialmente devido ao uso individual em `get_latest_*_data()`.
 - **O que aprendi:** Um lock e um dicionário com capacidade limitada são suficientes para aliviar chamadas lentas com alta contenção de I/O em banco de dados sem a necessidade de bibliotecas adicionais, desde que seja garantida a thread-safety (caso do Uvicorn rodando rotas síncronas em thread pool).
 - **O que evitar:** Implementar caches sem `threading.Lock` ou com reordenação desprotegida da inserção, o que pode causar `RuntimeError` sob alta simultaneidade.
+
+- **2026-11-02:** Corrigi concorrência no cache de _snapshot_cache em `app/banco.py`. Ao acessar a chave no dicionário, eu não estava usando lock de forma consistente (o read+pop+reinsert não estava sob lock, gerando RuntimeError: dictionary changed size during iteration se houvesse deleção concorrente).
+- **O que aprendi:** Operações de reordenação (pop + insert) devem estar completamente englobadas pelo lock. Mesmo leituras que modificam estado em um LRU cache precisam ser thread-safe.
+- **O que evitar:** Assumir que ler de um dict que funciona como LRU é uma operação puramente de leitura. Se há mutação para manter a ordem, o Lock é obrigatório.
