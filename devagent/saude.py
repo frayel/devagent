@@ -137,6 +137,8 @@ def pendentes(dados: dict[str, Any], nivel: str) -> list[dict[str, Any]]:
                 if agora - dt > timedelta(hours=24):
                     if "Faltam snapshots" in p.get("detalhe", ""):
                         pass
+                    elif p.get("nome") == "Issues que pedem ação":
+                        pass
                     else:
                         efetivo = "problema"
             except ValueError:
