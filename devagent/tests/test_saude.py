@@ -132,6 +132,19 @@ def test_item_em_atencao_ha_mais_de_24h_vira_problema():
                 {"nivel": "atencao", "grupo": "A", "nome": "1", "desde": antigo},
                 {"nivel": "atencao", "grupo": "A", "nome": "2", "desde": recente},
                 {"nivel": "atencao", "grupo": "A", "nome": "3"},
+                {
+                    "nivel": "atencao",
+                    "grupo": "A",
+                    "nome": "4",
+                    "desde": antigo,
+                    "detalhe": "Faltam snapshots na janela recente",
+                },
+                {
+                    "nivel": "atencao",
+                    "grupo": "Fluxo de desenvolvimento",
+                    "nome": "Issues que pedem ação",
+                    "desde": antigo,
+                },
             ]
         }
     }
@@ -141,6 +154,8 @@ def test_item_em_atencao_ha_mais_de_24h_vira_problema():
     assert problemas[0]["nome"] == "1"
 
     atencoes = saude.pendentes(dados, "atencao")
-    assert len(atencoes) == 2
+    assert len(atencoes) == 4
     assert atencoes[0]["nome"] == "2"
     assert atencoes[1]["nome"] == "3"
+    assert atencoes[2]["nome"] == "4"
+    assert atencoes[3]["nome"] == "Issues que pedem ação"
