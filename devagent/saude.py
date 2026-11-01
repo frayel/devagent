@@ -135,7 +135,10 @@ def pendentes(dados: dict[str, Any], nivel: str) -> list[dict[str, Any]]:
             try:
                 dt = datetime.fromisoformat(desde)
                 if agora - dt > timedelta(hours=24):
-                    efetivo = "problema"
+                    if "Faltam snapshots" in p.get("detalhe", ""):
+                        pass
+                    else:
+                        efetivo = "problema"
             except ValueError:
                 pass
 

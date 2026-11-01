@@ -1,2 +1,1 @@
-Resolves #531 by prioritizing `chartPreviousClose` from Yahoo Finance to avoid erroneous previous close dates, which caused a -13.88% implausible daily variation drop.
-Implemented the brapi module as secondary source correctly handling quotas and circuit breaking (Spec 098).
+A causa raiz era o bug fixado no PR 650 que não tirou o estado persistente do warning de Faltam snapshots que escala para problema apos 24h. O passo de impedir o escalonamento em saude.py foi a forma de mitigar esse efeito residual de issue arrumada em commit anterior.
