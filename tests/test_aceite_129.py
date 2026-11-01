@@ -67,6 +67,7 @@ def pool(monkeypatch):
 
 def test_quarenta_leituras_abrem_no_maximo_cinco_conexoes(pool):
     for _ in range(40):
+        banco._snapshot_cache.clear()
         assert banco.ler_snapshot("ibovespa", date(2026, 10, 29)) == {"valor": 1}
     assert 1 <= pool.conectadas <= 5
     assert pool.devolvidas == 40

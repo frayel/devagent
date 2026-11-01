@@ -322,11 +322,24 @@ def gravar_snapshot(
             conn.commit()
     finally:
         conn.close()
+    with _snapshot_cache_lock:
+        _snapshot_cache.pop((painel, data_referencia), None)
+        _snapshot_cache.pop((painel, None), None)
+
+
+_snapshot_cache: dict = {}
+_snapshot_cache_lock = threading.Lock()
 
 
 def ler_snapshot(painel: str, data_referencia: date | None = None) -> dict | None:
     if not data_referencia:
         data_referencia = _lendo_pregao_var.get()
+
+    cache_key = (painel, data_referencia)
+    if cache_key in _snapshot_cache:
+        _snapshot_cache[cache_key] = _snapshot_cache.pop(cache_key)
+        return _snapshot_cache[cache_key]
+
     init_db()
     conn, backend = get_connection()
     try:
@@ -344,7 +357,15 @@ def ler_snapshot(painel: str, data_referencia: date | None = None) -> dict | Non
                     )
                 row = cursor.fetchone()
                 if row:
-                    return row[0] if isinstance(row[0], dict) else json.loads(row[0])
+                    res = row[0] if isinstance(row[0], dict) else json.loads(row[0])
+                    with _snapshot_cache_lock:
+                        _snapshot_cache[cache_key] = res
+                        if len(_snapshot_cache) > 128:
+                            try:
+                                _snapshot_cache.pop(next(iter(_snapshot_cache)))
+                            except (KeyError, RuntimeError):
+                                pass
+                    return res
                 return None
         else:
             cursor = conn.cursor()
@@ -360,7 +381,15 @@ def ler_snapshot(painel: str, data_referencia: date | None = None) -> dict | Non
                 )
             row = cursor.fetchone()
             if row:
-                return json.loads(row[0])
+                res = json.loads(row[0])
+                with _snapshot_cache_lock:
+                    _snapshot_cache[cache_key] = res
+                    if len(_snapshot_cache) > 128:
+                        try:
+                            _snapshot_cache.pop(next(iter(_snapshot_cache)))
+                        except (KeyError, RuntimeError):
+                            pass
+                return res
             return None
     finally:
         conn.close()
