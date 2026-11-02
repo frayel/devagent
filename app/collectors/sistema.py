@@ -12,6 +12,7 @@ Variáveis de ambiente, todas opcionais:
     RENDER_API_KEY      liga a leitura do último deploy no Render
     RENDER_SERVICE_ID   id do serviço; o Render já define esta variável
     RENDER_GIT_COMMIT   commit em produção; o Render já define esta variável
+    GIT_COMMIT          commit em produção no Kubernetes; gravado na imagem pelo deploy-k8s.yml
     MONITOR_SISTEMA     0 desliga o laço
 """
 
@@ -81,10 +82,14 @@ def repositorio() -> str:
 
 
 def commit_em_producao() -> str | None:
-    """O Render define RENDER_GIT_COMMIT; fora dele, o HEAD do checkout local."""
-    sha = os.environ.get("RENDER_GIT_COMMIT", "").strip()
-    if sha:
-        return sha
+    """O Render define RENDER_GIT_COMMIT e a imagem do Kubernetes, GIT_COMMIT.
+
+    Fora dos dois, o HEAD do checkout local.
+    """
+    for variavel in ("RENDER_GIT_COMMIT", "GIT_COMMIT"):
+        sha = os.environ.get(variavel, "").strip()
+        if sha:
+            return sha
     try:
         saida = subprocess.run(
             ["git", "rev-parse", "HEAD"],

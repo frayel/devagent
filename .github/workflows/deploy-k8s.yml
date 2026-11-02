@@ -1,0 +1,121 @@
+name: Deploy Kubernetes
+
+# Deploy do Painel B3 no servidor Kubernetes próprio (namespace painelb3),
+# no mesmo padrão do dux: imagem no GHCR e kubectl num runner self-hosted.
+# Roda junto com o Render, que segue publicando a main pelo render.yaml.
+#
+# Gatilhos: o merge do automerge.yml (merges do GITHUB_TOKEN não disparam
+# `push`), push humano na main e disparo manual.
+# Só roda quando a variável K8S_HOST está definida no repositório: até lá o
+# workflow é ignorado e não espera por um runner que ainda não existe.
+on:
+  workflow_run:
+    workflows: [Auto-merge]
+    types: [completed]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy-k8s
+  cancel-in-progress: false
+
+env:
+  IMAGEM: ghcr.io/frayel/devagent/web
+
+jobs:
+  build:
+    if: >-
+      vars.K8S_HOST != '' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Commit da main
+        id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Login no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construir e publicar a imagem
+        env:
+          SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          docker build . --build-arg GIT_COMMIT="$SHA" -t "$IMAGEM:$SHA" -t "$IMAGEM:latest"
+          docker push "$IMAGEM" --all-tags
+
+      - name: Apagar imagens antigas do GHCR
+        continue-on-error: true
+        uses: snok/container-retention-policy@v3.0.1
+        with:
+          account: user
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image-names: "devagent/web"
+          cut-off: 1w
+          # Guarda as últimas para um rollback com kubectl set image.
+          keep-n-most-recent: 5
+
+  deploy:
+    needs: [build]
+    runs-on: [self-hosted, painelb3]
+    env:
+      K8S_HOST: ${{ vars.K8S_HOST }}
+      KUBECTL: ${{ vars.KUBECTL || 'microk8s kubectl' }}
+      SHA: ${{ needs.build.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build.outputs.sha }}
+
+      - name: Arquivo de ambiente
+        env:
+          PAINELB3_ENV: ${{ secrets.PAINELB3_ENV }}
+        run: |
+          umask 077
+          printf '%s\n' "$PAINELB3_ENV" > .env.docker
+          echo "GIT_COMMIT=$SHA" >> .env.docker
+
+      - name: Credencial do GHCR no cluster
+        env:
+          GHCR_USUARIO: ${{ secrets.GHCR_USUARIO }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          $KUBECTL create namespace painelb3 --dry-run=client -o yaml | $KUBECTL apply -f -
+          $KUBECTL create secret docker-registry ghcr-secret --namespace=painelb3 \
+            --docker-server=ghcr.io --docker-username="$GHCR_USUARIO" \
+            --docker-password="$GHCR_TOKEN" --dry-run=client -o yaml | $KUBECTL apply -f -
+
+      - name: Trocar marcadores
+        run: |
+          sed -i "s/painelb3.host.placeholder/$K8S_HOST/g" k8s/web/ingress.yaml
+          sed -i "s/:latest/:$SHA/g" k8s/web/deploy.yaml
+
+      - name: Aplicar no Kubernetes
+        run: sh k8s/deploy.sh
+
+      - name: Conferir /healthz pela URL pública
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsS "https://$K8S_HOST/healthz"; then exit 0; fi
+            sleep 15
+          done
+          echo "https://$K8S_HOST/healthz não respondeu em 5 min" >&2
+          exit 1
+
+      - name: Limpar arquivo de ambiente
+        if: always()
+        run: rm -f .env.docker

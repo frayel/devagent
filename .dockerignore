@@ -1,0 +1,13 @@
+.git
+.venv
+**/__pycache__
+.mypy_cache
+.pytest_cache
+.ruff_cache
+*.db
+*.png
+telas/
+server.log
+.env
+.env.*
+k8s/

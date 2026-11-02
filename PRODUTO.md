@@ -40,7 +40,7 @@ Toda recomendação exibida precisa mostrar: a fonte, a data da coleta, o métod
 | Testes | pytest, respx para mockar HTTP | testes não acessam a internet |
 | Qualidade | ruff (lint e format), mypy no modo básico | |
 | CI | GitHub Actions, pelos alvos do `Makefile` | |
-| Deploy | Render, configurado por `render.yaml` (Blueprint), `autoDeploy` a partir de `main` | |
+| Deploy | Render, configurado por `render.yaml` (Blueprint), `autoDeploy` a partir de `main`; Kubernetes próprio no namespace `painelb3` (`k8s/`, `deploy-k8s.yml`, ADR 010) | o Kubernetes só publica com a variável `K8S_HOST` definida |
 
 Mudanças de stack exigem um ADR em `docs/decisions/` antes do código.
 
@@ -179,6 +179,8 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 
 `render.yaml` declara um web service (`uvicorn app.main:app`), `healthCheckPath: /healthz` e `autoDeploy: true`.
 
+No Kubernetes, as mesmas variáveis vão no secret `PAINELB3_ENV` do GitHub, e `GIT_COMMIT` faz o papel de `RENDER_GIT_COMMIT` (`docs/context/deploy-kubernetes.md`).
+
 ## 11. Índice do projeto e itens protegidos
 
 | Arquivo | Para que serve | Leia quando |
@@ -189,9 +191,10 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `docs/context/dominio-b3.md` | conceitos do mercado, pregão, horários, armadilhas | antes de spec ou cálculo financeiro |
 | `docs/context/fontes-de-dados.md` | cada fonte: URL, limites, termos, confiabilidade | antes de criar ou alterar coletor |
 | `docs/context/operacao.md` | particularidades operacionais deste produto no Render | antes de mexer em deploy ou coleta |
+| `docs/context/deploy-kubernetes.md` | deploy no Kubernetes próprio: fluxo, secrets e variáveis do GitHub, preparo do servidor | antes de mexer em `k8s/`, `Dockerfile` ou `deploy-k8s.yml` |
 | `docs/context/referencias-academicas.md` | artigos científicos sobre preço, volume e microestrutura, incluindo estudos da B3, com a ideia que cada um sugere | no Passo 7 e antes de spec com sinal técnico, volume, pares ou livro |
 | `docs/skills/criar-coletor.md` | procedimento para nova fonte de dados | ao implementar coletor |
-| `docs/decisions/` | ADRs do produto: `004` coleta dentro do web service; `005` consultor (página própria, regras determinísticas, LLM só extrai); `006` persistência do consultor; `007` Postgres como banco único e snapshots por painel; `008` data de referência, congelamento após o fechamento e histórico de 5 pregões; `009` Postgres próprio no lugar do Neon | antes de mudar stack ou arquitetura |
+| `docs/decisions/` | ADRs do produto: `004` coleta dentro do web service; `005` consultor (página própria, regras determinísticas, LLM só extrai); `006` persistência do consultor; `007` Postgres como banco único e snapshots por painel; `008` data de referência, congelamento após o fechamento e histórico de 5 pregões; `009` Postgres próprio no lugar do Neon; `010` deploy em Kubernetes próprio ao lado do Render | antes de mudar stack ou arquitetura |
 | `auditoria/README.md` | o que o auditor verifica e o contrato `/api/snapshot` | ao tratar issue `producao-incorreta` e ao publicar painel novo |
 
 Ao criar um arquivo novo em `docs/context/` ou `docs/skills/`, acrescente-o a esta tabela no mesmo PR.

@@ -74,6 +74,15 @@ def test_disparos_perdidos_desconta_a_hora_de_folga():
     assert s.disparos_perdidos(crons, recente, AGORA) == 0
 
 
+def test_commit_em_producao_le_render_e_depois_kubernetes(monkeypatch):
+    monkeypatch.setenv("RENDER_GIT_COMMIT", "aaa111")
+    monkeypatch.setenv("GIT_COMMIT", "bbb222")
+    assert monitor.commit_em_producao() == "aaa111"
+    monkeypatch.delenv("RENDER_GIT_COMMIT")
+    # A imagem do deploy em Kubernetes não tem .git; o commit vem de GIT_COMMIT.
+    assert monitor.commit_em_producao() == "bbb222"
+
+
 def test_workflows_do_repositorio_le_os_crons_dos_arquivos():
     workflows = {w["arquivo"]: w for w in monitor.workflows_do_repositorio()}
     # Só o cron de reserva (ADR 025 do núcleo); o relógio principal é externo.

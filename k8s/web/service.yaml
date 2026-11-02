@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: web
+  name: web-svc
+  namespace: painelb3
+spec:
+  # ClusterIP: o tráfego entra só pelo Ingress (TLS e limites de requisição).
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app: web
