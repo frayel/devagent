@@ -2,7 +2,7 @@
 id: 2026-10-31-historico-pregoes
 severidade: alta
 painel: app/services/sistema.py
-status: aberto
+status: resolvido
 visto_em: 2026-10-31T11:20:00-03:00
 pr: 650
 ---

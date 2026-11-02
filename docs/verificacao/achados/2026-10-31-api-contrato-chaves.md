@@ -2,7 +2,7 @@
 id: 2026-10-31-api-contrato-chaves
 severidade: media
 painel: app/main.py (Endpoint /api/snapshot)
-status: aberto
+status: resolvido
 visto_em: 2026-10-31T09:50:00-03:00
 pr: 646
 ---
