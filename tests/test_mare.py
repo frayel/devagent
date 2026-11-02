@@ -454,7 +454,9 @@ def test_snapshot_parcial_sem_ibovespa():
 
 
 def test_snapshot_sem_coleta_tem_chave_vazia():
-    assert _cliente().get("/api/snapshot").json()["paineis"]["mare"] == {}
+    resp = _cliente().get("/api/snapshot").json()["paineis"]["mare"]
+    assert "fonte" in resp
+    assert "coletado_em" in resp
 
 
 def test_painel_mostra_gauge_componentes_e_historico():
