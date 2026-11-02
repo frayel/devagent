@@ -1,12 +1,17 @@
 ---
 id: 125
 titulo: Fechamento que falhou vira incompleto depois das 20h
-status: ready
+status: draft
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_125.py
-revisada: 2026-10-28
+revisada: 2026-11-02
 ---
+
+## Revisão
+Spec dividida, pois ficou grande (toca o arquivo agendador e requer testes distintos de intervalo e de mock de coletores para marcar o incompleto). Partes:
+- 125a: Corrige o intervalo das tentativas de fechamento até as 20h.
+- 125b: Marca como incompleto sem chamar os coletores após 20h.
 
 ## Problema
 A spec 077 diz: "Rodada de fechamento: a primeira depois das 18h15 BRT em dia de pregão. Snapshot gravado com sucesso nela vira `final`. Falhou: nova tentativa a cada 30 min até 20h; depois, `incompleto`, com o último dado bom." O agendador (`app/agendador.py`) não faz isso:
