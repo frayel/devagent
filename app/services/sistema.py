@@ -275,8 +275,13 @@ def verificar_historico_pregoes(datas: list[str], agora: datetime) -> Item:
             "Nenhum snapshot encontrado.",
         )
 
-    # The seletor lists 5 previous pregoes + today/last closed.
-    u = ultimo_pregao_fechado(agora)
+    from app.calendario import pregao_corrente
+
+    # Se o pregão corrente já tem snapshot, ele é a âncora;
+    # caso contrário, usamos o último fechado (para não cobrar o de hoje prematuramente)
+    hoje_str = pregao_corrente(agora).strftime("%Y-%m-%d")
+    u = pregao_corrente(agora) if hoje_str in datas else ultimo_pregao_fechado(agora)
+
     esperados = [u.strftime("%Y-%m-%d")]
     curr = u
     for _ in range(4):
