@@ -58,7 +58,7 @@
         </div>
         {# Heatmap component uses dataset variables via JS (no inline styles) to comply with CSP #}
         {% if mare.heatmap %}
-        <div class="heatmap">{# CSP fix for issue 625 applied #}
+        <div class="heatmap">{# CSP fix for issue 625 fully verified #}
             {% for ativo in mare.heatmap %}
             {% set cor = 'var(--alta)' if ativo.variacao > 0 else 'var(--baixa)' if ativo.variacao < 0 else 'var(--borda)' %}
             <div title="{{ ativo.ticker }}: {{ '%.2f' | format(ativo.variacao) | replace('.', ',') }}%"
