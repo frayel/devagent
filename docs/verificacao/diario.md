@@ -65,3 +65,8 @@
 - Verifiquei o PR 650 (fix: resolve missing snapshots on non-trading days Closes #647).
 - A modificação atualizou o `app/calendario.py` e os testes, bem como o script `verificar_historico_pregoes`.
 - Identifiquei que a função `verificar_historico_pregoes` continua usando `pregao_corrente` em vez de `ultimo_pregao_fechado`. Durante horários onde o mercado ainda não atingiu a consolidação, isso gera falsos positivos indicando que faltam snapshots de dias recuados que caíram da janela. O erro foi acentuado pela lógica ajustada para dias de fim de semana (que caem para sexta), mas durante as madrugadas de 29/10, cobrava o fechamento do dia recuando a janela e apontando 26 e 27 como ausentes. Criei o achado '2026-10-31-historico-pregoes' com severidade alta por impactar e poluir ativamente a saúde da produção.
+
+- Verifiquei o PR 672 (fix: garante chaves contratuais no snapshot. Closes #649).
+- Confirmei a resolução do achado '2026-10-31-api-contrato-chaves'. O endpoint `/api/snapshot` agora expõe corretamente as chaves contratuais `fonte` e `coletado_em` para todos os painéis, mesmo em falhas de banco de dados.
+- Notei que a função `verificar_historico_pregoes` na `main` já utiliza `ultimo_pregao_fechado(agora)`, corrigindo o uso incorreto de `pregao_corrente`. Confirmei a resolução do achado '2026-10-31-historico-pregoes'.
+- Durante os testes automatizados da aplicação para validar esta PR, foi identificado que o teste da Spec 095 (`tests/test_aceite_095.py::test_bloqueio_rede`) falha com `ConnectError: Temporary failure in name resolution` ao invés de `RuntimeError` na ausência de rede (DNS indisponível), gerando o achado de baixa severidade `2026-11-02-test-bloqueio-rede`.
