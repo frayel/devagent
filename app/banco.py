@@ -828,3 +828,58 @@ def get_simbolos_suspensos() -> list[dict]:
             ]
     finally:
         conn.close()
+
+
+def ler_snapshot_completo(
+    painel: str, data_referencia: date | None = None
+) -> dict | None:
+    if not data_referencia:
+        data_referencia = _lendo_pregao_var.get()
+
+    init_db()
+    conn, backend = get_connection()
+    try:
+        if backend == "postgres":
+            with conn.cursor() as cursor:
+                if data_referencia:
+                    cursor.execute(
+                        "SELECT estado, fonte, payload FROM snapshots_paineis WHERE painel = %s AND data_referencia = %s LIMIT 1",
+                        (painel, data_referencia),
+                    )
+                else:
+                    cursor.execute(
+                        "SELECT estado, fonte, payload FROM snapshots_paineis WHERE painel = %s ORDER BY data_referencia DESC LIMIT 1",
+                        (painel,),
+                    )
+                row = cursor.fetchone()
+                if row:
+                    payload = row[2] if isinstance(row[2], dict) else json.loads(row[2])
+                    return {
+                        "estado_snapshot": row[0],
+                        "fonte_snapshot": row[1],
+                        "payload": payload,
+                    }
+                return None
+        else:
+            cursor = conn.cursor()
+            if data_referencia:
+                cursor.execute(
+                    "SELECT estado, fonte, payload FROM snapshots_paineis WHERE painel = ? AND data_referencia = ? LIMIT 1",
+                    (painel, str(data_referencia)),
+                )
+            else:
+                cursor.execute(
+                    "SELECT estado, fonte, payload FROM snapshots_paineis WHERE painel = ? ORDER BY data_referencia DESC LIMIT 1",
+                    (painel,),
+                )
+            row = cursor.fetchone()
+            if row:
+                payload = row[2] if isinstance(row[2], dict) else json.loads(row[2])
+                return {
+                    "estado_snapshot": row[0],
+                    "fonte_snapshot": row[1],
+                    "payload": payload,
+                }
+            return None
+    finally:
+        conn.close()

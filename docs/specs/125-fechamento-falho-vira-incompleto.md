@@ -1,7 +1,7 @@
 ---
 id: 125
 titulo: Fechamento que falhou vira incompleto depois das 20h
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_125.py
@@ -30,12 +30,12 @@ Nenhuma nova.
 Nenhum.
 
 ## Critérios de aceite
-- [ ] `intervalo()` às 18h40 BRT de um dia de pregão devolve 30 min; às 20h10, 2 h.
-- [ ] Com o snapshot `ao_vivo` de D num painel `pregao`, uma rodada às 20h05 de D grava `incompleto` em D com o mesmo payload, sem chamar `collect_and_save` desse painel.
-- [ ] A mesma rodada às 08h de D+1 (o serviço dormiu) produz o mesmo resultado.
-- [ ] Snapshot `final` continua `final`.
-- [ ] Depois da marcação, `listar_datas("ibovespa")` inclui D.
-- [ ] `tests/test_agendador.py` continua verde.
+- [x] `intervalo()` às 18h40 BRT de um dia de pregão devolve 30 min; às 20h10, 2 h.
+- [x] Com o snapshot `ao_vivo` de D num painel `pregao`, uma rodada às 20h05 de D grava `incompleto` em D com o mesmo payload, sem chamar `collect_and_save` desse painel.
+- [x] A mesma rodada às 08h de D+1 (o serviço dormiu) produz o mesmo resultado.
+- [x] Snapshot `final` continua `final`.
+- [x] Depois da marcação, `listar_datas("ibovespa")` inclui D.
+- [x] `tests/test_agendador.py` continua verde.
 - Arquivos tocados: `app/agendador.py` e o novo `tests/test_aceite_125.py`.
 
 ## Invariantes de produção

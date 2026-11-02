@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- **Spec 125**: Corrige fechamento que falhava em marcar snapshot como incompleto, com reavaliação a cada 30 min.
 - Spec 124: Seletor de pregão mostra os números do dia escolhido em todos os painéis, isolando leitura com lendo_pregao.
 - Spec 129: o Postgres passa a usar um pool de conexões. Antes, cada leitura abria uma conexão nova (em 29/10, cerca de 1,6 s cada), e a `/sistema` e a página inicial demoravam segundos. O item Banco de dados da `/sistema` mostra o custo de abrir conexão e acusa Atenção acima de 500 ms.
 - **Sistema**: o item Banco de dados mostra a versão do servidor e o tamanho do banco em uso. Documentação atualizada: o Postgres de produção não é mais o Neon (ADR 009).

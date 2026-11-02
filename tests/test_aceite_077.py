@@ -65,6 +65,10 @@ def test_agendador_fim_de_semana(mock_horario, mock_coletores, clean_db, monkeyp
         "app.banco.ler_snapshot",
         lambda painel, ref: {"estado_snapshot": "final", "estado": "final"},
     )
+    monkeypatch.setattr(
+        "app.banco.ler_snapshot_completo",
+        lambda painel, ref: {"estado_snapshot": "final", "estado": "final"},
+    )
 
     agendador.coletar_tudo()
     assert "ibovespa" not in mock_coletores, (

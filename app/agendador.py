@@ -27,6 +27,7 @@ INICIO_PREGAO = time(9, 55)
 FIM_PREGAO = time(18, 15)
 NO_PREGAO = timedelta(minutes=15)
 FORA_DO_PREGAO = timedelta(hours=2)
+FECHAMENTO_ESPERA = timedelta(minutes=30)
 
 # Estado da última rodada, exposto em /api/coleta para diagnóstico.
 estado: dict[str, str | None] = {
@@ -45,8 +46,11 @@ def coleta_ligada() -> bool:
 def intervalo(agora: datetime) -> timedelta:
     """Quanto esperar até a próxima coleta."""
     local = agora.astimezone(BRT)
-    if local.weekday() < 5 and INICIO_PREGAO <= local.time() <= FIM_PREGAO:
-        return NO_PREGAO
+    if local.weekday() < 5:
+        if INICIO_PREGAO <= local.time() <= FIM_PREGAO:
+            return NO_PREGAO
+        elif FIM_PREGAO < local.time() <= time(20, 0):
+            return FECHAMENTO_ESPERA
     return FORA_DO_PREGAO
 
 
@@ -207,30 +211,82 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 and agora_brt.time() <= time(20, 0)
             ):
                 # Tentativa de fechamento
-                last_snap = app.banco.ler_snapshot(nome, ult_fechado)
-                if not last_snap or (
-                    last_snap.get("estado_snapshot") != "final"
-                    and last_snap.get("estado") != "final"
-                ):
+                last_snap = app.banco.ler_snapshot_completo(nome, ult_fechado)
+                est = (
+                    last_snap.get("estado_snapshot")
+                    if isinstance(last_snap, dict)
+                    else None
+                )
+                if not last_snap or est != "final":
                     deve_coletar = True
                     estado_coleta = "final"
             else:
                 # Partida a frio
-                last_snap = app.banco.ler_snapshot(nome, ult_fechado)
+                last_snap = app.banco.ler_snapshot_completo(nome, ult_fechado)
+                est = (
+                    last_snap.get("estado_snapshot")
+                    if isinstance(last_snap, dict)
+                    else None
+                )
                 if not last_snap:
                     deve_coletar = True
                     eh_partida_a_frio = True
                     estado_coleta = "final"
                     data_ref_coleta = ult_fechado
+                elif est not in ("incompleto", "final"):
+                    app.banco.gravar_snapshot(
+                        nome,
+                        ult_fechado,
+                        "incompleto",
+                        str(last_snap.get("fonte_snapshot", "banco"))
+                        if isinstance(last_snap, dict)
+                        else "banco",
+                        (
+                            {
+                                k: v
+                                for k, v in last_snap.items()
+                                if k not in ("estado_snapshot", "fonte_snapshot")
+                            }
+                            if isinstance(last_snap, dict)
+                            else last_snap
+                        ),
+                    )
+                    if estado_detalhes_manual is not None:
+                        estado_detalhes_manual.append(f"{nome}: incompleto")
 
         # Fallback de Partida a Frio para QUALQUER janela que não deva coletar normalmente
         if not deve_coletar:
-            last_snap = app.banco.ler_snapshot(nome, ult_fechado)
+            last_snap = app.banco.ler_snapshot_completo(nome, ult_fechado)
+            est = (
+                last_snap.get("estado_snapshot")
+                if isinstance(last_snap, dict)
+                else None
+            )
             if not last_snap:
                 deve_coletar = True
                 eh_partida_a_frio = True
                 estado_coleta = "final"
                 data_ref_coleta = ult_fechado
+            elif janela == "pregao" and est not in ("incompleto", "final"):
+                app.banco.gravar_snapshot(
+                    nome,
+                    ult_fechado,
+                    "incompleto",
+                    str(last_snap.get("fonte_snapshot", "banco"))
+                    if isinstance(last_snap, dict)
+                    else "banco",
+                    (
+                        {
+                            k: v
+                            for k, v in last_snap.items()
+                            if k not in ("estado_snapshot", "fonte_snapshot")
+                        }
+                        if isinstance(last_snap, dict)
+                        else last_snap
+                    ),
+                )
+                if estado_detalhes_manual is not None:
+                    estado_detalhes_manual.append(f"{nome}: incompleto")
 
         if not deve_coletar:
             continue
@@ -277,26 +333,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                     save_coleta_vazia(nome, datetime.now(timezone.utc))
                 except Exception:
                     logger.exception("Falha ao salvar coleta vazia para %s", nome)
-                if (
-                    janela == "pregao"
-                    and eh_dia_pregao
-                    and passou_do_fechamento
-                    and agora_brt.time() > time(20, 0)
-                ):
-                    last_snap = app.banco.ler_snapshot(nome, ult_fechado)
-                    if (
-                        last_snap
-                        and last_snap.get("estado_snapshot")
-                        not in ("incompleto", "final")
-                        and last_snap.get("estado") not in ("incompleto", "final")
-                    ):
-                        app.banco.gravar_snapshot(
-                            nome,
-                            ult_fechado,
-                            "incompleto",
-                            last_snap.get("fonte", "banco"),
-                            last_snap,
-                        )
+
         except Exception as e:  # noqa: BLE001 - o laço não pode morrer
             logger.exception("Coleta de %s falhou", nome)
             estado["ultimo_erro"] = _mask_secrets(f"{nome}: {e}")
