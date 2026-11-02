@@ -1,7 +1,7 @@
 ---
 id: 124
 titulo: Seletor de pregão mostra os números do dia escolhido
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_124.py
