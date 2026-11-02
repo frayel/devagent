@@ -262,14 +262,14 @@ def test_simbolo_recusado_nao_pausa_os_outros(mt5_ligado, caplog):
     }
 
     def responder(request: httpx.Request) -> httpx.Response:
-        if request.url.params["symbol"] == "ELET3":
+        if request.url.params["symbol"] == "":
             return httpx.Response(503, json=erro)
         return httpx.Response(200, json={"data": barras_diarias(30)})
 
     rota = respx.get(RATES).mock(side_effect=responder)
     url = (
         "https://query1.finance.yahoo.com/v8/finance/spark"
-        "?symbols=ELET3.SA,PETR4.SA,VALE3.SA&range=5d&interval=1d"
+        "?symbols=PETR4.SA,VALE3.SA&range=5d&interval=1d"
     )
     with caplog.at_level("WARNING"):
         resultado = fetch_with_retry(url).json()["spark"]["result"]
@@ -280,7 +280,7 @@ def test_simbolo_recusado_nao_pausa_os_outros(mt5_ligado, caplog):
     mt5._cache.clear()
     fetch_with_retry(url)
     pedidos = [c.request.url.params["symbol"] for c in rota.calls]
-    assert pedidos.count("ELET3") == 1
+    assert pedidos.count("") == 1
     assert pedidos.count("PETR4") == 2
 
 

@@ -90,13 +90,15 @@ def generate_mock_yfinance_batch_data(batch_tickers, global_offset=0):
 def test_fetch_brapi_success(monkeypatch):
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     brapi_data = generate_mock_brapi_data()
-    tickers_str = ",".join(TICKERS)
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
-            )
-        ).respond(status_code=200, json=brapi_data)
+        monkeypatch.setattr(
+            "app.collectors.brapi.cotacoes",
+            lambda tickers, **kwargs: {
+                item["symbol"]: item
+                for item in brapi_data["results"]
+                if item["symbol"] in tickers
+            },
+        )
 
         data = fetch_brapi()
         assert data is not None
@@ -161,14 +163,12 @@ def test_fetch_yfinance_success(monkeypatch):
 @respx.mock
 def test_collect_and_save_fallback(monkeypatch):
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
-    tickers_str = ",".join(TICKERS)
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
         # Brapi fails
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
-            )
-        ).respond(status_code=500)
+
+        monkeypatch.setattr(
+            "app.collectors.brapi.cotacoes", lambda tickers, **kwargs: {}
+        )
 
         # Brapi list fails too
         respx.get(
@@ -205,13 +205,15 @@ def test_index_route(monkeypatch):
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     # Setup Brapi Mock and collect to have data in DB
     brapi_data = generate_mock_brapi_data()
-    tickers_str = ",".join(TICKERS)
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
-            )
-        ).respond(status_code=200, json=brapi_data)
+        monkeypatch.setattr(
+            "app.collectors.brapi.cotacoes",
+            lambda tickers, **kwargs: {
+                item["symbol"]: item
+                for item in brapi_data["results"]
+                if item["symbol"] in tickers
+            },
+        )
         collect_and_save()
 
     response = client.get("/")
@@ -240,13 +242,15 @@ def test_fetch_less_than_5_assets(monkeypatch):
             }
         )
 
-    tickers_str = ",".join(TICKERS)
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
-            )
-        ).respond(status_code=200, json=brapi_data)
+        monkeypatch.setattr(
+            "app.collectors.brapi.cotacoes",
+            lambda tickers, **kwargs: {
+                item["symbol"]: item
+                for item in brapi_data["results"]
+                if item["symbol"] in tickers
+            },
+        )
 
         collect_and_save()
 
@@ -263,12 +267,10 @@ def test_index_route_yfinance(monkeypatch):
 
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
         # Brapi fails
-        tickers_str = ",".join(TICKERS)
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
-            )
-        ).respond(status_code=500)
+
+        monkeypatch.setattr(
+            "app.collectors.brapi.cotacoes", lambda tickers, **kwargs: {}
+        )
 
         # Brapi list fails too
         respx.get(

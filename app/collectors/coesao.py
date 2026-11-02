@@ -6,6 +6,7 @@ import httpx
 from app.database import CoesaoData, save_coesao_data
 from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
+from app.collectors import brapi
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -104,33 +105,17 @@ def fetch_yfinance() -> CoesaoData | None:
 def fetch_brapi() -> CoesaoData | None:
     # We fallback to brapi if yfinance fails
     try:
-        import os
-
-        token = os.environ.get("BRAPI_TOKEN")
-
         # Get ^BVSP
-        url_ibov = "https://brapi.dev/api/quote/%5EBVSP"
-        if token:
-            url_ibov += f"?token={token}"
-
-        res_ibov = fetch_with_retry(url_ibov, timeout=10.0)
-        data_ibov = res_ibov.json()
-
-        if not data_ibov.get("results"):
+        ibov_res = brapi.cotacao("%5EBVSP")
+        if not ibov_res:
             return None
 
-        ibov_res = data_ibov["results"][0]
         ibov_change = ibov_res.get("regularMarketChange", 0)
         ibov_direction = ibov_change >= 0
 
         # Get Tickers
-        tickers_str = ",".join([t.replace(".SA", "") for t in TICKERS])
-        url_tickers = f"https://brapi.dev/api/quote/{tickers_str}"
-        if token:
-            url_tickers += f"?token={token}"
-
-        res_tickers = fetch_with_retry(url_tickers, timeout=10.0)
-        data_tickers = res_tickers.json()
+        resultados = brapi.cotacoes([t.replace(".SA", "") for t in TICKERS])
+        data_tickers = {"results": list(resultados.values())}
 
         if not data_tickers.get("results"):
             return None

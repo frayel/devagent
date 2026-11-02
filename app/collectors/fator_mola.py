@@ -8,8 +8,8 @@ import httpx
 
 from app.database import FatorMolaData, save_fator_mola_data
 from app.collectors import mt5
-from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
+from app.collectors import brapi
 from app.collectors.utils import fetch_historico_diario_yfinance_spark
 
 logging.basicConfig(level=logging.INFO)
@@ -78,12 +78,9 @@ def fetch_brapi() -> FatorMolaData | None:
         logger.warning("BRAPI_TOKEN not set, skipping brapi.dev for fator mola")
         return None
 
-    tickers_str = ",".join(TICKERS)
-    url = f"https://brapi.dev/api/quote/{tickers_str}?token={BRAPI_TOKEN}&fundamental=false"
-
     try:
-        response = fetch_with_retry(url, timeout=15.0)
-        data = response.json()
+        resultados = brapi.cotacoes(TICKERS, fundamental="false")
+        data = {"results": list(resultados.values())}
 
         if "results" not in data or not data["results"]:
             logger.error("Invalid response from brapi for fator mola")

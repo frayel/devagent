@@ -9,6 +9,7 @@ import httpx
 from app.database import HighlightsData, save_highlights_data
 from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
+from app.collectors import brapi
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -21,7 +22,6 @@ TICKERS = [
     "BBDC4",
     "B3SA3",
     "ABEV3",
-    "ELET3",
     "RENT3",
     "WEGE3",
     "BBAS3",
@@ -113,12 +113,11 @@ def fetch_brapi() -> HighlightsData | None:
         logger.warning("BRAPI_TOKEN not set, skipping brapi.dev for highlights")
         return None
 
-    tickers_str = ",".join(TICKERS)
-    url = f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token={BRAPI_TOKEN}&fundamental=false"
-
     try:
-        response = fetch_with_retry(url, timeout=15.0)
-        data = response.json()
+        resultados = brapi.cotacoes(
+            TICKERS, range="1mo", interval="1d", fundamental="false"
+        )
+        data = {"results": list(resultados.values())}
 
         if "results" not in data or not data["results"]:
             logger.error("Invalid response from brapi for highlights")

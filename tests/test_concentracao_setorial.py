@@ -70,8 +70,13 @@ def test_coleta_concentracao_setorial_com_brapi(
     monkeypatch.setenv("BRAPI_TOKEN", "fake_token")
 
     with respx.mock:
-        respx.get(url__startswith="https://brapi.dev").mock(
-            return_value=httpx.Response(200, json=mock_brapi_response)
+        monkeypatch.setattr(
+            "app.collectors.brapi.cotacoes",
+            lambda tickers, **kwargs: {
+                item["symbol"]: item
+                for item in mock_brapi_response["results"]
+                if item["symbol"] in tickers
+            },
         )
 
         sucesso = concentracao_setorial.collect_and_save()
@@ -160,8 +165,13 @@ def test_acao_fora_do_mapa_nao_vira_setor(monkeypatch, setup_db):
         ]
     }
     with respx.mock:
-        respx.get(url__startswith="https://brapi.dev").mock(
-            return_value=httpx.Response(200, json=resposta)
+        monkeypatch.setattr(
+            "app.collectors.brapi.cotacoes",
+            lambda tickers, **kwargs: {
+                item["symbol"]: item
+                for item in resposta["results"]
+                if item["symbol"] in tickers
+            },
         )
         assert concentracao_setorial.collect_and_save() is True
 

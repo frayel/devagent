@@ -7,6 +7,7 @@ import httpx
 
 from app.database import RadarAnomaliasSpreadData, save_radar_anomalias_spread_data
 from app.collectors.utils import fetch_with_retry
+from app.collectors import brapi
 from app.collectors.highlights import TICKERS
 
 logging.basicConfig(level=logging.INFO)
@@ -21,12 +22,9 @@ def fetch_brapi() -> RadarAnomaliasSpreadData | None:
         logger.warning("BRAPI_TOKEN not set, skipping brapi.dev for anomalias spread")
         return None
 
-    tickers_str = ",".join(CESTA_LIQUIDEZ)
-    url = f"https://brapi.dev/api/quote/{tickers_str}?token={BRAPI_TOKEN}&fundamental=false"
-
     try:
-        response = fetch_with_retry(url, timeout=15.0)
-        data = response.json()
+        resultados = brapi.cotacoes(CESTA_LIQUIDEZ, fundamental="false")
+        data = {"results": list(resultados.values())}
 
         if "results" not in data or not data["results"]:
             logger.error("Invalid response from brapi for anomalias spread")

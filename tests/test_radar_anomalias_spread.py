@@ -2,11 +2,10 @@ import json
 import os
 from unittest import mock
 
-import httpx
 import respx
 from fastapi.testclient import TestClient
 
-from app.collectors.radar_anomalias_spread import collect_and_save, CESTA_LIQUIDEZ
+from app.collectors.radar_anomalias_spread import collect_and_save
 from app.database import get_latest_radar_anomalias_spread_data
 from app.main import app
 
@@ -40,14 +39,16 @@ def generate_mock_brapi_data():
 def test_fetch_brapi_success(monkeypatch):
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     brapi_data = generate_mock_brapi_data()
-    tickers_str = ",".join(CESTA_LIQUIDEZ)
 
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?token=test_token&fundamental=false"
-            )
-        ).respond(status_code=200, json=brapi_data)
+        monkeypatch.setattr(
+            "app.collectors.brapi.cotacoes",
+            lambda tickers, **kwargs: {
+                item["symbol"]: item
+                for item in brapi_data["results"]
+                if item["symbol"] in tickers
+            },
+        )
 
         success = collect_and_save()
         assert success is True
@@ -65,13 +66,15 @@ def test_fetch_brapi_success(monkeypatch):
 def test_index_route(monkeypatch):
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     brapi_data = generate_mock_brapi_data()
-    tickers_str = ",".join(CESTA_LIQUIDEZ)
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?token=test_token&fundamental=false"
-            )
-        ).respond(status_code=200, json=brapi_data)
+        monkeypatch.setattr(
+            "app.collectors.brapi.cotacoes",
+            lambda tickers, **kwargs: {
+                item["symbol"]: item
+                for item in brapi_data["results"]
+                if item["symbol"] in tickers
+            },
+        )
 
         collect_and_save()
 
@@ -85,13 +88,15 @@ def test_index_route(monkeypatch):
 def test_snapshot_route(monkeypatch):
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     brapi_data = generate_mock_brapi_data()
-    tickers_str = ",".join(CESTA_LIQUIDEZ)
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?token=test_token&fundamental=false"
-            )
-        ).respond(status_code=200, json=brapi_data)
+        monkeypatch.setattr(
+            "app.collectors.brapi.cotacoes",
+            lambda tickers, **kwargs: {
+                item["symbol"]: item
+                for item in brapi_data["results"]
+                if item["symbol"] in tickers
+            },
+        )
 
         collect_and_save()
 

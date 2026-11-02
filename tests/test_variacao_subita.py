@@ -54,7 +54,7 @@ def mock_yfinance_response(with_alerts=True):
 def test_coletor_com_alertas():
     respx.get(
         re.compile(
-            r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols=PETR4\.SA,VALE3\.SA,ITUB4\.SA,BBDC4\.SA,B3SA3\.SA,ABEV3\.SA,ELET3\.SA,RENT3\.SA,WEGE3\.SA,BBAS3\.SA,ITSA4\.SA,SUZB3\.SA,BPAC11\.SA,RADL3\.SA,EQTL3\.SA&range=1d&interval=15m"
+            r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols=PETR4\.SA,VALE3\.SA,ITUB4\.SA,BBDC4\.SA,B3SA3\.SA,ABEV3\.SA,\.SA,RENT3\.SA,WEGE3\.SA,BBAS3\.SA,ITSA4\.SA,SUZB3\.SA,BPAC11\.SA,RADL3\.SA,EQTL3\.SA&range=1d&interval=15m"
         )
     ).mock(return_value=mock_yfinance_response(with_alerts=True))
     respx.get(
@@ -87,7 +87,7 @@ def test_coletor_com_alertas():
 def test_coletor_sem_alertas():
     respx.get(
         re.compile(
-            r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols=PETR4\.SA,VALE3\.SA,ITUB4\.SA,BBDC4\.SA,B3SA3\.SA,ABEV3\.SA,ELET3\.SA,RENT3\.SA,WEGE3\.SA,BBAS3\.SA,ITSA4\.SA,SUZB3\.SA,BPAC11\.SA,RADL3\.SA,EQTL3\.SA&range=1d&interval=15m"
+            r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols=PETR4\.SA,VALE3\.SA,ITUB4\.SA,BBDC4\.SA,B3SA3\.SA,ABEV3\.SA,\.SA,RENT3\.SA,WEGE3\.SA,BBAS3\.SA,ITSA4\.SA,SUZB3\.SA,BPAC11\.SA,RADL3\.SA,EQTL3\.SA&range=1d&interval=15m"
         )
     ).mock(return_value=mock_yfinance_response(with_alerts=False))
     respx.get(

@@ -80,8 +80,12 @@ def test_fetch_brapi(monkeypatch):
         ]
     }
     monkeypatch.setattr(
-        "app.collectors.fator_mola.fetch_with_retry",
-        lambda *args, **kwargs: mock_response,
+        "app.collectors.brapi.cotacoes",
+        lambda tickers, **kwargs: {
+            item["symbol"]: item
+            for item in mock_response.json()["results"]
+            if item["symbol"] in tickers
+        },
     )
 
     data = fator_mola.fetch_brapi()

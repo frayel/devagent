@@ -2,7 +2,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from app.database import ConcentracaoOrdensData, save_concentracao_ordens_data
-from app.collectors.utils import fetch_with_retry
+from app.collectors import brapi
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +41,9 @@ TICKERS = [
 
 
 def collect_and_save() -> bool:
-    tickers_str = "%2C".join(TICKERS)
-    url = f"https://brapi.dev/api/quote/{tickers_str}"
     try:
-        response = fetch_with_retry(url)
-        data = response.json()
-        results = data.get("results", [])
+        resultados = brapi.cotacoes(TICKERS)
+        results = list(resultados.values())
     except Exception as e:
         logger.error(f"Erro ao buscar concentracao de ordens: {e}")
         save_concentracao_ordens_data(

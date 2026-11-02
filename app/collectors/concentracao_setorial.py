@@ -6,6 +6,7 @@ import httpx
 
 from app.database import ConcentracaoSetorialData, save_concentracao_setorial_data
 from app.collectors.utils import fetch_with_retry
+from app.collectors import brapi
 from app.collectors import mt5
 from app.collectors.highlights import TICKERS
 
@@ -53,12 +54,9 @@ def fetch_brapi() -> tuple[dict[str, float], dict[str, float]] | None:
     if not token:
         return None
 
-    tickers_str = ",".join(TICKERS)
-    url = f"https://brapi.dev/api/quote/{tickers_str}?token={token}&fundamental=false"
-
     try:
-        response = fetch_with_retry(url, timeout=15.0)
-        data = response.json()
+        resultados = brapi.cotacoes(TICKERS, fundamental="false")
+        data = {"results": list(resultados.values())}
 
         if "results" not in data or not data["results"]:
             return None
