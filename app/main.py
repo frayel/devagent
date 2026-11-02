@@ -1021,7 +1021,10 @@ def snapshot(
                 "alertas": alerts,
             }
         else:
-            resp["paineis"]["radar_volume"] = {}
+            resp["paineis"]["radar_volume"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         dolar_corr_data = get_latest_dolar_correlation_data()
         if dolar_corr_data:
@@ -1042,7 +1045,10 @@ def snapshot(
                 "negativas": negativas,
             }
         else:
-            resp["paineis"]["sensibilidade_dolar"] = {}
+            resp["paineis"]["sensibilidade_dolar"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         sensibilidade_juros_data = get_latest_sensibilidade_juros_data()
         if sensibilidade_juros_data:
@@ -1060,7 +1066,10 @@ def snapshot(
                 "alertas": alertas,
             }
         else:
-            resp["paineis"]["sensibilidade_juros"] = {}
+            resp["paineis"]["sensibilidade_juros"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         forca_relativa_data = get_latest_forca_relativa_data()
         if forca_relativa_data:
@@ -1074,9 +1083,15 @@ def snapshot(
                     "menor": menor,
                 }
             except json.JSONDecodeError:
-                resp["paineis"]["forca_relativa"] = {}
+                resp["paineis"]["forca_relativa"] = {
+                    "fonte": "nd",
+                    "coletado_em": agora.isoformat(),
+                }
         else:
-            resp["paineis"]["forca_relativa"] = {}
+            resp["paineis"]["forca_relativa"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         escudo_quedas_data = get_latest_escudo_quedas_data()
         if escudo_quedas_data:
@@ -1089,9 +1104,15 @@ def snapshot(
                     "top3": parsed.get("top3", []),
                 }
             except Exception:
-                resp["paineis"]["escudo_quedas"] = {}
+                resp["paineis"]["escudo_quedas"] = {
+                    "fonte": "nd",
+                    "coletado_em": agora.isoformat(),
+                }
         else:
-            resp["paineis"]["escudo_quedas"] = {}
+            resp["paineis"]["escudo_quedas"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         motores_data = get_latest_motores_indice_data()
         if motores_data:
@@ -1121,7 +1142,10 @@ def snapshot(
                 "total": coesao_data.total,
             }
         else:
-            resp["paineis"]["coesao"] = {}
+            resp["paineis"]["coesao"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         atrasadas_rally_data = get_latest_atrasadas_rally_data()
         if atrasadas_rally_data:
@@ -1135,9 +1159,15 @@ def snapshot(
                     "top3": top3,
                 }
             except Exception:
-                resp["paineis"]["atrasadas_rally"] = {}
+                resp["paineis"]["atrasadas_rally"] = {
+                    "fonte": "nd",
+                    "coletado_em": agora.isoformat(),
+                }
         else:
-            resp["paineis"]["atrasadas_rally"] = {}
+            resp["paineis"]["atrasadas_rally"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         concentracao_data = get_latest_concentracao_data()
         if concentracao_data:
@@ -1149,7 +1179,10 @@ def snapshot(
                     "top3": json.loads(concentracao_data.top3_json),
                 }
             except Exception:
-                resp["paineis"]["concentracao"] = {}
+                resp["paineis"]["concentracao"] = {
+                    "fonte": "nd",
+                    "coletado_em": agora.isoformat(),
+                }
 
         elif is_historical:
             resp["paineis"]["concentracao"] = None
@@ -1163,9 +1196,15 @@ def snapshot(
                     "top3": json.loads(concentracao_vendedora_data.top3_json),
                 }
             except Exception:
-                resp["paineis"]["concentracao_vendedora"] = {}
+                resp["paineis"]["concentracao_vendedora"] = {
+                    "fonte": "nd",
+                    "coletado_em": agora.isoformat(),
+                }
         else:
-            resp["paineis"]["concentracao_vendedora"] = {}
+            resp["paineis"]["concentracao_vendedora"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         concentracao_setorial_data = get_latest_concentracao_setorial_data()
         if concentracao_setorial_data:
@@ -1181,11 +1220,18 @@ def snapshot(
                 "volume_lider": concentracao_setorial_data.volume_lider,
             }
         else:
-            resp["paineis"]["concentracao_setorial"] = {}
+            resp["paineis"]["concentracao_setorial"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         # Maré do mercado (spec 027). Sem coleta válida, chave vazia.
         mare_data = get_latest_mare_data()
-        resp["paineis"]["mare"] = mare_servico.snapshot(mare_data) if mare_data else {}
+        resp["paineis"]["mare"] = (
+            mare_servico.snapshot(mare_data)
+            if mare_data
+            else {"fonte": "nd", "coletado_em": agora.isoformat()}
+        )
 
         apetite_risco_data = get_latest_apetite_risco_data()
         if apetite_risco_data:
@@ -1196,7 +1242,10 @@ def snapshot(
                 "diferenca": apetite_risco_data.diferenca,
             }
         else:
-            resp["paineis"]["apetite_risco"] = {}
+            resp["paineis"]["apetite_risco"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         variacao_subita_data = get_latest_variacao_subita_data()
         if variacao_subita_data:
@@ -1210,7 +1259,10 @@ def snapshot(
                 "alertas": alertas,
             }
         else:
-            resp["paineis"]["variacao_subita"] = {}
+            resp["paineis"]["variacao_subita"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         rotacao_capital_data = get_latest_rotacao_capital_data()
         if rotacao_capital_data:
@@ -1224,7 +1276,10 @@ def snapshot(
                 },
             }
         else:
-            resp["paineis"]["rotacao_capital"] = {}
+            resp["paineis"]["rotacao_capital"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         from app.database import get_latest_faca_caindo_data
         from app.database import get_latest_volatilidade_silenciosa_data
@@ -1241,7 +1296,10 @@ def snapshot(
                 "alertas": alertas,
             }
         else:
-            resp["paineis"]["faca_caindo"] = {}
+            resp["paineis"]["faca_caindo"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         compradores_fundo_data = get_latest_compradores_fundo_data()
         if compradores_fundo_data:
@@ -1255,7 +1313,10 @@ def snapshot(
                 "alertas": alertas,
             }
         else:
-            resp["paineis"]["compradores_fundo"] = {}
+            resp["paineis"]["compradores_fundo"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         concentracao_ordens_data = get_latest_concentracao_ordens_data()
         if concentracao_ordens_data:
@@ -1269,7 +1330,10 @@ def snapshot(
                 "alertas": alertas,
             }
         else:
-            resp["paineis"]["concentracao_ordens"] = {}
+            resp["paineis"]["concentracao_ordens"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         armadilha_abertura_data = get_latest_armadilha_abertura_data()
         if armadilha_abertura_data:
@@ -1283,7 +1347,10 @@ def snapshot(
                 "alertas": alertas,
             }
         else:
-            resp["paineis"]["armadilha_abertura"] = {}
+            resp["paineis"]["armadilha_abertura"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         from app.database import (
             get_latest_radar_inflexao_data,
@@ -1452,7 +1519,10 @@ def snapshot(
                 "alertas": alertas,
             }
         else:
-            resp["paineis"]["sobrevivencia_semanal"] = {}
+            resp["paineis"]["sobrevivencia_semanal"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         volatilidade_silenciosa_data = get_latest_volatilidade_silenciosa_data()
         if volatilidade_silenciosa_data:
@@ -1466,7 +1536,10 @@ def snapshot(
                 "alertas": alertas,
             }
         else:
-            resp["paineis"]["volatilidade_silenciosa"] = {}
+            resp["paineis"]["volatilidade_silenciosa"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         anomalias_spread_data = get_latest_radar_anomalias_spread_data()
         if anomalias_spread_data:
@@ -1527,9 +1600,15 @@ def snapshot(
                     "status": "pico_as_" + str(alertas.get("pico_horario", "")),
                 }
             except Exception:
-                resp["paineis"]["relogio_volatilidade"] = {}
+                resp["paineis"]["relogio_volatilidade"] = {
+                    "fonte": "nd",
+                    "coletado_em": agora.isoformat(),
+                }
         else:
-            resp["paineis"]["relogio_volatilidade"] = {}
+            resp["paineis"]["relogio_volatilidade"] = {
+                "fonte": "nd",
+                "coletado_em": agora.isoformat(),
+            }
 
         anomalia_fechamento = get_radar_anomalia_fechamento_view()
         if anomalia_fechamento and "alertas" in anomalia_fechamento:
