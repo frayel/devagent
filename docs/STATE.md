@@ -463,5 +463,7 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
   - Validacao da chave API do Gemini via validador_gemini em background.
 - Otimização do consumo de dados via banco reduzindo histórico lido e adicionando caches em memória para o cálculo do consultor (Spec 122).
 
+- Spec 124 (Seletor de pregão mostra números do dia):
+  - Foi criado o gerenciador de contexto lendo_pregao no app/banco.py e isolada a gravação de snapshots da leitura de histórico em requisições GET (/?data=...).
 - Spec 121: 1- Spec 123 (Heatmap visual da Maré do Mercado):
   - Adicionado novo atributo `ativos_json` ao DB (em `/api/snapshot`). O HTML renderiza as ações mais movimentadas com background que indica a variação utilizando a paleta de alta/baixa.
