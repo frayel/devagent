@@ -629,3 +629,23 @@ def test_verificar_historico_pregoes_usa_ultimo_fechado():
     item = s.verificar_historico_pregoes(datas, agora)
     assert item.nivel == "ok"
     assert "Faltam snapshots" not in item.detalhe
+
+
+def test_verificar_historico_pregoes_ignora_ausencia_durante_pregao():
+    agora = datetime.fromisoformat("2026-10-30T16:50:12.351351-03:00")
+    # Today is Friday, 30th. Snapshot is not yet generated.
+    # Expected days: 29, 28, 27, 26, 23
+    datas = ["2026-10-29", "2026-10-28", "2026-10-27", "2026-10-26", "2026-10-23"]
+    item = s.verificar_historico_pregoes(datas, agora)
+    assert item.nivel == "ok"
+    assert "Faltam snapshots" not in item.detalhe
+
+
+def test_verificar_historico_pregoes_aceita_hoje_durante_pregao():
+    agora = datetime.fromisoformat("2026-10-30T16:50:12.351351-03:00")
+    # Today is Friday, 30th. Snapshot IS generated early.
+    # The 5 snapshots kept by DB will push the 23rd out.
+    datas = ["2026-10-30", "2026-10-29", "2026-10-28", "2026-10-27", "2026-10-26"]
+    item = s.verificar_historico_pregoes(datas, agora)
+    assert item.nivel == "ok"
+    assert "Faltam snapshots" not in item.detalhe
