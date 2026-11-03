@@ -9,6 +9,8 @@ revisada: 2026-11-03
 ---
 
 ## Problema
+O usuário perguntou: "por que a variação diária de algumas ações parece estar acumulada desde semanas atrás em vez de ser a variação de ontem para hoje?"
+
 O defeito da spec 134 (tratar `chartPreviousClose` como "fechamento de ontem") não é exclusivo do Ibovespa. Em `app/collectors/highlights.py`, o caminho do Yahoo consulta `spark?...&range=15d&interval=1d` (linha 197) e calcula `change_percent = (preço − chartPreviousClose) / chartPreviousClose` (linhas 209 e 137). Com `range=15d`, `chartPreviousClose` é o fechamento de antes da janela de 15 dias, então a "variação do dia" de cada ação é, na verdade, a de cerca de 15 dias. Dela saem as maiores altas, as maiores quedas, a Dispersão (proporção de ações em alta) e a contagem `up_count`/`down_count`.
 
 Levantamento dos coletores que leem `chartPreviousClose` (código atual):
