@@ -46,11 +46,11 @@
         <div class="mare-componentes">
             {% for c in mare.componentes %}
             <div class="comp">
-                <span>{{ c.nome }} <span class="comp-peso num">{{ c.peso }}%</span></span>
+                <span>{{ c.nome }} <span class="comp-peso num">peso {{ c.peso }}%</span></span>
                 {% if c.valor is none %}
                 <span class="comp-ausente">ausente</span><span></span>
                 {% else %}
-                <svg class="comp-barra" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="comp-trilho" width="100" height="6"/><rect class="comp-valor" width="{{ c.valor }}" height="6"/></svg>
+                <svg class="comp-barra" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="comp-trilho" width="100" height="6"/><rect class="comp-valor" width="{{ [c.valor, 1]|max }}" height="6"/></svg>
                 <span class="num comp-num">{{ c.valor }}</span>
                 {% endif %}
             </div>

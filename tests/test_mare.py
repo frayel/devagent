@@ -494,3 +494,24 @@ def test_mare_fica_ao_lado_do_ibovespa_antes_do_resto():
     html = _cliente().get("/").text
     titulos = [t for t in re.findall(r"<h2>([^<]+)</h2>", html)]
     assert titulos[:2] == ["Ibovespa hoje", "Maré do mercado"]
+
+
+def test_painel_mare_calma_zero_mostra_barra_minima_e_peso_distinto():
+    _gravar(valor=68, fluxo=74.2, calma=0.0, volume=67.4)
+    html = _cliente().get("/").text
+    assert "peso 35%" in html
+    assert 'width="1"' in html
+    assert (
+        'class="num comp-num">0.0</span>' in html
+        or 'class="num comp-num">0</span>' in html
+    )
+
+
+def test_painel_mare_calma_trinta_e_cinco_mostra_peso_distinto():
+    _gravar(valor=68, fluxo=74.2, calma=35.0, volume=67.4)
+    html = _cliente().get("/").text
+    assert "peso 35%" in html
+    assert (
+        'class="num comp-num">35.0</span>' in html
+        or 'class="num comp-num">35</span>' in html
+    )
