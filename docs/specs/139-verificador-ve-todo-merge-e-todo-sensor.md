@@ -55,3 +55,5 @@ Nenhum.
 - Verificar PRs de outras raias.
 - Mudar a cadência do Verificador (mínimo de 90 minutos entre sessões).
 - Mexer em `auditoria/` ou `docs/auditoria/`.
+
+<!-- Revisada: a spec está de acordo com escrever-spec.md e pronta. -->
