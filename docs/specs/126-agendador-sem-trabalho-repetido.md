@@ -1,7 +1,7 @@
 ---
 id: 126
 titulo: Agendador sem trabalho repetido (backtest único, feriado fora do pregão)
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_126.py

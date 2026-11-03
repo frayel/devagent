@@ -45,14 +45,13 @@ def coleta_ligada() -> bool:
 def intervalo(agora: datetime) -> timedelta:
     """Quanto esperar até a próxima coleta."""
     local = agora.astimezone(BRT)
-    if local.weekday() < 5:
-        import app.calendario
+    import app.calendario
 
-        if app.calendario.e_pregao(local.date()):
-            if INICIO_PREGAO <= local.time() <= FIM_PREGAO:
-                return NO_PREGAO
-            elif FIM_PREGAO < local.time() <= time(20, 0):
-                return timedelta(minutes=30)
+    if app.calendario.e_pregao(local.date()):
+        if INICIO_PREGAO <= local.time() <= FIM_PREGAO:
+            return NO_PREGAO
+        elif FIM_PREGAO < local.time() <= time(20, 0):
+            return timedelta(minutes=30)
     return FORA_DO_PREGAO
 
 
@@ -262,17 +261,28 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 app.banco._data_referencia_snapshot.reset(token_data)
             if nome == "consultor_historico":
                 from app.consultor import avaliador_historico
-
-                # Avaliador não roda bloqueante no fluxo para não estourar o limite de tempo
                 import threading
 
-                threading.Thread(target=avaliador_historico.rodar_backtest).start()
+                # Run once in background, track if running
+                if getattr(avaliador_historico, "_backtest_em_curso", False):  # type: ignore
+                    if estado_detalhes_manual is not None:
+                        estado_detalhes_manual.append(
+                            "consultor_historico: backtest anterior ainda em curso"
+                        )
+                else:
+                    avaliador_historico._backtest_em_curso = True  # type: ignore
+
+                    def run_backtest_tracked():
+                        try:
+                            avaliador_historico.rodar_backtest()
+                        finally:
+                            avaliador_historico._backtest_em_curso = False  # type: ignore
+
+                    t = threading.Thread(target=run_backtest_tracked, daemon=True)
+                    t.start()
 
             duracao = std_time.perf_counter() - start_time
-            if nome == "consultor_historico":
-                from app.consultor import avaliador_historico
 
-                avaliador_historico.rodar_backtest()
             try:
                 save_coleta_tempo(nome, duracao, datetime.now(timezone.utc))
             except Exception:
