@@ -45,8 +45,14 @@ def coleta_ligada() -> bool:
 def intervalo(agora: datetime) -> timedelta:
     """Quanto esperar até a próxima coleta."""
     local = agora.astimezone(BRT)
-    if local.weekday() < 5 and INICIO_PREGAO <= local.time() <= FIM_PREGAO:
-        return NO_PREGAO
+    if local.weekday() < 5:
+        import app.calendario
+
+        if app.calendario.e_pregao(local.date()):
+            if INICIO_PREGAO <= local.time() <= FIM_PREGAO:
+                return NO_PREGAO
+            elif FIM_PREGAO < local.time() <= time(20, 0):
+                return timedelta(minutes=30)
     return FORA_DO_PREGAO
 
 

@@ -1,3 +1,7 @@
+- Spec 125a (Intervalo de tentativa de fechamento a cada 30 min até 20h):
+  - O agendador agora tenta um novo fechamento a cada 30 minutos entre as 18h15 e 20h, em vez de esperar 2 horas.
+  - Nenhum painel novo: o contador da cadência de experiência não muda.
+
 - Spec 121a entregue: Sistema de alertas na página `/sistema` ganhou campos `causa` e `acao` baseados na classificação dos detalhes do erro.
 # Estado do Sistema
 
