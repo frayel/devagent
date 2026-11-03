@@ -70,3 +70,8 @@
 - Confirmei a resolução do achado '2026-10-31-api-contrato-chaves'. O endpoint `/api/snapshot` agora expõe corretamente as chaves contratuais `fonte` e `coletado_em` para todos os painéis, mesmo em falhas de banco de dados.
 - Notei que a função `verificar_historico_pregoes` na `main` já utiliza `ultimo_pregao_fechado(agora)`, corrigindo o uso incorreto de `pregao_corrente`. Confirmei a resolução do achado '2026-10-31-historico-pregoes'.
 - Durante os testes automatizados da aplicação para validar esta PR, foi identificado que o teste da Spec 095 (`tests/test_aceite_095.py::test_bloqueio_rede`) falha com `ConnectError: Temporary failure in name resolution` ao invés de `RuntimeError` na ausência de rede (DNS indisponível), gerando o achado de baixa severidade `2026-11-02-test-bloqueio-rede`.
+
+- Verifiquei os PRs #691 e #692.
+- O PR 691 foi criado para consertar a visualização e formato da Calma. No entanto, por causa das grandes variações, a chamada à fonte externa não preenche dados suficientes o que causa o calculo zerar (pois MINIMO_PERCENTIL é 120 e faltam dados na janela e ele cai pra None/0). A falha no `componente_calma` (e falha visual que causou a issue 695) é um defeito provocado pela lógica na coleta de volatilidade de quedas não lidando devidamente.
+- O PR 692 alterou a lógica de fechamento incompleto corretamente (spec 125b).
+- Adicionei o achado `2026-11-03-mare-calma-zerada` por causa do bug em produção provocado pela Calma zerada.
