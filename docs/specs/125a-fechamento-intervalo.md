@@ -1,7 +1,7 @@
 ---
 id: 125a
 titulo: Intervalo de tentativa de fechamento a cada 30 min até 20h
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_125a.py
