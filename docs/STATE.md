@@ -473,3 +473,7 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
   - Adicionado novo atributo `ativos_json` ao DB (em `/api/snapshot`). O HTML renderiza as ações mais movimentadas com background que indica a variação utilizando a paleta de alta/baixa.
 
 - Spec 125b: Modificado app/agendador.py para gravar estado incompleto após as 20h para falhas de coleta.
+
+Página Inicial Sem Bloquear (spec 130)
+- `index` roda sincronamente em threadpool do FastAPI.
+- Em requisições de página, todos os painéis para a dada data de referência são lidos do banco em uma única consulta e oxigenados num cache restrito ao tempo de vida da requisição (usando `contextvars`), não bloqueando o backend de processar novas rotas (como o `/healthz`).

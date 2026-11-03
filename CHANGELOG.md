@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Spec 130: Página inicial não bloqueia mais o servidor e tem cache local (painéis agrupados por requisição).
 - Spec 125a: intervalo de tentativa de fechamento alterado para 30 min até 20h.
 - Spec 124: Seletor de pregão mostra os números do dia escolhido em todos os painéis, isolando leitura com lendo_pregao.
 - Spec 129: o Postgres passa a usar um pool de conexões. Antes, cada leitura abria uma conexão nova (em 29/10, cerca de 1,6 s cada), e a `/sistema` e a página inicial demoravam segundos. O item Banco de dados da `/sistema` mostra o custo de abrir conexão e acusa Atenção acima de 500 ms.

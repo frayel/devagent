@@ -331,11 +331,97 @@ _snapshot_cache: dict = {}
 _snapshot_cache_lock = threading.Lock()
 
 
+_req_snapshot_cache: contextvars.ContextVar[dict | None] = contextvars.ContextVar(
+    "req_snapshot_cache", default=None
+)
+
+
+class req_snapshot_cache_ctx:
+    def __enter__(self):
+        self.token = _req_snapshot_cache.set({})
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if hasattr(self, "token") and self.token:
+            _req_snapshot_cache.reset(self.token)
+
+
 def ler_snapshot(painel: str, data_referencia: date | None = None) -> dict | None:
     if not data_referencia:
         data_referencia = _lendo_pregao_var.get()
 
     cache_key = (painel, data_referencia)
+    req_cache = _req_snapshot_cache.get()
+
+    if req_cache is not None:
+        if cache_key in req_cache:
+            return req_cache[cache_key]
+
+        # Determine if we have already fetched everything for this request/date context
+        # If we have, but it's not in the cache, it just means the panel doesn't exist.
+        fetch_key = ("__fetched__", data_referencia)
+        if fetch_key in req_cache:
+            return None
+
+        req_cache[fetch_key] = True
+
+        init_db()
+        conn, backend = get_connection()
+        try:
+            if backend == "postgres":
+                with conn.cursor() as cursor:
+                    if data_referencia:
+                        cursor.execute(
+                            "SELECT DISTINCT ON (painel) painel, payload FROM snapshots_paineis WHERE data_referencia = %s ORDER BY painel, data_referencia DESC",
+                            (data_referencia,),
+                        )
+                    else:
+                        cursor.execute(
+                            "SELECT DISTINCT ON (painel) painel, payload FROM snapshots_paineis ORDER BY painel, data_referencia DESC"
+                        )
+                    rows = cursor.fetchall()
+            else:
+                cursor = conn.cursor()
+                if data_referencia:
+                    cursor.execute(
+                        """
+                        SELECT painel, payload
+                        FROM (
+                            SELECT painel, payload, ROW_NUMBER() OVER(PARTITION BY painel ORDER BY data_referencia DESC) as rn
+                            FROM snapshots_paineis
+                            WHERE data_referencia = ?
+                        )
+                        WHERE rn = 1
+                        """,
+                        (str(data_referencia),),
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        SELECT painel, payload
+                        FROM (
+                            SELECT painel, payload, ROW_NUMBER() OVER(PARTITION BY painel ORDER BY data_referencia DESC) as rn
+                            FROM snapshots_paineis
+                        )
+                        WHERE rn = 1
+                        """
+                    )
+                rows = cursor.fetchall()
+
+            for row in rows:
+                p = row[0]
+                res = row[1] if isinstance(row[1], dict) else json.loads(row[1])
+                req_cache[(p, data_referencia)] = res
+
+        finally:
+            conn.close()
+
+        if cache_key in req_cache:
+            return req_cache[cache_key]
+
+        return None
+
+    # Fallback to the old cache behaviour for background jobs
     with _snapshot_cache_lock:
         if cache_key in _snapshot_cache:
             val = _snapshot_cache.pop(cache_key)
