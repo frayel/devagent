@@ -84,3 +84,12 @@ def _bloquear_rede(monkeypatch, request):
             super().connect(address)
 
     monkeypatch.setattr(socket, "socket", BlockedSocket)
+
+    original_getaddrinfo = socket.getaddrinfo
+
+    def mock_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+        if host not in ("127.0.0.1", "localhost", "::1", "testserver"):
+            raise RuntimeError(f"teste tentou chamar a rede: {host}")
+        return original_getaddrinfo(host, port, family, type, proto, flags)
+
+    monkeypatch.setattr(socket, "getaddrinfo", mock_getaddrinfo)

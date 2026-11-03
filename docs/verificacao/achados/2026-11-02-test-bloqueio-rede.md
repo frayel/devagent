@@ -2,7 +2,7 @@
 id: 2026-11-02-test-bloqueio-rede
 severidade: baixa
 painel: tests/test_aceite_095.py
-status: aberto
+status: resolvido
 visto_em: 2026-11-02T05:20:00-03:00
 pr: 672
 ---
