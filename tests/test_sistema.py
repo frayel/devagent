@@ -649,3 +649,21 @@ def test_verificar_historico_pregoes_aceita_hoje_durante_pregao():
     item = s.verificar_historico_pregoes(datas, agora)
     assert item.nivel == "ok"
     assert "Faltam snapshots" not in item.detalhe
+
+
+def test_duracao_da_coleta_longa():
+    from devagent.saude import pendentes
+
+    dados = {
+        "geral": {
+            "pendentes": [
+                {
+                    "nivel": "atencao",
+                    "nome": "Duração da coleta",
+                    "desde": "2026-10-29T02:07:01.846918+00:00",
+                }
+            ]
+        }
+    }
+    # Should ignore "Duração da coleta" when looking for problem escalations
+    assert pendentes(dados, "problema") == []
