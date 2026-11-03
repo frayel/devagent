@@ -386,3 +386,92 @@ def test_estado_detalhes_masking(monkeypatch):
 
     assert "supersecret" not in app.agendador.estado["detalhes"]
     assert "***" in app.agendador.estado["detalhes"]
+
+
+def test_consultor_historico_backtest_roda_em_thread(monkeypatch):
+    from app import agendador
+    import threading
+
+    chamadas_backtest = []
+    threads_iniciadas = []
+
+    def fake_rodar_backtest():
+        chamadas_backtest.append(threading.current_thread().name)
+
+    class FakeThread:
+        def __init__(self, target):
+            self.target = target
+
+        def start(self):
+            threads_iniciadas.append("iniciada")
+            import threading
+
+            # Simulate thread behavior by changing thread name during execution
+            old_name = threading.current_thread().name
+            threading.current_thread().name = "FakeThread"
+            try:
+                self.target()
+            finally:
+                threading.current_thread().name = old_name
+
+    monkeypatch.setattr(
+        "app.consultor.avaliador_historico.rodar_backtest", fake_rodar_backtest
+    )
+    monkeypatch.setattr("threading.Thread", FakeThread)
+
+    # Mocking others to just return True
+    for nome in (
+        "ibovespa",
+        "consultor_opinioes",
+        "radar_exaustao_alta",
+        "highlights",
+        "mare",
+        "volume_alerts",
+        "dolar_correlation",
+        "sensibilidade_juros",
+        "motores_indice",
+        "relogio_volatilidade",
+        "forca_relativa",
+        "escudo_quedas",
+        "coesao",
+        "atrasadas_rally",
+        "concentracao",
+        "apetite_risco",
+        "variacao_subita",
+        "concentracao_setorial",
+        "rotacao_capital",
+        "faca_caindo",
+        "compradores_fundo",
+        "armadilha_abertura",
+        "sobrevivencia_semanal",
+        "volatilidade_silenciosa",
+        "scanner_capitulacao",
+        "radar_inflexao",
+        "divergencia_ibov_dolar",
+        "assimetria_risco_retorno",
+        "anomalia_peso",
+        "radar_short_squeeze",
+        "radar_congestionamento",
+        "esforco_resultado",
+        "radar_divergencia_volume",
+        "falso_rompimento",
+        "radar_liquidez_abertura",
+        "radar_absorcao_cruzada",
+        "fator_peso_pesado",
+        "clima_global",
+        "radar_anomalias_spread",
+        "concentracao_ordens",
+        "exaustao_tendencia",
+        "radar_anomalia_fechamento",
+        "correlacao_di",
+        "consultor_historico",
+        "exaustao_queda",
+        "fator_mola",
+        "consultor_fechamento",
+    ):
+        monkeypatch.setattr(f"app.collectors.{nome}.collect_and_save", lambda: True)
+
+    agendador.coletar_tudo()
+
+    assert len(threads_iniciadas) == 1
+    assert chamadas_backtest[0] != "MainThread"

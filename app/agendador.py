@@ -295,10 +295,6 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 threading.Thread(target=avaliador_historico.rodar_backtest).start()
 
             duracao = std_time.perf_counter() - start_time
-            if nome == "consultor_historico":
-                from app.consultor import avaliador_historico
-
-                avaliador_historico.rodar_backtest()
             try:
                 save_coleta_tempo(nome, duracao, datetime.now(timezone.utc))
             except Exception:
