@@ -1,7 +1,7 @@
 ---
 id: 126
 titulo: Agendador sem trabalho repetido (backtest único, feriado fora do pregão)
-status: ready
+status: draft
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_126.py
@@ -37,3 +37,8 @@ Nenhum.
 ## Fora do escopo
 - Deixar o próprio backtest mais rápido.
 - A janela de fechamento (spec 125).
+
+## Revisão
+Esta spec foi dividida para viabilizar entregas menores:
+- A parte de backtest duplo foi para `docs/specs/126a-agendador-backtest-unico.md`.
+- A parte de feriado no `intervalo()` foi para `docs/specs/126b-agendador-feriado-fora-pregao.md`.
