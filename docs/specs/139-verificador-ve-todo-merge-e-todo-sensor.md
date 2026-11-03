@@ -5,6 +5,7 @@ status: ready
 esforco: M
 gaveta: saúde técnica
 aceite: devagent/tests/test_aceite_139.py
+revisada: 2026-11-03
 ---
 
 ## Problema
