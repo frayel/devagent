@@ -12,6 +12,7 @@ Desligue com COLETA_AUTOMATICA=0 (os testes fazem isso).
 
 from __future__ import annotations
 
+import typing
 import asyncio
 import logging
 import os
@@ -29,6 +30,8 @@ NO_PREGAO = timedelta(minutes=15)
 FORA_DO_PREGAO = timedelta(hours=2)
 
 # Estado da última rodada, exposto em /api/coleta para diagnóstico.
+_backtest_thread: "typing.Any" = None
+
 estado: dict[str, str | None] = {
     "ultima_coleta": None,
     "ultimo_erro": None,
@@ -45,14 +48,13 @@ def coleta_ligada() -> bool:
 def intervalo(agora: datetime) -> timedelta:
     """Quanto esperar até a próxima coleta."""
     local = agora.astimezone(BRT)
-    if local.weekday() < 5:
-        import app.calendario
+    import app.calendario
 
-        if app.calendario.e_pregao(local.date()):
-            if INICIO_PREGAO <= local.time() <= FIM_PREGAO:
-                return NO_PREGAO
-            elif FIM_PREGAO < local.time() <= time(20, 0):
-                return timedelta(minutes=30)
+    if app.calendario.e_pregao(local.date()):
+        if INICIO_PREGAO <= local.time() <= FIM_PREGAO:
+            return NO_PREGAO
+        elif FIM_PREGAO < local.time() <= time(20, 0):
+            return timedelta(minutes=30)
     return FORA_DO_PREGAO
 
 
@@ -288,17 +290,24 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 app.banco._data_referencia_snapshot.reset(token_data)
             if nome == "consultor_historico":
                 from app.consultor import avaliador_historico
-
-                # Avaliador não roda bloqueante no fluxo para não estourar o limite de tempo
                 import threading
+                import app.agendador
 
-                threading.Thread(target=avaliador_historico.rodar_backtest).start()
+                if (
+                    getattr(app.agendador, "_backtest_thread", None) is not None
+                    and app.agendador._backtest_thread.is_alive()
+                ):
+                    if estado_detalhes_manual is not None:
+                        estado_detalhes_manual.append(
+                            "consultor_historico: backtest anterior ainda em curso"
+                        )
+                else:
+                    app.agendador._backtest_thread = threading.Thread(
+                        target=avaliador_historico.rodar_backtest, daemon=True
+                    )
+                    app.agendador._backtest_thread.start()
 
             duracao = std_time.perf_counter() - start_time
-            if nome == "consultor_historico":
-                from app.consultor import avaliador_historico
-
-                avaliador_historico.rodar_backtest()
             try:
                 save_coleta_tempo(nome, duracao, datetime.now(timezone.utc))
             except Exception:
