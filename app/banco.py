@@ -103,7 +103,7 @@ def _criar_pool(db_url: str):
     )
 
 
-def _obter_pool(db_url: str):
+def _obter_pool(db_url: str):  # Retorna a pool de conexoes
     global _pool
     if _pool is None:
         with _pool_lock:
