@@ -1,3 +1,4 @@
+# Verificação de specs concluída sem achados recém-implementados.
 """Coleta periódica dentro do próprio web service.
 
 Por que aqui e não num Cron Job do Render: no plano gratuito o disco é
