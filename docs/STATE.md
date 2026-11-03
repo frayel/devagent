@@ -471,3 +471,5 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
   - Foi criado o gerenciador de contexto lendo_pregao no app/banco.py e isolada a gravação de snapshots da leitura de histórico em requisições GET (/?data=...).
 - Spec 121: 1- Spec 123 (Heatmap visual da Maré do Mercado):
   - Adicionado novo atributo `ativos_json` ao DB (em `/api/snapshot`). O HTML renderiza as ações mais movimentadas com background que indica a variação utilizando a paleta de alta/baixa.
+
+- Spec 125b: Modificado app/agendador.py para gravar estado incompleto após as 20h para falhas de coleta.

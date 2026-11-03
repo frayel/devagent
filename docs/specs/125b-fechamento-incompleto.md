@@ -1,7 +1,7 @@
 ---
 id: 125b
 titulo: Fechamento que falhou vira incompleto depois das 20h
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_125b.py
