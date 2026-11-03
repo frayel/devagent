@@ -220,8 +220,34 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 ):
                     deve_coletar = True
                     estado_coleta = "final"
+            elif (
+                eh_dia_pregao
+                and passou_do_fechamento
+                and agora_brt.time() > time(20, 0)
+            ) or (agora_brt.date() > ult_fechado):
+                last_snap = app.banco.ler_snapshot(nome, ult_fechado)
+                if (
+                    last_snap
+                    and last_snap.get("estado_snapshot") not in ("incompleto", "final")
+                    and last_snap.get("estado") not in ("incompleto", "final")
+                ):
+                    app.banco.gravar_snapshot(
+                        nome,
+                        ult_fechado,
+                        "incompleto",
+                        last_snap.get("fonte", "banco"),
+                        last_snap,
+                    )
+                    if estado_detalhes_manual is not None:
+                        estado_detalhes_manual.append(f"{nome}: incompleto")
+                elif not last_snap:
+                    # Partida a frio
+                    deve_coletar = True
+                    eh_partida_a_frio = True
+                    estado_coleta = "final"
+                    data_ref_coleta = ult_fechado
             else:
-                # Partida a frio
+                # Partida a frio fallback
                 last_snap = app.banco.ler_snapshot(nome, ult_fechado)
                 if not last_snap:
                     deve_coletar = True
@@ -283,26 +309,6 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                     save_coleta_vazia(nome, datetime.now(timezone.utc))
                 except Exception:
                     logger.exception("Falha ao salvar coleta vazia para %s", nome)
-                if (
-                    janela == "pregao"
-                    and eh_dia_pregao
-                    and passou_do_fechamento
-                    and agora_brt.time() > time(20, 0)
-                ):
-                    last_snap = app.banco.ler_snapshot(nome, ult_fechado)
-                    if (
-                        last_snap
-                        and last_snap.get("estado_snapshot")
-                        not in ("incompleto", "final")
-                        and last_snap.get("estado") not in ("incompleto", "final")
-                    ):
-                        app.banco.gravar_snapshot(
-                            nome,
-                            ult_fechado,
-                            "incompleto",
-                            last_snap.get("fonte", "banco"),
-                            last_snap,
-                        )
         except Exception as e:  # noqa: BLE001 - o laço não pode morrer
             logger.exception("Coleta de %s falhou", nome)
             estado["ultimo_erro"] = _mask_secrets(f"{nome}: {e}")
