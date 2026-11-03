@@ -1,7 +1,7 @@
 ---
 id: 127
 titulo: Endpoints de diagnóstico dizem a verdade (/api/coleta e cache do /api/consultor)
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_127.py

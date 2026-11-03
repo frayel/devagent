@@ -473,3 +473,4 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
   - Adicionado novo atributo `ativos_json` ao DB (em `/api/snapshot`). O HTML renderiza as ações mais movimentadas com background que indica a variação utilizando a paleta de alta/baixa.
 
 - Spec 125b: Modificado app/agendador.py para gravar estado incompleto após as 20h para falhas de coleta.
+- **127**: O `/api/coleta` agora exige senha e mostra corretamente os dados (`ligada`, `banco`, `aviso`). O `/api/consultor` exibe `cache: true/false` corretamente com base no uso real do cache (não mais copiado incorretamente do escopo global).

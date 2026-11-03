@@ -169,11 +169,19 @@ def healthz():
 
 
 @app.get("/api/coleta")
-def coleta():
+def coleta(request: Request):
     """Diagnóstico da coleta automática (última rodada e último erro)."""
-    from app.agendador import estado
+    exigir_senha(request)
+    from app.agendador import estado, coleta_ligada
+    import os
+    from app.banco import get_backend_type
 
-    return estado
+    res = {"ligada": coleta_ligada(), **estado}
+    backend = get_backend_type()
+    if os.environ.get("RENDER") and backend != "postgres":
+        res["aviso"] = "Banco persistente não configurado: dados se perdem ao reiniciar"
+    res["banco"] = backend
+    return res
 
 
 def _get_seletor_context(
@@ -241,13 +249,6 @@ def obter_pregoes_disponiveis(agora, mercado_aberto, pregao_corr):
             break
 
     return pregoes[: PREGOES_NO_SELETOR + 1]
-
-    res = {"ligada": agendador.coleta_ligada(), **agendador.estado}
-    backend = get_backend_type()
-    if os.environ.get("RENDER") and backend != "postgres":
-        res["aviso"] = "Banco persistente não configurado: dados se perdem ao reiniciar"
-    res["banco"] = backend
-    return res
 
 
 HORAS_VAZIOS = 3
@@ -641,7 +642,6 @@ def api_consultor(
     is_historical = ctx["is_historical"]
 
     import time
-    from app.consultor.calculador import _consultor_cache_time
 
     _t0 = time.perf_counter()
     try:
@@ -741,13 +741,9 @@ def api_consultor(
             }
             _usou_cache = False
         else:
-            _cache_ts_before = _consultor_cache_time
             dados = calcular_consultor()
-            _cache_ts_after = _consultor_cache_time
             _usou_cache = (
-                _cache_ts_before == _cache_ts_after
-                if _cache_ts_before is not None
-                else False
+                dados.pop("_usou_cache", False) if isinstance(dados, dict) else False
             )
     except Exception:
         _usou_cache = False
