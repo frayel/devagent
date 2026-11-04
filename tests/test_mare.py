@@ -515,3 +515,15 @@ def test_painel_mare_calma_trinta_e_cinco_mostra_peso_distinto():
         'class="num comp-num">35.0</span>' in html
         or 'class="num comp-num">35</span>' in html
     )
+
+
+def test_artefato_de_dados_invalida_a_calma():
+    dias = _dias_uteis(date(2026, 10, 6), 300)
+    fech, v = {}, 100_000.0
+    for i, d in enumerate(dias):
+        v *= 1 + (0.006 if i % 2 else -0.006)
+        if i == len(dias) - 2:
+            v *= 0.85
+        fech[d] = v
+    sig = mare.volatilidades([fech[d] for d in dias])
+    assert mare.calma_no_indice(sig, len(dias) - 1) is None
