@@ -1,7 +1,7 @@
 ---
 id: 126b
 titulo: Agendador sem trabalho repetido (feriado fora do pregão)
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_126b.py
