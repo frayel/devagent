@@ -8,7 +8,6 @@ import httpx
 
 from app.database import FatorMolaData, save_fator_mola_data
 from app.collectors import mt5
-from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
 from app.collectors.utils import fetch_historico_diario_yfinance_spark
 
@@ -73,24 +72,21 @@ def fetch_yfinance() -> FatorMolaData | None:
 
 
 def fetch_brapi() -> FatorMolaData | None:
+    from app.collectors import brapi
+
     BRAPI_TOKEN = os.environ.get("BRAPI_TOKEN")
     if not BRAPI_TOKEN:
         logger.warning("BRAPI_TOKEN not set, skipping brapi.dev for fator mola")
         return None
 
-    tickers_str = ",".join(TICKERS)
-    url = f"https://brapi.dev/api/quote/{tickers_str}?token={BRAPI_TOKEN}&fundamental=false"
-
     try:
-        response = fetch_with_retry(url, timeout=15.0)
-        data = response.json()
-
-        if "results" not in data or not data["results"]:
+        data_results = brapi.cotacoes(TICKERS, fundamental="false")
+        if not data_results:
             logger.error("Invalid response from brapi for fator mola")
             return None
 
         parsed_results = []
-        for result in data["results"]:
+        for ticker, result in data_results.items():
             price = result.get("regularMarketPrice")
             low = result.get("regularMarketDayLow")
 
@@ -105,7 +101,7 @@ def fetch_brapi() -> FatorMolaData | None:
             if mola_percent > 0:
                 parsed_results.append(
                     {
-                        "ticker": result.get("symbol", ""),
+                        "ticker": result.get("symbol", ticker),
                         "price": price,
                         "low": low,
                         "mola_percent": mola_percent,
@@ -126,7 +122,7 @@ def fetch_brapi() -> FatorMolaData | None:
             top3_json=json.dumps(top3),
             fonte="brapi",
         )
-    except httpx.HTTPError as e:
+    except Exception as e:
         logger.error(f"Error fetching fator mola from brapi: {e}")
         return None
 

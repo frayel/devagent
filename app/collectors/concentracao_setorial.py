@@ -49,32 +49,29 @@ SETOR_MAP = {
 
 
 def fetch_brapi() -> tuple[dict[str, float], dict[str, float]] | None:
+    from app.collectors import brapi
+
     token = os.environ.get("BRAPI_TOKEN")
     if not token:
         return None
 
-    tickers_str = ",".join(TICKERS)
-    url = f"https://brapi.dev/api/quote/{tickers_str}?token={token}&fundamental=false"
-
     try:
-        response = fetch_with_retry(url, timeout=15.0)
-        data = response.json()
-
-        if "results" not in data or not data["results"]:
+        data_results = brapi.cotacoes(TICKERS, fundamental="false")
+        if not data_results:
             return None
 
         variacoes = {}
         volumes = {}
-        for item in data["results"]:
+        for ticker, item in data_results.items():
             price = item.get("regularMarketPrice")
             prev_close = item.get("regularMarketPreviousClose")
             vol = item.get("regularMarketVolume")
 
             if price is not None and prev_close is not None and prev_close > 0:
                 change = ((price - prev_close) / prev_close) * 100
-                variacoes[item["symbol"]] = change
+                variacoes[item.get("symbol", ticker)] = change
             if price is not None and vol is not None:
-                volumes[item["symbol"]] = vol * price
+                volumes[item.get("symbol", ticker)] = vol * price
 
         return (variacoes, volumes) if variacoes else None
     except Exception as e:

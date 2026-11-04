@@ -16,24 +16,21 @@ CESTA_LIQUIDEZ = TICKERS[:10]
 
 
 def fetch_brapi() -> RadarAnomaliasSpreadData | None:
+    from app.collectors import brapi
+
     BRAPI_TOKEN = os.environ.get("BRAPI_TOKEN")
     if not BRAPI_TOKEN:
         logger.warning("BRAPI_TOKEN not set, skipping brapi.dev for anomalias spread")
         return None
 
-    tickers_str = ",".join(CESTA_LIQUIDEZ)
-    url = f"https://brapi.dev/api/quote/{tickers_str}?token={BRAPI_TOKEN}&fundamental=false"
-
     try:
-        response = fetch_with_retry(url, timeout=15.0)
-        data = response.json()
-
-        if "results" not in data or not data["results"]:
+        data_results = brapi.cotacoes(CESTA_LIQUIDEZ, fundamental="false")
+        if not data_results:
             logger.error("Invalid response from brapi for anomalias spread")
             return None
 
         parsed_results = []
-        for result in data["results"]:
+        for ticker, result in data_results.items():
             ask = result.get("regularMarketDayHigh")
             bid = result.get("regularMarketDayLow")
 
@@ -52,7 +49,7 @@ def fetch_brapi() -> RadarAnomaliasSpreadData | None:
             if spread_percent > 0.5:
                 parsed_results.append(
                     {
-                        "ticker": result.get("symbol", ""),
+                        "ticker": result.get("symbol", ticker),
                         "spread_percent": spread_percent,
                     }
                 )
@@ -65,7 +62,7 @@ def fetch_brapi() -> RadarAnomaliasSpreadData | None:
             alertas_json=json.dumps(top5),
             fonte="brapi",
         )
-    except httpx.HTTPError as e:
+    except Exception as e:
         logger.error(f"Error fetching anomalias spread from brapi: {e}")
         return None
 

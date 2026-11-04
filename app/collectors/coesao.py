@@ -102,43 +102,33 @@ def fetch_yfinance() -> CoesaoData | None:
 
 
 def fetch_brapi() -> CoesaoData | None:
-    # We fallback to brapi if yfinance fails
+    from app.collectors import brapi
+
     try:
         import os
 
-        token = os.environ.get("BRAPI_TOKEN")
+        os.environ.get("BRAPI_TOKEN")
 
         # Get ^BVSP
-        url_ibov = "https://brapi.dev/api/quote/%5EBVSP"
-        if token:
-            url_ibov += f"?token={token}"
+        ibov_res = brapi.cotacao("%5EBVSP")
 
-        res_ibov = fetch_with_retry(url_ibov, timeout=10.0)
-        data_ibov = res_ibov.json()
-
-        if not data_ibov.get("results"):
+        if not ibov_res:
             return None
 
-        ibov_res = data_ibov["results"][0]
         ibov_change = ibov_res.get("regularMarketChange", 0)
         ibov_direction = ibov_change >= 0
 
         # Get Tickers
-        tickers_str = ",".join([t.replace(".SA", "") for t in TICKERS])
-        url_tickers = f"https://brapi.dev/api/quote/{tickers_str}"
-        if token:
-            url_tickers += f"?token={token}"
+        tickers_list = [t.replace(".SA", "") for t in TICKERS]
+        data_tickers = brapi.cotacoes(tickers_list)
 
-        res_tickers = fetch_with_retry(url_tickers, timeout=10.0)
-        data_tickers = res_tickers.json()
-
-        if not data_tickers.get("results"):
+        if not data_tickers:
             return None
 
         concordantes = 0
         total = len(TICKERS)
 
-        for result in data_tickers["results"]:
+        for ticker, result in data_tickers.items():
             change = result.get("regularMarketChange", 0)
             stock_direction = change >= 0
             if stock_direction == ibov_direction:

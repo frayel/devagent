@@ -88,15 +88,56 @@ def generate_mock_yfinance_batch_data(batch_tickers, global_offset=0):
 
 @respx.mock
 def test_fetch_brapi_success(monkeypatch):
+    monkeypatch.setattr(
+        "app.collectors.highlights.TICKERS",
+        [f"HIGH{i}" for i in range(5)] + [f"LOW{i}" for i in range(5)],
+    )
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     brapi_data = generate_mock_brapi_data()
-    tickers_str = ",".join(TICKERS)
+    ",".join(TICKERS)
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
+        import httpx
+
+        def mock_brapi_router(request):
+            symbol = request.url.path.split("/")[-1].split("?")[0]
+            if symbol == "list":
+                stocks = [
+                    {
+                        "stock": res["symbol"],
+                        "change": (
+                            res.get("regularMarketPrice", 10.0)
+                            - res.get("regularMarketPreviousClose", 90.0)
+                        )
+                        / res.get("regularMarketPreviousClose", 90.0)
+                        * 100,
+                        "close": res.get("regularMarketPrice", 10.0),
+                        "type": "stock",
+                    }
+                    for res in brapi_data["results"]
+                ]
+                return httpx.Response(200, json={"stocks": stocks})
+
+            res_match = next(
+                (res for res in brapi_data["results"] if res["symbol"] == symbol), None
             )
-        ).respond(status_code=200, json=brapi_data)
+            if res_match:
+                return httpx.Response(200, json={"results": [res_match]})
+            return httpx.Response(
+                200,
+                json={
+                    "results": [
+                        {
+                            "symbol": symbol,
+                            "regularMarketPrice": 10.0,
+                            "regularMarketPreviousClose": 10.0,
+                        }
+                    ]
+                },
+            )
+
+        respx.get(url__startswith="https://brapi.dev/api/quote/").mock(
+            side_effect=mock_brapi_router
+        )
 
         data = fetch_brapi()
         assert data is not None
@@ -171,11 +212,9 @@ def test_collect_and_save_fallback(monkeypatch):
         ).respond(status_code=500)
 
         # Brapi list fails too
-        respx.get(
-            httpx.URL(
-                "https://brapi.dev/api/quote/list?type=stock&sortBy=volume&sortOrder=desc&limit=100&token=test_token"
-            )
-        ).respond(status_code=500)
+        respx.get(url__startswith="https://brapi.dev/api/quote/list").respond(
+            status_code=500
+        )
 
         # Yfinance succeeds
         batch_size = 15
@@ -202,16 +241,57 @@ def test_collect_and_save_fallback(monkeypatch):
 
 @respx.mock
 def test_index_route(monkeypatch):
+    monkeypatch.setattr(
+        "app.collectors.highlights.TICKERS",
+        [f"HIGH{i}" for i in range(5)] + [f"LOW{i}" for i in range(5)],
+    )
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     # Setup Brapi Mock and collect to have data in DB
     brapi_data = generate_mock_brapi_data()
-    tickers_str = ",".join(TICKERS)
+    ",".join(TICKERS)
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
+        import httpx
+
+        def mock_brapi_router(request):
+            symbol = request.url.path.split("/")[-1].split("?")[0]
+            if symbol == "list":
+                stocks = [
+                    {
+                        "stock": res["symbol"],
+                        "change": (
+                            res.get("regularMarketPrice", 10.0)
+                            - res.get("regularMarketPreviousClose", 90.0)
+                        )
+                        / res.get("regularMarketPreviousClose", 90.0)
+                        * 100,
+                        "close": res.get("regularMarketPrice", 10.0),
+                        "type": "stock",
+                    }
+                    for res in brapi_data["results"]
+                ]
+                return httpx.Response(200, json={"stocks": stocks})
+
+            res_match = next(
+                (res for res in brapi_data["results"] if res["symbol"] == symbol), None
             )
-        ).respond(status_code=200, json=brapi_data)
+            if res_match:
+                return httpx.Response(200, json={"results": [res_match]})
+            return httpx.Response(
+                200,
+                json={
+                    "results": [
+                        {
+                            "symbol": symbol,
+                            "regularMarketPrice": 10.0,
+                            "regularMarketPreviousClose": 10.0,
+                        }
+                    ]
+                },
+            )
+
+        respx.get(url__startswith="https://brapi.dev/api/quote/").mock(
+            side_effect=mock_brapi_router
+        )
         collect_and_save()
 
     response = client.get("/")
@@ -227,6 +307,9 @@ def test_index_route(monkeypatch):
 
 @respx.mock
 def test_fetch_less_than_5_assets(monkeypatch):
+    monkeypatch.setattr(
+        "app.collectors.highlights.TICKERS", [f"ASSET{i}" for i in range(3)]
+    )
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     brapi_data = {"results": []}
 
@@ -240,13 +323,50 @@ def test_fetch_less_than_5_assets(monkeypatch):
             }
         )
 
-    tickers_str = ",".join(TICKERS)
+    ",".join(TICKERS)
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token=test_token&fundamental=false"
+        import httpx
+
+        def mock_brapi_router(request):
+            symbol = request.url.path.split("/")[-1].split("?")[0]
+            if symbol == "list":
+                stocks = [
+                    {
+                        "stock": res["symbol"],
+                        "change": (
+                            res.get("regularMarketPrice", 10.0)
+                            - res.get("regularMarketPreviousClose", 90.0)
+                        )
+                        / res.get("regularMarketPreviousClose", 90.0)
+                        * 100,
+                        "close": res.get("regularMarketPrice", 10.0),
+                        "type": "stock",
+                    }
+                    for res in brapi_data["results"]
+                ]
+                return httpx.Response(200, json={"stocks": stocks})
+
+            res_match = next(
+                (res for res in brapi_data["results"] if res["symbol"] == symbol), None
             )
-        ).respond(status_code=200, json=brapi_data)
+            if res_match:
+                return httpx.Response(200, json={"results": [res_match]})
+            return httpx.Response(
+                200,
+                json={
+                    "results": [
+                        {
+                            "symbol": symbol,
+                            "regularMarketPrice": 10.0,
+                            "regularMarketPreviousClose": 10.0,
+                        }
+                    ]
+                },
+            )
+
+        respx.get(url__startswith="https://brapi.dev/api/quote/").mock(
+            side_effect=mock_brapi_router
+        )
 
         collect_and_save()
 
@@ -271,11 +391,9 @@ def test_index_route_yfinance(monkeypatch):
         ).respond(status_code=500)
 
         # Brapi list fails too
-        respx.get(
-            httpx.URL(
-                "https://brapi.dev/api/quote/list?type=stock&sortBy=volume&sortOrder=desc&limit=100&token=test_token"
-            )
-        ).respond(status_code=500)
+        respx.get(url__startswith="https://brapi.dev/api/quote/list").respond(
+            status_code=500
+        )
 
         # Yfinance succeeds
         batch_size = 15
