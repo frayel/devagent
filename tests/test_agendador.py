@@ -399,7 +399,7 @@ def test_consultor_historico_backtest_roda_em_thread(monkeypatch):
         chamadas_backtest.append(threading.current_thread().name)
 
     class FakeThread:
-        def __init__(self, target):
+        def __init__(self, target, **kwargs):
             self.target = target
 
         def start(self):

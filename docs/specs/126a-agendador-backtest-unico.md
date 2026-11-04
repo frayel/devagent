@@ -1,7 +1,7 @@
 ---
 id: 126a
 titulo: Agendador sem trabalho repetido (backtest único)
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_126a.py
