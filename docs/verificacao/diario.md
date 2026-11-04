@@ -85,3 +85,7 @@
 - Ele corrigiu a lógica da Calma, prevenindo valores 0 por janelas curtas, estendendo a busca por dados. Confirmei a resolução do achado '2026-11-03-mare-calma-zerada'.
 - No entanto, devido à recorrência do erro 400 na brapi com múltiplos símbolos (Issue 732), as retentativas (backoff) das chamadas HTTP engarrafaram o servidor HTTP e geraram timeouts reais na página e no `/api/snapshot` ('The read operation timed out', Issue 733).
 - Adicionei o achado '2026-11-04-producao-inacessivel-brapi-timeout' refletindo que a produção quebrou pelo bloqueio síncrono.
+- Verifiquei PR 744 (spec 128 - Postgres fail-fast e disjuntor).
+- Encontrei que o disjuntor fura o cache do `_diagnostico_cache`, causando estado stale do banco de dados na página de diagnóstico.
+- Criei achado de severidade média/alta sobre `_diagnostico_cache`.
+- Próxima execução: verificar se o diagnóstico foi arrumado e reflete o banco em tempo real quando há falha.
