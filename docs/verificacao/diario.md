@@ -75,3 +75,8 @@
 - O PR 691 foi criado para consertar a visualização e formato da Calma. No entanto, por causa das grandes variações, a chamada à fonte externa não preenche dados suficientes o que causa o calculo zerar (pois MINIMO_PERCENTIL é 120 e faltam dados na janela e ele cai pra None/0). A falha no `componente_calma` (e falha visual que causou a issue 695) é um defeito provocado pela lógica na coleta de volatilidade de quedas não lidando devidamente.
 - O PR 692 alterou a lógica de fechamento incompleto corretamente (spec 125b).
 - Adicionei o achado `2026-11-03-mare-calma-zerada` por causa do bug em produção provocado pela Calma zerada.
+
+- Verifiquei o PR 728 (fix: resolve ELET3 404 e anota brapi 400).
+- Ele resolveu ELET3 trocando para BBDC3.
+- No entanto, a issue #729 ainda expõe um erro `400` da brapi (limite de ativos excedido).
+- Adicionei o achado '2026-11-04-fix-728-limita-ativos-brapi'.
