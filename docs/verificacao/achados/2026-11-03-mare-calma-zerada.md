@@ -2,7 +2,7 @@
 id: 2026-11-03-mare-calma-zerada
 severidade: media
 painel: mare
-status: aberto
+status: resolvido
 visto_em: 2026-11-03T04:20:00-03:00
 pr: 691
 ---

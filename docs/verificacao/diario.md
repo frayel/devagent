@@ -80,3 +80,8 @@
 - Ele resolveu ELET3 trocando para BBDC3.
 - No entanto, a issue #729 ainda expõe um erro `400` da brapi (limite de ativos excedido).
 - Adicionei o achado '2026-11-04-fix-728-limita-ativos-brapi'.
+
+- Verifiquei o PR 730 (fix: ignora quedas irreais e corrige alcance na Maré. Closes #701).
+- Ele corrigiu a lógica da Calma, prevenindo valores 0 por janelas curtas, estendendo a busca por dados. Confirmei a resolução do achado '2026-11-03-mare-calma-zerada'.
+- No entanto, devido à recorrência do erro 400 na brapi com múltiplos símbolos (Issue 732), as retentativas (backoff) das chamadas HTTP engarrafaram o servidor HTTP e geraram timeouts reais na página e no `/api/snapshot` ('The read operation timed out', Issue 733).
+- Adicionei o achado '2026-11-04-producao-inacessivel-brapi-timeout' refletindo que a produção quebrou pelo bloqueio síncrono.
