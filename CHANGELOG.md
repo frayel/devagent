@@ -257,3 +257,4 @@
   - Adiciona propriedade `ativos_json` ao DB para rastrear principais ativos.
   - Altera front-end `app/templates/index.html` para expor via estilo inline o top-10 do fluxo e volume no pregão diário no painel da maré.
 - Fecha Issues #557 (Remoção código morto da Maré) e #570.
+- Spec 126b (Agendador sem trabalho repetido: feriado fora do pregao): intervalo() agora trata corretamente feriados como dias sem pregao.

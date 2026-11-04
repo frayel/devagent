@@ -485,3 +485,4 @@ Página Inicial Sem Bloquear (spec 130)
 - **127**: O `/api/coleta` agora exige senha e mostra corretamente os dados (`ligada`, `banco`, `aviso`). O `/api/consultor` exibe `cache: true/false` corretamente com base no uso real do cache (não mais copiado incorretamente do escopo global).
 
 - Spec 126a (Agendador sem trabalho repetido): backtest do Consultor roda exatamente uma vez por coleta.
+- Spec 126b (Agendador sem trabalho repetido): Tratamento correto de feriados usando app.calendario.e_pregao() em app/agendador.py.
