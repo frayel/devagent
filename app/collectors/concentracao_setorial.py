@@ -1,5 +1,4 @@
 import logging
-import os
 from datetime import datetime, timezone
 from collections import defaultdict
 import httpx
@@ -48,37 +47,6 @@ SETOR_MAP = {
 }
 
 
-def fetch_brapi() -> tuple[dict[str, float], dict[str, float]] | None:
-    from app.collectors import brapi
-
-    token = os.environ.get("BRAPI_TOKEN")
-    if not token:
-        return None
-
-    try:
-        data_results = brapi.cotacoes(TICKERS, fundamental="false")
-        if not data_results:
-            return None
-
-        variacoes = {}
-        volumes = {}
-        for ticker, item in data_results.items():
-            price = item.get("regularMarketPrice")
-            prev_close = item.get("regularMarketPreviousClose")
-            vol = item.get("regularMarketVolume")
-
-            if price is not None and prev_close is not None and prev_close > 0:
-                change = ((price - prev_close) / prev_close) * 100
-                variacoes[item.get("symbol", ticker)] = change
-            if price is not None and vol is not None:
-                volumes[item.get("symbol", ticker)] = vol * price
-
-        return (variacoes, volumes) if variacoes else None
-    except Exception as e:
-        logger.error(f"Erro ao buscar variacoes na brapi: {e}")
-        return None
-
-
 def fetch_yfinance() -> tuple[dict[str, float], dict[str, float]] | None:
     variacoes = {}
     volumes = {}
@@ -120,16 +88,13 @@ def collect_and_save() -> bool:
     logger.info("Starting concentracao_setorial collection...")
 
     dados = None
-    fonte = "brapi"
+    fonte = "yfinance"
 
     if mt5.configurado():
         with mt5.exclusivo():
             dados = fetch_yfinance()
             if dados:
                 fonte = mt5.fonte_efetiva("yfinance")
-
-    if not dados:
-        dados = fetch_brapi()
 
     if not dados:
         dados = fetch_yfinance()

@@ -89,23 +89,30 @@ def test_workflows_do_repositorio_le_os_crons_dos_arquivos():
 
 @respx.mock
 def test_fetch_with_retry_registra_sucesso_e_falha():
-    respx.get("https://brapi.dev/api/quote/PETR4?token=abc").mock(
+    respx.get("https://generativelanguage.googleapis.com/v1beta/models/a?key=abc").mock(
         return_value=httpx.Response(200, json={})
     )
-    respx.get("https://brapi.dev/api/quote/VALE3?token=abc").mock(
+    respx.get("https://generativelanguage.googleapis.com/v1beta/models/b?key=abc").mock(
         return_value=httpx.Response(404)
     )
-    fetch_with_retry("https://brapi.dev/api/quote/PETR4?token=abc")
+    fetch_with_retry(
+        "https://generativelanguage.googleapis.com/v1beta/models/a?key=abc"
+    )
     with pytest.raises(httpx.HTTPStatusError):
-        fetch_with_retry("https://brapi.dev/api/quote/VALE3?token=abc")
-    brapi = registro_fontes.fontes()["brapi"]
-    assert (brapi.sucessos, brapi.falhas) == (1, 1)
-    assert brapi.ultimo_erro.startswith("HTTP 404 em")
+        fetch_with_retry(
+            "https://generativelanguage.googleapis.com/v1beta/models/b?key=abc"
+        )
+    gemini = registro_fontes.fontes()["Gemini"]
+    assert (gemini.sucessos, gemini.falhas) == (1, 1)
+    assert gemini.ultimo_erro.startswith("HTTP 404 em")
 
 
 def test_registro_mascara_segredo_no_erro():
-    registro_fontes.falha("brapi", "falhou em https://brapi.dev/x?token=segredo123")
-    assert "segredo123" not in (registro_fontes.fontes()["brapi"].ultimo_erro or "")
+    registro_fontes.falha(
+        "Gemini",
+        "falhou em https://generativelanguage.googleapis.com/v1beta/models?key=segredo123",
+    )
+    assert "segredo123" not in (registro_fontes.fontes()["Gemini"].ultimo_erro or "")
 
 
 def _fonte(resultados: list[bool]) -> registro_fontes.Fonte:
@@ -507,14 +514,19 @@ def test_poucas_chamadas_nao_viram_problema():
 
 @respx.mock
 def test_registro_guarda_url_mascarada_e_gravidade():
-    respx.get("https://brapi.dev/api/quote/X?token=abc").mock(
+    respx.get("https://generativelanguage.googleapis.com/v1beta/models/x?key=abc").mock(
         return_value=httpx.Response(404)
     )
     with pytest.raises(httpx.HTTPStatusError):
-        fetch_with_retry("https://brapi.dev/api/quote/X?token=abc")
-    brapi = registro_fontes.fontes()["brapi"]
-    assert brapi.ultimo_erro == "HTTP 404 em https://brapi.dev/api/quote/X?token=***"
-    assert brapi.graves == [False]
+        fetch_with_retry(
+            "https://generativelanguage.googleapis.com/v1beta/models/x?key=abc"
+        )
+    gemini = registro_fontes.fontes()["Gemini"]
+    assert (
+        gemini.ultimo_erro
+        == "HTTP 404 em https://generativelanguage.googleapis.com/v1beta/models/x?key=***"
+    )
+    assert gemini.graves == [False]
 
 
 def test_painel_vazio_em_todas_as_rodadas_e_problema():

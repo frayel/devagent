@@ -322,7 +322,6 @@ def _chart(ibov, volumes=None):
 def sem_espera(monkeypatch):
     monkeypatch.setattr("app.collectors.utils.MIN_DELAY", 0.0)
     monkeypatch.setattr("app.collectors.utils._last_request_time", {})
-    monkeypatch.delenv("BRAPI_TOKEN", raising=False)
 
 
 def _mock_cesta(cesta):

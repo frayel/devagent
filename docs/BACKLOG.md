@@ -2,8 +2,6 @@
 
 ## Correções (prioridade sobre qualquer feature)
 
-026). Implementar a spec 083 (`docs/specs/083-brapi-fonte-secundaria.md`): brapi como fonte secundária, uma chamada por ativo, orçamento de requisições e disjuntor para 403/429. Fechar a spec no mesmo PR `fix:` que remove esta entrada.
-
 ## Features
 
 | Feature | Valor | Fonte de dados | Esforço (P/M/G) | Risco |

@@ -13,7 +13,7 @@ class IbovespaData:
     current_price: float
     previous_close: float
     history_json: str
-    fonte: str = "brapi"
+    fonte: str = "yfinance"
     mm21: float | None = None
     mm200: float | None = None
 
@@ -23,7 +23,7 @@ class HighlightsData:
     timestamp: datetime
     highs_json: str
     lows_json: str
-    fonte: str = "brapi"
+    fonte: str = "yfinance"
     up_count: int | None = None
     down_count: int | None = None
     total_count: int | None = None
@@ -117,7 +117,7 @@ class ConcentracaoSetorialData:
     timestamp: datetime
     setor_destaque: str
     variacao_media: float
-    fonte: str = "brapi"
+    fonte: str = "yfinance"
     setor_lider_volume: str = ""
     volume_lider: float = 0.0
 
@@ -134,7 +134,7 @@ class ApetiteRiscoData:
 class ConcentracaoOrdensData:
     timestamp: datetime
     alertas_json: str
-    fonte: str = "brapi"
+    fonte: str = "yfinance"
 
 
 def get_connection() -> sqlite3.Connection:
@@ -299,7 +299,7 @@ def init_db() -> None:
             current_price REAL NOT NULL,
             previous_close REAL NOT NULL,
             history_json TEXT NOT NULL,
-            fonte TEXT NOT NULL DEFAULT 'brapi',
+            fonte TEXT NOT NULL DEFAULT 'yfinance',
             mm21 REAL,
             mm200 REAL
         )
@@ -310,7 +310,7 @@ def init_db() -> None:
         cursor.execute("SELECT fonte FROM ibovespa_cache LIMIT 1")
     except sqlite3.OperationalError:
         cursor.execute(
-            "ALTER TABLE ibovespa_cache ADD COLUMN fonte TEXT NOT NULL DEFAULT 'brapi'"
+            "ALTER TABLE ibovespa_cache ADD COLUMN fonte TEXT NOT NULL DEFAULT 'yfinance'"
         )
 
     # Migrar a tabela antiga caso exista e não tenha as colunas mm21 e mm200
@@ -326,7 +326,7 @@ def init_db() -> None:
             timestamp DATETIME NOT NULL,
             highs_json TEXT NOT NULL,
             lows_json TEXT NOT NULL,
-            fonte TEXT NOT NULL DEFAULT 'brapi',
+            fonte TEXT NOT NULL DEFAULT 'yfinance',
             up_count INTEGER,
             down_count INTEGER,
             total_count INTEGER
@@ -337,7 +337,7 @@ def init_db() -> None:
         cursor.execute("SELECT fonte FROM highlights_cache LIMIT 1")
     except sqlite3.OperationalError:
         cursor.execute(
-            "ALTER TABLE highlights_cache ADD COLUMN fonte TEXT NOT NULL DEFAULT 'brapi'"
+            "ALTER TABLE highlights_cache ADD COLUMN fonte TEXT NOT NULL DEFAULT 'yfinance'"
         )
 
     # Migrar a tabela antiga caso exista e não tenha colunas de contagem
@@ -1461,7 +1461,7 @@ def get_rodadas_coleta_desde(desde: datetime) -> dict[str, int]:
 class RadarAnomaliasSpreadData:
     timestamp: datetime
     alertas_json: str
-    fonte: str = "brapi"
+    fonte: str = "yfinance"
 
 
 def save_radar_anomalias_spread_data(data: RadarAnomaliasSpreadData) -> None:

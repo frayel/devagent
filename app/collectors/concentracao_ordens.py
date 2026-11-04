@@ -87,17 +87,6 @@ def fetch_mt5() -> list[dict] | None:
     return resultados or None
 
 
-def fetch_brapi() -> list[dict] | None:
-    from app.collectors import brapi
-
-    try:
-        data_results = brapi.cotacoes(TICKERS)
-    except Exception as e:
-        logger.error(f"Erro ao buscar concentracao de ordens: {e}")
-        return None
-    return list(data_results.values()) if data_results else None
-
-
 def calcular(results: list[dict]) -> list[dict]:
     alertas = []
     for r in results:
@@ -119,13 +108,7 @@ def calcular(results: list[dict]) -> list[dict]:
 
 
 def collect_and_save() -> bool:
-    fonte = "mt5"
-    results = fetch_mt5()
-    if not results:
-        fonte = "brapi"
-        results = fetch_brapi() or []
-
-    alertas = calcular(results)
+    alertas = calcular(fetch_mt5() or [])
     if not alertas:
         logger.info(
             "Nenhuma contagem de negócios na fonte para Concentração de Ordens."
@@ -134,7 +117,7 @@ def collect_and_save() -> bool:
         ConcentracaoOrdensData(
             timestamp=datetime.now(timezone.utc),
             alertas_json=json.dumps(alertas),
-            fonte=fonte,
+            fonte="mt5",
         )
     )
     return True

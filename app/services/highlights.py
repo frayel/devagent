@@ -66,7 +66,7 @@ def get_highlights_view_data() -> dict[str, Any] | None:
         "highs": highs_formatted,
         "lows": lows_formatted,
         "time": time_formatted,
-        "fonte": getattr(data, "fonte", "brapi"),
+        "fonte": getattr(data, "fonte", "yfinance"),
         "up_count": data.up_count,
         "down_count": data.down_count,
         "total_count": data.total_count,

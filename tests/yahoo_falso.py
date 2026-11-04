@@ -6,8 +6,7 @@ série depende do símbolo (hash estável), então o mesmo ticker sempre cai, so
 ou oscila do mesmo jeito e todos os painéis recebem casos interessantes:
 quedas consecutivas, altas, picos de volume, rally do Ibovespa.
 
-Qualquer outra URL (brapi, por exemplo) responde 404, e os coletores caem
-para o Yahoo como fariam em produção sem token.
+Qualquer outra URL responde 404.
 
 Uso: `instalar(monkeypatch)` dentro de um teste.
 """

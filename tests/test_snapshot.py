@@ -25,7 +25,7 @@ def test_snapshot_with_data():
         current_price=183476.86,
         previous_close=182050.10,
         history_json=json.dumps(history),
-        fonte="brapi",
+        fonte="yfinance",
     )
     save_ibovespa_data(data)
 
@@ -70,7 +70,7 @@ def test_snapshot_with_data():
     expected_pct = ((183476.86 - 182050.10) / 182050.10) * 100
     assert ibov["variacao_pct"] == pytest.approx(expected_pct)
     assert ibov["coletado_em"] == now.isoformat()
-    assert ibov["fonte"] == "brapi"
+    assert ibov["fonte"] == "yfinance"
     assert ibov["historico"]["datas"] == ["2026-09-25", "2026-09-28"]
     assert ibov["historico"]["fechamentos"] == [182050.1, 183476.86]
 

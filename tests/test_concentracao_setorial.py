@@ -6,29 +6,29 @@ from app.collectors import concentracao_setorial
 from app.database import get_latest_concentracao_setorial_data
 
 
-@pytest.fixture
-def mock_brapi_response():
+YAHOO = r"https://query[12]\.finance\.yahoo\.com.*"
+
+
+def _spark(*cotacoes: tuple[str, float, float, int]) -> dict:
+    """Resposta do spark do Yahoo: (símbolo, preço, fechamento anterior, volume)."""
     return {
-        "results": [
-            {
-                "symbol": "PETR4",
-                "regularMarketPrice": 30.5,
-                "regularMarketPreviousClose": 30.0,
-                "regularMarketVolume": 1000,
-            },
-            {
-                "symbol": "VALE3",
-                "regularMarketPrice": 61.2,
-                "regularMarketPreviousClose": 60.0,
-                "regularMarketVolume": 2000,
-            },
-            {
-                "symbol": "ITUB4",
-                "regularMarketPrice": 25.0,
-                "regularMarketPreviousClose": 24.5,
-                "regularMarketVolume": 5000,
-            },
-        ]
+        "spark": {
+            "result": [
+                {
+                    "symbol": f"{simbolo}.SA",
+                    "response": [
+                        {
+                            "meta": {
+                                "regularMarketPrice": preco,
+                                "chartPreviousClose": anterior,
+                                "regularMarketVolume": volume,
+                            }
+                        }
+                    ],
+                }
+                for simbolo, preco, anterior, volume in cotacoes
+            ]
+        }
     }
 
 
@@ -64,53 +64,30 @@ def mock_yfinance_response():
     }
 
 
-def test_coleta_concentracao_setorial_com_brapi(
-    mock_brapi_response, monkeypatch, setup_db
-):
-    monkeypatch.setenv("BRAPI_TOKEN", "fake_token")
-
+def test_coleta_concentracao_setorial_pelo_yahoo(setup_db):
+    resposta = _spark(
+        ("PETR4", 30.5, 30.0, 1000),
+        ("VALE3", 61.2, 60.0, 2000),
+        ("ITUB4", 25.0, 24.5, 5000),
+    )
     with respx.mock:
-        respx.get(url__startswith="https://brapi.dev/api/quote/").mock(
-            side_effect=lambda request: httpx.Response(
-                200,
-                json={
-                    "results": [
-                        next(
-                            (
-                                res
-                                for res in mock_brapi_response["results"]
-                                if res["symbol"]
-                                == request.url.path.split("/")[-1].split("?")[0]
-                            )
-                        )
-                    ]
-                }
-                if request.url.path.split("/")[-1].split("?")[0]
-                in [r["symbol"] for r in mock_brapi_response["results"]]
-                else {"results": []},
-            )
+        respx.get(url__regex=YAHOO).mock(
+            return_value=httpx.Response(200, json=resposta)
         )
+        assert concentracao_setorial.collect_and_save() is True
 
-        sucesso = concentracao_setorial.collect_and_save()
-        assert sucesso is True
-
-        data = get_latest_concentracao_setorial_data()
-        assert data is not None
-        assert data.fonte == "brapi"
-        # VALE3 sobe 2,0%, PETR4 1,67%, ITUB4 2,04%: Financeiro lidera.
-        assert data.setor_destaque == "Financeiro"
-        assert data.variacao_media == pytest.approx(2.0408, abs=1e-3)
+    data = get_latest_concentracao_setorial_data()
+    assert data is not None
+    assert data.fonte == "yfinance"
+    # VALE3 sobe 2,0%, PETR4 1,67%, ITUB4 2,04%: Financeiro lidera.
+    assert data.setor_destaque == "Financeiro"
+    assert data.variacao_media == pytest.approx(2.0408, abs=1e-3)
 
 
-def test_coleta_concentracao_setorial_com_yfinance_fallback(
+def test_coleta_concentracao_setorial_com_yfinance(
     mock_yfinance_response, monkeypatch, setup_db
 ):
-    monkeypatch.delenv("BRAPI_TOKEN", raising=False)
-
     with respx.mock:
-        respx.get(url__startswith="https://brapi.dev").mock(
-            return_value=httpx.Response(500)
-        )
         respx.get(url__regex=r"https://query[12]\.finance\.yahoo\.com.*").mock(
             return_value=httpx.Response(200, json=mock_yfinance_response)
         )
@@ -124,12 +101,7 @@ def test_coleta_concentracao_setorial_com_yfinance_fallback(
 
 
 def test_coleta_concentracao_setorial_falha_total(monkeypatch, setup_db):
-    monkeypatch.delenv("BRAPI_TOKEN", raising=False)
-
     with respx.mock:
-        respx.get(url__startswith="https://brapi.dev").mock(
-            return_value=httpx.Response(500)
-        )
         respx.get(url__regex=r"https://query[12]\.finance\.yahoo\.com.*").mock(
             return_value=httpx.Response(500)
         )
@@ -154,48 +126,17 @@ def _salvar(setor: str, variacao: float) -> None:
             timestamp=datetime.now(timezone.utc),
             setor_destaque=setor,
             variacao_media=variacao,
-            fonte="brapi",
+            fonte="yfinance",
         )
     )
 
 
 def test_acao_fora_do_mapa_nao_vira_setor(monkeypatch, setup_db):
     """Um ticker sem setor conhecido não pode ser apontado como líder."""
-    monkeypatch.setenv("BRAPI_TOKEN", "fake_token")
-    resposta = {
-        "results": [
-            {
-                "symbol": "XPTO3",
-                "regularMarketPrice": 20.0,
-                "regularMarketPreviousClose": 10.0,
-            },
-            {
-                "symbol": "PETR4",
-                "regularMarketPrice": 30.3,
-                "regularMarketPreviousClose": 30.0,
-            },
-        ]
-    }
+    resposta = _spark(("XPTO3", 20.0, 10.0, 100), ("PETR4", 30.3, 30.0, 100))
     with respx.mock:
-        respx.get(url__startswith="https://brapi.dev/api/quote/").mock(
-            side_effect=lambda request: httpx.Response(
-                200,
-                json={
-                    "results": [
-                        next(
-                            (
-                                res
-                                for res in resposta["results"]
-                                if res["symbol"]
-                                == request.url.path.split("/")[-1].split("?")[0]
-                            )
-                        )
-                    ]
-                }
-                if request.url.path.split("/")[-1].split("?")[0]
-                in [r["symbol"] for r in resposta["results"]]
-                else {"results": []},
-            )
+        respx.get(url__regex=YAHOO).mock(
+            return_value=httpx.Response(200, json=resposta)
         )
         assert concentracao_setorial.collect_and_save() is True
 
@@ -220,7 +161,7 @@ def test_snapshot_expoe_concentracao_setorial(setup_db):
     assert painel["setor_destaque"] == "Financeiro"
     assert painel["variacao_media"] == pytest.approx(1.25)
     assert painel["ha_setor_em_alta"] is True
-    assert painel["fonte"] == "brapi"
+    assert painel["fonte"] == "yfinance"
     assert painel["coletado_em"]
 
 

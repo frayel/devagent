@@ -20,7 +20,6 @@ from datetime import datetime, timezone
 # Domínio (ou trecho dele) → nome da integração exibido na página.
 FONTES: tuple[tuple[str, str], ...] = (
     ("finance.yahoo.com", "Yahoo Finance"),
-    ("brapi.dev", "brapi"),
     ("generativelanguage.googleapis.com", "Gemini"),
     ("moneytimes.com.br", "Money Times"),
     ("infomoney.com.br", "InfoMoney"),

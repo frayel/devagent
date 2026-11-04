@@ -51,14 +51,14 @@ Hoje o auditor extrai os números do HTML, o que quebra se o template mudar. A a
       "fechamento_anterior": 182050.10,
       "variacao_pct": 0.78,
       "coletado_em": "2026-09-28T14:30:00-03:00",
-      "fonte": "brapi",
+      "fonte": "mt5",
       "historico": {"datas": ["2026-08-17", "..."], "fechamentos": [176210.4, "..."]}
     }
   }
 }
 ```
 
-`fonte` é o nome do coletor que produziu o dado (`mt5`, `brapi` ou `yfinance`; `mt5+yfinance` quando parte veio de cada um). O auditor usa esse campo para escolher uma referência diferente.
+`fonte` é o nome do coletor que produziu o dado (`mt5` ou `yfinance`; `mt5+yfinance` quando parte veio de cada um). O auditor usa esse campo para escolher uma referência diferente.
 
 Painéis com checagem própria: `apetite_risco`, `armadilha_abertura` e `mare` (escala 0 a 100, faixa coerente com o valor, pesos somando 1, valor igual à média ponderada, histórico de até 21 pregões anterior à coleta).
 

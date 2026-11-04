@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import sys
 from datetime import datetime, timezone
 
@@ -46,139 +45,6 @@ TICKERS = [
     "EGIE3",
     "HAPV3",
 ]
-
-
-UNIVERSO = 100  # ações mais negociadas do dia que entram no ranking
-LISTA_URL = (
-    "https://brapi.dev/api/quote/list"
-    f"?type=stock&sortBy=volume&sortOrder=desc&limit={UNIVERSO}"
-)
-
-
-def fetch_brapi_lista() -> HighlightsData | None:
-    """Uma única requisição ao /api/quote/list da brapi (não exige token).
-
-    O plano gratuito da brapi não aceita vários ativos em /api/quote, e 30
-    requisições por coleta estourariam a cota mensal. A listagem traz a
-    variação do dia de todas as ações; o ranking usa as UNIVERSO mais
-    negociadas, para não premiar papéis sem liquidez.
-    """
-    token = os.environ.get("BRAPI_TOKEN")
-    url = LISTA_URL + (f"&token={token}" if token else "")
-    try:
-        data = fetch_with_retry(url, timeout=15.0).json()
-    except Exception as e:  # noqa: BLE001 - qualquer falha cai no plano B
-        logger.error(f"Error fetching brapi quote list: {type(e).__name__}: {e}")
-        return None
-
-    ativos = []
-    up_count = 0
-    down_count = 0
-    for item in data.get("stocks") or []:
-        change = item.get("change")
-        close = item.get("close")
-        if change is None or not close or item.get("type") not in (None, "stock"):
-            continue
-        ativos.append(
-            {
-                "ticker": item.get("stock", ""),
-                "price": float(close),
-                "change_percent": float(change),
-            }
-        )
-        if float(change) > 0:
-            up_count += 1
-        elif float(change) < 0:
-            down_count += 1
-
-    if len(ativos) < 10:
-        logger.error(f"brapi quote list returned only {len(ativos)} usable stocks")
-        return None
-
-    ativos.sort(key=lambda x: x["change_percent"], reverse=True)
-    return HighlightsData(
-        timestamp=datetime.now(timezone.utc),
-        highs_json=json.dumps(ativos[:5]),
-        lows_json=json.dumps(sorted(ativos[-5:], key=lambda x: x["change_percent"])),
-        fonte="brapi",
-        up_count=up_count,
-        down_count=down_count,
-        total_count=len(ativos),
-    )
-
-
-def fetch_brapi() -> HighlightsData | None:
-    from app.collectors import brapi
-
-    BRAPI_TOKEN = os.environ.get("BRAPI_TOKEN")
-    if not BRAPI_TOKEN:
-        logger.warning("BRAPI_TOKEN not set, skipping brapi.dev for highlights")
-        return None
-
-    try:
-        data_results = brapi.cotacoes(
-            TICKERS, range="1mo", interval="1d", fundamental="false"
-        )
-        if not data_results:
-            logger.error("Invalid response from brapi for highlights")
-            return None
-
-        parsed_results = []
-        up_count = 0
-        down_count = 0
-        for ticker, result in data_results.items():
-            price = result.get("regularMarketPrice")
-            prev_close = result.get("regularMarketPreviousClose")
-
-            if price is None or prev_close is None or prev_close == 0:
-                continue
-
-            change_percent = ((price - prev_close) / prev_close) * 100
-
-            # Extrai os últimos 10 fechamentos do brapi "historicalDataPrice"
-            history = result.get("historicalDataPrice", [])
-            valid_closes = [
-                h.get("close") for h in history if h.get("close") is not None
-            ]
-            sparkline = valid_closes[-10:] if valid_closes else []
-
-            parsed_results.append(
-                {
-                    "ticker": result.get("symbol", ticker),
-                    "price": price,
-                    "change_percent": change_percent,
-                    "sparkline": sparkline,
-                }
-            )
-            if change_percent > 0:
-                up_count += 1
-            elif change_percent < 0:
-                down_count += 1
-
-        if not parsed_results:
-            return None
-
-        # Sort by change percent
-        parsed_results.sort(key=lambda x: x["change_percent"], reverse=True)
-
-        highs = parsed_results[:5]
-        lows = parsed_results[-5:]
-        lows.sort(
-            key=lambda x: x["change_percent"]
-        )  # Sort lows ascending (worst first)
-
-        return HighlightsData(
-            timestamp=datetime.now(timezone.utc),
-            highs_json=json.dumps(highs),
-            lows_json=json.dumps(lows),
-            fonte="brapi",
-            up_count=up_count,
-            down_count=down_count,
-            total_count=len(parsed_results),
-        )
-    except Exception as e:
-        logger.error(f"Error fetching highlights from brapi: {e}")
-        return None
 
 
 def fetch_yfinance() -> HighlightsData | None:
@@ -264,11 +130,6 @@ def collect_and_save() -> bool:
         # MetaTrader 5 é a fonte preferencial; sem ele, segue a ordem antiga.
         with mt5.exclusivo():
             data = fetch_yfinance()
-    if not data:
-        data = fetch_brapi_lista()
-    if not data:
-        logger.info("Falling back highlights to brapi quote by ticker...")
-        data = fetch_brapi()
     if not data:
         logger.info("Falling back highlights to yfinance...")
         data = fetch_yfinance()

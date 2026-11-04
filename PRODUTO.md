@@ -32,7 +32,7 @@ Toda recomendação exibida precisa mostrar: a fonte, a data da coleta, o métod
 | Web | FastAPI + Jinja2 + HTMX | servidor único, sem build de frontend |
 | Gráficos | Plotly.js via CDN, com tema único em `app/static/graficos.js` | gráficos interativos com JSON gerado no backend |
 | Interface | tema escuro, tokens em `app/static/tema.css`, macros em `app/templates/componentes.html` | guia em `docs/DESIGN.md` |
-| Dados de mercado | MetaTrader 5 via mt5api (preferencial), brapi.dev (API), yfinance (tickers `.SA`) | fontes estruturadas primeiro |
+| Dados de mercado | MetaTrader 5 via mt5api (preferencial), yfinance (tickers `.SA`) | fontes estruturadas primeiro |
 | Scraping | httpx + selectolax; Playwright só se inevitável | leve por padrão |
 | Armazenamento | Postgres externo por `DATABASE_URL` como banco único de produção (o Neon saiu em 29/10/2026, ADR 009), com snapshots por painel e pregão; SQLite só em testes e desenvolvimento local (ADRs 006 e 007; migração nas specs 073 a 076) | o disco do plano gratuito se perde a cada hibernação |
 | Extração de opiniões | Gemini por REST com `httpx`, só para extrair dados de matérias; nunca decide (ADR 005) | texto livre dos portais não se presta a regex |
@@ -158,7 +158,6 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 
 | Variável | Onde | Uso |
 |---|---|---|
-| `BRAPI_TOKEN` | Render | token da brapi.dev (sem ele, a coleta usa só o Yahoo Finance) |
 | `MT5_API_URL` | Render, secreto | base da mt5api, ex. `http://host:8000/api/v1`; liga o MetaTrader 5 como fonte preferencial |
 | `MT5_API_KEY` | Render, secreto | chave enviada no header `X-API-Key` (igual a `MT5API_SECRET_KEY` no servidor) |
 | `MT5_SIMBOLOS` | Render, opcional | JSON de símbolos Yahoo → MT5; padrão `{"^BVSP": "IBOV", "BRL=X": "DOL$"}` |

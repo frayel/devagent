@@ -218,16 +218,15 @@ def test_rotulo_de_fonte():
 
 
 @respx.mock
-def test_ibovespa_prefere_mt5_a_brapi(mt5_ligado, monkeypatch):
+def test_ibovespa_prefere_mt5_ao_yahoo(mt5_ligado, monkeypatch):
     from app.collectors.ibovespa import collect_and_save
     from app.database import get_latest_ibovespa_data
 
-    monkeypatch.setenv("BRAPI_TOKEN", "tok")
     rota_rates({"IBOV:D1": barras_diarias(260, 150000.0)})
-    brapi = respx.get(url__startswith="https://brapi.dev")
+    yahoo = respx.get(url__regex=r"https://query[12]\.finance\.yahoo\.com.*")
 
     assert collect_and_save()
-    assert not brapi.called
+    assert not yahoo.called
     dado = get_latest_ibovespa_data()
     assert dado is not None
     assert dado.fonte == "mt5"
@@ -239,7 +238,6 @@ def test_ibovespa_prefere_mt5_a_brapi(mt5_ligado, monkeypatch):
 def test_ibovespa_sem_mt5_segue_para_yfinance(mt5_ligado, monkeypatch):
     from app.collectors import ibovespa
 
-    monkeypatch.setenv("BRAPI_TOKEN", "tok")
     respx.get(RATES).mock(side_effect=httpx.ConnectError("recusado"))
     chamado = []
 
@@ -247,7 +245,6 @@ def test_ibovespa_sem_mt5_segue_para_yfinance(mt5_ligado, monkeypatch):
         chamado.append(True)
         return None
 
-    monkeypatch.setattr(ibovespa, "fetch_brapi", lambda: None)
     monkeypatch.setattr(ibovespa, "fetch_yfinance", falso_yfinance)
     assert not ibovespa.collect_and_save()
     assert chamado

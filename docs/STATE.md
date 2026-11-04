@@ -13,6 +13,11 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
 
 ## Implementado
 
+- Remoção da brapi.dev (04/11/2026, a pedido do dono do produto):
+  - Saíram `app/collectors/brapi.py`, os ramos `fetch_brapi` de Ibovespa, maiores altas e baixas, coesão, concentração setorial, fator mola, radar de spread, Maré e concentração de ordens, a variável `BRAPI_TOKEN` e o item brapi da `/sistema`.
+  - As fontes de mercado passam a ser MetaTrader 5 (preferencial) e Yahoo Finance. O número de negócios do Termômetro de Concentração de Ordens vem só do MT5; sem ele, o painel mostra Dados indisponíveis.
+  - As menções à brapi nas entradas abaixo descrevem o estado da época.
+
 - Spec 129 (Pool de conexões do Postgres):
   - `app/banco.py`: `get_connection()` empresta uma conexão de um `psycopg_pool.ConnectionPool` (1 a 5 conexões, espera de 10 s, conexão testada antes de ser entregue); o `close()` do invólucro devolve ao pool. Os chamadores não mudaram.
   - O pool abre e fecha no `lifespan` de `app/main.py`; o SQLite segue sem pool.
