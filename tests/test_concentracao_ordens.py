@@ -1,69 +1,48 @@
 import json
-from unittest.mock import Mock
-from app.collectors.concentracao_ordens import collect_and_save
+
+import httpx
+import respx
+
+from app.collectors import utils
+from app.collectors.concentracao_ordens import calcular, collect_and_save
 from app.database import get_latest_concentracao_ordens_data, init_db
 
 
-def test_concentracao_ordens_sucesso(monkeypatch):
-    init_db()
-    mock_response = Mock()
-    mock_response.json.return_value = {
-        "results": [
-            {
-                "symbol": "PETR4",
-                "regularMarketVolume": 1000,
-                "regularMarketPrice": 30.0,
-                "regularMarketTrades": 10,
-            },
+def test_calcular_ordena_por_ticket_medio():
+    alertas = calcular(
+        [
             {
                 "symbol": "VALE3",
                 "regularMarketVolume": 500,
                 "regularMarketPrice": 60.0,
                 "regularMarketTrades": 20,
             },
+            {
+                "symbol": "PETR4",
+                "regularMarketVolume": 1000,
+                "regularMarketPrice": 30.0,
+                "regularMarketTrades": 10,
+            },
+            # Sem número de negócios: fica de fora.
+            {"symbol": "ITUB4", "regularMarketVolume": 1000, "regularMarketPrice": 30},
         ]
-    }
-    monkeypatch.setattr(
-        "app.collectors.brapi.cotacoes",
-        lambda tickers: {res["symbol"]: res for res in mock_response.json()["results"]},
     )
-    assert collect_and_save() is True
-    data = get_latest_concentracao_ordens_data()
-    assert data is not None
-    assert data.fonte == "brapi"
-    alertas = json.loads(data.alertas_json)
-    assert len(alertas) == 2
-    assert alertas[0]["ticker"] == "PETR4"
+    assert [a["ticker"] for a in alertas] == ["PETR4", "VALE3"]
     assert alertas[0]["ticket_medio"] == 3000.0
 
 
-def test_concentracao_ordens_sem_trades(monkeypatch):
+def test_concentracao_ordens_sem_mt5_fica_vazio():
+    """Sem o MT5 não há número de negócios: o painel mostra Dados indisponíveis."""
     init_db()
-    mock_response = Mock()
-    mock_response.json.return_value = {
-        "results": [
-            {"symbol": "ITUB4", "regularMarketVolume": 1000, "regularMarketPrice": 30.0}
-        ]
-    }
-    monkeypatch.setattr(
-        "app.collectors.brapi.cotacoes",
-        lambda tickers: {res["symbol"]: res for res in mock_response.json()["results"]},
-    )
     assert collect_and_save() is True
     data = get_latest_concentracao_ordens_data()
     assert data is not None
-    alertas = json.loads(data.alertas_json)
-    assert len(alertas) == 0
+    assert json.loads(data.alertas_json) == []
 
 
 # --------------------------------------------------------------------------
 # MetaTrader 5: número de negócios vem do tick_volume da barra diária
 # --------------------------------------------------------------------------
-
-import httpx  # noqa: E402
-import respx  # noqa: E402
-
-from app.collectors import utils  # noqa: E402
 
 MT5_BASE = "http://mt5.teste:8000/api/v1"
 
@@ -99,12 +78,10 @@ def test_concentracao_ordens_pelo_mt5(monkeypatch):
 
     respx.get(f"{MT5_BASE}/rates/from-pos").mock(side_effect=responder)
     yahoo = respx.get(url__regex=r"https://query[12]\.finance\.yahoo\.com.*")
-    brapi = respx.get(url__startswith="https://brapi.dev")
 
     assert collect_and_save() is True
 
     assert not yahoo.called
-    assert not brapi.called
     data = get_latest_concentracao_ordens_data()
     assert data is not None
     assert data.fonte == "mt5"
@@ -127,7 +104,6 @@ def test_concentracao_ordens_ignora_simbolo_sem_volume_real(monkeypatch):
         return httpx.Response(503, json={"detail": "símbolo indisponível"})
 
     respx.get(f"{MT5_BASE}/rates/from-pos").mock(side_effect=responder)
-    monkeypatch.setattr("app.collectors.brapi.cotacoes", lambda tickers: {})
 
     assert collect_and_save() is True
     data = get_latest_concentracao_ordens_data()

@@ -102,7 +102,7 @@ def test_marca_incompleto_20h05(monkeypatch, mock_cenario):
     # Snapshot inicial
     snapshots[("ibovespa", ult_fechado)] = {
         "estado_snapshot": "ao_vivo",
-        "fonte": "brapi",
+        "fonte": "yfinance",
         "payload": "teste",
     }
 
@@ -125,7 +125,7 @@ def test_marca_incompleto_20h05(monkeypatch, mock_cenario):
     # Check assertions
     snap = snapshots[("ibovespa", ult_fechado)]
     assert snap["estado_snapshot"] == "incompleto"
-    assert snap["fonte"] == "brapi"
+    assert snap["fonte"] == "yfinance"
     assert snap["payload"] == "teste"
     assert tracker.calls == 0
     assert "ibovespa: incompleto" in (agendador.estado.get("detalhes") or "")
@@ -140,7 +140,7 @@ def test_marca_incompleto_dia_seguinte(monkeypatch, mock_cenario):
 
     snapshots[("ibovespa", ult_fechado)] = {
         "estado_snapshot": "ao_vivo",
-        "fonte": "brapi",
+        "fonte": "yfinance",
         "payload": "teste",
     }
 
@@ -160,7 +160,7 @@ def test_marca_incompleto_dia_seguinte(monkeypatch, mock_cenario):
 
     snap = snapshots[("ibovespa", ult_fechado)]
     assert snap["estado_snapshot"] == "incompleto"
-    assert snap["fonte"] == "brapi"
+    assert snap["fonte"] == "yfinance"
     assert tracker.calls == 0
     assert "ibovespa: incompleto" in (agendador.estado.get("detalhes") or "")
 
@@ -173,7 +173,7 @@ def test_nao_sobrescreve_final(monkeypatch, mock_cenario):
 
     snapshots[("ibovespa", ult_fechado)] = {
         "estado_snapshot": "final",
-        "fonte": "brapi",
+        "fonte": "yfinance",
     }
 
     monkeypatch.setattr("app.calendario.mercado_aberto", lambda dt: False)

@@ -962,7 +962,7 @@ def snapshot(
                 "fechamento_anterior": data.previous_close,
                 "variacao_pct": variation_pct,
                 "coletado_em": data.timestamp.isoformat(),
-                "fonte": getattr(data, "fonte", "brapi"),
+                "fonte": getattr(data, "fonte", "yfinance"),
                 "historico": {
                     "datas": history_data.get("dates", []),
                     "fechamentos": history_data.get("closes", []),
@@ -989,7 +989,7 @@ def snapshot(
             )
             altas_baixas_panel = {
                 "coletado_em": highlights_data.timestamp.isoformat(),
-                "fonte": getattr(highlights_data, "fonte", "brapi"),
+                "fonte": getattr(highlights_data, "fonte", "yfinance"),
                 "altas": highs,
                 "baixas": lows,
             }

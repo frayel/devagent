@@ -101,56 +101,9 @@ def fetch_yfinance() -> CoesaoData | None:
     )
 
 
-def fetch_brapi() -> CoesaoData | None:
-    from app.collectors import brapi
-
-    try:
-        import os
-
-        os.environ.get("BRAPI_TOKEN")
-
-        # Get ^BVSP
-        ibov_res = brapi.cotacao("%5EBVSP")
-
-        if not ibov_res:
-            return None
-
-        ibov_change = ibov_res.get("regularMarketChange", 0)
-        ibov_direction = ibov_change >= 0
-
-        # Get Tickers
-        tickers_list = [t.replace(".SA", "") for t in TICKERS]
-        data_tickers = brapi.cotacoes(tickers_list)
-
-        if not data_tickers:
-            return None
-
-        concordantes = 0
-        total = len(TICKERS)
-
-        for ticker, result in data_tickers.items():
-            change = result.get("regularMarketChange", 0)
-            stock_direction = change >= 0
-            if stock_direction == ibov_direction:
-                concordantes += 1
-
-        return CoesaoData(
-            timestamp=datetime.now(timezone.utc),
-            concordantes=concordantes,
-            total=total,
-            fonte="brapi",
-        )
-
-    except Exception as e:
-        logger.error(f"Error fetching from brapi for coesao: {e}")
-        return None
-
-
 def collect_and_save() -> bool:
     logger.info("Starting coesao collection...")
     data = fetch_yfinance()
-    if not data:
-        data = fetch_brapi()
 
     if data:
         save_coesao_data(data)

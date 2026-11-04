@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 from datetime import datetime, timezone
 
 import httpx
@@ -13,58 +12,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 CESTA_LIQUIDEZ = TICKERS[:10]
-
-
-def fetch_brapi() -> RadarAnomaliasSpreadData | None:
-    from app.collectors import brapi
-
-    BRAPI_TOKEN = os.environ.get("BRAPI_TOKEN")
-    if not BRAPI_TOKEN:
-        logger.warning("BRAPI_TOKEN not set, skipping brapi.dev for anomalias spread")
-        return None
-
-    try:
-        data_results = brapi.cotacoes(CESTA_LIQUIDEZ, fundamental="false")
-        if not data_results:
-            logger.error("Invalid response from brapi for anomalias spread")
-            return None
-
-        parsed_results = []
-        for ticker, result in data_results.items():
-            ask = result.get("regularMarketDayHigh")
-            bid = result.get("regularMarketDayLow")
-
-            ask = result.get("ask", ask)
-            bid = result.get("bid", bid)
-
-            if ask is None or bid is None or bid == 0:
-                continue
-
-            volume = result.get("regularMarketVolume", 0)
-            if volume == 0:
-                continue
-
-            spread_percent = ((ask - bid) / bid) * 100
-
-            if spread_percent > 0.5:
-                parsed_results.append(
-                    {
-                        "ticker": result.get("symbol", ticker),
-                        "spread_percent": spread_percent,
-                    }
-                )
-
-        parsed_results.sort(key=lambda x: x["spread_percent"], reverse=True)
-        top5 = parsed_results[:5]
-
-        return RadarAnomaliasSpreadData(
-            timestamp=datetime.now(timezone.utc),
-            alertas_json=json.dumps(top5),
-            fonte="brapi",
-        )
-    except Exception as e:
-        logger.error(f"Error fetching anomalias spread from brapi: {e}")
-        return None
 
 
 def fetch_yfinance() -> RadarAnomaliasSpreadData | None:
@@ -110,9 +57,7 @@ def fetch_yfinance() -> RadarAnomaliasSpreadData | None:
 
 def collect_and_save() -> bool:
     logger.info("Starting anomalias spread collection...")
-    data = fetch_brapi()
-    if not data:
-        data = fetch_yfinance()
+    data = fetch_yfinance()
 
     if data:
         save_radar_anomalias_spread_data(data)

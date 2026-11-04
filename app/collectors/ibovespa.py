@@ -25,67 +25,6 @@ def calc_mm(closes: list[float], window: int) -> float | None:
     return sum(closes[-window:]) / window
 
 
-def fetch_brapi() -> IbovespaData | None:
-    from app.collectors import brapi
-
-    try:
-        result = brapi.cotacao("^BVSP", range="3mo", interval="1d", fundamental="false")
-        if not result:
-            logger.error("Invalid response from brapi")
-            return None
-
-        current_price = float(result.get("regularMarketPrice", 0.0))
-        previous_close = float(result.get("regularMarketPreviousClose", 0.0))
-
-        history = result.get("historicalDataPrice", [])
-        if not history:
-            logger.error("No historical data from brapi")
-            return None
-
-        # extract dates and closes
-        dates = [
-            datetime.fromtimestamp(h["date"], tz=timezone.utc).strftime("%Y-%m-%d")
-            for h in history
-            if "date" in h and "close" in h
-        ]
-        closes = [h["close"] for h in history if "date" in h and "close" in h]
-
-        if not dates or not closes:
-            return None
-
-        # Calculate moving averages
-        # Append current price to closes if it's not already closed (current_price not exactly the last close)
-        calc_closes = closes.copy()
-        if current_price and (not calc_closes or current_price != calc_closes[-1]):
-            calc_closes.append(current_price)
-
-        mm21 = calc_mm(calc_closes, 21)
-        mm200 = calc_mm(calc_closes, 200)
-
-        if previous_close:
-            var_pct = ((current_price - previous_close) / previous_close) * 100
-            if abs(var_pct) > VARIACAO_DIARIA_MAXIMA:
-                logger.error(
-                    f"brapi.dev returned implausible variation: {var_pct:.2f}%"
-                )
-                return None
-
-        history_json = json.dumps({"dates": dates[-30:], "closes": closes[-30:]})
-
-        return IbovespaData(
-            timestamp=datetime.now(timezone.utc),
-            current_price=current_price,
-            previous_close=previous_close,
-            history_json=history_json,
-            fonte="brapi",
-            mm21=mm21,
-            mm200=mm200,
-        )
-    except httpx.HTTPError as e:
-        logger.error(f"Error fetching from brapi: {e}")
-        return None
-
-
 def fetch_yfinance() -> IbovespaData | None:
     url = "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=1y&interval=1d"
     try:
@@ -205,8 +144,6 @@ def collect_and_save() -> bool:
     if not data:
         logger.info("Falling back to yfinance...")
         data = fetch_yfinance()
-    if not data:
-        data = fetch_brapi()
 
     if data:
         save_ibovespa_data(data)

@@ -33,7 +33,6 @@ PESO = {PROBLEMA: 3, ATENCAO: 2, OK: 1, INATIVO: 0}
 INTEGRACOES: tuple[tuple[str, str | None, str], ...] = (
     ("MetaTrader 5", "MT5_API_URL", "fonte preferencial de cotações (mt5api)"),
     ("Yahoo Finance", None, "cotações e séries diárias"),
-    ("brapi", "BRAPI_TOKEN", "cotações e rankings"),
     ("Gemini", "GEMINI_API_KEY", "extração de opiniões do Consultor"),
 )
 

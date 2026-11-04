@@ -25,7 +25,7 @@ def test_xss_protection_in_history_json():
                 "dates": ["<script>alert(1)</script>"],
                 "closes": [130000],
             },
-            "fonte": "brapi",
+            "fonte": "yfinance",
             "mm21": None,
             "mm21_signal": None,
             "mm200": None,
@@ -72,7 +72,7 @@ def test_security_headers():
 def test_xss_protection_in_tables():
     with mock.patch("app.main.get_highlights_view_data") as mock_get_high:
         mock_get_high.return_value = {
-            "fonte": "brapi",
+            "fonte": "yfinance",
             "time": "...",
             "dispersion_pct": 50,
             "up_count": 1,
@@ -109,7 +109,7 @@ def test_xss_protection_in_kpis():
                 "dates": [],
                 "closes": [],
             },
-            "fonte": "brapi",
+            "fonte": "yfinance",
             "mm21": None,
             "mm21_signal": None,
             "mm200": None,

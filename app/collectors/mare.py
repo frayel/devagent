@@ -4,8 +4,7 @@ Baixa duas séries diárias e entrega o cálculo a `app/services/mare.py`:
 
 - a cesta `TICKERS` de `highlights.py` pelo `/v8/finance/spark`
   (`range=3mo&interval=1d`, fechamento e volume), em lotes de 15;
-- o Ibovespa pelo `/v8/finance/chart` (`range=2y&interval=1d`), com a brapi
-  (`range=2y`) como reserva.
+- o Ibovespa pelo `/v8/finance/chart` (`range=2y&interval=1d`).
 
 As duas URLs do Yahoo passam por `fetch_with_retry`, que prefere o MetaTrader 5
 quando ele está configurado (`app/collectors/mt5.py`). Se a cesta falhar
@@ -83,40 +82,20 @@ def _ibov_yahoo(client: httpx.Client) -> dict[date, float]:
     return {_dia(t): float(c) for t, c in zip(tempos, fechamentos) if c}
 
 
-def _ibov_brapi(client: httpx.Client) -> dict[date, float]:
-    from app.collectors import brapi
-
-    dados = brapi.cotacao("^BVSP", range="2y", interval="1d", fundamental="false")
-    if not dados:
-        return {}
-    historico = dados.get("historicalDataPrice", [])
-    return {
-        _dia(h["date"]): float(h["close"])
-        for h in historico
-        if h.get("date") and h.get("close")
-    }
-
-
-def buscar_ibov(client: httpx.Client) -> tuple[dict[date, float], bool]:
-    """Fechamentos diários do Ibovespa e se veio da brapi."""
+def buscar_ibov(client: httpx.Client) -> dict[date, float]:
+    """Fechamentos diários do Ibovespa."""
     try:
-        serie = _ibov_yahoo(client)
-        if serie:
-            return serie, False
+        return _ibov_yahoo(client)
     except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError) as e:
         logger.error("Maré: Ibovespa no Yahoo falhou: %s", e)
-    try:
-        return _ibov_brapi(client), True
-    except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError) as e:
-        logger.error("Maré: Ibovespa na brapi falhou: %s", e)
-        return {}, False
+        return {}
 
 
 def coletar(agora: datetime | None = None) -> MareData | None:
     agora = agora or datetime.now(timezone.utc)
     with httpx.Client(timeout=10.0) as client:
         cesta = buscar_cesta(client)
-        ibov, usou_brapi = buscar_ibov(client)
+        ibov = buscar_ibov(client)
 
     atual, historico = mare.calcular(cesta, ibov, agora)
     if atual is None or atual.valor is None:
@@ -128,8 +107,6 @@ def coletar(agora: datetime | None = None) -> MareData | None:
         return None
 
     fonte = mt5.fonte_efetiva("yfinance")
-    if usou_brapi and ibov:
-        fonte += "+brapi"
     c = atual.componentes
     return MareData(
         timestamp=agora,
