@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Spec 130: Página inicial não bloqueia mais o servidor e tem cache local (painéis agrupados por requisição).
 - 127
 - Spec 125a: intervalo de tentativa de fechamento alterado para 30 min até 20h.
 - Spec 124: Seletor de pregão mostra os números do dia escolhido em todos os painéis, isolando leitura com lendo_pregao.

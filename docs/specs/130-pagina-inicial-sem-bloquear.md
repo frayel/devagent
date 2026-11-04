@@ -1,7 +1,7 @@
 ---
 id: 130
 titulo: Página inicial sem bloquear o servidor
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_130.py

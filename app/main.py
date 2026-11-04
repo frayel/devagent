@@ -642,6 +642,7 @@ def api_consultor(
     is_historical = ctx["is_historical"]
 
     import time
+    from app.consultor.calculador import _consultor_cache_time
 
     _t0 = time.perf_counter()
     try:
@@ -741,9 +742,13 @@ def api_consultor(
             }
             _usou_cache = False
         else:
+            _cache_ts_before = _consultor_cache_time
             dados = calcular_consultor()
+            _cache_ts_after = _consultor_cache_time
             _usou_cache = (
-                dados.pop("_usou_cache", False) if isinstance(dados, dict) else False
+                _cache_ts_before == _cache_ts_after
+                if _cache_ts_before is not None
+                else False
             )
     except Exception:
         _usou_cache = False
@@ -1622,7 +1627,7 @@ def snapshot(
 
 
 @app.get("/", response_class=HTMLResponse)
-async def index(
+def index(
     request: Request,
     data: str | None = Query(default=None, alias="data"),
     data_str: str | None = None,
@@ -1643,7 +1648,10 @@ async def index(
     import app.banco
 
     # Store old values to restore
-    with app.banco.lendo_pregao(data_ref if is_historical else None):
+    with (
+        app.banco.req_snapshot_cache_ctx(),
+        app.banco.lendo_pregao(data_ref if is_historical else None),
+    ):
         motores_data = get_latest_motores_indice_data()
         motores_cards = json.loads(motores_data.motores_json) if motores_data else None
 
@@ -1665,24 +1673,17 @@ async def index(
             }
         ibovespa_data = get_ibovespa_view_data()
 
-        highlights_data = get_latest_highlights_data()
-        highs_dict = {}
-        if (
-            highlights_data
-            and highlights_data.total_count
-            and highlights_data.up_count is not None
-        ):
-            highs_dict["dispersion_pct"] = (
-                highlights_data.up_count / highlights_data.total_count
-            ) * 100
-
-        apetite_risco_data = get_latest_apetite_risco_data()
-        risco_dict = {}
-        if apetite_risco_data:
-            risco_dict["estado"] = apetite_risco_data.estado
-
-        data_ibov = get_ibovespa_view_data()
         highlights = get_highlights_view_data()
+        highs_dict = {}
+        if highlights and highlights.get("dispersion_pct") is not None:
+            highs_dict["dispersion_pct"] = highlights["dispersion_pct"]
+
+        apetite_risco = get_apetite_risco_view_data()
+        risco_dict = {}
+        if apetite_risco:
+            risco_dict["estado"] = apetite_risco.get("estado")
+
+        data_ibov = ibovespa_data
         volume_alerts = get_volume_alerts_view_data()
         dolar_correlation = get_dolar_correlation_view_data()
         sensibilidade_juros = get_sensibilidade_juros_view_data()
@@ -1697,7 +1698,6 @@ async def index(
         concentracao = get_concentracao_view_data()
         concentracao_vendedora = get_concentracao_vendedora_view_data()
 
-        apetite_risco = get_apetite_risco_view_data()
         concentracao_setorial_data = get_latest_concentracao_setorial_data()
         concentracao_setorial = None
         if concentracao_setorial_data:
