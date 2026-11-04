@@ -24,7 +24,8 @@ def test_concentracao_ordens_sucesso(monkeypatch):
         ]
     }
     monkeypatch.setattr(
-        "app.collectors.concentracao_ordens.fetch_with_retry", lambda url: mock_response
+        "app.collectors.brapi.cotacoes",
+        lambda tickers: {res["symbol"]: res for res in mock_response.json()["results"]},
     )
     assert collect_and_save() is True
     data = get_latest_concentracao_ordens_data()
@@ -45,7 +46,8 @@ def test_concentracao_ordens_sem_trades(monkeypatch):
         ]
     }
     monkeypatch.setattr(
-        "app.collectors.concentracao_ordens.fetch_with_retry", lambda url: mock_response
+        "app.collectors.brapi.cotacoes",
+        lambda tickers: {res["symbol"]: res for res in mock_response.json()["results"]},
     )
     assert collect_and_save() is True
     data = get_latest_concentracao_ordens_data()

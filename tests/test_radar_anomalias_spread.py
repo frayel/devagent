@@ -2,7 +2,6 @@ import json
 import os
 from unittest import mock
 
-import httpx
 import respx
 from fastapi.testclient import TestClient
 
@@ -40,14 +39,25 @@ def generate_mock_brapi_data():
 def test_fetch_brapi_success(monkeypatch):
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     brapi_data = generate_mock_brapi_data()
-    tickers_str = ",".join(CESTA_LIQUIDEZ)
+    ",".join(CESTA_LIQUIDEZ)
 
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?token=test_token&fundamental=false"
+        import httpx
+
+        def mock_brapi_router(request):
+            symbol = request.url.path.split("/")[-1].split("?")[0]
+            res_match = next(
+                (res for res in brapi_data["results"] if res["symbol"] == symbol), None
             )
-        ).respond(status_code=200, json=brapi_data)
+            if res_match:
+                return httpx.Response(200, json={"results": [res_match]})
+            return httpx.Response(
+                200, json={"results": [{"symbol": symbol, "regularMarketPrice": 10.0}]}
+            )
+
+        respx.get(url__startswith="https://brapi.dev/api/quote/").mock(
+            side_effect=mock_brapi_router
+        )
 
         success = collect_and_save()
         assert success is True
@@ -65,13 +75,24 @@ def test_fetch_brapi_success(monkeypatch):
 def test_index_route(monkeypatch):
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     brapi_data = generate_mock_brapi_data()
-    tickers_str = ",".join(CESTA_LIQUIDEZ)
+    ",".join(CESTA_LIQUIDEZ)
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?token=test_token&fundamental=false"
+        import httpx
+
+        def mock_brapi_router(request):
+            symbol = request.url.path.split("/")[-1].split("?")[0]
+            res_match = next(
+                (res for res in brapi_data["results"] if res["symbol"] == symbol), None
             )
-        ).respond(status_code=200, json=brapi_data)
+            if res_match:
+                return httpx.Response(200, json={"results": [res_match]})
+            return httpx.Response(
+                200, json={"results": [{"symbol": symbol, "regularMarketPrice": 10.0}]}
+            )
+
+        respx.get(url__startswith="https://brapi.dev/api/quote/").mock(
+            side_effect=mock_brapi_router
+        )
 
         collect_and_save()
 
@@ -85,13 +106,24 @@ def test_index_route(monkeypatch):
 def test_snapshot_route(monkeypatch):
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     brapi_data = generate_mock_brapi_data()
-    tickers_str = ",".join(CESTA_LIQUIDEZ)
+    ",".join(CESTA_LIQUIDEZ)
     with mock.patch.dict(os.environ, {"BRAPI_TOKEN": "test_token"}):
-        respx.get(
-            httpx.URL(
-                f"https://brapi.dev/api/quote/{tickers_str}?token=test_token&fundamental=false"
+        import httpx
+
+        def mock_brapi_router(request):
+            symbol = request.url.path.split("/")[-1].split("?")[0]
+            res_match = next(
+                (res for res in brapi_data["results"] if res["symbol"] == symbol), None
             )
-        ).respond(status_code=200, json=brapi_data)
+            if res_match:
+                return httpx.Response(200, json={"results": [res_match]})
+            return httpx.Response(
+                200, json={"results": [{"symbol": symbol, "regularMarketPrice": 10.0}]}
+            )
+
+        respx.get(url__startswith="https://brapi.dev/api/quote/").mock(
+            side_effect=mock_brapi_router
+        )
 
         collect_and_save()
 

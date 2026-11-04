@@ -79,8 +79,9 @@ def test_fetch_brapi(monkeypatch):
             }
         ]
     }
+    monkeypatch.setattr("app.collectors.fator_mola.TICKERS", ["ITUB4"])
     monkeypatch.setattr(
-        "app.collectors.fator_mola.fetch_with_retry",
+        "app.collectors.brapi.fetch_with_retry",
         lambda *args, **kwargs: mock_response,
     )
 

@@ -70,8 +70,25 @@ def test_coleta_concentracao_setorial_com_brapi(
     monkeypatch.setenv("BRAPI_TOKEN", "fake_token")
 
     with respx.mock:
-        respx.get(url__startswith="https://brapi.dev").mock(
-            return_value=httpx.Response(200, json=mock_brapi_response)
+        respx.get(url__startswith="https://brapi.dev/api/quote/").mock(
+            side_effect=lambda request: httpx.Response(
+                200,
+                json={
+                    "results": [
+                        next(
+                            (
+                                res
+                                for res in mock_brapi_response["results"]
+                                if res["symbol"]
+                                == request.url.path.split("/")[-1].split("?")[0]
+                            )
+                        )
+                    ]
+                }
+                if request.url.path.split("/")[-1].split("?")[0]
+                in [r["symbol"] for r in mock_brapi_response["results"]]
+                else {"results": []},
+            )
         )
 
         sucesso = concentracao_setorial.collect_and_save()
@@ -160,8 +177,25 @@ def test_acao_fora_do_mapa_nao_vira_setor(monkeypatch, setup_db):
         ]
     }
     with respx.mock:
-        respx.get(url__startswith="https://brapi.dev").mock(
-            return_value=httpx.Response(200, json=resposta)
+        respx.get(url__startswith="https://brapi.dev/api/quote/").mock(
+            side_effect=lambda request: httpx.Response(
+                200,
+                json={
+                    "results": [
+                        next(
+                            (
+                                res
+                                for res in resposta["results"]
+                                if res["symbol"]
+                                == request.url.path.split("/")[-1].split("?")[0]
+                            )
+                        )
+                    ]
+                }
+                if request.url.path.split("/")[-1].split("?")[0]
+                in [r["symbol"] for r in resposta["results"]]
+                else {"results": []},
+            )
         )
         assert concentracao_setorial.collect_and_save() is True
 

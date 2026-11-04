@@ -108,26 +108,25 @@ def fetch_brapi_lista() -> HighlightsData | None:
 
 
 def fetch_brapi() -> HighlightsData | None:
+    from app.collectors import brapi
+
     BRAPI_TOKEN = os.environ.get("BRAPI_TOKEN")
     if not BRAPI_TOKEN:
         logger.warning("BRAPI_TOKEN not set, skipping brapi.dev for highlights")
         return None
 
-    tickers_str = ",".join(TICKERS)
-    url = f"https://brapi.dev/api/quote/{tickers_str}?range=1mo&interval=1d&token={BRAPI_TOKEN}&fundamental=false"
-
     try:
-        response = fetch_with_retry(url, timeout=15.0)
-        data = response.json()
-
-        if "results" not in data or not data["results"]:
+        data_results = brapi.cotacoes(
+            TICKERS, range="1mo", interval="1d", fundamental="false"
+        )
+        if not data_results:
             logger.error("Invalid response from brapi for highlights")
             return None
 
         parsed_results = []
         up_count = 0
         down_count = 0
-        for result in data["results"]:
+        for ticker, result in data_results.items():
             price = result.get("regularMarketPrice")
             prev_close = result.get("regularMarketPreviousClose")
 
@@ -145,7 +144,7 @@ def fetch_brapi() -> HighlightsData | None:
 
             parsed_results.append(
                 {
-                    "ticker": result.get("symbol", ""),
+                    "ticker": result.get("symbol", ticker),
                     "price": price,
                     "change_percent": change_percent,
                     "sparkline": sparkline,
@@ -177,7 +176,7 @@ def fetch_brapi() -> HighlightsData | None:
             down_count=down_count,
             total_count=len(parsed_results),
         )
-    except httpx.HTTPError as e:
+    except Exception as e:
         logger.error(f"Error fetching highlights from brapi: {e}")
         return None
 
