@@ -93,3 +93,13 @@ def _bloquear_rede(monkeypatch, request):
         return original_getaddrinfo(host, port, family, type, proto, flags)
 
     monkeypatch.setattr(socket, "getaddrinfo", mock_getaddrinfo)
+
+
+@pytest.fixture(autouse=True)
+def reset_disjuntor():
+    from app.banco import _reset_disjuntor
+
+    try:
+        _reset_disjuntor()
+    except Exception:
+        pass

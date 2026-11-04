@@ -1,7 +1,7 @@
 ---
 id: 128
 titulo: Postgres configurado não cai em silêncio para o SQLite
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_128.py

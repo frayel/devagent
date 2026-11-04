@@ -486,3 +486,5 @@ Página Inicial Sem Bloquear (spec 130)
 
 - Spec 126a (Agendador sem trabalho repetido): backtest do Consultor roda exatamente uma vez por coleta.
 - Spec 126b (Agendador sem trabalho repetido): Tratamento correto de feriados usando app.calendario.e_pregao() em app/agendador.py.
+
+- Implementada a spec 128 para evitar que banco Postgres inacessível em startup perca dados no SQLite.
