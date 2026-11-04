@@ -177,8 +177,8 @@ def fonte_efetiva(padrao: str) -> str:
 def exclusivo() -> Iterator[None]:
     """Dentro do bloco, URLs do Yahoo são servidas só pelo MT5, sem recurso.
 
-    Serve para coletores cuja fonte principal não é o Yahoo (brapi): eles
-    tentam o MT5 primeiro e, se falhar, seguem a ordem original.
+    Serve para coletores que tentam o MT5 primeiro e, se falhar, seguem a
+    ordem original.
     """
     anterior = getattr(_local, "exclusivo", False)
     _local.exclusivo = True
@@ -296,7 +296,9 @@ def _baixar_barras(simbolo: str, timeframe: str, quantidade: int) -> list[dict]:
     lidas: list[dict[str, Any]] = []
     for b in dados:
         try:
-            volume = b.get("real_volume") or b.get("tick_volume") or 0
+            real = b.get("real_volume") or 0
+            ticks = b.get("tick_volume") or 0
+            volume = real or ticks
             lidas.append(
                 {
                     "hora": _hora_da_barra(b["time"]),
@@ -305,6 +307,10 @@ def _baixar_barras(simbolo: str, timeframe: str, quantidade: int) -> list[dict]:
                     "low": float(b["low"]),
                     "close": float(b["close"]),
                     "volume": int(volume),
+                    # Em ativos de bolsa (real_volume preenchido), o MT5 da B3
+                    # conta em tick_volume os negócios da barra. Sem
+                    # real_volume, tick_volume é só contagem de cotações.
+                    "negocios": int(ticks) if real else None,
                 }
             )
         except (KeyError, TypeError, ValueError):
@@ -416,6 +422,7 @@ def bloco_yahoo(simbolo_yahoo: str, intervalo: str, janela: str) -> dict:
         "regularMarketDayHigh": ultima_diaria["high"],
         "regularMarketDayLow": ultima_diaria["low"],
         "regularMarketVolume": ultima_diaria["volume"],
+        "regularMarketTrades": ultima_diaria.get("negocios"),
         "chartPreviousClose": fech_anterior_janela,
         "previousClose": fech_anterior_dia,
         "fonte": FONTE,

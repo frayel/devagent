@@ -105,6 +105,8 @@ def test_spark_servido_pelo_mt5(mt5_ligado):
     assert bloco["meta"]["chartPreviousClose"] == 30.0 + 24 + 0.25
     assert bloco["meta"]["previousClose"] == 30.0 + 28 + 0.25
     assert bloco["meta"]["regularMarketPrice"] == quote["close"][-1]
+    # tick_volume da barra diária vira o número de negócios.
+    assert bloco["meta"]["regularMarketTrades"] == 10
     # Candle diário às 13:00 UTC: a data é a mesma em UTC e em BRT.
     ultimo = datetime.fromtimestamp(bloco["timestamp"][-1], tz=timezone.utc)
     assert ultimo.strftime("%Y-%m-%d %H:%M") == "2026-10-05 13:00"
