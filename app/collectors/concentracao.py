@@ -20,7 +20,7 @@ TICKERS_PESOS = {
     "B3SA3": 0.03,
     "WEGE3": 0.03,
     "ABEV3": 0.03,
-    "ELET3": 0.03,
+    "BBDC3": 0.03,
     "BBAS3": 0.03,
 }
 

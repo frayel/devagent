@@ -31,7 +31,7 @@ TICKERS = [
     "VIVT3",
     "BBSE3",
     "JBSS3",
-    "ELET3",
+    "BBDC3",
     "CPLE3",
     "BRFS3",
     "ENEV3",

@@ -39,8 +39,6 @@ CARTEIRA_IBOVESPA = [
     "CYRE3",
     "DXCO3",
     "EGIE3",
-    "ELET3",
-    "Elet6",
     "EMBR3",
     "ENGI11",
     "ENEV3",

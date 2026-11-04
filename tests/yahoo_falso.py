@@ -149,7 +149,7 @@ def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
         volumes[-1] *= 4  # pico de volume no último pregão
     ultimo = fechamentos[-1]
 
-    if "ELET3" in simbolo:
+    if "BBDC3" in simbolo:
         highs = [round(v * 1.01, 2) for v in fechamentos]
         if n >= 2:
             highs[-1] = highs[-2] + 0.5  # higher high
