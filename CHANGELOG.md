@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- **Concentração de Ordens**: o número de negócios passa a vir do MetaTrader 5 (`tick_volume` da barra diária, exposto pela ponte como `regularMarketTrades`). A brapi fica só como reserva até ser removida. Era o último painel que dependia exclusivamente dela.
 - Spec 130: Página inicial não bloqueia mais o servidor e tem cache local (painéis agrupados por requisição).
 - 127
 - Spec 125a: intervalo de tentativa de fechamento alterado para 30 min até 20h.
