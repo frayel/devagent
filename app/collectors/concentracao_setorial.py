@@ -27,7 +27,7 @@ SETOR_MAP = {
     "ITSA4": "Financeiro",
     "BPAC11": "Financeiro",
     "ABEV3": "Consumo não cíclico",
-    "ELET3": "Energia elétrica",
+    "BBDC3": "Financeiro",
     "EQTL3": "Energia elétrica",
     "CMIG4": "Energia elétrica",
     "CPLE3": "Energia elétrica",

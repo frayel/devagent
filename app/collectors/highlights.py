@@ -21,7 +21,7 @@ TICKERS = [
     "BBDC4",
     "B3SA3",
     "ABEV3",
-    "ELET3",
+    "BBDC3",
     "RENT3",
     "WEGE3",
     "BBAS3",
