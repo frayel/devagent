@@ -251,9 +251,12 @@ def get_latest_esforco_resultado_data() -> EsforcoResultadoData | None:
 
 
 def init_db() -> None:
-    from app.banco import init_db as init_banco
+    from app.banco import init_db as init_banco, DBInacessivelError
 
-    init_banco()
+    try:
+        init_banco()
+    except DBInacessivelError:
+        return
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(

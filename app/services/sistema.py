@@ -313,6 +313,13 @@ CONEXAO_LENTA_MS = 500
 
 
 def verificar_banco(info: dict[str, Any]) -> Item:
+    if info.get("disjuntor_desde"):
+        return Item(
+            "Banco de dados",
+            PROBLEMA,
+            f"Postgres configurado e inacessível desde {info['disjuntor_desde']}",
+            "",
+        )
     if info.get("erro"):
         return Item("Banco de dados", PROBLEMA, "não conecta", info["erro"])
     # Versão e tamanho do banco em uso, para quem troca de provedor ver na hora

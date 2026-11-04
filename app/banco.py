@@ -32,6 +32,22 @@ def serialize_json(payload: dict | list) -> str:
     return json.dumps(payload, default=custom_default)
 
 
+class DBInacessivelError(Exception):
+    pass
+
+
+_disjuntor_aberto_ate: float | None = None
+_disjuntor_aberto_desde: str | None = None
+_disjuntor_lock = threading.Lock()
+
+
+def _reset_disjuntor():
+    global _disjuntor_aberto_ate, _disjuntor_aberto_desde
+    with _disjuntor_lock:
+        _disjuntor_aberto_ate = None
+        _disjuntor_aberto_desde = None
+
+
 def _determine_backend() -> Literal["postgres", "sqlite_efemero"]:
     db_url = os.environ.get("DATABASE_URL")
     if (
@@ -39,18 +55,7 @@ def _determine_backend() -> Literal["postgres", "sqlite_efemero"]:
         and (db_url.startswith("postgres://") or db_url.startswith("postgresql://"))
         and PSYCOPG_AVAILABLE
     ):
-        for attempt in range(2):
-            try:
-                import psycopg
-
-                with psycopg.connect(db_url, connect_timeout=10):
-                    return "postgres"
-            except Exception as e:
-                logger.warning(
-                    f"Failed to connect to Postgres (attempt {attempt + 1}): {e}"
-                )
-                time.sleep(1)
-        return "sqlite_efemero"
+        return "postgres"
     return "sqlite_efemero"
 
 
@@ -99,7 +104,7 @@ def _criar_pool(db_url: str):
         kwargs={"connect_timeout": 10},
         # Conexão parada pode ter sido derrubada pelo servidor: testa antes de entregar.
         check=ConnectionPool.check_connection,
-        open=True,
+        open=False,
     )
 
 
@@ -141,7 +146,23 @@ class _ConexaoDoPool:
     def __init__(self, pool):
         self._pool = pool
         self._conn = None
-        self._conn = pool.getconn()
+        global _disjuntor_aberto_ate, _disjuntor_aberto_desde
+        with _disjuntor_lock:
+            if _disjuntor_aberto_ate and time.time() < _disjuntor_aberto_ate:
+                raise DBInacessivelError("Disjuntor aberto")
+        try:
+            self._conn = pool.getconn()
+            with _disjuntor_lock:
+                _disjuntor_aberto_ate = None
+                _disjuntor_aberto_desde = None
+        except Exception as e:
+            with _disjuntor_lock:
+                if _disjuntor_aberto_desde is None:
+                    from datetime import datetime
+
+                    _disjuntor_aberto_desde = datetime.now().strftime("%H:%M")
+                _disjuntor_aberto_ate = time.time() + 30
+            raise DBInacessivelError("Conexão falhou") from e
 
     def __getattr__(self, nome):
         if self._conn is None:
@@ -168,7 +189,10 @@ def init_db():
     global _db_initialized
     if _db_initialized:
         return
-    conn, backend = get_connection()
+    try:
+        conn, backend = get_connection()
+    except DBInacessivelError:
+        return
     try:
         if backend == "postgres":
             with conn.cursor() as cursor:
@@ -365,8 +389,11 @@ def ler_snapshot(painel: str, data_referencia: date | None = None) -> dict | Non
 
         req_cache[fetch_key] = True
 
-        init_db()
-        conn, backend = get_connection()
+        try:
+            init_db()
+            conn, backend = get_connection()
+        except DBInacessivelError:
+            return None
         try:
             if backend == "postgres":
                 with conn.cursor() as cursor:
@@ -484,8 +511,11 @@ def ler_snapshot(painel: str, data_referencia: date | None = None) -> dict | Non
 
 
 def listar_datas(painel: str, limite: int = 10) -> list[str]:
-    init_db()
-    conn, backend = get_connection()
+    try:
+        init_db()
+        conn, backend = get_connection()
+    except DBInacessivelError:
+        return []
     try:
         if backend == "postgres":
             with conn.cursor() as cursor:
@@ -678,7 +708,6 @@ def versao_postgres(numero: object) -> str | None:
 
 
 def diagnostico() -> dict:
-    import time
     import os
     from app.database import DB_PATH
 
@@ -699,7 +728,15 @@ def diagnostico() -> dict:
     }
     inicio = time.perf_counter()
     try:
-        conn, backend = get_connection()
+        try:
+            conn, backend = get_connection()
+        except DBInacessivelError:
+            if _disjuntor_aberto_desde:
+                info["disjuntor_desde"] = _disjuntor_aberto_desde
+                info["erro"] = (
+                    f"Postgres configurado e inacessível desde {_disjuntor_aberto_desde}"
+                )
+            return info
         try:
             if backend == "postgres":
                 # Versão vem da própria conexão, sem consulta a mais.
@@ -831,8 +868,11 @@ def registrar_falha_simbolo(fonte: str, simbolo: str, sucesso: bool = False) -> 
 
 
 def is_simbolo_suspenso(fonte: str, simbolo: str) -> bool:
-    init_db()
-    conn, backend = get_connection()
+    try:
+        init_db()
+        conn, backend = get_connection()
+    except DBInacessivelError:
+        return False
     try:
         from datetime import datetime, timezone, timedelta
 
@@ -877,8 +917,11 @@ def is_simbolo_suspenso(fonte: str, simbolo: str) -> bool:
 
 
 def get_simbolos_suspensos() -> list[dict]:
-    init_db()
-    conn, backend = get_connection()
+    try:
+        init_db()
+        conn, backend = get_connection()
+    except DBInacessivelError:
+        return []
     try:
         if backend == "postgres":
             with conn.cursor() as cursor:
