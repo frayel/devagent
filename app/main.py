@@ -169,11 +169,19 @@ def healthz():
 
 
 @app.get("/api/coleta")
-def coleta():
+def coleta(request: Request):
     """Diagnóstico da coleta automática (última rodada e último erro)."""
-    from app.agendador import estado
+    exigir_senha(request)
+    from app.agendador import estado, coleta_ligada
+    import os
+    from app.banco import get_backend_type
 
-    return estado
+    res = {"ligada": coleta_ligada(), **estado}
+    backend = get_backend_type()
+    if os.environ.get("RENDER") and backend != "postgres":
+        res["aviso"] = "Banco persistente não configurado: dados se perdem ao reiniciar"
+    res["banco"] = backend
+    return res
 
 
 def _get_seletor_context(
@@ -241,13 +249,6 @@ def obter_pregoes_disponiveis(agora, mercado_aberto, pregao_corr):
             break
 
     return pregoes[: PREGOES_NO_SELETOR + 1]
-
-    res = {"ligada": agendador.coleta_ligada(), **agendador.estado}
-    backend = get_backend_type()
-    if os.environ.get("RENDER") and backend != "postgres":
-        res["aviso"] = "Banco persistente não configurado: dados se perdem ao reiniciar"
-    res["banco"] = backend
-    return res
 
 
 HORAS_VAZIOS = 3

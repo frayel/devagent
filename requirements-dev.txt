@@ -8,3 +8,4 @@ httpx
 respx
 # Capturas da interface (make telas). Só desenvolvimento.
 playwright
+pytest-asyncio

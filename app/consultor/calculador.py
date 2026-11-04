@@ -51,7 +51,9 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
             _consultor_cache_time
             and (datetime.now() - _consultor_cache_time).total_seconds() < 300
         ):
-            return _consultor_cache
+            res = _consultor_cache.copy()
+            res["_usou_cache"] = True
+            return res
 
     historicos = get_historico_diario(
         ativos, JANELA, "1d", max_age_minutes=IDADE_MAXIMA_MIN
