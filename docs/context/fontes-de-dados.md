@@ -27,7 +27,6 @@ Uma entrada por fonte. Atualize ao criar ou alterar coletor (skill `criar-coleto
 
 - **Uso**: matérias que citam recomendações, preços-alvo e carteiras de casas de análise para ações do Ibovespa (spec 070, ADR 005).
 - **Feeds verificados em 2026-10-18**: Money Times (`https://www.moneytimes.com.br/feed/`, RSS 2.0 válido, com `content:encoded`; publica carteiras semanais recomendadas) e InfoMoney (`https://www.infomoney.com.br/feed/`, RSS 2.0 válido, mistura notícias de todo tipo). O feed `https://www.infomoney.com.br/mercados/feed/` veio sem itens nessa data.
-- **Pendência**: conferir `robots.txt` e termos de uso de cada portal antes do primeiro coletor e registrar aqui.
 - **Limites**: 1 requisição a cada 2 s por domínio, coleta a cada 30 min, só o conteúdo do próprio feed (a página da matéria não é baixada).
 - **Ritmo**: não é tempo real. Algumas matérias com opinião de casa por dia, dependendo do portal.
 
@@ -39,10 +38,22 @@ Uma entrada por fonte. Atualize ao criar ou alterar coletor (skill `criar-coleto
 - **Privacidade**: na camada gratuita, o conteúdo enviado pode ser usado pelo Google para melhorar produtos. Envie só texto público das matérias.
 - **Fontes**: https://ai.google.dev/gemini-api/docs/rate-limits e https://ai.google.dev/pricing
 
-## Fontes proibidas (verificado em 2026-10-18)
+## Telegram, canal público Clube Acionista (candidata · consultor)
 
-- **Yahoo Finance `quoteSummary`** (`/v10/finance/quoteSummary`, onde ficam consenso e preço-alvo): bloqueado por `robots.txt`.
-- **Google News RSS** (`news.google.com/rss/search`): bloqueado por `robots.txt`.
+- **Acesso**: página pública de prévia `https://t.me/s/clubeacionista`, HTML sem login. Cada leitura traz as 20 mensagens mais recentes, com `data-post` (ID permanente, link `https://t.me/clubeacionista/<id>`) e `<time datetime>` em UTC. Mensagens mais antigas: `?before=<id>`. `https://t.me/robots.txt` responde 404 (verificado em 2026-11-04).
+- **Conteúdo** (amostra de 04/11/2026, 20 mensagens entre 10h00 e 12h00 BRT): só texto, uma notícia curta por mensagem, quase sempre com o ticker no início (`🔔 RADL3 - ...`). Cerca de 3 em 20 trazem opinião atribuída a uma casa ("Ativa Investimentos recomenda COMPRA para RADL3", "Itaú Unibanco tem recomendação Neutra com alvo de R$48,00, alerta Ativa Investimentos"); o resto são resultados trimestrais, fatos relevantes e macro.
+- **Ritmo**: dezenas de mensagens por hora no pregão; a coleta a cada 30 min precisa paginar com `before` para não perder mensagens.
+- **Cuidado**: o canal é um agregador; a casa citada no texto é a fonte da opinião, não o canal.
+
+## Fontes antes vetadas por `robots.txt` (verificado em 2026-10-18)
+
+Desde 04/11/2026 o `robots.txt` não bloqueia fontes (`PRODUTO.md`, seção 5). Estas ficaram de fora por isso e podem ser reavaliadas:
+
+- **Yahoo Finance `quoteSummary`** (`/v10/finance/quoteSummary`, onde ficam consenso e preço-alvo).
+- **Google News RSS** (`news.google.com/rss/search`).
+
+## Fontes proibidas
+
 - **Relatórios de corretoras e casas de análise**: atrás de login.
 
 ## Fontes descontinuadas

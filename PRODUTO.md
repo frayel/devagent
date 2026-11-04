@@ -86,7 +86,7 @@ Sugestões de incrementos. São ponto de partida, não plano: o Passo 7 pode reo
 ## 5. Regras de coleta de dados (protegido)
 
 - Prefira APIs oficiais ou públicas. Recorra a scraping só quando não houver alternativa, e registre a decisão na spec.
-- Respeite `robots.txt` e os termos de uso. Se uma fonte proibir coleta automatizada, não a use.
+- O `robots.txt` não bloqueia uma fonte (decisão do dono do produto em 04/11/2026). Mesmo sem ele, mantenha os limites de ritmo, o User-Agent identificável e a regra de login abaixo.
 - No máximo 1 requisição a cada 2 segundos por domínio. User-Agent identificável.
 - Faça cache de toda resposta; nunca colete a cada visita ao painel. A coleta roda no agendador do web service (`app/agendador.py`) e o site lê do banco.
 - Não colete dados atrás de login ou paywall.
