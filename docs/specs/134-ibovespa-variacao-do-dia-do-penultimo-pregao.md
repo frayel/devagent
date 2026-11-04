@@ -19,7 +19,7 @@ Pelo código, o percentual do card "Ibovespa hoje" é calculado como se fosse a 
 - O módulo do MT5 imita esse comportamento: `app/collectors/mt5.py:406` e `:419` preenchem `chartPreviousClose` com o último fechamento antes da janela. O campo correto, `previousClose` (o pregão anterior), está em `:420`, mas nunca é lido porque o primeiro campo sempre vem preenchido.
 - Como o MT5 responde no lugar do Yahoo (`fetch_with_retry` chama `mt5.interceptar` antes da requisição), o rótulo da fonte pode dizer `mt5` e o defeito continua o mesmo.
 
-O valor gravado em `previous_close` alimenta: `app/services/ibovespa.py:13` (card, `is_positive` e a manchete de `app/services/manchete.py`), `app/main.py:947` (`/api/snapshot`) e `app/collectors/anomalia_peso.py:28` (pontos por ação). O caminho da brapi (`regularMarketPreviousClose`) não tem o defeito.
+O valor gravado em `previous_close` alimenta: `app/services/ibovespa.py:13` (card, `is_positive` e a manchete de `app/services/manchete.py`), `app/main.py:947` (`/api/snapshot`) e `app/collectors/anomalia_peso.py:28` (pontos por ação).
 
 Esta leitura vem do código e de testes com dublês. Não foi conferida contra a produção; o critério 1 reproduz o defeito sem internet, e as Invariantes dizem como confirmar no site publicado.
 
@@ -31,10 +31,10 @@ O fechamento anterior passa a vir da própria série de fechamentos, nesta ordem
 3. Série com menos de 2 fechamentos: `meta["previousClose"]`, depois `meta["regularMarketPreviousClose"]`.
 4. Nada disso existe: o preço atual, com um aviso no log (variação 0, como hoje).
 
-`chartPreviousClose` não entra em nenhum dos passos. Os dois comentários contraditórios são trocados por um que explica a regra. O resto de `fetch_yfinance`, os consumidores do campo e o caminho da brapi não mudam.
+`chartPreviousClose` não entra em nenhum dos passos. Os dois comentários contraditórios são trocados por um que explica a regra. O resto de `fetch_yfinance` e os consumidores do campo não mudam.
 
 ## Fontes de dados
-Yahoo (`chart/^BVSP`, `range=1y`) ou o MT5 respondendo no formato do Yahoo; plano B: brapi, como hoje. Nada de fonte nova.
+MT5 respondendo no formato do Yahoo (`chart/^BVSP`, `range=1y`); plano B: o próprio Yahoo, como hoje. Nada de fonte nova.
 
 ## Cálculos
 `variação = preço atual − previous_close`; `variação % = variação / previous_close × 100`. Só muda de onde sai `previous_close`.

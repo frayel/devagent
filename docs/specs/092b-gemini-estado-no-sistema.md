@@ -17,7 +17,7 @@ Em `/sistema`, a integração **Gemini** aparece como *Inativo*. O `/api/sistema
 1. *Inativo* em `app/services/sistema.py::_item_da_fonte` significa "sem chamadas desde a partida", e **não** "sem chave". Com a chave presente e nenhuma chamada, a tela mostra *Inativo, sem chamadas desde a partida*, que é indistinguível de "desligado de propósito".
 2. Nenhuma chamada acontece porque o pipeline do Consultor quebra antes de chegar à API (spec 084: tabela `consultor_llm_uso` ausente no Postgres). Corrigir a 084 destrava as chamadas, mas só quando houver matérias na fila e a rodada do coletor passar por `extrair_opinioes`; a tela continua cega até lá.
 
-Depende da spec 092a (que implementa a validação da chave em `registro_fontes`).
+Depende da validação da chave em `registro_fontes`, entregue pela spec 119b (`app/services/gemini_modelo.py`).
 
 ## Comportamento esperado
 
@@ -55,10 +55,10 @@ API do Gemini: `generateContent` (extração, já existente). Plano B: sem chave
 
 ## Fora do escopo
 
-- Validação da chave em segundo plano e variáveis em render.yaml (feito na 092a).
+- Validação da chave em segundo plano (feita na 119b) e variáveis no `render.yaml` (já declaradas).
 - Trocar o modelo ou o provedor de LLM.
 - Mudar a cota diária de chamadas.
 
 ## Revisão
 
-Spec movida para `draft` por depender de uma funcionalidade ainda não implementada na `main`. A spec afirma "Depende da spec 092a (que implementa a validação da chave em registro_fontes)", mas a 092a ainda não foi implementada pelo desenvolvimento. O Revisor não aprova specs baseadas em promessas de código futuro ou dependentes de specs não implementadas na mesma entrega.
+Spec movida para `draft` porque dependia da validação da chave, então não implementada. Em 04/11/2026 essa dependência foi entregue pela 119b, e as specs intermediárias (092, 092a, 120b) foram removidas. A spec pode voltar à revisão.
