@@ -38,19 +38,30 @@ Uma entrada por fonte. Atualize ao criar ou alterar coletor (skill `criar-coleto
 - **Privacidade**: na camada gratuita, o conteúdo enviado pode ser usado pelo Google para melhorar produtos. Envie só texto público das matérias.
 - **Fontes**: https://ai.google.dev/gemini-api/docs/rate-limits e https://ai.google.dev/pricing
 
-## Telegram, canal público Clube Acionista (candidata · consultor)
+## Telegram (opiniões e notícias · consultor, spec 141)
 
-- **Acesso**: página pública de prévia `https://t.me/s/clubeacionista`, HTML sem login. Cada leitura traz as 20 mensagens mais recentes, com `data-post` (ID permanente, link `https://t.me/clubeacionista/<id>`) e `<time datetime>` em UTC. Mensagens mais antigas: `?before=<id>`. `https://t.me/robots.txt` responde 404 (verificado em 2026-11-04).
-- **Conteúdo** (amostra de 04/11/2026, 20 mensagens entre 10h00 e 12h00 BRT): só texto, uma notícia curta por mensagem, quase sempre com o ticker no início (`🔔 RADL3 - ...`). Cerca de 3 em 20 trazem opinião atribuída a uma casa ("Ativa Investimentos recomenda COMPRA para RADL3", "Itaú Unibanco tem recomendação Neutra com alvo de R$48,00, alerta Ativa Investimentos"); o resto são resultados trimestrais, fatos relevantes e macro.
-- **Ritmo**: dezenas de mensagens por hora no pregão; a coleta a cada 30 min precisa paginar com `before` para não perder mensagens.
-- **Cuidado**: o canal é um agregador; a casa citada no texto é a fonte da opinião, não o canal.
+Três canais públicos, verificados em 2026-11-04. `https://t.me/robots.txt` responde 404. Nenhum exige login.
 
-## Fontes antes vetadas por `robots.txt` (verificado em 2026-10-18)
+- **Clube Acionista** (`https://t.me/s/clubeacionista`): prévia pública ativa. Cada leitura traz as 20 mensagens mais recentes, com `data-post` (ID permanente, link `https://t.me/clubeacionista/<id>`) e `<time datetime>` em UTC; mensagens anteriores com `?before=<id>`. Só texto, uma notícia curta por mensagem, quase sempre com o ticker no início (`🔔 RADL3 - ...`). Na amostra de 04/11 (20 mensagens entre 10h00 e 12h00 BRT), cerca de 3 traziam opinião atribuída a uma casa ("Ativa Investimentos recomenda COMPRA para RADL3", "Itaú Unibanco tem recomendação Neutra com alvo de R$48,00, alerta Ativa Investimentos"); o resto eram resultados do trimestre, fatos relevantes e macro. Dezenas de mensagens por hora no pregão: a coleta pagina com `before` até alcançar o último ID salvo. A casa citada no texto é a fonte da opinião, não o canal.
+- **Repositório de Ações** (`https://t.me/RepositorioDeAcoes`, ~1.100 inscritos): prévia `/s/` desativada (302 para a página do canal) e o widget `?embed=1` esconde o texto. A página de cada post (`https://t.me/RepositorioDeAcoes/<id>`) traz a primeira linha em `og:description`, e `<time datetime>` vem no widget. IDs sequenciais (159.281 às 12h07 BRT de 04/11). Conteúdo: título de cada documento entregue à CVM ("RAIA DROGASIL S.A. - Comunicado ao Mercado - Apresentações a analistas", "Valores Mobiliários Negociados e Detidos", atas, FRE). Não traz opinião de casa; serve como sinal de evento corporativo. A origem real é o sistema de documentos da CVM/B3, que tem dados abertos próprios.
+- **Universo Antifrágil** (`https://t.me/universoantifragil`, ~1.350 inscritos): mesmo acesso do Repositório (sem prévia, texto só pela `og:description` truncada do post). Poucas mensagens por dia (ID 3.549 em 04/11), a maioria imagem ou link para o site (`universoantifragil.com.br/fechamento-de-mercado`), com títulos como "#BBDC4 - Análise do resultado do 3T26" e "#BBSE3 - Revisão do Guidance de 2026". Opinião é do próprio canal (Prof. Paulo Sérgio Miranda), não de casa de análise; o texto disponível é curto demais para extrair recomendação na maior parte dos posts.
 
-Desde 04/11/2026 o `robots.txt` não bloqueia fontes (`PRODUTO.md`, seção 5). Estas ficaram de fora por isso e podem ser reavaliadas:
+## Google News RSS (manchetes · consultor, spec 141)
 
-- **Yahoo Finance `quoteSummary`** (`/v10/finance/quoteSummary`, onde ficam consenso e preço-alvo).
-- **Google News RSS** (`news.google.com/rss/search`).
+- **Acesso**: `https://news.google.com/rss/search?q=<termos>&hl=pt-BR&gl=BR&ceid=BR:pt-419`, RSS 2.0 sem login. Verificado em 2026-11-04: busca `RADL3 recomendação` devolveu 17 itens de vários portais (InfoMoney, Suno, Seu Dinheiro, Guia do Investidor, TradingView).
+- **Conteúdo útil**: só o título (`<title>`, com o portal após ` - `), `<pubDate>` e `<source>`. O `<link>` é um redirecionamento do Google e a `<description>` repete o título em HTML. Títulos como "Safra corta preço-alvo, mas ainda vê alta de 63%" e "Goldman vê oportunidade e mantém alvo de R$ 26" já nomeiam casa e direção.
+- **Ordem**: os itens não vêm por data e incluem matérias de meses atrás. Use `when:7d` na busca e descarte itens com `pubDate` mais antigo que 7 dias.
+- **Volume**: uma busca por ativo do Ibovespa (~85) por rodada é demais; agrupe tickers com `OR` (até ~8 por busca) e rode a cada 2 h.
+
+## Yahoo Finance quoteSummary (consenso · consultor, spec 142)
+
+- **Uso pretendido**: consenso de analistas por ativo (`recommendationMean`, `numberOfAnalystOpinions`, `targetMeanPrice`, `targetLowPrice`, `targetHighPrice`) dos módulos `financialData` e `recommendationTrend`.
+- **Teste em 2026-11-04, a partir do container de desenvolvimento**: chamada direta sem crumb devolveu 429; pelo `yfinance` (que obtém cookie e crumb) devolveu 401 `Invalid Crumb` e `User is unable to access this feature` para RADL3, ITUB4 e PETR4. Não há dado confirmado. O endpoint `v8/finance/chart`, já usado pelo painel, é outro e segue funcionando.
+- **Risco**: o Yahoo restringe esse endpoint a IPs de datacenter e muda o mecanismo de crumb sem aviso. Precisa ser testado a partir do Render antes de contar com ele.
+
+## Fontes antes vetadas por `robots.txt`
+
+Desde 04/11/2026 o `robots.txt` não bloqueia fontes (`PRODUTO.md`, seção 5). Yahoo `quoteSummary` e Google News RSS, barrados em 2026-10-18 só por isso, estão registrados acima.
 
 ## Fontes proibidas
 
