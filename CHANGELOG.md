@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Spec 126a: Agendador sem trabalho repetido (backtest único).
 - **Fontes**: a brapi.dev foi removida. O MetaTrader 5 é a fonte preferencial e o Yahoo Finance a reserva; o Termômetro de Concentração de Ordens depende só do MT5. A variável `BRAPI_TOKEN` deixa de existir e pode ser apagada do painel do Render.
 - **Concentração de Ordens**: o número de negócios passa a vir do MetaTrader 5 (`tick_volume` da barra diária, exposto pela ponte como `regularMarketTrades`). A brapi fica só como reserva até ser removida. Era o último painel que dependia exclusivamente dela.
 - Spec 130: Página inicial não bloqueia mais o servidor e tem cache local (painéis agrupados por requisição).

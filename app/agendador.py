@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 import os
 import re
 from datetime import datetime, time, timedelta, timezone
@@ -30,6 +31,10 @@ NO_PREGAO = timedelta(minutes=15)
 FORA_DO_PREGAO = timedelta(hours=2)
 
 # Estado da última rodada, exposto em /api/coleta para diagnóstico.
+
+_backtest_rodando = False
+_backtest_lock = threading.Lock()
+
 estado: dict[str, str | None] = {
     "ultima_coleta": None,
     "ultimo_erro": None,
@@ -290,10 +295,29 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
             if nome == "consultor_historico":
                 from app.consultor import avaliador_historico
 
-                # Avaliador não roda bloqueante no fluxo para não estourar o limite de tempo
-                import threading
+                global _backtest_rodando
+                with _backtest_lock:
+                    ja_rodando = _backtest_rodando
+                    if not ja_rodando:
+                        _backtest_rodando = True
 
-                threading.Thread(target=avaliador_historico.rodar_backtest).start()
+                if ja_rodando:
+                    if estado_detalhes_manual is not None:
+                        estado_detalhes_manual.append(
+                            "consultor_historico: backtest anterior ainda em curso"
+                        )
+                else:
+
+                    def _wrapper_backtest():
+                        global _backtest_rodando
+                        try:
+                            avaliador_historico.rodar_backtest()
+                        finally:
+                            with _backtest_lock:
+                                _backtest_rodando = False
+
+                    t = threading.Thread(target=_wrapper_backtest, daemon=True)
+                    t.start()
 
             duracao = std_time.perf_counter() - start_time
             try:

@@ -483,3 +483,5 @@ Página Inicial Sem Bloquear (spec 130)
 - `index` roda sincronamente em threadpool do FastAPI.
 - Em requisições de página, todos os painéis para a dada data de referência são lidos do banco em uma única consulta e oxigenados num cache restrito ao tempo de vida da requisição (usando `contextvars`), não bloqueando o backend de processar novas rotas (como o `/healthz`).
 - **127**: O `/api/coleta` agora exige senha e mostra corretamente os dados (`ligada`, `banco`, `aviso`). O `/api/consultor` exibe `cache: true/false` corretamente com base no uso real do cache (não mais copiado incorretamente do escopo global).
+
+- Spec 126a (Agendador sem trabalho repetido): backtest do Consultor roda exatamente uma vez por coleta.
