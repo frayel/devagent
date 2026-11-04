@@ -18,7 +18,7 @@ def obter_referencia(evitar):
             continue
 ```
 
-`evitar` recebe o rótulo de fonte que o painel declara (`painel.fonte`, linha 811), e os rótulos reais são `mt5`, `yfinance`, `brapi` e `mt5+yfinance` (`app/collectors/mt5.py:161`). Os nomes das funções são `ref_yahoo` e `ref_stooq`. `"yfinance" in "ref_yahoo"` é falso, então, quando o produto declara `yfinance`, o Yahoo **não é pulado** e é usado como "fonte independente" contra um dado que veio do Yahoo. O mesmo vale para `mt5+yfinance`. Só o texto literal `yahoo` casaria, e nenhum rótulo real o usa.
+`evitar` recebe o rótulo de fonte que o painel declara (`painel.fonte`, linha 811), e os rótulos reais são `mt5`, `yfinance` e `mt5+yfinance` (`app/collectors/mt5.py:161`). Os nomes das funções são `ref_yahoo` e `ref_stooq`. `"yfinance" in "ref_yahoo"` é falso, então, quando o produto declara `yfinance`, o Yahoo **não é pulado** e é usado como "fonte independente" contra um dado que veio do Yahoo. O mesmo vale para `mt5+yfinance`. Só o texto literal `yahoo` casaria, e nenhum rótulo real o usa.
 
 Nesse caso a checagem `ibov.confere_com_fonte` compara o Yahoo com ele mesmo e passa, por construção. O achado de 26/10 (`docs/auditoria/achados/2026-10-26-ibov-variacao-implausivel.md`) cita exatamente uma "conferência com Yahoo Finance" como confirmação.
 
@@ -30,7 +30,7 @@ Nesse caso a checagem `ibov.confere_com_fonte` compara o Yahoo com ele mesmo e p
    | `ref_yahoo` | `yfinance`, `yahoo` |
    | `ref_stooq` | `stooq` |
 
-   `mt5` e `brapi` não excluem nenhuma das duas, porque são outras origens.
+   `mt5` não exclui nenhuma das duas, porque é outra origem.
 2. `obter_referencia(evitar)` quebra o rótulo em partes por `+`, normaliza para minúsculas e pula toda referência cuja lista de exclusão cruze com essas partes. Rótulo desconhecido não pula nada, e o resultado carrega um aviso `fonte do produto desconhecida: <rótulo>`, visível no detalhe do resultado.
 3. O detalhe de `ibov.confere_com_fonte`, `ibov.historico_confere` e das checagens novas da spec 138 passa a mostrar as duas pontas: `produto: <rótulo>; referência: <nome>`.
 4. Se todas as referências forem excluídas, vale o comportamento que já existe: `ibov.fonte_independente` fica `inconclusivo` com os motivos. Uma referência não independente nunca vira `OK`.
@@ -47,7 +47,7 @@ Nenhum.
 ## Critérios de aceite
 - [ ] `obter_referencia("yfinance")` pula `ref_yahoo` e devolve a referência do Stooq (as duas funções trocadas por falsas no teste).
 - [ ] `obter_referencia("mt5+yfinance")` pula `ref_yahoo`.
-- [ ] `obter_referencia("mt5")` e `obter_referencia("brapi")` usam `ref_yahoo` primeiro.
+- [ ] `obter_referencia("mt5")` usa `ref_yahoo` primeiro.
 - [ ] `obter_referencia("yfinance")` com o Stooq fora do ar devolve `(None, erros)`, e `checar_referencia` produz `ibov.fonte_independente` como `inconclusivo`, sem nenhum `OK`.
 - [ ] Rótulo desconhecido (`"xpto"`) não pula nada e aparece como aviso no detalhe.
 - [ ] O detalhe de `ibov.confere_com_fonte` contém `produto: yfinance` e o nome da referência usada.
