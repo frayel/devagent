@@ -14,12 +14,16 @@ class PoolFalso:
     """Imita o `ConnectionPool`: reaproveita conexões devolvidas, até `max_size`."""
 
     def __init__(self, max_size: int = banco.POOL_MAX):
+        self.aberto = False
         self.max_size = max_size
         self.livres: list = []
         self.emprestadas: set = set()
         self.conectadas = 0
         self.devolvidas = 0
         self.fechado = False
+
+    def open(self, wait=True):
+        self.aberto = True
 
     def _conectar(self):
         self.conectadas += 1
@@ -71,6 +75,11 @@ def test_quarenta_leituras_abrem_no_maximo_cinco_conexoes(pool):
         assert banco.ler_snapshot("ibovespa", date(2026, 10, 29)) == {"valor": 1}
     assert 1 <= pool.conectadas <= 5
     assert pool.devolvidas == 40
+
+
+def test_abrir_pool_abre_assincrono(pool):
+    banco.abrir_pool()
+    assert pool.aberto
 
 
 def test_close_devolve_ao_pool_sem_fechar(pool):
