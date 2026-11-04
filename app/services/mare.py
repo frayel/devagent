@@ -106,9 +106,11 @@ def volatilidades(fechamentos: list[float]) -> list[float | None]:
     """
     retornos: list[float | None] = [None]
     for anterior, atual in zip(fechamentos, fechamentos[1:]):
-        retornos.append(
-            math.log(atual / anterior) if anterior > 0 and atual > 0 else None
-        )
+        if anterior > 0 and atual > 0:
+            r = math.log(atual / anterior)
+            retornos.append(r if abs(r) < 0.12 else None)
+        else:
+            retornos.append(None)
     saida: list[float | None] = []
     for i in range(len(fechamentos)):
         trecho = retornos[i - JANELA_VOLATILIDADE + 1 : i + 1] if i >= 1 else []
