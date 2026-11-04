@@ -133,6 +133,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 @app.middleware("http")
 async def limit_request_size(request: Request, call_next):
+
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > 1_000_000:  # 1MB limit
         return PlainTextResponse("Payload Too Large", status_code=413)
@@ -914,7 +915,10 @@ def snapshot(
 
     import app.banco
 
-    with app.banco.lendo_pregao(data_ref if is_historical else None):
+    with (
+        app.banco.lendo_pregao(data_ref if is_historical else None),
+        app.banco.req_snapshot_cache_ctx(),
+    ):
         resp: dict[str, Any] = {
             "gerado_em": agora.isoformat(),
             "estado_mercado": estado_mercado,
