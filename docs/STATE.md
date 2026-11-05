@@ -12,6 +12,7 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Saúde Técnica] Spec 132a - Leitura tolerante de consenso (JSON, dict, texto) implementada e `ast.literal_eval` removido de `app/main.py`.
 
 - Spec 131: Histórico do Consultor sem consultas repetidas por recomendação
   - contador de painéis: 1

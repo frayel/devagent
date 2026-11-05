@@ -1,7 +1,7 @@
 ---
 id: 132a
 titulo: Leitura do consenso e remoção de literal_eval em main.py
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_132a.py
