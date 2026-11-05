@@ -13,6 +13,9 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
 
 ## Implementado
 
+- Spec 131: Histórico do Consultor sem consultas repetidas por recomendação
+  - contador de painéis: 1
+
 - Remoção da brapi.dev (04/11/2026, a pedido do dono do produto):
   - Saíram `app/collectors/brapi.py`, os ramos `fetch_brapi` de Ibovespa, maiores altas e baixas, coesão, concentração setorial, fator mola, radar de spread, Maré e concentração de ordens, a variável `BRAPI_TOKEN` e o item brapi da `/sistema`.
   - As fontes de mercado passam a ser MetaTrader 5 (preferencial) e Yahoo Finance. O número de negócios do Termômetro de Concentração de Ordens vem só do MT5; sem ele, o painel mostra Dados indisponíveis.
