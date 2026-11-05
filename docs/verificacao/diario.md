@@ -1,3 +1,7 @@
+- Verifiquei o PR 765 (evitar interrupção por coletor falho).
+- O PR introduziu blocos try-except robustos em app/agendador.py, mas gerou o achado 2026-11-05-agendador-mascara-excecao devido ao silenciamento e sobreposição de erros sistêmicos em `ultimo_erro` e `estado_detalhes_manual`.
+- Próxima verificação: analisar aderência à resiliência mantendo a observabilidade das falhas sistêmicas.
+
 - O PR 489 implementou a Spec 086 com sucesso, provendo os timestamps reais para a página do consultor e os avisos de defasagem de sinais e opiniões. O teste de aceite da spec 086 foi incluído no commit e passou, bem como os avisos constam nas telas e nas rotas da API.
 - Confirmada a resolução dos achados 'radar-exaustao-alta' (PR anterior) e 'spec-086-nao-implementada' (PR 489).
 - Sem problemas de segurança identificados.
