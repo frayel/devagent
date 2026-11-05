@@ -151,3 +151,11 @@ def test_payload_ok():
     response = client.post("/healthz", data="ok")
     # O método POST não é permitido em /healthz, mas não deve cair em 413
     assert response.status_code == 405
+
+
+def test_literal_eval_removed():
+    with open("app/main.py", "r") as f:
+        content = f.read()
+    assert "literal_eval" not in content, (
+        "literal_eval should not be present in app/main.py"
+    )

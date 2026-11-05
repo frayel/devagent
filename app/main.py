@@ -418,12 +418,12 @@ def pagina_consultor(
                 if group not in resultados:
                     resultados[group] = []
                 # map consensus back, and format
-                import ast
+                import json
 
                 consenso_dict = {}
                 try:
                     if row["consenso"]:
-                        consenso_dict = ast.literal_eval(row["consenso"])
+                        consenso_dict = json.loads(row["consenso"])
                 except Exception:
                     pass
 
@@ -662,7 +662,6 @@ def api_consultor(
                 "No radar": [],
                 "Sem sinal": [],
             }
-            import ast
             from app.consultor.armazenamento import get_connection, init_db
             from app.consultor.placar import _calcular_excesso
 
@@ -692,10 +691,12 @@ def api_consultor(
                 group = row["decisao"]
                 if group not in resultados:
                     resultados[group] = []
+                import json
+
                 consenso_dict = {}
                 try:
                     if row["consenso"]:
-                        consenso_dict = ast.literal_eval(row["consenso"])
+                        consenso_dict = json.loads(row["consenso"])
                 except Exception:
                     pass
                 resultados[group].append(
