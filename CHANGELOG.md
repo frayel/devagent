@@ -149,6 +149,7 @@
 ### Changed
 - agent: `docs/DESIGN.md` reduz o gráfico do Ibovespa para 200px e proíbe eixo Y de preço começando em zero (vai de 2% abaixo do mínimo do período), a pedido do dono do produto.
 ### Fixed
+- spec 132b: Gravação do consenso em JSON no coletor implementada.
 - fix: Implementa de fato a Spec 086 com datas reais e painel de defasagem (Closes #488).
 - fix: JSON cru em 8 painéis e painel Ação Órfã sem tabela, ordenação nem critério
 - fix: a Calma da Maré do mercado (Spec 027) passa a medir só a volatilidade de queda (semidesvio com alvo zero). Com o desvio-padrão comum, a alta de 7,42% do Ibovespa em 05/10/2026 zerava a Calma e deixava a Maré em Medo (25) no dia seguinte a uma alta histórica.
@@ -160,6 +161,7 @@
 - Spec 046: Fator Peso Pesado (painel de contribuição das 5 maiores ações)
 - feat: Maré do mercado (Spec 027), índice de otimismo de 0 a 100 ao lado do Ibovespa: Fluxo (40%, volume financeiro em ações que sobem), Calma (35%, percentil da volatilidade de 10 pregões do Ibovespa) e Volume (25%, ritmo contra a média de 21 pregões no sentido da maioria). Gauge com as cinco faixas (Pânico, Medo, Neutro, Confiança, Otimismo extremo), barras dos componentes, linha dos últimos 21 pregões e selo `parcial` quando falta um componente. Chave `mare` no `/api/snapshot` e invariantes no auditor (`checar_mare`). Tendência, Dispersão e Coesão passam para a linha seguinte.
 ### Fixed
+- spec 132b: Gravação do consenso em JSON no coletor implementada.
 - agent: PR vazio não entra mais. O #171 ("Spec 027a") chegou sem nenhum arquivo, passou no CI e foi mergeado; a Maré do mercado continua sem implementação e a spec 027 segue `ready` na seção Correções. Regra 5 em `devagent/conferir_pr.py` (reprova PR sem alteração em `pull_request` ou com `--exigir-alteracao`) e segunda trava no `automerge.yml`, que fecha o PR vazio sem merge.
 ### Added
 - Migração de tabelas de cache para `snapshots_paineis` (Spec 075a).
@@ -207,6 +209,7 @@
 - feat: Implementa painéis de "Tendência (Ibovespa)" com médias móveis de curto e longo prazo (Spec 003).
 - feat: Implementa painéis de Maiores Altas e Maiores Baixas (Spec 002).
 ### Fixed
+- spec 132b: Gravação do consenso em JSON no coletor implementada.
 - fix: Implementa testes para o endpoint `/api/snapshot` conforme contrato do auditor de produção e registra a conclusão no backlog.
 - test(highlights): Adiciona cobertura para os critérios da spec 002 marcados como sem teste: testa comportamento com menos de 5 ativos, testa a presença da fonte no template da página, e valida a ordenação do ranking de maiores altas e maiores baixas. Testes de maiores altas e baixas não levam mais 2 minutos após isolamento com monkeypatch.
 - Maiores altas e baixas vazias com `BRAPI_TOKEN`: o plano gratuito da brapi não aceita 30 ativos numa chamada. O coletor passa a usar `/api/quote/list` (uma chamada, sem token), com ranking entre as 100 ações mais negociadas do dia; Yahoo continua como reserva.
