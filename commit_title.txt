@@ -1,1 +1,1 @@
-fix: impede escalonamento de histórico de pregões Closes #656
+fix: evitar que erro em um coletor interrompa a coleta inteira
