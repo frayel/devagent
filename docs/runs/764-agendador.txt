@@ -1,0 +1,14 @@
+## Execução 764
+
+A auditoria reprovou `ibov.coleta_recente` com atraso de mais de 24 horas porque o Render hiberna o serviço da aplicação durante inatividade.
+Isso expôs a fragilidade no agendador de coleta:
+1. Qualquer falha dentro do laco_de_coleta causava o crash da thread assíncrona inteira, impedindo coletas futuras no mesmo container até o reinício.
+2. Adicionamos `try..except` envolvendo a chamada `_coletar` para não matar a thread em falhas fatais do banco de dados.
+3. Adicionamos `try..except` no laço dos módulos, garantindo que se o `ibovespa` falhar de coletar (ou erro no módulo/banco para ele), os demais painéis (`mare`, `highlights`) ainda rodam normalmente no mesmo loop.
+4. Como a pausa prolongada depende do provedor externo, incluímos instrução no PR para configurar pings `/healthz` via UptimeRobot.
+
+Decisões Conservadoras:
+- Não alteramos o limite da auditoria (mantido em 45 minutos).
+- Não alteramos o tempo de espera no carregamento inicial (`espera_sem_dados`).
+
+Com isso a estabilidade da thread é restaurada.

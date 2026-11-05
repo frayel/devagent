@@ -475,3 +475,54 @@ def test_consultor_historico_backtest_roda_em_thread(monkeypatch):
 
     assert len(threads_iniciadas) == 1
     assert chamadas_backtest[0] != "MainThread"
+
+
+def test_falha_em_um_coletor_nao_interrompe_outros_exception(monkeypatch):
+    from app.agendador import _coletar
+
+    coletados = []
+
+    # Simulamos que banco e datetime não lançam erro
+    monkeypatch.setattr("app.banco.ler_snapshot", lambda *args, **kwargs: None)
+
+    # Vamos mockar importlib.import_module para lançar erro no ibovespa, mas passar no mare
+
+    def mock_import_module(name, *args, **kwargs):
+        if name == "app.collectors.ibovespa":
+            raise Exception("Falha simulada no ibovespa")
+        elif name == "app.collectors.highlights":
+
+            class FakeCollector:
+                def collect_and_save(self):
+                    coletados.append("highlights")
+                    return True
+
+            return FakeCollector()
+        else:
+
+            class FakeCollector:
+                def collect_and_save(self):
+                    return True
+
+            return FakeCollector()
+
+    import importlib
+
+    original_import_module = importlib.import_module
+
+    def selective_mock_import(name, *args, **kwargs):
+        if name == "app.collectors.ibovespa":
+            return mock_import_module(name, *args, **kwargs)
+        elif name.startswith("app.collectors"):
+            return mock_import_module(name, *args, **kwargs)
+        return original_import_module(name, *args, **kwargs)
+
+    monkeypatch.setattr("importlib.import_module", selective_mock_import)
+
+    monkeypatch.setattr("app.calendario.mercado_aberto", lambda x: True)
+
+    detalhes = []
+    _coletar(detalhes)
+
+    assert "highlights" in coletados
+    assert any("ibovespa: erro fatal" in d for d in detalhes)
