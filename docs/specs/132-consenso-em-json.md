@@ -1,12 +1,18 @@
 ---
 id: 132
 titulo: Consenso das recomendações gravado em JSON
-status: ready
+status: draft
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_132.py
 revisada: 2026-10-28
 ---
+
+## Revisão
+Esta spec foi dividida para diminuir o risco de regressões e falhas nos testes em função do escopo excessivo (Issue #759). As novas partes são:
+- **132a**: Leitura tolerante de consenso (JSON, fallback para texto ou dict via ast) e remoção de literal_eval de app/main.py.
+- **132b**: Gravação de novos consensos diretamente em JSON no banco.
+- **132c**: Migração (idempotente) de registros antigos em init_db para converter strings de dict Python para JSON.
 
 ## Problema
 `app/collectors/consultor_fechamento.py` grava o consenso das casas com `"consenso": str(item.get("consenso", ""))`, ou seja, o `repr` de um dicionário Python. A leitura em `app/main.py` (rotas `/consultor` e `/api/consultor`, ramo histórico) desfaz isso com `ast.literal_eval` e engole qualquer erro com `except: pass`.
