@@ -212,35 +212,35 @@ def init_db():
                     "ALTER TABLE consultor_fila_materias ADD COLUMN processada INTEGER DEFAULT 0"
                 )
             except Exception as e:
-                print('ALTER EXCEPTION:', e)
+                print("ALTER EXCEPTION:", e)
                 pass
             try:
                 cursor.execute(
                     "ALTER TABLE consultor_opinioes_status ADD COLUMN ultima_extracao_em TEXT"
                 )
             except Exception as e:
-                print('ALTER EXCEPTION:', e)
+                print("ALTER EXCEPTION:", e)
                 pass
             try:
                 cursor.execute(
                     "ALTER TABLE consultor_opinioes_status ADD COLUMN materias_processadas INTEGER DEFAULT 0"
                 )
             except Exception as e:
-                print('ALTER EXCEPTION:', e)
+                print("ALTER EXCEPTION:", e)
                 pass
             try:
                 cursor.execute(
                     "ALTER TABLE consultor_opinioes_status ADD COLUMN opinioes_gravadas INTEGER DEFAULT 0"
                 )
             except Exception as e:
-                print('ALTER EXCEPTION:', e)
+                print("ALTER EXCEPTION:", e)
                 pass
             try:
                 cursor.execute(
                     "ALTER TABLE consultor_opinioes_status ADD COLUMN descartadas INTEGER DEFAULT 0"
                 )
             except Exception as e:
-                print('ALTER EXCEPTION:', e)
+                print("ALTER EXCEPTION:", e)
                 pass
             conn.commit()
 
@@ -280,7 +280,7 @@ def init_db():
                         (novo_consenso, id_rec),
                     )
             except Exception as e:
-                print('ALTER EXCEPTION:', e)
+                print("ALTER EXCEPTION:", e)
                 pass
         conn.commit()
     except Exception:

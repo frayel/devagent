@@ -21,6 +21,7 @@ def setup_db(monkeypatch, tmp_path):
     app.database.init_db()
 
     import app.consultor.armazenamento
+
     app.consultor.armazenamento.reset_db_init()
 
     # O MT5 só entra nos testes que o configuram de propósito.
