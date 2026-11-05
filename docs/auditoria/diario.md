@@ -6,3 +6,4 @@ Memória entre execuções do auditor LLM. No máximo 20 linhas: condense em vez
 - 2026-10-29 · Produção estava inacessível (HTTP 500) e reportado. Porém, em nova verificação no mesmo dia, os endpoints retornaram HTTP 200 (site funcional) e as chaves de `api/snapshot` ausentes foram corrigidas. Ambos achados abertos foram marcados como resolvidos.
 - 2026-10-30 · Implementada invariante para o contrato do snapshot (`api.contrato_chaves`) em `auditoria/auditar.py` e teste unitário adicionado. Sem falhas reportadas.
 - 2026-11-03 · Detectado componente Calma zerado (0) na Maré do Mercado, contrariando o histórico e a regra de ignorar altas fortes. Registrado como achado.
+- 2026-11-05 · O achado da Maré (componente Calma) zerada não reproduz mais. Marcado como resolvido. Nenhuma falha encontrada na auditoria de hoje.

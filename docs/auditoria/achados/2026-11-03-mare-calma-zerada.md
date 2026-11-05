@@ -2,7 +2,7 @@
 id: 2026-11-03-mare-calma-zerada
 severidade: media
 painel: mare
-status: aberto
+status: resolvido
 visto_em: 2026-11-03T00:15-03:00
 ---
 
@@ -36,3 +36,6 @@ No `api/snapshot`:
 
 ## Invariante proposta
 Verificar se o valor do componente Calma sofre quedas abruptas a zero em dias de alta forte do Ibovespa.
+
+## Resolução
+Marcado como resolvido em 2026-11-05. A auditoria de produção não acusou mais falhas, e o componente Maré está de acordo com as regras.
