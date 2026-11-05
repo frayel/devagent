@@ -89,3 +89,7 @@
 - Encontrei que o disjuntor fura o cache do `_diagnostico_cache`, causando estado stale do banco de dados na página de diagnóstico.
 - Criei achado de severidade média/alta sobre `_diagnostico_cache`.
 - Próxima execução: verificar se o diagnóstico foi arrumado e reflete o banco em tempo real quando há falha.
+- Verifiquei os PRs #753, #754, e #755 na main.
+- O PR 753 arrumou adequadamente o alerta de disjuntor da página sistema, o que marca o achado 2026-11-04-diagnostico-cache como resolvido. O PR 754 foi implementado corretamente (Otimização do Histórico do consultor para N+1 queries).
+- A Spec 132 pelo PR 755 introduziu persistência de recomendações em JSON mas quebrou o critério de aceite (ainda utiliza `literal_eval` para ler JSON no cache dentro da rota do `app/main.py`). Criei achado de severidade média.
+- Próxima execução: Focar nos reflexos disso nas migrações em `init_db` e confirmar o compliance dos retornos e chaves para PRs a frente.
