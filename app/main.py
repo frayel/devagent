@@ -418,14 +418,9 @@ def pagina_consultor(
                 if group not in resultados:
                     resultados[group] = []
                 # map consensus back, and format
-                import json
+                from app.consultor.armazenamento import ler_consenso
 
-                consenso_dict = {}
-                try:
-                    if row["consenso"]:
-                        consenso_dict = json.loads(row["consenso"])
-                except Exception:
-                    pass
+                consenso_dict = ler_consenso(row["consenso"])
 
                 resultados[group].append(
                     {
@@ -691,14 +686,9 @@ def api_consultor(
                 group = row["decisao"]
                 if group not in resultados:
                     resultados[group] = []
-                import json
+                from app.consultor.armazenamento import ler_consenso
 
-                consenso_dict = {}
-                try:
-                    if row["consenso"]:
-                        consenso_dict = json.loads(row["consenso"])
-                except Exception:
-                    pass
+                consenso_dict = ler_consenso(row["consenso"])
                 resultados[group].append(
                     {
                         "ticker": row["ticker"],

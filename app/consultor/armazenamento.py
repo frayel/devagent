@@ -1,3 +1,7 @@
+import ast
+import logging
+
+
 import json
 from datetime import datetime, timezone, timedelta
 
@@ -600,3 +604,29 @@ def get_recomendacoes(data_referencia: str) -> list[dict]:
         return result
     finally:
         conn.close()
+
+
+def ler_consenso(bruto: str) -> dict | str:
+    if not bruto:
+        return {}
+
+    # 1. Tentar JSON
+    try:
+        resultado = json.loads(bruto)
+        return resultado
+    except Exception:
+        pass
+
+    # 2. Tentar formato antigo (ast.literal_eval)
+    try:
+        resultado = ast.literal_eval(bruto)
+        if isinstance(resultado, dict):
+            return resultado
+    except Exception:
+        pass
+
+    # 3. Fallback: string original com um aviso
+    logging.warning(
+        f"Consenso lido em formato texto, não é JSON nem dict Python: {bruto!r}"
+    )
+    return bruto
