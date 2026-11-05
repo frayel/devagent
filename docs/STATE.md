@@ -14,7 +14,8 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
 ## Implementado
 
 - Spec 131: Histórico do Consultor sem consultas repetidas por recomendação
-  - contador de painéis: 1
+  - contador de painéis
+- Spec 132: Implementado o formato de consenso usando JSON nativo: 1
 
 - Remoção da brapi.dev (04/11/2026, a pedido do dono do produto):
   - Saíram `app/collectors/brapi.py`, os ramos `fetch_brapi` de Ibovespa, maiores altas e baixas, coesão, concentração setorial, fator mola, radar de spread, Maré e concentração de ordens, a variável `BRAPI_TOKEN` e o item brapi da `/sistema`.
@@ -168,7 +169,8 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
 - Spec 035 (Setor Líder por Volume Financeiro):
   - Adicionado setor líder por volume e valor financeiro ao painel "Concentração Setorial" na visão macro.
   - Banco de dados SQLite (`concentracao_setorial_cache`) e `/api/snapshot` atualizados.
-  - O contador de painéis, seções ou telas acrescentados permanece em 0, pois a UI foi integrada num painel existente.
+  - O contador de painéis
+- Spec 132: Implementado o formato de consenso usando JSON nativo, seções ou telas acrescentados permanece em 0, pois a UI foi integrada num painel existente.
 - Spec 034 (Minimização de Painéis Indisponíveis):
   - Adicionada classe `.escondido` com `display: none` no CSS.
   - Painéis "Concentração Setorial", "Concentração de Ganhos" e "Anomalia de Peso" agora são ocultados da UI se estiverem sem dados para economizar espaço de tela, mantendo `/api/snapshot` intacto.

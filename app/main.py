@@ -401,7 +401,7 @@ def pagina_consultor(
 
     try:
         if is_historical:
-            from app.consultor.armazenamento import get_recomendacoes
+            from app.consultor.armazenamento import get_recomendacoes, ler_consenso
 
             hist = get_recomendacoes(target_data or "")
 
@@ -418,14 +418,10 @@ def pagina_consultor(
                 if group not in resultados:
                     resultados[group] = []
                 # map consensus back, and format
-                import ast
 
-                consenso_dict = {}
-                try:
-                    if row["consenso"]:
-                        consenso_dict = ast.literal_eval(row["consenso"])
-                except Exception:
-                    pass
+                consenso_dict = (
+                    ler_consenso(row["consenso"]) if row.get("consenso") else {}
+                )
 
                 resultados[group].append(
                     {
@@ -440,7 +436,11 @@ def pagina_consultor(
                         "mensagem_confianca": "histórico indisponível (pregão passado)",
                     }
                 )
-                from app.consultor.armazenamento import get_connection, init_db
+                from app.consultor.armazenamento import (
+                    get_connection,
+                    init_db,
+                    ler_consenso,
+                )
                 from app.consultor.placar import _calcular_excesso
 
                 init_db()
@@ -662,8 +662,11 @@ def api_consultor(
                 "No radar": [],
                 "Sem sinal": [],
             }
-            import ast
-            from app.consultor.armazenamento import get_connection, init_db
+            from app.consultor.armazenamento import (
+                get_connection,
+                init_db,
+                ler_consenso,
+            )
             from app.consultor.placar import _calcular_excesso
 
             init_db()
@@ -692,12 +695,11 @@ def api_consultor(
                 group = row["decisao"]
                 if group not in resultados:
                     resultados[group] = []
-                consenso_dict = {}
-                try:
-                    if row["consenso"]:
-                        consenso_dict = ast.literal_eval(row["consenso"])
-                except Exception:
-                    pass
+
+                consenso_dict = (
+                    ler_consenso(row["consenso"]) if row.get("consenso") else {}
+                )
+
                 resultados[group].append(
                     {
                         "ticker": row["ticker"],

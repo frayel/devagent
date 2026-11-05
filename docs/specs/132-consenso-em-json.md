@@ -1,7 +1,7 @@
 ---
 id: 132
 titulo: Consenso das recomendações gravado em JSON
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_132.py

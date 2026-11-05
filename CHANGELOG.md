@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Consenso gravado em JSON (Spec 132)
 - Spec 131: Histórico do Consultor sem consultas repetidas por recomendação
 - Spec 126a: Agendador sem trabalho repetido (backtest único).
 - **Fontes**: a brapi.dev foi removida. O MetaTrader 5 é a fonte preferencial e o Yahoo Finance a reserva; o Termômetro de Concentração de Ordens depende só do MT5. A variável `BRAPI_TOKEN` deixa de existir e pode ser apagada do painel do Render.

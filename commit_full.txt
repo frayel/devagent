@@ -1,0 +1,6 @@
+feat: gravar e ler consenso de recomendação em formato JSON (Spec 132)
+
+Closes #703
+
+Tamanho: 3 arquivos de código e 1 de teste (grep -rl MOCK tests)
+Já no código: não

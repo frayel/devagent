@@ -1,4 +1,5 @@
 import logging
+import json
 from app.consultor.calculador import calcular_consultor
 from app.consultor.armazenamento import save_recomendacoes, save_fechamentos
 
@@ -21,7 +22,11 @@ def collect_and_save() -> bool:
                         "timestamp": item["timestamp"],
                         "decisao": group_name,
                         "regra": item["regra"],
-                        "consenso": str(item.get("consenso", "")),
+                        "consenso": json.dumps(
+                            item.get("consenso", ""), ensure_ascii=False
+                        )
+                        if item.get("consenso") != ""
+                        else "",
                         "preco": item.get("fechamento", 0.0),
                         "gatilho": str(item.get("gatilho", "-")),
                     }

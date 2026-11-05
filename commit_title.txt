@@ -1,1 +1,1 @@
-fix: impede escalonamento de histórico de pregões Closes #656
+feat: gravar e ler consenso de recomendação em formato JSON (Spec 132)

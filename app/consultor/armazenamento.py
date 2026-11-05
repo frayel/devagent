@@ -3,6 +3,25 @@ from datetime import datetime, timezone, timedelta
 
 from app.banco import get_connection
 
+import ast
+import logging
+from typing import Any
+
+logger = logging.getLogger(__name__)
+
+
+def ler_consenso(bruto: str) -> Any:
+    if not bruto:
+        return ""
+    try:
+        return json.loads(bruto)
+    except Exception:
+        try:
+            return ast.literal_eval(bruto)
+        except Exception:
+            logger.warning("Falha ao ler consenso como JSON ou literal_eval: %r", bruto)
+            return bruto
+
 
 def sql_para(backend: str, sqlite_sql: str) -> str:
     """Substitui `?` por `%s` se for postgres, senao mantem."""
@@ -219,10 +238,52 @@ def init_db():
             except Exception:
                 pass
             conn.commit()
+
+    except Exception:
+        pass
+
+    finally:
+        conn.close()
+
+    try:
+        # Migração 132: reescrever consensos antigos como JSON (apenas onde o formato antigo é óbvio)
+        conn, backend = get_connection()
+        cursor = conn.cursor()
+        if backend == "postgres":
+            cursor.execute(
+                "SELECT id, consenso FROM consultor_recomendacoes WHERE consenso LIKE '{''%'"
+            )
+        else:
+            cursor.execute(
+                "SELECT id, consenso FROM consultor_recomendacoes WHERE consenso LIKE '{''%'"
+            )
+
+        rows = cursor.fetchall()
+        for row in rows:
+            id_rec = row[0]
+            consenso_str = row[1]
+            try:
+                parsed = ast.literal_eval(consenso_str)
+                novo_consenso = json.dumps(parsed, ensure_ascii=False)
+                if backend == "postgres":
+                    cursor.execute(
+                        "UPDATE consultor_recomendacoes SET consenso = %s WHERE id = %s",
+                        (novo_consenso, id_rec),
+                    )
+                else:
+                    cursor.execute(
+                        "UPDATE consultor_recomendacoes SET consenso = ? WHERE id = ?",
+                        (novo_consenso, id_rec),
+                    )
+            except Exception:
+                pass
+        conn.commit()
     except Exception:
         pass
     finally:
         conn.close()
+
+    _consultor_db_initialized = True
 
 
 def save_materia(
@@ -313,7 +374,7 @@ def save_materia(
                 """
             )
             conn.commit()
-        _consultor_db_initialized = True
+
     finally:
         conn.close()
 
