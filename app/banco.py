@@ -717,6 +717,7 @@ def diagnostico() -> dict:
         _diagnostico_cache
         and _diagnostico_cache_time
         and (agora - _diagnostico_cache_time < 300)
+        and not _disjuntor_aberto_desde
     ):
         return _diagnostico_cache
 

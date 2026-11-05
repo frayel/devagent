@@ -2,7 +2,7 @@
 id: 2026-11-04-diagnostico-cache
 severidade: media
 painel: app/banco.py diagnostico
-status: aberto
+status: resolvido
 visto_em: 2026-11-04T18:45-03:00
 pr: 744
 ---

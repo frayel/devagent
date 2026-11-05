@@ -77,3 +77,24 @@ def test_sql_generation_postgres(monkeypatch):
     assert params[2] == "e"
     assert params[3] == "f"
     assert params[4] == '{"a": 1}'
+
+
+def test_diagnostico_cache_bypass(monkeypatch):
+    import time
+    from app.banco import diagnostico, DBInacessivelError
+    import app.banco
+
+    monkeypatch.setattr(
+        app.banco, "_diagnostico_cache", {"tipo": "Postgres", "tamanho": "10 MB"}
+    )
+    monkeypatch.setattr(app.banco, "_diagnostico_cache_time", time.time())
+    monkeypatch.setattr(app.banco, "_disjuntor_aberto_desde", "10:00")
+
+    def mock_get_connection():
+        raise DBInacessivelError("Disjuntor aberto")
+
+    monkeypatch.setattr(app.banco, "get_connection", mock_get_connection)
+
+    result = diagnostico()
+    assert "erro" in result
+    assert result["erro"] == "Postgres configurado e inacessível desde 10:00"
