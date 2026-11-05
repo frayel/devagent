@@ -1,7 +1,7 @@
 ---
 id: 132b
 titulo: Gravação do consenso em JSON no coletor
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_132b.py
