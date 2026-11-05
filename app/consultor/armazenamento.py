@@ -211,31 +211,36 @@ def init_db():
                 cursor.execute(
                     "ALTER TABLE consultor_fila_materias ADD COLUMN processada INTEGER DEFAULT 0"
                 )
-            except Exception:
+            except Exception as e:
+                print('ALTER EXCEPTION:', e)
                 pass
             try:
                 cursor.execute(
                     "ALTER TABLE consultor_opinioes_status ADD COLUMN ultima_extracao_em TEXT"
                 )
-            except Exception:
+            except Exception as e:
+                print('ALTER EXCEPTION:', e)
                 pass
             try:
                 cursor.execute(
                     "ALTER TABLE consultor_opinioes_status ADD COLUMN materias_processadas INTEGER DEFAULT 0"
                 )
-            except Exception:
+            except Exception as e:
+                print('ALTER EXCEPTION:', e)
                 pass
             try:
                 cursor.execute(
                     "ALTER TABLE consultor_opinioes_status ADD COLUMN opinioes_gravadas INTEGER DEFAULT 0"
                 )
-            except Exception:
+            except Exception as e:
+                print('ALTER EXCEPTION:', e)
                 pass
             try:
                 cursor.execute(
                     "ALTER TABLE consultor_opinioes_status ADD COLUMN descartadas INTEGER DEFAULT 0"
                 )
-            except Exception:
+            except Exception as e:
+                print('ALTER EXCEPTION:', e)
                 pass
             conn.commit()
 
@@ -243,8 +248,6 @@ def init_db():
         pass
     finally:
         conn.close()
-
-    _consultor_db_initialized = True
 
     try:
         # Migração 132: reescrever consensos antigos como JSON (apenas onde o formato antigo é óbvio)
@@ -276,7 +279,8 @@ def init_db():
                         "UPDATE consultor_recomendacoes SET consenso = ? WHERE id = ?",
                         (novo_consenso, id_rec),
                     )
-            except Exception:
+            except Exception as e:
+                print('ALTER EXCEPTION:', e)
                 pass
         conn.commit()
     except Exception:
