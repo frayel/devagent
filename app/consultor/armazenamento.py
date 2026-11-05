@@ -241,9 +241,10 @@ def init_db():
 
     except Exception:
         pass
-
     finally:
         conn.close()
+
+    _consultor_db_initialized = True
 
     try:
         # Migração 132: reescrever consensos antigos como JSON (apenas onde o formato antigo é óbvio)
