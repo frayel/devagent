@@ -5,6 +5,7 @@ status: ready
 esforco: M
 gaveta: experiência
 aceite: tests/test_aceite_141.py
+revisada: 2026-11-06
 brief: P0-4
 depende_de: 077, 134
 ---
