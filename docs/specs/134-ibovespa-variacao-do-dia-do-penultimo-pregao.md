@@ -6,6 +6,7 @@ esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_134.py
 brief: P0-1
+revisada: 2026-11-06
 ---
 
 ## Problema
