@@ -2,10 +2,10 @@
 id: 134
 titulo: A variação do Ibovespa no painel é a do dia, não a de um ano atrás
 status: ready
-esforco: P
+esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_134.py
-revisada: 2026-11-03
+brief: P0-1
 ---
 
 ## Problema
@@ -55,7 +55,44 @@ MT5 respondendo no formato do Yahoo (`chart/^BVSP`, `range=1y`); plano B: o pró
 - Para confirmar o defeito antes do deploy: o `fechamento_anterior` atual em `/api/snapshot` deve estar perto do nível do Ibovespa de um ano atrás. A spec 138 transforma estas duas invariantes em checagens do auditor.
 
 ## Fora do escopo
-- Mudar o teto de variação diária (spec 136).
+- Mudar o teto de variação diária e as regras de gravar ou não acima de 10% e de 20% (spec 136). O sinal de revisão desta spec não apaga o número e não substitui a 136.
+- O catálogo de frases da manchete (spec 140). Esta spec só publica o sinal que a manchete consome.
+- O as-of da página inteira e o TTL dos outros cards (spec 141). O card do Ibovespa continua obrigado a dizer o pregão da própria variação.
 - Outros coletores com a mesma falha e o dublê do Yahoo (spec 135).
 - Checagens do auditor (specs 137 e 138).
 - Alterar `mt5.py`: ele imita o Yahoo de propósito, e o contrato do campo está provado em `tests/test_mt5.py:105`.
+- Buscar um feed de ajuste oficial da B3 que o repositório não tem.
+
+## Evidência histórica (brief P0-1)
+
+Em 05/11/2026, no ambiente publicado, o card foi observado em 167.627 pts, +16.923 (+11,23%), com fonte `mt5` e carimbo 04/11 15:10. Esses três números fecham entre si: 167.627 − 16.923 = 150.704 e 16.923 / 150.704 ≈ 11,23%. A aritmética interna do card, naquela observação, era consistente. O que não está confirmado é se 150.704 era o fechamento do pregão anterior, nem se o carimbo de 04/11 era o pregão que a tela chamava de hoje.
+
+Hipóteses a validar, não causa confirmada: base errada, fechamento antigo, janela ou índice trocados, fuso ou sessão desalinhados. A leitura de `chartPreviousClose` na seção Problema é o que o código faz hoje; ela não foi conferida contra o snapshot daquele horário. Issues abertas de frescor (#772, #764) são contexto, e esta spec não as fecha.
+
+O campo `revisada:` de 03/11/2026 foi retirado porque o texto abaixo ainda não passou pelo Revisor.
+
+## Sinal de revisão
+
+`pontos = último − fechamento do pregão regular anterior` e `percentual = pontos / fechamento do pregão regular anterior × 100`, como em `docs/context/dominio-b3.md` e em `app/services/ibovespa.py`. "Oficial", neste repositório, é o fechamento da sessão regular anterior do mesmo instrumento (`^BVSP` / `IBOV`), pela regra de `previous_close` já descrita acima. Não é `chartPreviousClose` de uma janela longa e não é um ajuste publicado pela B3.
+
+Constantes configuráveis, no coletor do Ibovespa: `LIMIAR_PCT_REVISAO = 3.0` e `LIMIAR_PONTOS_REVISAO = 5000`. Se `|percentual| > 3` ou `|pontos| >= 5000`, o card e `paineis.ibovespa` ganham `revisao_variacao: true` e um selo visível de revisão. O número continua na tela. O selo não é prova de dado errado e não autoriza apagar um pregão que tenha de fato andado isso. A spec 136 segue dona do que é gravado acima de 10% e do descarte acima de 20%.
+
+Enquanto `revisao_variacao` for verdadeiro, o card não usa tom de alta ou queda larga. A frase da manchete é da spec 140; o aceite desta spec só exige o booleano no snapshot e o selo no HTML.
+
+## Sessão, feriado e base ausente
+
+- O rodapé do card traz a fonte e o carimbo da coleta em `America/Sao_Paulo` (`dd/mm/aaaa HH:MM BRT`). O percentual diz o pregão da base e o pregão do último preço quando os dois não são o mesmo dia civil.
+- Pregão fechado, fim de semana ou feriado de `auditoria/calendario.py`: o card mostra o fechamento da última sessão, com a data dela. Não usa a palavra "hoje" para um número de sessão anterior.
+- Sem fechamento anterior, o card não publica `0%`. A variação fica em `estado('indisponivel')` e o preço último, se existir, permanece com a fonte. Hoje `app/services/ibovespa.py` cai em `0.0` quando `previous_close` é falso; o aceite cobre esse caso.
+- Falha da fonte: o último snapshot permanece com o carimbo original. A coleta que falha não avança `coletado_em`.
+
+## Critérios de aceite (expansão)
+- [ ] Fixture com último `131300`, fechamento anterior `130000`: pontos `+1.300`, percentual `+1,00%`, `revisao_variacao` falso (1% e 1.300 pontos ficam abaixo dos dois limiares).
+- [ ] Fixture com último `167627` e fechamento anterior `150704`: pontos `+16.923`, percentual `+11,23%`, `revisao_variacao` verdadeiro, e o HTML do card contém o selo de revisão e os dois números. O fixture reproduz a aritmética observada; não afirma que 150.704 era o fechamento de 03/11 ou de 04/11.
+- [ ] `|pontos| = 5000` com percentual de 2%: `revisao_variacao` verdadeiro. Percentual de 3,0% com 100 pontos: falso, porque o corte do percentual é estrito (`>`).
+- [ ] `previous_close` ausente: a página não contém `0,00%` no card do Ibovespa e o snapshot traz a variação nula, com estado indisponível.
+- [ ] Carimbo `2026-11-04T18:10:00Z` lido num instante de 05/11: o rodapé mostra `04/11/2026 15:10 BRT` e o texto do card não chama esse número de hoje.
+- [ ] Os critérios originais desta spec continuam valendo. `tests/test_aceite_134.py` começa com `exigir_spec_done("134")`.
+
+## Plano de validação
+`pytest -q tests/test_aceite_134.py tests/test_ibovespa.py` sem internet. No PR de implementação, uma passagem de manhã e outra de tarde do mesmo pregão, com o `/api/snapshot` real, confirma fonte, pregão e sinal; esta spec não traz essa captura. Causa raiz do +11,23% de 05/11 só entra no relatório de implementação se a evidência a sustentar.
