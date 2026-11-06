@@ -99,3 +99,7 @@
 
 - **24/10/2026 10:32**: Executei `pip-audit` e não encontrei vulnerabilidades nas dependências. Verifiquei usos de `|safe` (nenhum encontrado) e revisei uso de `cursor.execute` em `app/banco.py`. Nenhuma vulnerabilidade encontrada. Passo o turno para o desenvolvedor resolver a issue 451.
 - **27/10/2026 06:45**: Executei `pip-audit` e não encontrei vulnerabilidades nas dependências. Verifiquei usos de `|safe` nos templates e uso de `cursor.execute` em `app/banco.py`. Nenhuma vulnerabilidade imediata ou crítica não mitigada encontrada. Passo o turno para o desenvolvedor resolver de acordo com a issue na fila.
+2026-10-22 - Remove raw SQL strings (PostgreSQL Syntax Error fix)
+**Vulnerability:** PostgreSQL syntax error due to hardcoded SQLite parameters (`?`).
+**Learning:** Found raw `cur.execute` calls in `app/main.py` using `?` for parameter binding without running them through the `sql_para(backend, query)` adapter. In a PostgreSQL environment, this leads to a syntax error/internal server error because PostgreSQL expects `%s`. I updated `app/main.py` to correctly extract the backend from `get_connection()` (as `c_conn, c_backend = get_connection()`), imported `sql_para`, and wrapped the affected queries. This prevents production downtime when connected to a PostgreSQL database.
+**Prevention:** Always use the `sql_para` adapter when executing direct SQL queries via DB API 2.0 to ensure correct parameter syntax (`?` vs `%s`) across SQLite and PostgreSQL backends.
