@@ -1,3 +1,4 @@
+- **2026-11-06**: O PR #770 foi avaliado, mas a falha `ibov.coleta_do_ultimo_pregao` continua presente. Um achado (`2026-11-06-ibov-coleta-ultimo-pregao-race-condition.md`) foi aberto detalhando o defeito no agendador e no banco.
 - Verifiquei o PR 765 (evitar interrupção por coletor falho).
 - O PR introduziu blocos try-except robustos em app/agendador.py, mas gerou o achado 2026-11-05-agendador-mascara-excecao devido ao silenciamento e sobreposição de erros sistêmicos em `ultimo_erro` e `estado_detalhes_manual`.
 - Próxima verificação: analisar aderência à resiliência mantendo a observabilidade das falhas sistêmicas.
@@ -96,4 +97,3 @@
 - Verifiquei os PRs #753, #754, e #755 na main.
 - O PR 753 arrumou adequadamente o alerta de disjuntor da página sistema, o que marca o achado 2026-11-04-diagnostico-cache como resolvido. O PR 754 foi implementado corretamente (Otimização do Histórico do consultor para N+1 queries).
 - A Spec 132 pelo PR 755 introduziu persistência de recomendações em JSON mas quebrou o critério de aceite (ainda utiliza `literal_eval` para ler JSON no cache dentro da rota do `app/main.py`). Criei achado de severidade média.
-- Próxima execução: Focar nos reflexos disso nas migrações em `init_db` e confirmar o compliance dos retornos e chaves para PRs a frente.
