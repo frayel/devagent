@@ -2,10 +2,10 @@
 id: 135
 titulo: A variação diária das ações não usa o fechamento de 15 dias atrás
 status: ready
-esforco: M
+esforco: G
 gaveta: saúde técnica
 aceite: tests/test_aceite_135.py
-revisada: 2026-11-03
+brief: P0-3
 ---
 
 ## Problema
@@ -52,4 +52,40 @@ MT5 no formato do Yahoo (`spark`); plano B: o próprio Yahoo, como hoje.
 ## Fora do escopo
 - O Ibovespa (spec 134) e o teto de variação (spec 136).
 - Reescrever os coletores de `range=1d`, que estão corretos.
-- Mudar o tamanho das sparklines ou a janela de 15 dias, que continua servindo ao gráfico.
+- Mudar o tamanho das sparklines ou a janela de 15 dias, que continua servindo ao gráfico. O número ao lado da sparkline é o do dia; o nome acessível da sparkline diz a janela dela.
+- Um cadastro novo de proventos ou desdobramentos. O repositório não tem essa fonte; a quarentena não inventa o evento.
+- Apagar da tela um movimento que a segunda fonte confirmou.
+
+## Evidência histórica (brief P0-3)
+
+Em 05/11/2026 foram observadas, com rótulo de dia, HAPV3 −51%, CSAN3 −50%, RENT3 −41%, B3SA3 −36% e SUZB3 +21%. Hipóteses a validar, não causa confirmada: janela de ano ou de 52 semanas, desdobramento sem ajuste, ou série corrompida. A seção Problema já mostra um mecanismo no código (`chartPreviousClose` com `range=15d` em `app/collectors/highlights.py`). Ele explica variação acumulada na janela; não está provado que foi ele, e não outro, que produziu aqueles cinco percentuais.
+
+O campo `revisada:` de 03/11/2026 foi retirado porque o texto abaixo ainda não passou pelo Revisor.
+
+## Título, janela e base
+
+Os painéis "Maiores altas" e "Maiores baixas" (`app/templates/index.html`) titulam o pregão da série: `Maiores altas · pregão dd/mm/aaaa`. A data é a da última barra usada na variação, em `America/Sao_Paulo`, não o relógio do servidor se os dois divergirem.
+
+A variação de cada ação é a do pregão corrente contra o fechamento da sessão regular anterior, pela mesma função `fechamento_anterior` já exigida acima. Amostra, neutros e ausentes seguem o coletor: quem não tem preço ou base não entra na lista nem em `up_count` / `down_count`, e o rodapé diz quantos tickers da cesta `TICKERS` ficaram de fora.
+
+## Quarentena de outlier
+
+Constante configurável `OUTLIER_VARIACAO_DIA = 15.0`, o exemplo do brief. `|change_percent| > 15` não entra no ranking do dia e não é descartado em silêncio. O nome vai para uma lista "Em revisão" dentro dos mesmos dois painéis, com fonte, janela, base, último preço e percentual bruto. No snapshot, a lista é `paineis.altas_baixas.em_revisao`. `altas` e `baixas` continuam sendo só o ranking do dia.
+
+A saída da quarentena, para voltar ao ranking:
+
+1. A outra fonte (MT5 se a principal foi o Yahoo, Yahoo se a principal foi o MT5) calcula a variação do dia com a mesma regra de fechamento anterior e difere em até 0,5 ponto percentual. Aí o nome volta, com as duas fontes no registro.
+2. Sem segunda fonte, ou com divergência maior, o nome permanece em "Em revisão". Não há feed de evento societário para promovê-lo por outro caminho.
+
+Um movimento de 16% que as duas fontes confirmam volta ao ranking. O limiar não é prova de erro. `docs/context/dominio-b3.md` lembra que provento e desdobramento distorcem preço sem ajuste: a lista de revisão é o lugar onde isso fica visível até a segunda fonte concordar.
+
+## Critérios de aceite (expansão)
+- [ ] Três ações com variação do dia `+2%`, `−1%` e `+21%` (a de `+21%` com `chartPreviousClose` irrelevante, já ignorado): o ranking do dia mostra as duas primeiras e a terceira só em "Em revisão", com o `+21%` bruto e a fonte.
+- [ ] A mesma ação de `+21%` confirmada pela segunda fonte em `+20,7%` volta ao ranking.
+- [ ] Ação de `+21%` cuja segunda fonte responde `+4%` permanece em "Em revisão" e não aparece entre as cinco do dia.
+- [ ] Série cuja última barra é `2026-11-04`: o título contém `04/11/2026` e não contém a data do relógio se ela for outra.
+- [ ] Cesta com um ticker sem base: ele não altera `up_count` nem `down_count`, e o HTML diz que faltou dado para esse ticker.
+- [ ] Os critérios originais desta spec continuam valendo. `tests/test_aceite_135.py` começa com `exigir_spec_done("135")`. Se `grep -rl yahoo_falso tests` mais `grep -rl highlights tests` passar de cerca de 15 arquivos, a quarentena fica para uma parte `135b` pedida ao Revisor; não se corta critério para caber.
+
+## Plano de validação
+`pytest -q tests/test_aceite_135.py tests/test_highlights.py` sem internet. A passagem de manhã e de tarde do mesmo pregão, no PR de implementação, confere título, ranking e lista de revisão no `/api/snapshot`. Esta spec não traz captura fictícia.
