@@ -2,7 +2,8 @@ import sqlite3
 import json
 from dataclasses import dataclass, fields
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
+from app.calendario import BRT
 
 DB_PATH = os.environ.get("DATABASE_PATH", "data.db")
 
@@ -192,7 +193,7 @@ class VolatilidadeSilenciosaData:
 def save_volatilidade_silenciosa_data(data: VolatilidadeSilenciosaData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("volatilidade_silenciosa", hoje, "ao_vivo", data.fonte, payload)
@@ -223,7 +224,7 @@ class EsforcoResultadoData:
 def save_esforco_resultado_data(data: EsforcoResultadoData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot(
@@ -416,7 +417,7 @@ def init_db() -> None:
 def save_ibovespa_data(data: IbovespaData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = {
         "timestamp": data.timestamp.isoformat(),
         "current_price": data.current_price,
@@ -450,7 +451,7 @@ def get_latest_ibovespa_data() -> IbovespaData | None:
 def save_highlights_data(data: HighlightsData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = {
         "timestamp": data.timestamp.isoformat(),
         "highs_json": data.highs_json,
@@ -484,7 +485,7 @@ def get_latest_highlights_data() -> HighlightsData | None:
 def save_volume_alerts_data(data: VolumeAlertsData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("volume_alerts", hoje, "ao_vivo", data.fonte, payload)
@@ -508,7 +509,7 @@ def get_latest_volume_alerts_data() -> VolumeAlertsData | None:
 def save_dolar_correlation_data(data: DolarCorrelationData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot(
@@ -561,7 +562,7 @@ init_db()
 def save_scanner_capitulacao_data(data: ScannerCapitulacaoData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("scanner_capitulacao", hoje, "ao_vivo", data.fonte, payload)
@@ -607,7 +608,7 @@ def get_latest_forca_relativa_data() -> ForcaRelativaData | None:
 def save_escudo_quedas_data(data: EscudoQuedasData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot(
@@ -633,7 +634,7 @@ def get_latest_escudo_quedas_data() -> EscudoQuedasData | None:
 def save_coesao_data(data: CoesaoData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("coesao", hoje, "ao_vivo", data.fonte, payload)
@@ -657,7 +658,7 @@ def get_latest_coesao_data() -> CoesaoData | None:
 def save_atrasadas_rally_data(data: AtrasadasRallyData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("atrasadas_rally", hoje, "ao_vivo", data.fonte, payload)
@@ -681,7 +682,7 @@ def get_latest_atrasadas_rally_data() -> AtrasadasRallyData | None:
 def save_concentracao_data(data: ConcentracaoData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("concentracao", hoje, "ao_vivo", data.fonte, payload)
@@ -690,7 +691,7 @@ def save_concentracao_data(data: ConcentracaoData) -> None:
 def save_concentracao_vendedora_data(data: ConcentracaoData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("concentracao_vendedora", hoje, "ao_vivo", data.fonte, payload)
@@ -729,7 +730,7 @@ def get_latest_concentracao_data() -> ConcentracaoData | None:
 def save_variacao_subita_data(data: VariacaoSubitaData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("variacao_subita", hoje, "ao_vivo", data.fonte, payload)
@@ -753,7 +754,7 @@ def get_latest_variacao_subita_data() -> VariacaoSubitaData | None:
 def save_concentracao_setorial_data(data: ConcentracaoSetorialData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("concentracao_setorial", hoje, "ao_vivo", data.fonte, payload)
@@ -777,7 +778,7 @@ def get_latest_concentracao_setorial_data() -> ConcentracaoSetorialData | None:
 def save_apetite_risco_data(data: ApetiteRiscoData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("apetite_risco", hoje, "ao_vivo", data.fonte, payload)
@@ -801,7 +802,7 @@ def get_latest_apetite_risco_data() -> ApetiteRiscoData | None:
 def save_rotacao_capital_data(data: RotacaoCapitalData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("rotacao_capital", hoje, "ao_vivo", data.fonte, payload)
@@ -832,7 +833,7 @@ class FacaCaindoData:
 def save_faca_caindo_data(data: FacaCaindoData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot(
@@ -865,7 +866,7 @@ class CompradoresFundoData:
 def save_compradores_fundo_data(data: CompradoresFundoData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("compradores_fundo", hoje, "ao_vivo", data.fonte, payload)
@@ -896,7 +897,7 @@ class ArmadilhaAberturaData:
 def save_armadilha_abertura_data(data: ArmadilhaAberturaData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("armadilha_abertura", hoje, "ao_vivo", data.fonte, payload)
@@ -927,7 +928,7 @@ class SobrevivenciaSemanalData:
 def save_sobrevivencia_semanal_data(data: SobrevivenciaSemanalData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("sobrevivencia_semanal", hoje, "ao_vivo", data.fonte, payload)
@@ -981,7 +982,7 @@ class AnomaliaPesoData:
 def save_anomalia_peso_data(data: AnomaliaPesoData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("anomalia_peso", hoje, "ao_vivo", data.fonte, payload)
@@ -1019,7 +1020,7 @@ class RadarShortSqueezeData:
 def save_radar_inflexao_data(data: RadarInflexaoData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("radar_inflexao", hoje, "ao_vivo", data.fonte, payload)
@@ -1063,7 +1064,6 @@ class RadarCongestionamentoData:
     @property
     def coletado_em(self) -> str:
 
-        BRT = timezone(timedelta(hours=-3))
         return self.timestamp.astimezone(BRT).strftime("%d/%m/%Y %H:%M:%S BRT")
 
 
@@ -1098,7 +1098,7 @@ def get_latest_radar_congestionamento_data() -> RadarCongestionamentoData | None
 def save_radar_short_squeeze_data(data: RadarShortSqueezeData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("radar_short_squeeze", hoje, "ao_vivo", data.fonte, payload)
@@ -1156,7 +1156,7 @@ class RadarAbsorcaoCruzadaData:
 def save_radar_absorcao_cruzada_data(data: RadarAbsorcaoCruzadaData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("radar_absorcao_cruzada", hoje, "ao_vivo", data.fonte, payload)
@@ -1230,7 +1230,7 @@ def get_latest_liquidez_abertura_data() -> LiquidezAberturaData | None:
 def save_radar_divergencia_volume_data(data: RadarDivergenciaVolumeData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("radar_divergencia_volume", hoje, "ao_vivo", data.fonte, payload)
@@ -1252,7 +1252,7 @@ def get_latest_radar_divergencia_volume_data() -> RadarDivergenciaVolumeData | N
 def save_sensibilidade_juros_data(data: SensibilidadeJurosData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("sensibilidade_juros", hoje, "ao_vivo", data.fonte, payload)
@@ -1298,7 +1298,7 @@ def get_latest_fator_peso_pesado_data() -> FatorPesoPesadoData | None:
 def save_motores_indice_data(data: MotoresIndiceData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("motores_indice", hoje, "ao_vivo", data.fonte, payload)
@@ -1329,7 +1329,7 @@ class ClimaGlobalData:
 def save_clima_global_data(data: ClimaGlobalData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("clima_global", hoje, "ao_vivo", data.fonte, payload)
@@ -1368,7 +1368,7 @@ def get_latest_relogio_volatilidade_data() -> RelogioVolatilidadeData | None:
 def save_relogio_volatilidade_data(data: RelogioVolatilidadeData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("relogio_volatilidade", hoje, "ao_vivo", data.fonte, payload)
@@ -1377,7 +1377,7 @@ def save_relogio_volatilidade_data(data: RelogioVolatilidadeData) -> None:
 def save_coleta_tempo(painel: str, duracao: float, timestamp: datetime) -> None:
     from app.banco import ler_snapshot, gravar_snapshot
 
-    hoje = timestamp.astimezone(timezone.utc).date()
+    hoje = timestamp.astimezone(BRT).date()
 
     payload = ler_snapshot("instrumentacao", hoje) or {
         "tempos": {},
@@ -1398,7 +1398,7 @@ def save_coleta_tempo(painel: str, duracao: float, timestamp: datetime) -> None:
 def save_coleta_vazia(painel: str, timestamp: datetime) -> None:
     from app.banco import ler_snapshot, gravar_snapshot
 
-    hoje = timestamp.astimezone(timezone.utc).date()
+    hoje = timestamp.astimezone(BRT).date()
 
     payload = ler_snapshot("instrumentacao", hoje) or {
         "tempos": {},
@@ -1470,7 +1470,7 @@ class RadarAnomaliasSpreadData:
 def save_radar_anomalias_spread_data(data: RadarAnomaliasSpreadData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("anomalias_spread", hoje, "ao_vivo", data.fonte, payload)
@@ -1494,7 +1494,7 @@ def get_latest_radar_anomalias_spread_data() -> RadarAnomaliasSpreadData | None:
 def save_concentracao_ordens_data(data: ConcentracaoOrdensData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("concentracao_ordens", hoje, "ao_vivo", data.fonte, payload)
@@ -1532,7 +1532,7 @@ class ExaustaoTendenciaData:
 def save_exaustao_queda_data(data: ExaustaoQuedaData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot(
@@ -1558,7 +1558,7 @@ def get_latest_exaustao_queda_data() -> ExaustaoQuedaData | None:
 def save_exaustao_tendencia_data(data: ExaustaoTendenciaData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot(
@@ -1595,7 +1595,7 @@ class AssimetriaRiscoRetornoData:
 def save_assimetria_risco_retorno_data(data: AssimetriaRiscoRetornoData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("assimetria_risco_retorno", hoje, "ao_vivo", data.fonte, payload)
@@ -1767,7 +1767,7 @@ def save_divergencia_ibov_dolar(
 ) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = timestamp.astimezone(timezone.utc).date()
+    hoje = timestamp.astimezone(BRT).date()
     payload = {
         "timestamp": timestamp.isoformat(),
         "divergencia_detectada": divergencia_detectada,
@@ -1872,7 +1872,7 @@ class CorrelacaoDIData:
 def save_correlacao_di_data(data: CorrelacaoDIData) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = data.timestamp.astimezone(timezone.utc).date()
+    hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
     payload["timestamp"] = payload["timestamp"].isoformat()
     gravar_snapshot("correlacao_di", hoje, "ao_vivo", data.fonte, payload)
@@ -1899,10 +1899,10 @@ class ExaustaoAltaData:
 
 
 def save_exaustao_alta_data(data: ExaustaoAltaData) -> None:
-    from datetime import datetime, timezone
+    from datetime import datetime
     from app.banco import gravar_snapshot
 
-    hoje = datetime.now(timezone.utc).date()
+    hoje = datetime.now(BRT).date()
     payload = {
         "timestamp": data.timestamp.isoformat(),
         "alertas_json": data.alertas_json,
@@ -1947,7 +1947,7 @@ def get_simbolos_suspensos() -> list[dict]:
 def save_gemini_validacao(valido: bool, timestamp: datetime, detalhe: str) -> None:
     from app.banco import gravar_snapshot
 
-    hoje = timestamp.astimezone(timezone.utc).date()
+    hoje = timestamp.astimezone(BRT).date()
     payload = {"valido": valido, "timestamp": timestamp.isoformat(), "detalhe": detalhe}
     gravar_snapshot("validador_gemini", hoje, "ao_vivo", "Gemini", payload)
 
