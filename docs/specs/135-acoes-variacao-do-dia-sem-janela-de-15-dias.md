@@ -5,6 +5,7 @@ status: ready
 esforco: G
 gaveta: saúde técnica
 aceite: tests/test_aceite_135.py
+revisada: 2026-11-06
 brief: P0-3
 ---
 
