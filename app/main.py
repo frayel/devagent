@@ -435,11 +435,15 @@ def pagina_consultor(
                         "mensagem_confianca": "histórico indisponível (pregão passado)",
                     }
                 )
-                from app.consultor.armazenamento import get_connection, init_db
+                from app.consultor.armazenamento import (
+                    get_connection,
+                    init_db,
+                    sql_para,
+                )
                 from app.consultor.placar import _calcular_excesso
 
                 init_db()
-                c_conn, _ = get_connection()
+                c_conn, c_backend = get_connection()
                 try:
                     cur = c_conn.cursor()
                     cur.execute(
@@ -454,17 +458,26 @@ def pagina_consultor(
                         if offset > 0:
                             dp_futuro = dps[idx + offset]
                             cur.execute(
-                                "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
+                                sql_para(
+                                    c_backend,
+                                    "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
+                                ),
                                 (dp_futuro, row["ticker"]),
                             )
                             p_futuro_row = cur.fetchone()
                             cur.execute(
-                                "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
+                                sql_para(
+                                    c_backend,
+                                    "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
+                                ),
                                 (dp_rec, "^BVSP"),
                             )
                             ibov_hoje_row = cur.fetchone()
                             cur.execute(
-                                "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
+                                sql_para(
+                                    c_backend,
+                                    "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
+                                ),
                                 (dp_futuro, "^BVSP"),
                             )
                             ibov_futuro_row = cur.fetchone()
@@ -657,11 +670,11 @@ def api_consultor(
                 "No radar": [],
                 "Sem sinal": [],
             }
-            from app.consultor.armazenamento import get_connection, init_db
+            from app.consultor.armazenamento import get_connection, init_db, sql_para
             from app.consultor.placar import _calcular_excesso
 
             init_db()
-            c_conn, _ = get_connection()
+            c_conn, c_backend = get_connection()
             try:
                 cur = c_conn.cursor()
                 cur.execute(
@@ -674,7 +687,10 @@ def api_consultor(
                 if tickers_to_fetch:
                     placeholders = ",".join("?" for _ in tickers_to_fetch)
                     cur.execute(
-                        f"SELECT data_pregao, ticker, preco_fechamento FROM consultor_fechamentos WHERE ticker IN ({placeholders})",
+                        sql_para(
+                            c_backend,
+                            f"SELECT data_pregao, ticker, preco_fechamento FROM consultor_fechamentos WHERE ticker IN ({placeholders})",
+                        ),
                         tickers_to_fetch,
                     )
                     for dp, t, preco in cur.fetchall():
