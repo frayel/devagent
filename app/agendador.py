@@ -343,7 +343,10 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 estado_detalhes_manual.append(f"{nome}: erro fatal")
 
 
-async def laco_de_coleta() -> None:
+async def laco_de_coleta(pular_primeira: bool = False) -> None:
+    if pular_primeira:
+        espera = intervalo(datetime.now(timezone.utc))
+        await asyncio.sleep(espera.total_seconds())
     while True:
         await asyncio.to_thread(coletar_tudo)
         espera = intervalo(datetime.now(timezone.utc))

@@ -121,7 +121,7 @@ def abrir_pool() -> None:
     """Abre o pool na subida do app (lifespan), se o backend é Postgres."""
     db_url = os.environ.get("DATABASE_URL")
     if db_url and get_backend_type() == "postgres":
-        _obter_pool(db_url).open(wait=False)
+        _obter_pool(db_url).open(wait=True)
 
 
 def fechar_pool() -> None:

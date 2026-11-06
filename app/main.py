@@ -102,7 +102,10 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     await asyncio.to_thread(banco_module.abrir_pool)
     tarefas = []
     if agendador.coleta_ligada():
-        tarefas.append(asyncio.create_task(agendador.laco_de_coleta()))
+        await asyncio.to_thread(agendador.coletar_tudo)
+        tarefas.append(
+            asyncio.create_task(agendador.laco_de_coleta(pular_primeira=True))
+        )
     from app.collectors import sistema as monitor_sistema
 
     if monitor_sistema.monitor_ligado():
