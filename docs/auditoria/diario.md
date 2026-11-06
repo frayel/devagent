@@ -2,8 +2,7 @@
 
 Memória entre execuções do auditor LLM. No máximo 20 linhas: condense em vez de acumular.
 
-- 2026-10-10 a 2026-10-28 · Problemas antigos (fuso, radar, variação do Ibovespa) e achado do dia 26/10 resolvidos (0 falhas). Achado de contrato do snapshot reportado em 28/10.
-- 2026-10-29 · Produção estava inacessível (HTTP 500) e reportado. Porém, em nova verificação no mesmo dia, os endpoints retornaram HTTP 200 (site funcional) e as chaves de `api/snapshot` ausentes foram corrigidas. Ambos achados abertos foram marcados como resolvidos.
-- 2026-10-30 · Implementada invariante para o contrato do snapshot (`api.contrato_chaves`) em `auditoria/auditar.py` e teste unitário adicionado. Sem falhas reportadas.
-- 2026-11-03 · Detectado componente Calma zerado (0) na Maré do Mercado, contrariando o histórico e a regra de ignorar altas fortes. Registrado como achado.
-- 2026-11-05 · O achado da Maré (componente Calma) zerada não reproduz mais. Marcado como resolvido. Nenhuma falha encontrada na auditoria de hoje.
+- 2026-10-10 a 2026-10-28 · Problemas antigos resolvidos (0 falhas). Achado de contrato do snapshot reportado e resolvido logo em seguida.
+- 2026-10-29 a 2026-10-30 · Produção corrigida após inatividade (HTTP 500) e implementada invariante `api.contrato_chaves`. Sem falhas reportadas.
+- 2026-11-03 a 2026-11-05 · Maré do mercado exibia componente Calma zerado no dia 3, mas foi resolvido no dia 5.
+- 2026-11-06 · Encontrada falha ao auditar: a última coleta do Ibovespa foi em 2026-11-04, faltando o último pregão esperado de 2026-11-05. Reportado novo achado `2026-11-06-ibov-coleta-do-ultimo-pregao.md`.
