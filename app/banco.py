@@ -315,6 +315,21 @@ def gravar_snapshot(
     data_override = _data_referencia_snapshot.get()
     if data_override:
         data_referencia = data_override
+        if isinstance(payload, dict) and "timestamp" in payload:
+            from datetime import time, timezone
+            import datetime as dt_mod
+
+            try:
+                from app.calendario import BRT
+
+                dt_obj = dt_mod.datetime.fromisoformat(payload["timestamp"])
+                if dt_obj.astimezone(BRT).date() != data_referencia:
+                    novo_dt = dt_mod.datetime.combine(
+                        data_referencia, time(18, 15, tzinfo=BRT)
+                    ).astimezone(timezone.utc)
+                    payload["timestamp"] = novo_dt.isoformat()
+            except Exception:
+                pass
     init_db()
     conn, backend = get_connection()
     payload_str = serialize_json(payload)
