@@ -642,12 +642,19 @@ def _runs_do(github: dict[str, Any], caminho: str) -> list[dict[str, Any]]:
 def verificar_rodadas_jules(
     github: dict[str, Any], intervalo_min: int, agora: datetime
 ) -> Item:
+    nome = "Disparo das rodadas (cron-job.org)"
+    if intervalo_min <= 0:
+        return Item(
+            nome,
+            INATIVO,
+            "desativado (ADR 031)",
+            "Disparo externo pelo cron-job.org desativado com a migração para Antigravity Remote.",
+        )
     runs = [
         r
         for r in _runs_do(github, ".github/workflows/jules.yml")
         if r["evento"] == "workflow_dispatch"
     ]
-    nome = "Disparo das rodadas (cron-job.org)"
     if not runs:
         return Item(
             nome,
@@ -996,7 +1003,11 @@ def montar(
 ) -> dict[str, Any]:
     ambiente = dict(os.environ) if ambiente is None else ambiente
     github = remoto.get("github")
-    intervalo_jules = int(ambiente.get("JULES_DISPARO_MINUTOS", "5") or 5)
+    intervalo_raw = ambiente.get("JULES_DISPARO_MINUTOS", "0") or "0"
+    try:
+        intervalo_jules = int(intervalo_raw)
+    except ValueError:
+        intervalo_jules = 0
     limite_jules = ambiente.get("JULES_LIMITE_DIARIO", "").strip()
 
     aplicacao = verificar_versao(github, sha_local, agora)

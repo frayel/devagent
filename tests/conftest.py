@@ -79,6 +79,9 @@ def _bloquear_rede(monkeypatch, request):
     if request.node.get_closest_marker("rede"):
         return
 
+    for var in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"):
+        monkeypatch.delenv(var, raising=False)
+
     import socket
 
     original_socket = socket.socket

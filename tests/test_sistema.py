@@ -262,6 +262,16 @@ def test_rodadas_do_jules_paradas_viram_problema():
     assert s.verificar_rodadas_jules(falhando, 5, AGORA).nivel == s.PROBLEMA
 
 
+def test_rodadas_do_jules_desativadas_viram_inativo():
+    jules = ".github/workflows/jules.yml"
+    parado = _github(
+        runs=[_run(jules, "workflow_dispatch", "success", timedelta(days=2))]
+    )
+    item = s.verificar_rodadas_jules(parado, 0, AGORA)
+    assert item.nivel == s.INATIVO
+    assert "ADR 031" in item.resumo or "ADR 031" in item.detalhe
+
+
 def test_workflow_falho_no_pr_e_atencao_e_agendado_falho_e_problema():
     ci = ".github/workflows/ci.yml"
     aud = ".github/workflows/auditoria-producao.yml"
@@ -413,7 +423,7 @@ def test_resumo_geral_poe_problemas_primeiro():
         pausa_mt5=None,
         prontas=["082-x"],
         historico_pregoes=[],
-        ambiente={},
+        ambiente={"JULES_DISPARO_MINUTOS": "5"},
     )
     geral = estado["geral"]
     assert geral["nivel"] == s.PROBLEMA  # jules.yml sem disparo
@@ -425,6 +435,38 @@ def test_resumo_geral_poe_problemas_primeiro():
         "Integrações externas",
         "Fluxo de desenvolvimento",
     }
+
+
+def test_resumo_geral_sem_disparo_jules_padrao_inativo():
+    estado = s.montar(
+        agora=AGORA,
+        inicio=AGORA - timedelta(hours=1),
+        remoto={"github": _github(), "atualizado_em": AGORA.isoformat()},
+        sha_local=None,
+        banco={
+            "tipo": "SQLite",
+            "database_url": True,
+            "tamanho": "1 MB",
+            "latencia_ms": 1,
+            "tabelas": 3,
+        },
+        coleta_ligada=True,
+        estado_coleta={"ultima_coleta": (AGORA - timedelta(minutes=5)).isoformat()},
+        intervalo_coleta=timedelta(minutes=15),
+        vazios={"mare": 2},
+        horas_vazios=3,
+        tempos={"mare": 12.0},
+        fontes={},
+        pausa_mt5=None,
+        prontas=["082-x"],
+        historico_pregoes=[],
+        ambiente={},
+    )
+    fluxo = next(
+        g for g in estado["grupos"] if g["titulo"] == "Fluxo de desenvolvimento"
+    )
+    cron_item = next(i for i in fluxo["itens"] if "cron-job.org" in i["nome"])
+    assert cron_item["nivel"] == s.INATIVO
 
 
 def test_specs_prontas_le_a_fila_do_repositorio():
