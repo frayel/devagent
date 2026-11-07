@@ -48,11 +48,10 @@ def fetch_yfinance() -> IbovespaData | None:
         valid_dates = [v[0] for v in valid_history]
         valid_closes = [v[1] for v in valid_history]
 
-        # We need a robust way to get previous close
-        # chartPreviousClose is often incorrect for B3 on Yahoo during trading hours.
-        # previousClose can be None for Yahoo spark queries or sometimes missing.
-        # It's safest to get it from the valid_closes array.
-
+        # O fechamento anterior deve ser o do pregão anterior (não o de 1 ano atrás).
+        # Na API do Yahoo/MT5 para range=1y, chartPreviousClose é o fechamento antes
+        # do início da janela de 1 ano, gerando variações implausíveis (>20%) que descartavam
+        # o dado e travavam o avanço do histórico. O valor seguro e real vem da série de fechamentos valid_closes:
         current_date_str = (
             datetime.now(timezone.utc)
             .astimezone(timezone(timedelta(hours=-3)))
@@ -61,46 +60,38 @@ def fetch_yfinance() -> IbovespaData | None:
 
         previous_close = None
 
-        # Yahoo Finance returns a chartPreviousClose which is the most reliable source for previous close
-        # especially for indices where intraday previousClose calculation might use incomplete data
-        meta_prev_close = meta.get("chartPreviousClose") or meta.get("previousClose")
-
         if len(valid_closes) > 1:
-            if valid_dates[-1] == current_date_str:
-                previous_close = (
-                    meta_prev_close if meta_prev_close else valid_closes[-2]
-                )
+            # Se a última barra é de hoje ou coincide com o preço atual, o fechamento anterior é o penúltimo
+            if valid_dates[-1] == current_date_str or (
+                current_price
+                and abs(current_price - valid_closes[-1]) / valid_closes[-1] < 0.0001
+            ):
+                previous_close = valid_closes[-2]
             else:
-                # In tests, the fixture might not have today's date, but current_price matches valid_closes[-1]
-                if current_price and current_price == valid_closes[-1]:
-                    previous_close = (
-                        meta_prev_close if meta_prev_close else valid_closes[-2]
-                    )
-                else:
-                    previous_close = (
-                        meta_prev_close if meta_prev_close else valid_closes[-1]
-                    )
+                # Caso contrário (antes da abertura ou última barra de pregão anterior), é o último fechamento
+                previous_close = valid_closes[-1]
         elif len(valid_closes) == 1:
             if valid_dates[-1] == current_date_str or (
-                current_price and current_price == valid_closes[-1]
+                current_price
+                and abs(current_price - valid_closes[-1]) / valid_closes[-1] < 0.0001
             ):
-                previous_close = meta_prev_close if meta_prev_close else current_price
-            else:
                 previous_close = (
-                    meta_prev_close if meta_prev_close else valid_closes[-1]
+                    meta.get("previousClose")
+                    or meta.get("regularMarketPreviousClose")
+                    or valid_closes[0]
                 )
+            else:
+                previous_close = valid_closes[0]
 
-        # Absolute fallback to meta if for some reason history is empty
+        # Fallback caso a série esteja vazia
         if previous_close is None:
             previous_close = (
-                meta.get("regularMarketPreviousClose")
-                or meta.get("previousClose")
+                meta.get("previousClose")
+                or meta.get("regularMarketPreviousClose")
                 or meta.get("chartPreviousClose")
+                or current_price
             )
 
-        # In case the fallback also fails, use the current_price
-        if previous_close is None:
-            previous_close = current_price
         previous_close = float(previous_close) if previous_close is not None else 0.0
 
         calc_closes = valid_closes.copy()

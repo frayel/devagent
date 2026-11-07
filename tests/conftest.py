@@ -23,6 +23,13 @@ def setup_db(monkeypatch, tmp_path):
     # O MT5 só entra nos testes que o configuram de propósito.
     for var in ("MT5_API_URL", "MT5_API_KEY", "MT5_SIMBOLOS", "MT5_FUSO_SERVIDOR"):
         monkeypatch.delenv(var, raising=False)
+    # Evita crash do parser de proxy do httpx quando NO_PROXY contém [::1]
+    import os
+
+    for var in ("NO_PROXY", "no_proxy"):
+        val = os.environ.get(var)
+        if val and "[::1]" in val:
+            monkeypatch.setenv(var, val.replace(",[::1]", "").replace("[::1]", ""))
     from app.collectors import mt5
 
     mt5.limpar_cache()

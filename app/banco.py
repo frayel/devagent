@@ -470,8 +470,11 @@ def ler_snapshot(painel: str, data_referencia: date | None = None) -> dict | Non
             _snapshot_cache[cache_key] = val
             return val
 
-    init_db()
-    conn, backend = get_connection()
+    try:
+        init_db()
+        conn, backend = get_connection()
+    except DBInacessivelError:
+        return None
     try:
         if backend == "postgres":
             with conn.cursor() as cursor:

@@ -93,3 +93,80 @@ def test_index_route():
     assert response.status_code == 200
     assert "131.000" in response.text
     assert "Fonte yfinance" in response.text
+
+
+@respx.mock
+def test_fechamento_anterior_ignora_chart_previous_close_antigo():
+    """Regressão #787: chartPreviousClose de 1 ano atrás (>20% de variação) não pode
+
+    ser usado como previous_close, pois descartava o dado e congelava o gráfico.
+    """
+    payload = {
+        "chart": {
+            "result": [
+                {
+                    "meta": {
+                        "regularMarketPrice": 168498.45,
+                        # Fechamento de 1 ano atrás: se usado, variação é ~40% (> 20%)
+                        "chartPreviousClose": 120000.0,
+                    },
+                    "timestamp": [1793883600, 1793970000],
+                    "indicators": {
+                        "quote": [
+                            {
+                                "close": [166192.0, 168499.0],
+                            }
+                        ]
+                    },
+                }
+            ]
+        }
+    }
+    respx.get(
+        "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=1y&interval=1d"
+    ).respond(status_code=200, json=payload)
+
+    data = fetch_yfinance()
+    assert data is not None, "Coleta não deve ser descartada por variação implausível"
+    assert data.current_price == 168498.45
+    # previous_close deve ser o do pregão anterior (166192.0), não o de 1 ano atrás (120000.0)
+    assert data.previous_close == 166192.0
+
+    history_json = json.loads(data.history_json)
+    assert len(history_json["dates"]) == 2
+    assert history_json["closes"][-1] == 168499.0
+
+
+@respx.mock
+def test_fechamento_anterior_antes_da_abertura():
+    """Quando o último candle é de ontem e o preço atual difere (pré-abertura),
+
+    o previous_close é o fechamento de ontem.
+    """
+    payload = {
+        "chart": {
+            "result": [
+                {
+                    "meta": {
+                        "regularMarketPrice": 169000.0,
+                        "chartPreviousClose": 120000.0,
+                    },
+                    "timestamp": [1793797200, 1793883600],
+                    "indicators": {
+                        "quote": [
+                            {
+                                "close": [165529.0, 167564.0],
+                            }
+                        ]
+                    },
+                }
+            ]
+        }
+    }
+    respx.get(
+        "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=1y&interval=1d"
+    ).respond(status_code=200, json=payload)
+
+    data = fetch_yfinance()
+    assert data is not None
+    assert data.previous_close == 167564.0
