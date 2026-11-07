@@ -7,6 +7,7 @@ gaveta: experiência
 aceite: tests/test_aceite_143.py
 brief: P1-2
 depende_de: 046, 134
+revisada: 2026-11-07
 ---
 
 ## Problema
