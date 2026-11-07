@@ -73,6 +73,7 @@ from devagent.raias import (
     edicao_de_spec_proibida,
     fora_da_raia,
     raia_da_sessao,
+    raia_declarada,
     raia_do_titulo,
     spec_nova_fora_do_alvo,
 )
@@ -89,7 +90,7 @@ PADRAO_DOCUMENTOS = {
     "secao_correcoes": "Correções",
 }
 # Prefixos de caminho que só registram a execução (relatório, diário).
-PADRAO_REGISTROS = ("docs/runs/", ".jules/")
+PADRAO_REGISTROS = ("docs/runs/", ".jules/", ".agents/")
 FECHA_ISSUE = re.compile(r"\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\s+#\d+", re.I)
 
 STATUS = re.compile(r"^status:\s*([\w-]+)\s*$", re.MULTILINE)
@@ -168,15 +169,24 @@ def titulo_da_sessao(corpo: str) -> str:
 
 
 def conferir_raia_da_sessao(res: Resultado, raia: str, sessao: str | None) -> None:
-    """A raia do título precisa bater com a persona da sessão (ADR 024).
+    """A raia do título precisa bater com a persona/raia declarada (ADRs 024 e 031).
 
-    Em 27/10 sessões do desenvolvedor dividiram a 092a em PRs `spec:` (#542 e
-    #543) e escaparam da regra que reserva specs às raias auxiliares.
+    Aceita marcador no corpo (<!-- devagent:raia:<nome> -->) ou sessão do Jules.
     """
+    corpo = corpo_do_pr()
+    declarada = raia_declarada(corpo)
+    if declarada:
+        if declarada != raia:
+            res.falha(
+                f"O PR declara a raia `{declarada}` no corpo, mas o título o coloca na raia de `{raia}`. "
+                "Use o prefixo da sua raia (ADRs 024 e 031)."
+            )
+        return
+
     if sessao is None:
         if autor_do_pr() and not do_agente(autor_do_pr()):
             return
-        sessao = titulo_da_sessao(corpo_do_pr())
+        sessao = titulo_da_sessao(corpo)
     esperada = raia_da_sessao(sessao)
     if esperada and esperada != raia:
         res.falha(

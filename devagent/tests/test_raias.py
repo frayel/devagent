@@ -377,7 +377,36 @@ def test_raia_da_sessao_vence_o_titulo() -> None:
 def test_autor_do_agente() -> None:
     assert raias.do_agente("google-labs-jules[bot]")
     assert raias.do_agente("app/google-labs-jules")
+    assert raias.do_agente("antigravity")
+    assert raias.do_agente("antigravity-bot")
     assert not raias.do_agente("frayel")
+
+
+def test_raia_declarada_no_corpo() -> None:
+    assert (
+        raias.raia_declarada("<!-- devagent:raia:especificacao -->") == "especificacao"
+    )
+    assert raias.raia_declarada("<!-- devagent:raia:revisão -->") == "revisao"
+    assert (
+        raias.raia_declarada("<!-- devagent:raia:desenvolvimento -->")
+        == "desenvolvimento"
+    )
+    assert raias.raia_declarada("corpo sem marcador") is None
+
+
+def test_conferir_raia_declarada_no_corpo(monkeypatch: pytest.MonkeyPatch) -> None:
+    res = conferir_pr.Resultado()
+    monkeypatch.setattr(
+        conferir_pr,
+        "corpo_do_pr",
+        lambda: "<!-- devagent:raia:especificacao -->\ncorpo",
+    )
+    conferir_pr.conferir_raia_da_sessao(res, "desenvolvimento", sessao=None)
+    assert res.falhas and "declara a raia `especificacao`" in res.falhas[0]
+
+    res_ok = conferir_pr.Resultado()
+    conferir_pr.conferir_raia_da_sessao(res_ok, "especificacao", sessao=None)
+    assert res_ok.falhas == []
 
 
 def test_verificacao_sem_achado_reprova(repo: Path) -> None:

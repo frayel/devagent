@@ -2,7 +2,7 @@
 
 [projeto]
 nome = "NOME DO PRODUTO"
-# Repositório no GitHub; a fonte do Jules é sources/github/<repositorio>.
+# Repositório no GitHub.
 repositorio = "dono/repositorio"
 # URL publicada. A variável de ambiente PRODUCTION_URL tem precedência.
 producao_url = ""

@@ -10,7 +10,7 @@ O desenvolvimento é uma raia única: só ele mexe no código. As três raias de
 | revisão | Revisor | `revisão: ...` | `docs/specs/` (só a spec indicada e as partes dela), `docs/runs/` |
 | verificação | Verificador | `verificação: ...` | `docs/verificacao/` |
 
-O título do PR precisa bater com a persona da sua sessão: o CI consulta a sessão do Jules que abriu o PR e reprova o título de outra raia (ADR 024). Se a tarefa da sua raia não existe nesta volta, encerre sem PR; não faça o trabalho de outra.
+O título do PR precisa bater com a sua raia e o corpo deve incluir o marcador correspondente: `<!-- devagent:raia:especificacao -->`, `<!-- devagent:raia:revisao -->` ou `<!-- devagent:raia:verificacao -->` (ADRs 024 e 031). O job `disciplina` confere esse marcador e os arquivos permitidos. Se a tarefa da sua raia não existe nesta volta, encerre sem PR; não faça o trabalho de outra.
 
 A ordem de uma spec é sempre esta: o Especificador a escreve, o Revisor a revisa (e a divide, se preciso), o desenvolvimento a implementa. O desenvolvimento nunca cria, divide ou edita spec: o único toque dele é trocar o `status:` para `done` na entrega (ADR 023). Specs a partir de `revisao_obrigatoria_desde` (seção `[disciplina]` do `devagent.toml`) só entram na fila do desenvolvimento com o campo `revisada:` no cabeçalho. Assim duas raias nunca editam a mesma spec.
 

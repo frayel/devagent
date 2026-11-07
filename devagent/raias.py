@@ -57,17 +57,33 @@ RAIAS = {
     AUDITORIA: Raia(AUDITORIA, "auditoria:", ("docs/auditoria/", "auditoria/")),
 }
 
-# Autor dos PRs abertos pelo Jules. PR de outro autor (o dono do produto, outra
-# ferramenta) não é do agente: o guardião não o cobra nem o fecha e ele não
-# trava nenhuma raia (ADR 024).
+# Autor dos PRs abertos pelo agente (Jules, Antigravity ou configurado no projeto).
+# PR de outro autor (o dono do produto, outra ferramenta) não é do agente:
+# o guardião não o cobra nem o fecha e ele não trava nenhuma raia (ADRs 024 e 031).
 AUTOR_DO_AGENTE = "google-labs-jules[bot]"
+AUTORES_CONHECIDOS = {
+    "google-labs-jules",
+    "antigravity",
+    "antigravity-bot",
+    "gemini",
+    "gemini-code-assistant",
+}
 
 
 def do_agente(autor: str | None) -> bool:
-    """Aceita o login da API REST (`google-labs-jules[bot]`) e o do gh
-    (`app/google-labs-jules`)."""
-    nome = (autor or "").removeprefix("app/").removesuffix("[bot]")
-    return nome == AUTOR_DO_AGENTE.removesuffix("[bot]")
+    """Aceita logins do agente (Jules, Antigravity) e opcionalmente bot_usuario do devagent.toml."""
+    from devagent.config import PROJETO
+
+    nome = (autor or "").removeprefix("app/").removesuffix("[bot]").lower()
+    config_bot = (
+        (PROJETO.get("bot_usuario") or "")
+        .removeprefix("app/")
+        .removesuffix("[bot]")
+        .lower()
+    )
+    if config_bot and nome == config_bot:
+        return True
+    return nome in AUTORES_CONHECIDOS
 
 
 # Título da sessão do Jules (PERSONAS em adaptadores/jules.py) -> raia.
@@ -83,6 +99,7 @@ RAIA_DA_PERSONA = {
 }
 
 TAREFA_NO_CORPO = re.compile(r"jules\.google\.com/task/(\d+)")
+MARCADOR_RAIA = re.compile(r"<!--\s*devagent:raia:(\w+)\s*-->", re.I)
 
 
 def raia_da_sessao(titulo_sessao: str) -> str | None:
@@ -101,6 +118,19 @@ def _sem_acento(texto: str) -> str:
     return "".join(
         c for c in unicodedata.normalize("NFD", texto) if not unicodedata.combining(c)
     )
+
+
+def raia_declarada(corpo: str) -> str | None:
+    """Extrai a raia de um marcador HTML no corpo do PR: <!-- devagent:raia:<nome> --> (ADR 031)."""
+    m = MARCADOR_RAIA.search(corpo or "")
+    if not m:
+        return None
+    candidato = _sem_acento(m.group(1)).lower()
+    if candidato in RAIAS:
+        return candidato
+    if candidato == DESENVOLVIMENTO:
+        return DESENVOLVIMENTO
+    return None
 
 
 def raia_do_titulo(titulo: str) -> str:
