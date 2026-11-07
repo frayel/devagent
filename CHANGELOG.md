@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Fix: corrige cálculo de `previous_close` do Ibovespa para usar o pregão anterior em vez do fechamento de 1 ano atrás (`chartPreviousClose`), destravando a coleta do índice e restaurando o avanço do gráfico até o pregão mais recente (#787, #791, #772, #774). Trata também `DBInacessivelError` em `ler_snapshot` para evitar falha fatal em jobs em segundo plano.
 - agent: migração do executor Jules para o Antigravity Remote e modelo híbrido (ADR 031). Suporte a marcador de raia no corpo do PR (`<!-- devagent:raia:... -->`) para validação de disciplina no CI sem chamadas de rede; diários dos especialistas em `.agents/` (com fallback retrocompatível a `.jules/`); reconhecimento do usuário do Antigravity no guardião e na conferência; remoção dos crons de schedule do GitHub Actions; criação da skill e comando `/ciclo`.
 - Fix: Spec 132a - Leitura do consenso e remoção de literal_eval em main.py
 - Spec 131: Histórico do Consultor sem consultas repetidas por recomendação
