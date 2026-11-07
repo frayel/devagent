@@ -1417,7 +1417,7 @@ def get_coletas_vazias_count(painel: str) -> int:
     from app.banco import ler_snapshot
     from datetime import datetime as dt
 
-    hoje = dt.now(timezone.utc).astimezone().date()
+    hoje = dt.now(timezone.utc).astimezone(BRT).date()
     payload = ler_snapshot("instrumentacao", hoje)
     if payload and "vazias" in payload:
         return payload["vazias"].get(painel, 0)
