@@ -452,7 +452,7 @@ def ci_falhou(branch: str, run_id: str) -> None:
         return
     comentar(
         pr["number"],
-        f"{MARCA_CI}\n@jules o CI falhou neste PR (cobrança {tentativas + 1} de "
+        f"{MARCA_CI}\n@antigravity o CI falhou neste PR (cobrança {tentativas + 1} de "
         f"{MAX_TENTATIVAS}). Corrija **nesta mesma branch**, sem abrir PR novo. "
         f"Reproduza localmente com `{VERIFICACAO['verify']}` e `{VERIFICACAO['smoke']}` "
         "(veja `devagent/skills/destravar-pr.md`).\n\n"
@@ -849,7 +849,7 @@ def varredura() -> None:
         if not ja_pediu:
             comentar(
                 pr["number"],
-                f"{MARCA_CONFLITO}\n@jules este PR tem conflito pequeno com a `main` "
+                f"{MARCA_CONFLITO}\n@antigravity este PR tem conflito pequeno com a `main` "
                 f"({len(arquivos)} arquivos, {linhas} linhas). Traga a `main` para esta "
                 "branch (`git fetch origin && git merge origin/main`), resolva, rode os "
                 f"testes e dê push **nesta mesma branch**.\n\n{lista}\n\n"

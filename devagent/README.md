@@ -27,7 +27,7 @@ O `AGENTS.md` da raiz é só uma porta: manda ler o `CICLO.md` e o `PRODUTO.md`.
 
 ## Separação de poderes
 
-Não há revisão humana. O agente pode alterar e fazer merge de qualquer arquivo, inclusive o guardião, o adaptador do Jules, a auditoria e os workflows (ADR 007). A separação de poderes passou a ser uma regra escrita, não uma trava: uma checagem nunca é afrouxada no mesmo PR que corrige a falha que ela aponta, e a aplicação nunca imita o que a auditoria procura.
+Não há revisão humana. O agente pode alterar e fazer merge de qualquer arquivo, inclusive o guardião, os adaptadores, a auditoria e os workflows (ADR 007). A separação de poderes passou a ser uma regra escrita, não uma trava: uma checagem nunca é afrouxada no mesmo PR que corrige a falha que ela aponta, e a aplicação nunca imita o que a auditoria procura.
 
 ## Autoaperfeiçoamento
 

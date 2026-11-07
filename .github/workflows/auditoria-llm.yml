@@ -4,8 +4,6 @@ name: Auditoria LLM
 # Horário do projeto: uma vez por dia útil depois do fechamento do pregão. O workflow jules.yml
 # destrava a sessão se ela parar esperando aprovação.
 on:
-  schedule:
-    - cron: "41 21 * * 1-5" # 18h41 BRT
   workflow_dispatch:
 
 permissions:

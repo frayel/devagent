@@ -197,6 +197,14 @@ def test_pr_so_de_registro_reprova(repo: Path, monkeypatch) -> None:
     assert any("registros da execução" in f for f in falhas)
 
 
+def test_pr_so_de_registro_agents_reprova(repo: Path, monkeypatch) -> None:
+    monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
+    escrever(repo, {".agents/sentinel.md": "# Diário\n- nada a fazer\n"})
+    escrever(repo, {"docs/runs/2026-10-18-x.md": "# Relatório\n"})
+    falhas = conferir(repo, "base", exigir_alteracao=True).falhas
+    assert any("registros da execução" in f for f in falhas)
+
+
 def test_registro_junto_com_entrega_passa(repo: Path) -> None:
     fechar(repo)
     escrever(repo, {".jules/sentinel.md": "# Diário\n- nada a fazer\n"})

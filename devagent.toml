@@ -4,7 +4,7 @@
 
 [projeto]
 nome = "Painel B3"
-# Repositório no GitHub; a fonte do Jules é sources/github/<repositorio>.
+# Repositório no GitHub.
 repositorio = "frayel/devagent"
 # URL publicada. A variável de ambiente PRODUCTION_URL tem precedência.
 producao_url = "https://devagent-vb52.onrender.com"

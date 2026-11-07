@@ -1,6 +1,6 @@
 # Skill · Destravar um PR aberto
 
-Use no Passo 2, quando `python -m devagent.estado_github` mostrar um PR do agente aberto, ou quando o guardião comentar `@jules` num PR seu.
+Use no Passo 2, quando `python -m devagent.estado_github` mostrar um PR do agente aberto, ou quando o guardião comentar `@antigravity` num PR seu.
 
 Um PR aberto bloqueia todo o ciclo, porque só pode existir um de cada vez. Destravá-lo tem prioridade sobre qualquer trabalho novo.
 
@@ -13,7 +13,7 @@ git checkout -B <branch> origin/<branch>
 
 Trabalhe **sempre nesta branch** e dê push nela. Nunca abra PR novo para o mesmo trabalho.
 
-**Ambiente reiniciado.** Se as suas alterações sumiram, o diretório voltou para a `main` ou você não reconhece o estado do repositório, o trabalho não se perdeu: ele está na branch do PR, no GitHub. Rode os dois comandos acima e continue dali. Não recomece da `main`, não recrie a spec e não pergunte se deve continuar: ninguém vai responder, e a sessão fica parada até o guardião fechar o PR (ADR 009).
+**Ambiente reiniciado.** Se você iniciou em uma nova sessão para destravar o PR e o diretório está na `main`, o trabalho não se perdeu: ele está na branch do PR, no GitHub. Rode os dois comandos acima e continue dali. Não recomece da `main`, não recrie a spec e não pergunte se deve continuar: resolva e dê push na mesma branch.
 
 ## 2. CI falhando
 
@@ -60,4 +60,4 @@ Crie uma branch nova a partir da `main`, traga as mudanças do PR antigo (`git c
 
 ## 6. O que o guardião faz se nada disso acontecer
 
-O workflow `pr-guardiao.yml` comenta `@jules` a cada falha de CI (até 3 vezes), fecha o PR se não houver commit novo em 3 horas depois da cobrança, fecha PRs com conflito grande e abre uma issue `tentativa-falhou` explicando o motivo. Se tudo o que o PR muda já está na `main`, fecha sem abrir issue (ADR 014). PR de especialista ou de verificação sem achado fecha na hora, sem cobrança e sem issue (ADRs 019 e 025). Antes de refazer um trabalho, leia essas issues (Passo 4).
+O workflow `pr-guardiao.yml` comenta `@antigravity` a cada falha de CI (até 3 vezes), fecha o PR se não houver commit novo em 3 horas depois da cobrança, fecha PRs com conflito grande e abre uma issue `tentativa-falhou` explicando o motivo. Se tudo o que o PR muda já está na `main`, fecha sem abrir issue (ADR 014). PR de especialista ou de verificação sem achado fecha na hora, sem cobrança e sem issue (ADRs 019 e 025). Antes de refazer um trabalho, leia essas issues (Passo 4).

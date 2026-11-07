@@ -5,7 +5,7 @@ Como o trabalho do agente chega à produção e quem vigia cada etapa. Vale para
 ## Fluxo de entrega
 
 ```
-Jules abre PR → CI (make verify, make smoke) → automerge.yml faz squash merge
+Agente (Antigravity) abre PR → CI (make verify, make smoke, disciplina) → automerge.yml faz squash merge
 → a plataforma publica a main → deploy-check.yml confere o deploy
 → se falhou, abre issue `deploy-falhou` com logs → agente corrige no Passo 1
 → se live, auditoria-producao.yml confere o site contra fontes independentes (make audit)
@@ -16,8 +16,8 @@ fila com até 2 specs ready → Especificador abre PR `spec:` (só docs/specs, b
 spec ready sem `revisada:` → Revisor abre PR `revisão:` → a spec entra na fila do desenvolvimento
 merges do desenvolvimento → Verificador abre PR `verificação:` → achados viram issues `verificacao`
 
-PR com CI falhando ou em conflito → pr-guardiao.yml comenta @jules com o log
-→ Jules corrige na mesma branch → CI passa → automerge
+PR com CI falhando ou em conflito → pr-guardiao.yml comenta @antigravity com o log
+→ agente corrige na mesma branch → CI passa → automerge
 → sem reação em 3 h, 4ª falha ou conflito grande → PR fechado + issue `tentativa-falhou`
 → spec continua `ready` na main → próximo ciclo refaz, lendo a issue
 ```
@@ -28,57 +28,39 @@ Todos ficam em `.github/workflows/` porque o GitHub exige. São do núcleo; o pr
 
 | Arquivo | Dispara | Faz |
 |---|---|---|
-| `ci.yml` | PR e push na `main` | job `disciplina` com `python -m devagent.conferir_pr` (ADR 008); `make install` e `make verify`; job `smoke` com `make install-prod` e `make smoke` |
+| `ci.yml` | PR e push na `main` | job `disciplina` com `python -m devagent.conferir_pr` (ADR 008, 024 e 031); `make install` e `make verify`; job `smoke` com `make install-prod` e `make smoke` |
 | `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch; fecha as issues citadas com `Closes/Fixes/Resolves #N` no título, corpo ou commits do PR (exceto `deploy-falhou` e `producao-incorreta`) |
 | `deploy-check.yml` | após o auto-merge, a cada 6 h, manual | consulta a plataforma (`devagent/adaptadores/render_status.py`); abre ou fecha issues `deploy-falhou`; dispara a auditoria quando o deploy fica live |
 | `auditoria-producao.yml` | horários do projeto, após deploy | `make audit` contra produção; abre ou fecha issues `producao-incorreta`. Job `saude`: lê a página de saúde do produto (`python -m devagent.saude`, ADR 016) e abre, atualiza ou fecha a issue `sistema-com-problema` |
-| `jules.yml` | `workflow_dispatch` com `acao=rodada` a cada 5 min, chamado de fora pelo cron-job.org (ADRs 010 e 012); `schedule` de reserva às :11 e :41 (ADR 025); manual | `rodada` (`devagent/adaptadores/jules.py rodada`): inicia a próxima sessão assim que o caminho estiver livre: nenhuma sessão que altera código ativa, nenhum PR do agente com CI rodando ou esperando o auto-merge, e o ritmo da cota respeitado (`JULES_LIMITE_DIARIO` ou `JULES_INTERVALO_MINUTOS`). O desenvolvedor só começa se houver trabalho identificável: PR travado, issue que ele trate, correção no backlog ou spec revisada (ADR 025). O especialista do dia (Sentinel a partir das 03h e Bolt das 09h BRT; o Palette não tem horário) é o primeiro da fila até rodar; nas demais vezes, o desenvolvedor. PR do agente travado chama o desenvolvedor, nunca um especialista. Também encerra sessões zumbis (PR já mesclado ou fechado, ou 3 h sem atualização; ADR 013), retoma sessões do ciclo que terminaram em `FAILED` nas últimas 6 h e, se não voltarem em 15 min, abre `tentativa-falhou` com a última fala do agente (ADR 019), trata PR com CI vermelho e atividade na última hora como em correção, abre as sessões das raias paralelas que têm trabalho (ADR 021: Especificador com a fila de specs `ready` em até 2 (ADR 029), Revisor com spec esperando revisão, Verificador com merges do desenvolvimento desde a última verificação e no mínimo 90 min depois dela; cada raia com no máximo uma sessão ativa e um PR aberto), aprova planos pendentes, responde perguntas paradas há 5 min e encerra. Menos de 1 min por execução. O `schedule` é só reserva: o cron do GitHub descarta a maior parte dos disparos frequentes |
-| `auditoria-llm.yml` | horário do projeto, manual | cria a sessão do auditor LLM pela API do Jules |
-| `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | `devagent/guardiao_prs.py`: cobra `@jules` (até 3x), fecha PR sem reação em 3 h (o de raia paralela fecha sem `tentativa-falhou`; a raia recomeça na rodada seguinte), com conflito grande (> 3 arquivos ou > 40 linhas, sem contar trechos só de acréscimo, ADR 017) ou substituído (`Substitui #N`); abre issue `tentativa-falhou` com a spec do PR, salvo se o conteúdo do PR já está na `main` (ADR 014) ou se é especialista sem achado (ADRs 019 e 020); fecha na hora PR de verificação sem achado novo em `docs/verificacao/achados/`, sem issue (ADR 025); fecha `tentativa-falhou` órfã, cuja spec já está `done` na `main` ou que não cita spec (ADR 020); fecha issues citadas com `Closes #N` em PRs mergeados nos últimos 7 dias; aplica `prioridade` a issue `bug` aberta há mais de 24 h (ADR 030); apaga branches órfãs com mais de 24 h |
+| `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | `devagent/guardiao_prs.py`: cobra `@antigravity` (até 3x), fecha PR sem reação em 3 h (o de raia paralela fecha sem `tentativa-falhou`; a raia recomeça na rodada seguinte), com conflito grande (> 3 arquivos ou > 40 linhas, sem contar trechos só de acréscimo, ADR 017) ou substituído (`Substitui #N`); abre issue `tentativa-falhou` com a spec do PR, salvo se o conteúdo do PR já está na `main` (ADR 014) ou se é especialista sem achado (ADRs 019 e 020); fecha na hora PR de verificação sem achado novo em `docs/verificacao/achados/`, sem issue (ADR 025); fecha `tentativa-falhou` órfã, cuja spec já está `done` na `main` ou que não cita spec (ADR 020); fecha issues citadas com `Closes #N` em PRs mergeados nos últimos 7 dias; aplica `prioridade` a issue `bug` aberta há mais de 24 h (ADR 030); apaga branches órfãs com mais de 24 h |
 | `auditoria-achados.yml` | de hora em hora e após merge de PR `auditoria:` ou `verificação:` | `devagent/auditoria/achados_para_issues.py`: abre issues para os achados do auditor LLM em `docs/auditoria/achados/` e do Verificador em `docs/verificacao/achados/` (label `verificacao`; `alta` e `media` com `prioridade`) |
 
 O `automerge.yml` não tem caminhos protegidos: todo PR com CI verde entra (ADR 007).
 
 Merges feitos pelo `GITHUB_TOKEN` não fecham issues pelas palavras-chave `Closes #N` (o GitHub não processa); por isso o `automerge.yml` as fecha explicitamente, e precisa da permissão `issues: write`. Esses merges também não disparam o `ci.yml` na `main`; por isso a verificação pós-merge fica no `deploy-check.yml`.
 
-## Relógio externo (cron-job.org)
+## Agendamento e Execução (Modelo Híbrido · ADR 031)
 
-O agente só trabalha quando é acordado, e o `schedule` do GitHub Actions não serve para isso: ele descarta a maior parte dos disparos frequentes (em 48 h, só 8 de 48 disparos de hora em hora rodaram). Um job contínuo que esperasse dentro do Actions resolvia o atraso, mas cobrava minutos parado, 24 h por dia. Por isso o relógio fica fora do GitHub (ADR 010).
+O sistema opera no modelo híbrido, eliminando a dependência do cron de 5 minutos e da API do Jules:
 
-Configuração, uma vez por repositório:
-
-1. **Token no GitHub:** Settings → Developer settings → Fine-grained tokens. Acesso só a este repositório, permissão **Actions: Read and write** e nenhuma outra. Anote a validade e crie um lembrete para renovar.
-2. **Job no cron-job.org:**
-
-   | Campo | Valor |
-   |---|---|
-   | URL | `https://api.github.com/repos/<dono>/<repo>/actions/workflows/jules.yml/dispatches` |
-   | Agenda | a cada 5 min (o repositório é público: minutos do Actions não são cobrados; ADR 012) |
-   | Método | `POST` |
-   | Cabeçalhos | `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`, `Content-Type: application/json`, `User-Agent: devagent-cron` |
-   | Corpo | `{"ref":"main","inputs":{"acao":"rodada"}}` |
-
-3. **Conferir:** a resposta esperada é 204, e uma execução "Jules" aparece na aba Actions. 401 é token inválido ou expirado; 403, falta a permissão de Actions; 422, corpo ou input errado. Ative o aviso por e-mail de falha do cron-job.org: é assim que um token expirado aparece.
-
-Disparos duplicados não causam dano: as execuções do `jules.yml` são serializadas e a segunda encontra a sessão criada pela primeira.
-
-Se o relógio externo parar (token expirado, serviço fora do ar), o `schedule` de reserva do `jules.yml` ainda dispara a rodada às :11 e :41 de cada hora, nos disparos que o GitHub não descartar (ADR 025). A esteira fica mais lenta, mas não para.
+1. **Automação agendada no Antigravity Remote (a cada 2h):**
+   - Garante o batimento contínuo do projeto: executa verificações de produção, destrava PRs pendentes, roda a persona de especialista (Sentinel na madrugada, Bolt pela manhã), audita e implementa specs prontas.
+   - Configurada diretamente na interface do Antigravity Remote apontando para o workspace.
+2. **Modo Contínuo Sob Demanda (`/goal`):**
+   - Quando o desenvolvedor precisa acelerar entregas ou fechar um lote de trabalho, aciona o comando `/goal` com a meta (ex: implementar as 3 próximas specs ou corrigir issues prioritárias). O agente encadeia múltiplos passos e commits até concluir o objetivo.
+3. **Disparos Manuais (`workflow_dispatch`):**
+   - Disponíveis para acionar checagens de deploy ou auditorias pontuais via GitHub Actions.
 
 ## Secrets e variáveis do núcleo
 
 | Nome | Onde | Uso |
 |---|---|---|
-| `RENDER_API_KEY` | secret do GitHub e ambiente do Jules | ler status e logs de deploy |
-| `RENDER_SERVICE_ID` | secret do GitHub e ambiente do Jules | id `srv-...` do web service |
-| `RENDER_DEPLOY_HOOK_URL` | ambiente do Jules, opcional | disparo manual de deploy (Passo 3) |
-| `JULES_API_KEY` | secret do GitHub | criar e destravar sessões do Jules |
-| `JULES_LIMITE_DIARIO` | variável (não secret) do GitHub, recomendada | tarefas do plano do Jules por 24 h (15, 100 ou 300); o desenvolvedor e as raias paralelas param ao chegar a 4 do limite, reservando a cota dos especialistas e do auditor. O intervalo entre sessões do desenvolvedor é o tempo até a sessão mais antiga das últimas 24 h sair da janela, dividido pelas vagas que restam, contando todas as sessões, inclusive as das raias (ADR 028) |
-| `JULES_INTERVALO_MINUTOS` | variável do GitHub, opcional | intervalo mínimo, em minutos, entre sessões do desenvolvedor; substitui o ritmo calculado pela cota (`0` = sem espera) |
-| token do relógio | cron-job.org (não fica no GitHub) | token fine-grained com Actions: Read and write, usado para chamar `workflow_dispatch` do `jules.yml` |
-| `JULES_SOURCE` | ambiente, opcional | sobrescreve a fonte derivada de `repositorio` no `devagent.toml` |
-| `PRODUCTION_URL` | ambiente do Jules; variável (não secret) do GitHub, opcional | sobrescreve `producao_url` do `devagent.toml` |
+| `RENDER_API_KEY` | secret do GitHub e ambiente do agente | ler status e logs de deploy |
+| `RENDER_SERVICE_ID` | secret do GitHub e ambiente do agente | id `srv-...` do web service |
+| `RENDER_DEPLOY_HOOK_URL` | ambiente do agente, opcional | disparo manual de deploy (Passo 3) |
+| `PRODUCTION_URL` | ambiente do agente; variável (não secret) do GitHub, opcional | sobrescreve `producao_url` do `devagent.toml` |
 | `DEVAGENT_CONFIG` | ambiente, opcional | caminho de outro `devagent.toml` |
-| `SAUDE_SENHA` | secret do GitHub e ambiente do Jules, se a página de saúde pede senha | senha do HTTP Basic da página de saúde; o usuário fica em `[saude] usuario` no `devagent.toml` |
+| `SAUDE_SENHA` | secret do GitHub e ambiente do agente, se a página de saúde pede senha | senha do HTTP Basic da página de saúde; o usuário fica em `[saude] usuario` no `devagent.toml` |
 
 ## Render: cuidados do adaptador
 
@@ -89,4 +71,4 @@ Se o relógio externo parar (token expirado, serviço fora do ar), o `schedule` 
 ## Trocar um adaptador
 
 - **Outra plataforma de deploy:** escreva `devagent/adaptadores/<plataforma>_status.py` com a mesma saída (JSON e códigos 0, 1, 3), aponte o `deploy-check.yml` para ele e mude `[deploy] adaptador` no `devagent.toml`.
-- **Outro executor de agente:** substitua `devagent/adaptadores/jules.py`, os workflows `jules.yml` e `auditoria-llm.yml` e o alvo do relógio externo. Os prompts só apontam para `AGENTS.md`, `devagent/CICLO.md` e `devagent/agents/`, então a instrução continua a mesma.
+- **Outro executor de agente:** as instruções estão em `AGENTS.md`, `devagent/CICLO.md` e `devagent/agents/`, desacopladas de APIs proprietárias (ADR 031).

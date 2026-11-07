@@ -16,7 +16,7 @@ Você trabalha em ciclos curtos. **Cada execução resolve uma única coisa** e 
 
 | Camada | Onde | O que contém |
 |---|---|---|
-| Núcleo | `devagent/`, `.github/workflows/`, `devagent.toml` | este ciclo, personas, skills de processo, guardião, adaptadores (Jules, Render), harness da auditoria |
+| Núcleo | `devagent/`, `.github/workflows/`, `devagent.toml` | este ciclo, personas, skills de processo, guardião, adaptadores (Antigravity, Render), harness da auditoria |
 | Projeto | `PRODUTO.md`, `Makefile`, código da aplicação, `tests/`, `auditoria/`, `docs/` | o produto, o stack, as specs, o domínio, as checagens de produção |
 
 Elas se falam por três contratos:
@@ -40,7 +40,7 @@ devagent/
   guardiao_prs.py      # regras do guardião de PRs (roda no GitHub Actions)
   config.py            # lê o devagent.toml
   smoke.sh             # sobe a aplicação e confere o health check
-  adaptadores/         # jules.py (executor), render_status.py e render_blueprint.py (deploy)
+  adaptadores/         # executores (antigravity, jules legado), render_status.py e render_blueprint.py (deploy)
   auditoria/           # harness da auditoria e transformação de achados em issues
   agents/              # personas: auditor, especialistas
   skills/              # procedimentos de processo, um arquivo por tarefa recorrente
@@ -57,7 +57,7 @@ docs/
   skills/              # procedimentos que só fazem sentido neste produto
   auditoria/           # relatórios, achados e diário do auditor (escritos só por ele)
 auditoria/             # checagens de produção deste produto (PROTEGIDO)
-.jules/                # diários dos especialistas
+.agents/               # diários dos especialistas (compatível com o legado .jules/)
 ```
 
 A estrutura do código da aplicação está no `PRODUTO.md`. Se algum destes arquivos não existir, criá-lo faz parte da primeira execução.
@@ -71,17 +71,17 @@ git fetch origin
 python -m devagent.estado_github
 ```
 
-Se a sessão foi aberta por um comentário `@jules` num PR, você já está na branch desse PR: trate-o pelo Passo 2 e não troque de branch. O script lista os PRs abertos com o estado do CI e de conflito, e as issues abertas. Depois leia `PRODUTO.md`, `docs/STATE.md`, os três últimos relatórios em `docs/runs/` e as specs. Consulte os índices da seção 9 e do `PRODUTO.md` e leia as skills e os contextos que tocam a tarefa. Então percorra a lista abaixo **em ordem** e execute **somente o primeiro item que gerar entrega**.
+Se a sessão foi acionada para atuar num PR aberto (via comentário `@antigravity`, webhook de CI ou indicação da tarefa), você já está na branch desse PR: trate-o pelo Passo 2 e não troque de branch. O script lista os PRs abertos com o estado do CI e de conflito, e as issues abertas. Depois leia `PRODUTO.md`, `docs/STATE.md`, os três últimos relatórios em `docs/runs/` e as specs. Consulte os índices da seção 9 e do `PRODUTO.md` e leia as skills e os contextos que tocam a tarefa. Então percorra a lista abaixo **em ordem** e execute **somente o primeiro item que gerar entrega**.
 
 ### Execução sem entrega não existe
 
-Cada sessão custa uma tarefa da cota diária e só termina bem com um PR que muda o produto, as specs, o backlog ou o próprio agente. Por isso:
+Toda execução só termina bem com uma entrega concreta: um PR que muda o produto, as specs, o backlog ou o próprio agente. Por isso:
 
 - **Um passo que se aplica mas não gera mudança não encerra a execução.** As verificações do Passo 1 passaram, a publicação do Passo 3 já estava em dia, a issue escolhida já tem spec: escreva uma linha no relatório e siga para o próximo passo da lista, nesta mesma sessão.
-- **Nunca abra PR só com o relatório em `docs/runs/` ou só com um diário de `.jules/`.** O relatório vai no PR da entrega. O job `disciplina` reprova PR só de registro (regra 6 do `conferir_pr`), salvo quando o corpo fecha issues (`Closes #N`), como no Passo 6.
+- **Nunca abra PR só com o relatório em `docs/runs/` ou só com um diário de `.agents/` (ou `.jules/`).** O relatório vai no PR da entrega. O job `disciplina` reprova PR só de registro (regra 6 do `conferir_pr`), salvo quando o corpo fecha issues (`Closes #N`), como no Passo 6.
 - **As exceções são as paradas obrigatórias:** existe PR da raia de desenvolvimento aberto (Passo 2, onde só se mexe nele), você ficou bloqueado (seção 6) ou chegou ao Passo 7, que é da raia de especificação. Nelas a execução termina sem PR novo.
 
-O relógio externo chama a rodada a cada poucos minutos e a próxima sessão começa assim que esta terminar e o PR dela for mesclado (ADR 012). Não há motivo para encerrar cedo "deixando para o próximo ciclo".
+O modelo de operação é híbrido (ADR 031): automações agendadas a cada 2h mantêm o batimento e a manutenção do projeto, enquanto execuções sob demanda (`/goal`) aceleram lotes de trabalho. Uma sessão que termina com entrega permite à próxima rodada partir do novo estado da `main`.
 
 ### Regra de continuidade (vale antes de qualquer passo)
 
@@ -91,7 +91,7 @@ O merge não é feito por você. Ele é feito pelo workflow `automerge.yml`, que
 - **Só pode existir um PR aberto da raia de desenvolvimento por vez.** Se `estado_github` mostrar um, o único trabalho permitido é destravá-lo (Passo 2), depois de garantir que produção não está quebrada (Passo 1). Novos commits vão para a branch desse PR, nunca para um PR novo.
 - **Todo trabalho parte da `main` atual.** Antes de dar push, traga a `main` (`git fetch origin && git merge origin/main`). Nunca reescreva um arquivo inteiro a partir de uma cópia antiga: isso desfaz o trabalho de outros PRs.
 - O estado verdadeiro do projeto é a `main`. Trabalho que não chegou à `main` ainda não existe para o ciclo.
-- O workflow `pr-guardiao.yml` vigia os PRs: cobra o Jules quando o CI falha, fecha PRs sem reação ou com conflito grande e registra o motivo numa issue `tentativa-falhou`.
+- O workflow `pr-guardiao.yml` vigia os PRs: cobra o agente quando o CI falha, fecha PRs sem reação ou com conflito grande e registra o motivo numa issue `tentativa-falhou`.
 - Se o repositório ainda não tem código de aplicação (o `make verify` não tem o que verificar), o Passo 1 não se aplica: vá direto ao Passo 4 ou ao Passo 6 (o Passo 7 é da raia de especificação).
 
 ### Passo 1 · Verificar e corrigir
@@ -113,7 +113,7 @@ Produção quebrada vem antes de qualquer outra coisa. Verifique, nesta ordem:
 
 Se algo falhar: diagnostique pela causa raiz (não pelo sintoma), escreva um teste que reproduza o problema quando for possível, corrija, abra um PR com prefixo `fix:` citando `Closes #N` da issue e encerre a execução. Se a correção envolver configuração que só existe no painel da plataforma (variável de ambiente, plano, disco), você não tem como aplicá-la: registre o bloqueio na seção *Bloqueios* do `docs/STATE.md` (crie-a se não existir), com o ajuste exato que uma pessoa precisa fazer, num PR `docs:` que cite a issue com `Refs #N` (sem `Closes`). Você não comenta em issues nem muda labels (Passo 6): quem aplica `bloqueado` é o dono do produto, ao ler o PR (ADR 027), e encerre.
 
-A integração nativa do Jules com o Render corrige builds que falham nos PRs do próprio Jules. Ela não substitui este passo, porque não enxerga o que já chegou à `main`.
+Verificações automatizadas da plataforma de deploy não substituem este passo, porque não enxergam o que já chegou à `main`.
 
 ### Passo 2 · Destravar o PR aberto
 
@@ -137,7 +137,7 @@ Este passo não produz PR: registre no relatório e siga para o Passo 4.
 
 ### Passo 4 · Implementar uma especificação
 
-Escolha a spec com `status: ready` de menor número, na ordem natural (068a, 068b, 069, ..., 080), entre as que já passaram pela raia de revisão: a partir de `revisao_obrigatoria_desde` (`[disciplina]` do `devagent.toml`), spec sem o campo `revisada:` no cabeçalho ainda é do Revisor, e você não a implementa nem a edita (ADR 021). O `estado_github` e o prompt da sessão já dizem qual é (ADR 015): siga essa indicação. Antes de começar, confira se há issue aberta com label `tentativa-falhou` sobre ela: se houver, a spec não é sua (veja o parágrafo *Spec com tentativa fechada* abaixo). A issue fecha sozinha quando a spec vira `done` (ADR 020). Implemente, escreva os testes, atualize `docs/STATE.md` e `CHANGELOG.md`, marque a spec como `done` no mesmo PR e abra o PR com prefixo `feat:` (ou `refactor:`, se a spec é das gavetas *Saúde técnica* ou *Poda*). O status vai de `ready` direto para `done`: **nunca faça commit com `in-progress`**, nem num primeiro push "para salvar o progresso", porque o PR é aberto no primeiro push e já nasce reprovado. Faça o primeiro commit só quando a spec, os testes, o `CHANGELOG.md` e o `docs/STATE.md` estiverem prontos. Antes de abrir, rode `python -m devagent.conferir_pr --exigir-alteracao`: o job `disciplina` do CI reprova PR vazio (sem nenhum arquivo alterado, como o #171, que dizia entregar a 027a e não trazia código), PR com spec `in-progress`, script de teste fora de `tests/`, spec `done` sem `CHANGELOG.md` citando o número ou sem `docs/STATE.md`, e spec nova fechada enquanto a seção *Correções* tem entrada pendente.
+Escolha a spec com `status: ready` de menor número, na ordem natural (068a, 068b, 069, ..., 080), entre as que já passaram pela raia de revisão: a partir de `revisao_obrigatoria_desde` (`[disciplina]` do `devagent.toml`), spec sem o campo `revisada:` no cabeçalho ainda é do Revisor, e você não a implementa nem a edita (ADR 021). O `estado_github` e o prompt da sessão já dizem qual é (ADR 015): siga essa indicação. Antes de começar, confira se há issue aberta com label `tentativa-falhou` sobre ela: se houver, a spec não é sua (veja o parágrafo *Spec com tentativa fechada* abaixo). A issue fecha sozinha quando a spec vira `done` (ADR 020). Implemente, escreva os testes, atualize `docs/STATE.md` e `CHANGELOG.md`, marque a spec como `done` no mesmo PR e abra o PR com prefixo `feat:` (ou `refactor:`, se a spec é das gavetas *Saúde técnica* ou *Poda*), incluindo no corpo o marcador `<!-- devagent:raia:desenvolvimento -->` (ADR 031). O status vai de `ready` direto para `done`: **nunca faça commit com `in-progress`**, nem num primeiro push "para salvar o progresso", porque o PR é aberto no primeiro push e já nasce reprovado. Faça o primeiro commit só quando a spec, os testes, o `CHANGELOG.md` e o `docs/STATE.md` estiverem prontos. Antes de abrir, rode `python -m devagent.conferir_pr --exigir-alteracao`: o job `disciplina` do CI reprova PR vazio (sem nenhum arquivo alterado, como o #171, que dizia entregar a 027a e não trazia código), PR com spec `in-progress`, script de teste fora de `tests/`, spec `done` sem `CHANGELOG.md` citando o número ou sem `docs/STATE.md`, e spec nova fechada enquanto a seção *Correções* tem entrada pendente.
 
 **Você não cria, não divide e não edita specs** (ADR 023). Escrever spec é da raia de especificação; revisá-la e dividi-la é da raia de revisão. No PR da entrega, o único toque permitido na spec é trocar a linha `status:` para `done`; a regra 8 do `conferir_pr` reprova spec nova, spec apagada, texto de spec alterado ou status trocado para outra coisa. Se a spec parecer grande demais, implemente mantendo a interface pública e trocando só a implementação (a 074 migrou 13 painéis mexendo só no `database.py`). Se mesmo assim não couber, encerre sem PR: se o guardião fechar uma tentativa, a issue `tentativa-falhou` leva a divisão ao Revisor.
 
@@ -231,7 +231,7 @@ Vale para todo PR. O `PRODUTO.md` acrescenta o checklist do produto.
 - Nunca apague dados de produção, specs `done` ou relatórios em `docs/runs/`.
 - Nunca adicione dependência sem justificar no PR.
 - Nunca desative ou apague testes para fazer o CI passar, inclusive o teste de fronteira. Nunca use `git commit --no-verify` para contornar um hook.
-- Não há revisão humana nem caminhos protegidos: você pode alterar e fazer merge de qualquer arquivo, inclusive o guardião, o adaptador do Jules, os workflows e a auditoria. Com essa liberdade vem uma regra: uma checagem nunca é afrouxada no mesmo PR que corrige a falha que ela aponta (veja o Passo 1).
+- Não há revisão humana nem caminhos protegidos: você pode alterar e fazer merge de qualquer arquivo, inclusive o guardião, os adaptadores, os workflows e a auditoria. Com essa liberdade vem uma regra: uma checagem nunca é afrouxada no mesmo PR que corrige a falha que ela aponta (veja o Passo 1).
 - Nunca edite `docs/auditoria/`: pertence ao auditor.
 - Se ficar bloqueado (credencial ausente, fonte fora do ar, ambiguidade na spec), registre o bloqueio na seção *Bloqueios* do `docs/STATE.md`, num PR `docs:` com o que uma pessoa precisa decidir ou fazer, e encerre. Não invente contornos.
 - Se duas execuções seguidas falharem no mesmo ponto, pare de tentar e registre o pedido de ajuda na seção *Bloqueios* do `docs/STATE.md`, como acima.
@@ -281,7 +281,7 @@ O núcleo mora neste mesmo repositório justamente para você poder aprimorá-lo
 | `devagent/skills/descobrir-ideias.md` | como gerar ideias originais e escolher a próxima | Passo 7 |
 | `devagent/skills/rever-experiencia.md` | como rever a tela inteira a partir das capturas e transformar problemas em ideias | Passo 7, em toda rodada e obrigatoriamente na cadência de experiência |
 | `devagent/skills/manutencao.md` | como medir a saúde técnica, decidir o que podar e transformar isso em spec | Passo 7, em toda rodada e obrigatoriamente na cadência de manutenção |
-| `devagent/decisoes/` | ADRs do núcleo: `001` guardião e Passo 2, `002` correções no Passo 1, `003` escopo aberto, `005` núcleo separado do projeto, `006` revisão de experiência, `007` sem revisão humana, `008` disciplina conferida no CI, `009` retomada depois de ambiente reiniciado, `010` relógio externo, `011` cadência de manutenção e poda, `012` rodada contínua, `013` sessões zumbis, `014` PR absorvido pela main, `015` próxima spec no prompt da sessão, `016` saúde de produção, `017` conflito só de acréscimo, `018` falha que ensina, `019` sessão que falha, `020` issues órfãs e bug na frente, `021` raias paralelas, `022` testes sem o evento do PR, `023` desenvolvimento não escreve spec, `024` revisão do ciclo, `025` a esteira não para, `026` produção quebrada é a sessão inteira, `027` bloqueio registrado no `STATE.md`, `028` ritmo pela cota restante, `029` estoque de specs revisadas, `030` bug que envelhece ganha prioridade | antes de mudar o ciclo de decisão |
+| `devagent/decisoes/` | ADRs do núcleo: `001` guardião e Passo 2, `002` correções no Passo 1, `003` escopo aberto, `005` núcleo separado do projeto, `006` revisão de experiência, `007` sem revisão humana, `008` disciplina conferida no CI, `009` retomada depois de ambiente reiniciado, `010` relógio externo, `011` cadência de manutenção e poda, `012` rodada contínua, `013` sessões zumbis, `014` PR absorvido pela main, `015` próxima spec no prompt da sessão, `016` saúde de produção, `017` conflito só de acréscimo, `018` falha que ensina, `019` sessão que falha, `020` issues órfãs e bug na frente, `021` raias paralelas, `022` testes sem o evento do PR, `023` desenvolvimento não escreve spec, `024` revisão do ciclo, `025` a esteira não para, `026` produção quebrada é a sessão inteira, `027` bloqueio registrado no `STATE.md`, `028` ritmo pela cota restante, `029` estoque de specs revisadas, `030` bug que envelhece ganha prioridade, `031` migração para Antigravity Remote e modelo híbrido | antes de mudar o ciclo de decisão |
 | `devagent/agents/` | personas do auditor, dos especialistas e das raias paralelas (`raias.md`) | quando acionado como uma delas |
 
 O índice do projeto está no `PRODUTO.md`. Ao criar um arquivo novo em `devagent/skills/`, acrescente-o a esta tabela no mesmo PR; em `docs/skills/` ou `docs/context/`, à tabela do `PRODUTO.md`.
