@@ -1,7 +1,7 @@
 ---
 id: 138
 titulo: A auditoria confere a variação do dia do Ibovespa, não só o preço
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_138.py

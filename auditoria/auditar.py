@@ -51,6 +51,9 @@ USER_AGENT = "PainelB3-Auditor/1.0 (+https://github.com/frayel/devagent)"
 # Limites. Mudar um destes números exige PR próprio com evidência (veja README).
 TOLERANCIA_PRECO = 0.015  # 1,5% entre o valor exibido e a fonte independente
 TOLERANCIA_FECHAMENTO = 0.005  # 0,5% nos fechamentos de pregões encerrados
+TOLERANCIA_VARIACAO = (
+    0.5  # 0,5 p.p. na variação diária contra a fonte independente (spec 138)
+)
 IDADE_MAXIMA_NO_PREGAO = timedelta(minutes=45)
 # % por dia. Era 12% (o circuit breaker da B3 começa em 10%).
 # Em 29/10/2026 foi relatado que o Ibovespa teria variado 15,99% (relatado, não confirmado por fonte independente);
@@ -432,6 +435,11 @@ def checar_coerencia(p: Painel) -> list[Resultado]:
         esperado = p.variacao / p.fechamento_anterior * 100
         # A página arredonda pontos para inteiro; tolera o erro desse arredondamento.
         tol = 0.02 + 100 / p.fechamento_anterior
+        # ibov.variacao_coerente prova apenas a consistência aritmética entre a
+        # variação em pontos e a variação percentual a partir do fechamento anterior
+        # exibido no próprio painel. Ela NÃO prova a veracidade dos dados nem se o
+        # fechamento anterior está correto (ver ibov.fechamento_anterior_coerente e
+        # ibov.variacao_confere_com_fonte introduzidos na spec 138).
         r.append(
             Resultado(
                 "ibov.variacao_coerente",
@@ -487,6 +495,56 @@ def checar_coerencia(p: Painel) -> list[Resultado]:
             f"último fechamento {br(p.fechamentos[-1])}; valor {br(p.valor)}",
         )
     )
+
+    if len(p.fechamentos) >= 2 and p.valor is not None:
+        ultimo = p.fechamentos[-1]
+        penultimo = p.fechamentos[-2]
+        tol_coerente = 0.0005  # 0,05%
+        dif_ultimo = abs(p.valor - ultimo) / ultimo if ultimo != 0 else 0.0
+        if dif_ultimo > tol_coerente:
+            r.append(
+                Resultado(
+                    "ibov.fechamento_anterior_coerente",
+                    INCONCLUSIVO,
+                    "Fechamento anterior coerente com o penúltimo ponto do gráfico",
+                    f"valor exibido difere do último ponto do gráfico: valor {br(p.valor)}; último {br(ultimo)}",
+                )
+            )
+        elif p.fechamento_anterior is None:
+            r.append(
+                Resultado(
+                    "ibov.fechamento_anterior_coerente",
+                    INCONCLUSIVO,
+                    "Fechamento anterior coerente com o penúltimo ponto do gráfico",
+                    "fechamento anterior não disponível",
+                )
+            )
+        else:
+            dif_penultimo = (
+                abs(p.fechamento_anterior - penultimo) / penultimo
+                if penultimo != 0
+                else 0.0
+            )
+            fmt_ant = (
+                f"{int(p.fechamento_anterior)}"
+                if p.fechamento_anterior == int(p.fechamento_anterior)
+                else f"{p.fechamento_anterior}"
+            )
+            fmt_pen = (
+                f"{int(penultimo)}" if penultimo == int(penultimo) else f"{penultimo}"
+            )
+            detalhe = (
+                f"fechamento anterior {fmt_ant}; penúltimo ponto do gráfico {fmt_pen}"
+            )
+            status = OK if dif_penultimo <= tol_coerente else FALHA
+            r.append(
+                Resultado(
+                    "ibov.fechamento_anterior_coerente",
+                    status,
+                    "Fechamento anterior coerente com o penúltimo ponto do gráfico",
+                    detalhe,
+                )
+            )
     return r
 
 
@@ -638,6 +696,91 @@ def checar_referencia(
                 f"{prefixo_pontas}; datas exibidas {p.datas[0]} a {p.datas[-1]}",
             )
         )
+
+    # Variação do dia confere com a fonte independente (spec 138)
+    rotulos = {s.strip().lower() for s in rotulo_produto.split("+") if s.strip()}
+    fonte_ref_normalizada = ref.fonte.lower()
+    excluidas_ref: set[str] = set()
+    for k, v in FONTES_EXCLUIDAS.items():
+        if k in fonte_ref_normalizada or k.replace("ref_", "") in fonte_ref_normalizada:
+            excluidas_ref.update(v)
+    mesma_fonte = bool(rotulos & excluidas_ref) or (fonte_ref_normalizada in rotulos)
+
+    if mesma_fonte:
+        r.append(
+            Resultado(
+                "ibov.variacao_confere_com_fonte",
+                INCONCLUSIVO,
+                f"Variação do dia confere com {ref.fonte}",
+                f"{prefixo_pontas}; referência usa a mesma fonte do produto",
+            )
+        )
+    elif not p.datas:
+        r.append(
+            Resultado(
+                "ibov.variacao_confere_com_fonte",
+                INCONCLUSIVO,
+                f"Variação do dia confere com {ref.fonte}",
+                f"{prefixo_pontas}; gráfico sem datas para conferência",
+            )
+        )
+    else:
+        d = p.datas[-1]
+        anteriores = [dt for dt in ref.fechamentos if dt < d]
+        if not anteriores:
+            r.append(
+                Resultado(
+                    "ibov.variacao_confere_com_fonte",
+                    INCONCLUSIVO,
+                    f"Variação do dia confere com {ref.fonte}",
+                    f"{prefixo_pontas}; não há fechamento anterior a {d} na referência",
+                )
+            )
+        else:
+            a = max(anteriores)
+            val_d = ref.fechamentos.get(d, ref.valor)
+            val_a = ref.fechamentos[a]
+            if val_d is None or not val_a:
+                r.append(
+                    Resultado(
+                        "ibov.variacao_confere_com_fonte",
+                        INCONCLUSIVO,
+                        f"Variação do dia confere com {ref.fonte}",
+                        f"{prefixo_pontas}; fechamentos insuficientes na referência",
+                    )
+                )
+            elif p.variacao_pct is None:
+                r.append(
+                    Resultado(
+                        "ibov.variacao_confere_com_fonte",
+                        INCONCLUSIVO,
+                        f"Variação do dia confere com {ref.fonte}",
+                        f"{prefixo_pontas}; variação do produto não encontrada",
+                    )
+                )
+            else:
+                var_ref = (val_d / val_a - 1) * 100
+                dif_var = abs(p.variacao_pct - var_ref)
+                detalhe_var = (
+                    f"exibida {p.variacao_pct:+.2f}%; referência {var_ref:+.2f}%; "
+                    f"diferença {dif_var:.2f} p.p. (limite {TOLERANCIA_VARIACAO:.1f} p.p.)"
+                )
+                r.append(
+                    Resultado(
+                        "ibov.variacao_confere_com_fonte",
+                        OK if dif_var <= TOLERANCIA_VARIACAO else FALHA,
+                        f"Variação do dia confere com {ref.fonte}",
+                        f"{prefixo_pontas}; {detalhe_var}",
+                        {
+                            "exibida": p.variacao_pct,
+                            "referencia": var_ref,
+                            "diferenca_pp": dif_var,
+                            "tolerancia_pp": TOLERANCIA_VARIACAO,
+                            "fonte": ref.fonte,
+                            "produto": rotulo_produto,
+                        },
+                    )
+                )
     return r
 
 
