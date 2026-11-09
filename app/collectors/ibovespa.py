@@ -18,6 +18,10 @@ logger = logging.getLogger(__name__)
 # dado das duas fontes.
 VARIACAO_DIARIA_MAXIMA = 20.0  # %
 
+# Limiares de sinal de revisão (Spec 134)
+LIMIAR_PCT_REVISAO = 3.0  # % estrito (|pct| > 3.0)
+LIMIAR_PONTOS_REVISAO = 5000.0  # pts inclusive (|pts| >= 5000.0)
+
 
 def calc_mm(closes: list[float], window: int) -> float | None:
     if len(closes) < window:
@@ -48,49 +52,43 @@ def fetch_yfinance() -> IbovespaData | None:
         valid_dates = [v[0] for v in valid_history]
         valid_closes = [v[1] for v in valid_history]
 
-        # O fechamento anterior deve ser o do pregão anterior (não o de 1 ano atrás).
-        # Na API do Yahoo/MT5 para range=1y, chartPreviousClose é o fechamento antes
-        # do início da janela de 1 ano, gerando variações implausíveis (>20%) que descartavam
-        # o dado e travavam o avanço do histórico. O valor seguro e real vem da série de fechamentos valid_closes:
+        # Regras de fechamento anterior (Spec 134):
+        # 1. Série válida com >= 2 fechamentos, e última barra é de hoje (BRT) ou preço atual igual ao último (tol 0,01%):
+        #    previous_close = fechamentos[-2]
+        # 2. Série com >= 2 fechamentos cuja última barra é de pregão anterior e preço atual difere (antes da abertura):
+        #    previous_close = fechamentos[-1]
+        # 3. Série com menos de 2 fechamentos: meta["previousClose"], depois meta["regularMarketPreviousClose"]
+        # 4. Fallback se ausente: preço atual, com aviso no log (variação 0)
+        # `chartPreviousClose` não entra em nenhum passo pois refere-se ao início da janela (1 ano atrás).
         current_date_str = (
             datetime.now(timezone.utc)
             .astimezone(timezone(timedelta(hours=-3)))
             .strftime("%Y-%m-%d")
         )
 
-        previous_close = None
+        previous_close: float | None = None
 
-        if len(valid_closes) > 1:
-            # Se a última barra é de hoje ou coincide com o preço atual, o fechamento anterior é o penúltimo
-            if valid_dates[-1] == current_date_str or (
-                current_price
+        if len(valid_closes) >= 2:
+            is_hoje = valid_dates[-1] == current_date_str
+            is_igual_ultimo = (
+                current_price > 0
                 and abs(current_price - valid_closes[-1]) / valid_closes[-1] < 0.0001
-            ):
-                previous_close = valid_closes[-2]
-            else:
-                # Caso contrário (antes da abertura ou última barra de pregão anterior), é o último fechamento
-                previous_close = valid_closes[-1]
-        elif len(valid_closes) == 1:
-            if valid_dates[-1] == current_date_str or (
-                current_price
-                and abs(current_price - valid_closes[-1]) / valid_closes[-1] < 0.0001
-            ):
-                previous_close = (
-                    meta.get("previousClose")
-                    or meta.get("regularMarketPreviousClose")
-                    or valid_closes[0]
-                )
-            else:
-                previous_close = valid_closes[0]
-
-        # Fallback caso a série esteja vazia
-        if previous_close is None:
-            previous_close = (
-                meta.get("previousClose")
-                or meta.get("regularMarketPreviousClose")
-                or meta.get("chartPreviousClose")
-                or current_price
             )
+            if is_hoje or is_igual_ultimo:
+                previous_close = float(valid_closes[-2])
+            else:
+                previous_close = float(valid_closes[-1])
+        else:
+            meta_prev = meta.get("previousClose") or meta.get(
+                "regularMarketPreviousClose"
+            )
+            if meta_prev is not None:
+                previous_close = float(meta_prev)
+            else:
+                logger.warning(
+                    "previous_close ausente em meta e série; usando current_price como fallback."
+                )
+                previous_close = float(current_price)
 
         previous_close = float(previous_close) if previous_close is not None else 0.0
 

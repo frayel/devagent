@@ -86,6 +86,7 @@ from app.database import (
     get_latest_exaustao_alta_data,
 )
 from app import agendador
+from app.collectors.ibovespa import LIMIAR_PCT_REVISAO, LIMIAR_PONTOS_REVISAO
 from app.services import sistema as sistema_servico
 
 logging.basicConfig(
@@ -941,11 +942,20 @@ def snapshot(
             resp["paineis"]["assimetria_risco_retorno"] = None
         data = get_latest_ibovespa_data()
         if data:
-            variation_pct = (
-                ((data.current_price - data.previous_close) / data.previous_close) * 100
-                if data.previous_close
-                else 0.0
-            )
+            if data.previous_close and data.previous_close > 0:
+                variation_pts = data.current_price - data.previous_close
+                variation_pct = (variation_pts / data.previous_close) * 100
+                fechamento_anterior: float | None = data.previous_close
+                revisao_variacao = (
+                    abs(variation_pct) > LIMIAR_PCT_REVISAO
+                    or abs(variation_pts) >= LIMIAR_PONTOS_REVISAO
+                )
+                estado_ibov = None
+            else:
+                variation_pct = None
+                fechamento_anterior = None
+                revisao_variacao = False
+                estado_ibov = "indisponivel"
 
             history_data = (
                 json.loads(data.history_json)
@@ -953,10 +963,11 @@ def snapshot(
                 else {"dates": [], "closes": []}
             )
 
-            resp["paineis"]["ibovespa"] = {
+            ibov_dict: dict[str, Any] = {
                 "valor": data.current_price,
-                "fechamento_anterior": data.previous_close,
+                "fechamento_anterior": fechamento_anterior,
                 "variacao_pct": variation_pct,
+                "revisao_variacao": revisao_variacao,
                 "coletado_em": data.timestamp.isoformat(),
                 "fonte": getattr(data, "fonte", "yfinance"),
                 "historico": {
@@ -968,6 +979,9 @@ def snapshot(
                     "mm200": data.mm200,
                 },
             }
+            if estado_ibov:
+                ibov_dict["estado"] = estado_ibov
+            resp["paineis"]["ibovespa"] = ibov_dict
 
         elif is_historical:
             resp["paineis"]["ibovespa"] = None

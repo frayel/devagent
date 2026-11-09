@@ -17,9 +17,14 @@
 </div>
 
 <!-- Linha 1: Ibovespa e Maré do mercado -->
-{% call painel("Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "", "visao-macro painel-ibovespa visao-geral") %}
+{% call painel(data.titulo if data and data.titulo else "Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "", "visao-macro painel-ibovespa visao-geral") %}
     {% if data %}
-        {{ kpi(data.current_price|default("") + " pontos", "", (variacao((data.variation ~ " (" ~ data.variation_percent ~ ")") | e, data.variation_raw|default(0))) | safe, True) }}
+        {% if data.revisao_variacao %}<span class="selo alerta selo-revisao">em revisão</span>{% endif %}
+        {% if data.variacao_indisponivel %}
+        {{ kpi(data.current_price|default("") + " pontos", "", estado('indisponivel'), True) }}
+        {% else %}
+        {{ kpi(data.current_price|default("") + " pontos", "", (variacao((data.variation ~ " (" ~ data.variation_percent ~ ")") | e, 0 if data.revisao_variacao else (1 if data.is_positive else (-1 if data.is_negative else 0)))) | safe, True) }}
+        {% endif %}
         {% if data.history_dict and data.history_dict.dates %}
         <div id="grafico-ibovespa" class="grafico"
              data-dates='{{ data.history_dict.dates | tojson | e }}'

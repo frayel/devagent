@@ -1,7 +1,7 @@
 ---
 id: 134
 titulo: A variação do Ibovespa no painel é a do dia, não a de um ano atrás
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_134.py

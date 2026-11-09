@@ -1,31 +1,62 @@
 from typing import Any
-from datetime import timezone, timedelta
+from datetime import datetime, timezone, timedelta
 import json
 
+from app.collectors.ibovespa import LIMIAR_PCT_REVISAO, LIMIAR_PONTOS_REVISAO
 from app.database import get_latest_ibovespa_data
 
 
-def get_ibovespa_view_data() -> dict[str, Any] | None:
+def get_ibovespa_view_data(agora: datetime | None = None) -> dict[str, Any] | None:
     data = get_latest_ibovespa_data()
     if not data:
         return None
 
-    variation = data.current_price - data.previous_close
-    variation_percent = (
-        (variation / data.previous_close) * 100 if data.previous_close else 0.0
-    )
+    brt = timezone(timedelta(hours=-3))
+    dt_brt = data.timestamp.astimezone(brt)
+    if agora is None:
+        agora_brt = datetime.now(timezone.utc).astimezone(brt).date()
+    else:
+        agora_brt = agora.astimezone(brt).date()
 
-    is_positive = variation > 0
-    is_negative = variation < 0
+    if dt_brt.date() == agora_brt:
+        titulo = "Ibovespa hoje"
+    else:
+        titulo = "Ibovespa"
+
+    # Carimbo em America/Sao_Paulo (dd/mm/aaaa HH:MM BRT, sem segundos conforme spec 134)
+    time_formatted = dt_brt.strftime("%d/%m/%Y %H:%M BRT")
+
+    if not data.previous_close or data.previous_close <= 0:
+        variacao_indisponivel = True
+        revisao_variacao = False
+        variation_pts = None
+        variation_percent = None
+        variation_formatted = None
+        variation_percent_formatted = None
+        is_positive = False
+        is_negative = False
+        variation_raw = 0.0
+    else:
+        variacao_indisponivel = False
+        variation_pts = data.current_price - data.previous_close
+        variation_percent = (variation_pts / data.previous_close) * 100
+        revisao_variacao = (
+            abs(variation_percent) > LIMIAR_PCT_REVISAO
+            or abs(variation_pts) >= LIMIAR_PONTOS_REVISAO
+        )
+        is_positive = variation_pts > 0
+        is_negative = variation_pts < 0
+        variation_raw = variation_pts
+
+        variation_formatted = f"{int(variation_pts):,}".replace(",", ".")
+        variation_percent_formatted = f"{variation_percent:.2f}%".replace(".", ",")
+
+        if variation_pts > 0:
+            variation_formatted = f"+{variation_formatted}"
+            variation_percent_formatted = f"+{variation_percent_formatted}"
 
     # format strings for view
     current_formatted = f"{int(data.current_price):,}".replace(",", ".")
-    variation_formatted = f"{int(variation):,}".replace(",", ".")
-    variation_percent_formatted = f"{variation_percent:.2f}%".replace(".", ",")
-
-    if variation > 0:
-        variation_formatted = f"+{variation_formatted}"
-        variation_percent_formatted = f"+{variation_percent_formatted}"
 
     # calculate moving averages formatting and signals
     mm21_formatted = None
@@ -49,11 +80,6 @@ def get_ibovespa_view_data() -> dict[str, Any] | None:
             mm200_signal = "Baixa"
         else:
             mm200_signal = "Neutra"
-
-    # convert timestamp to local display
-    time_formatted = data.timestamp.astimezone(timezone(timedelta(hours=-3))).strftime(
-        "%d/%m/%Y %H:%M:%S BRT"
-    )
 
     history_dict = {}
     resumo_serie = ""
@@ -83,9 +109,15 @@ def get_ibovespa_view_data() -> dict[str, Any] | None:
             pass
 
     return {
+        "titulo": titulo,
         "current_price": current_formatted,
         "variation": variation_formatted,
         "variation_percent": variation_percent_formatted,
+        "variation_pts": variation_pts,
+        "variation_pct": variation_percent,
+        "variation_raw": variation_raw,
+        "variacao_indisponivel": variacao_indisponivel,
+        "revisao_variacao": revisao_variacao,
         "is_positive": is_positive,
         "is_negative": is_negative,
         "time": time_formatted,

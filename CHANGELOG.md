@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Saúde técnica: variação do Ibovespa do dia e sinal de revisão (Spec 134). Corrige o cálculo de previous_close pelas 4 regras sem chartPreviousClose, adiciona limiares de revisão (3,0% ou 5000 pts) com selo "em revisão", trata fechamento ausente com estado indisponível sem 0,00%, e ajusta título dinâmico ("Ibovespa hoje" / "Ibovespa") e carimbo de data/hora em BRT.
 - Poda: remoção de arquivos mortos na raiz e configuração centralizada de log (Spec 133). Remove imagens e arquivos de texto órfãos da raiz, código morto não utilizado em `app/main.py` (`security = HTTPBasic()`, `verificar_credenciais`), atualiza `.gitignore` e centraliza `logging.basicConfig` no início de `app/main.py`, removendo configurações de log como efeito colateral na importação de 21 coletores.
 - Saúde técnica: migração de formato de consenso para JSON no banco do Consultor (Spec 132c). Converte de forma idempotente em init_db registros legados gravados em repr de dicionário Python para JSON válido.
 - Fix: preserva detalhes de falhas sistêmicas e evita sobreposição do último erro no agendador (#769). Exceções na inicialização dos painéis não são mais mascaradas como "erro fatal" genérico em `estado["detalhes"]`, e falhas de infraestrutura (banco, rede, disjuntor) têm precedência e são preservadas em `estado["ultimo_erro"]` em vez de serem sobrescritas por falhas pontuais de coletores posteriores.
