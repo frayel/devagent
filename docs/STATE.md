@@ -12,6 +12,9 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- Preservação e detalhamento de falhas sistêmicas no Agendador (#769):
+  - Exceções na inicialização/verificação dos painéis em `app/agendador.py` passam a ser registradas em `estado["detalhes"]` com a mensagem real do erro (incluindo o prefixo `erro fatal: <mensagem>`), em vez de serem ofuscadas por uma string genérica.
+  - Implementada função `_registrar_erro` que prioriza e preserva falhas sistêmicas/infraestrutura (banco indisponível, disjuntor aberto, timeout) em `estado["ultimo_erro"]`, impedindo que falhas pontuais de fontes ("nenhuma fonte respondeu") em coletores posteriores sobrescrevam o erro raiz do ciclo.
 - Correção de resiliência do disjuntor e coleta do Ibovespa (#793):
   - Resolvido travamento do disjuntor na partida a frio em ambientes com Postgres configurado (Render/Supabase): `_reset_disjuntor()` executado após `abrir_pool()` no lifespan.
   - Removida chamada indevida de `init_db()` na importação de `app/database.py`, garantindo cumprimento da spec 128 (nenhuma conexão ao banco na importação de módulos).

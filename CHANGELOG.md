@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Fix: preserva detalhes de falhas sistêmicas e evita sobreposição do último erro no agendador (#769). Exceções na inicialização dos painéis não são mais mascaradas como "erro fatal" genérico em `estado["detalhes"]`, e falhas de infraestrutura (banco, rede, disjuntor) têm precedência e são preservadas em `estado["ultimo_erro"]` em vez de serem sobrescritas por falhas pontuais de coletores posteriores.
 - Fix: resolve travamento do disjuntor na partida a frio e falha na coleta do Ibovespa (#793). Reseta o disjuntor no `abrir_pool`, remove execução precipitada de `init_db()` na importação de `app/database.py`, evita abertura de disjuntor de 30 s para contenção temporária de pool (`PoolTimeout`), adiciona retentativa de gravação no salvamento do Ibovespa e saneia `[::1]` em `NO_PROXY`/`no_proxy` evitando `InvalidURL` no httpx. Corrige também fuso horário BRT nas consultas de instrumentação.
 - Fix: desativa alerta de cron-job.org na página /sistema por padrão (ADR 031), marcando o item como Inativo quando `JULES_DISPARO_MINUTOS` não estiver configurado ou for 0, eliminando alarme falso de produção (#789).
 - Fix: corrige cálculo de `previous_close` do Ibovespa para usar o pregão anterior em vez do fechamento de 1 ano atrás (`chartPreviousClose`), destravando a coleta do índice e restaurando o avanço do gráfico até o pregão mais recente (#787, #791, #772, #774). Trata também `DBInacessivelError` em `ler_snapshot` para evitar falha fatal em jobs em segundo plano.

@@ -523,6 +523,86 @@ def test_falha_em_um_coletor_nao_interrompe_outros_exception(monkeypatch):
 
     detalhes = []
     _coletar(detalhes)
-
     assert "highlights" in coletados
     assert any("ibovespa: erro fatal" in d for d in detalhes)
+
+
+def test_erro_sistemico_preserva_detalhes_e_nao_mascara_como_erro_fatal(monkeypatch):
+    """Regressão #769: Falha sistêmica (ex: Disjuntor aberto) na checagem de snapshot
+
+    não pode virar apenas 'erro fatal' genérico, preservando a mensagem real em detalhes e ultimo_erro.
+    """
+    from app import agendador
+    from app.banco import DBInacessivelError
+
+    agendador.estado["ultimo_erro"] = None
+    agendador.estado["detalhes"] = None
+
+    # Simula falha sistêmica ao ler snapshot
+    def mock_ler_snapshot(*args, **kwargs):
+        raise DBInacessivelError("Disjuntor aberto: timeout de conexao")
+
+    monkeypatch.setattr("app.banco.ler_snapshot", mock_ler_snapshot)
+    monkeypatch.setattr("app.calendario.mercado_aberto", lambda x: False)
+    monkeypatch.setattr("app.calendario.e_pregao", lambda x: True)
+
+    detalhes = []
+    agendador._coletar(detalhes)
+
+    # Detalhes deve conter a mensagem do disjuntor com prefixo informativo, não apenas 'erro fatal'
+    assert any(
+        "Disjuntor aberto: timeout de conexao" in d and "erro fatal" in d
+        for d in detalhes
+    )
+    assert "Disjuntor aberto: timeout de conexao" in (
+        agendador.estado["ultimo_erro"] or ""
+    )
+
+
+def test_erro_sistemico_nao_e_sobreposto_por_falha_de_fonte_posterior(monkeypatch):
+    """Regressão #769: Falha sistêmica inicial de infraestrutura não deve ser sobreposta
+
+    por falha pontual de fonte ('nenhuma fonte respondeu') em coletores posteriores.
+    """
+    from app import agendador
+    from app.banco import DBInacessivelError
+
+    agendador.estado["ultimo_erro"] = None
+    agendador._ultimo_erro_sistemico = False
+
+    # Primeiro registra erro sistêmico do disjuntor
+    agendador._registrar_erro(
+        "ibovespa: Disjuntor aberto",
+        eh_sistemico=agendador._eh_erro_sistemico(
+            DBInacessivelError("Disjuntor aberto")
+        ),
+    )
+    assert agendador.estado["ultimo_erro"] == "ibovespa: Disjuntor aberto"
+
+    # Segundo coletor falha apenas com fonte vazia (não sistêmico)
+    agendador._registrar_erro("highlights: nenhuma fonte respondeu", eh_sistemico=False)
+    # Erro sistêmico original deve ser PRESERVADO
+    assert agendador.estado["ultimo_erro"] == "ibovespa: Disjuntor aberto"
+
+
+def test_erro_sistemico_posterior_prioriza_sobre_falha_pontual_anterior(monkeypatch):
+    """Regressão #769: Erro sistêmico posterior deve ter precedência sobre falha pontual anterior."""
+    from app import agendador
+    from app.banco import DBInacessivelError
+
+    agendador.estado["ultimo_erro"] = None
+    agendador._ultimo_erro_sistemico = False
+
+    # Primeiro registra erro pontual não sistêmico
+    agendador._registrar_erro("ibovespa: nenhuma fonte respondeu", eh_sistemico=False)
+    assert agendador.estado["ultimo_erro"] == "ibovespa: nenhuma fonte respondeu"
+
+    # Segundo registra erro sistêmico
+    agendador._registrar_erro(
+        "highlights: Disjuntor aberto",
+        eh_sistemico=agendador._eh_erro_sistemico(
+            DBInacessivelError("Disjuntor aberto")
+        ),
+    )
+    # Erro sistêmico deve assumir o estado
+    assert agendador.estado["ultimo_erro"] == "highlights: Disjuntor aberto"

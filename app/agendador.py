@@ -76,8 +76,59 @@ class _Memoria(logging.Handler):
         self.linhas.append(_mask_secrets(f"{record.name}: {record.getMessage()}"[:300]))
 
 
+_ultimo_erro_sistemico = False
+
+
+def _eh_erro_sistemico(e: Exception | str) -> bool:
+    """Identifica falhas de infraestrutura/sistêmicas (banco, rede, disjuntor)."""
+    try:
+        from app.banco import DBInacessivelError
+
+        if isinstance(e, DBInacessivelError):
+            return True
+    except ImportError:
+        pass
+
+    nome_classe = type(e).__name__ if isinstance(e, Exception) else ""
+    texto = str(e).lower()
+    return (
+        "disjuntor" in texto
+        or "dbinacessivel" in texto
+        or "db_inacessivel" in texto
+        or "timeout" in texto
+        or "connection" in texto
+        or "conexao" in texto
+        or "operationalerror" in nome_classe.lower()
+        or isinstance(e, (ConnectionError, OSError))
+    )
+
+
+def _formatar_erro(nome: str, erro: Exception | str, prefixo: str | None = None) -> str:
+    if isinstance(erro, Exception):
+        detalhe = str(erro) or type(erro).__name__
+    else:
+        detalhe = str(erro)
+    if prefixo:
+        return f"{nome}: {prefixo}: {detalhe}"
+    return f"{nome}: {detalhe}"
+
+
+def _registrar_erro(msg: str, eh_sistemico: bool = False) -> None:
+    """Registra erro preservando a falha original ou sistêmica mais crítica da rodada."""
+    global _ultimo_erro_sistemico
+    msg_mascarada = _mask_secrets(msg)
+    if estado["ultimo_erro"] is None:
+        estado["ultimo_erro"] = msg_mascarada
+        _ultimo_erro_sistemico = eh_sistemico
+    elif eh_sistemico and not _ultimo_erro_sistemico:
+        estado["ultimo_erro"] = msg_mascarada
+        _ultimo_erro_sistemico = True
+
+
 def coletar_tudo() -> None:
     """Roda os coletores em sequência. Falha de um não impede o outro."""
+    global _ultimo_erro_sistemico
+    _ultimo_erro_sistemico = False
     memoria = _Memoria()
     raiz = logging.getLogger("app.collectors")
     raiz.addHandler(memoria)
@@ -329,18 +380,25 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 except Exception:
                     logger.exception("Falha ao salvar tempo de coleta para %s", nome)
                 if not ok:
-                    estado["ultimo_erro"] = f"{nome}: nenhuma fonte respondeu"
+                    _registrar_erro(
+                        f"{nome}: nenhuma fonte respondeu", eh_sistemico=False
+                    )
                     try:
                         save_coleta_vazia(nome, datetime.now(timezone.utc))
                     except Exception:
                         logger.exception("Falha ao salvar coleta vazia para %s", nome)
             except Exception as e:  # noqa: BLE001 - o laço não pode morrer
                 logger.exception("Coleta de %s falhou", nome)
-                estado["ultimo_erro"] = _mask_secrets(f"{nome}: {e}")
-        except Exception:
+                msg = _formatar_erro(nome, e)
+                if estado_detalhes_manual is not None:
+                    estado_detalhes_manual.append(_mask_secrets(msg))
+                _registrar_erro(msg, eh_sistemico=_eh_erro_sistemico(e))
+        except Exception as e:
             logger.exception("Falha ao inicializar ou coletar %s", nome)
+            msg = _formatar_erro(nome, e, prefixo="erro fatal")
             if estado_detalhes_manual is not None:
-                estado_detalhes_manual.append(f"{nome}: erro fatal")
+                estado_detalhes_manual.append(_mask_secrets(msg))
+            _registrar_erro(msg, eh_sistemico=_eh_erro_sistemico(e))
 
 
 async def laco_de_coleta() -> None:
