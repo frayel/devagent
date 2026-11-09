@@ -12,6 +12,11 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Saúde Técnica] Spec 132c - Migração de formato de consenso para JSON:
+  - Implementada função idempotente `migrar_consenso_para_json` em `app/consultor/armazenamento.py`, chamada durante `init_db()`.
+  - Converte registros legados gravados em formato `repr` de dicionário Python (`"{'compra': 3}"`) para JSON equivalente (`'{"compra": 3}'`) usando `ast.literal_eval` seguro e `json.dumps`.
+  - Registros já em JSON válido ou textos simples que não são dicionários avaliáveis são preservados sem alterações.
+  - Testes de aceite cobrem conversão, idempotência e compatibilidade com `/api/consultor` em `tests/test_aceite_132c.py`.
 - Preservação e detalhamento de falhas sistêmicas no Agendador (#769):
   - Exceções na inicialização/verificação dos painéis em `app/agendador.py` passam a ser registradas em `estado["detalhes"]` com a mensagem real do erro (incluindo o prefixo `erro fatal: <mensagem>`), em vez de serem ofuscadas por uma string genérica.
   - Implementada função `_registrar_erro` que prioriza e preserva falhas sistêmicas/infraestrutura (banco indisponível, disjuntor aberto, timeout) em `estado["ultimo_erro"]`, impedindo que falhas pontuais de fontes ("nenhuma fonte respondeu") em coletores posteriores sobrescrevam o erro raiz do ciclo.

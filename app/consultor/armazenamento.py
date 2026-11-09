@@ -223,8 +223,10 @@ def init_db():
             except Exception:
                 pass
             conn.commit()
-    except Exception:
-        pass
+
+        migrar_consenso_para_json(conn, backend)
+    except Exception as e:
+        logging.warning(f"Erro ao inicializar banco do consultor: {e}")
     finally:
         conn.close()
 
@@ -630,3 +632,62 @@ def ler_consenso(bruto: str) -> dict | str:
         f"Consenso lido em formato texto, não é JSON nem dict Python: {bruto!r}"
     )
     return bruto
+
+
+def migrar_consenso_para_json(conn=None, backend: str | None = None) -> int:
+    """Migra registros legados de consenso gravados em repr de dict para JSON (Spec 132c).
+
+    Idempotente: registros já convertidos para JSON ou que não sejam dicts avaliáveis
+    não são alterados. Retorna a quantidade de registros atualizados.
+    """
+    fechar = False
+    if conn is None:
+        conn, backend = get_connection()
+        fechar = True
+
+    atualizados = 0
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, consenso FROM consultor_recomendacoes WHERE consenso IS NOT NULL AND consenso != ''"
+        )
+        linhas = cursor.fetchall()
+        for row_id, bruto in linhas:
+            if not isinstance(bruto, str) or not bruto.strip():
+                continue
+
+            # Se já for JSON válido, não precisa migrar
+            try:
+                json.loads(bruto)
+                continue
+            except (json.JSONDecodeError, ValueError, TypeError):
+                pass
+
+            # Detecta de forma segura formato legado de dict usando ast.literal_eval
+            try:
+                avaliado = ast.literal_eval(bruto)
+                if isinstance(avaliado, dict):
+                    novo_json = json.dumps(avaliado, ensure_ascii=False)
+                    cursor.execute(
+                        sql_para(
+                            backend or "sqlite",
+                            "UPDATE consultor_recomendacoes SET consenso = ? WHERE id = ?",
+                        ),
+                        (novo_json, row_id),
+                    )
+                    atualizados += 1
+            except Exception:
+                # Não altera se não for dict avaliável
+                continue
+
+        conn.commit()
+    except Exception as e:
+        logging.warning(f"Erro ao executar migração de consenso para JSON: {e}")
+    finally:
+        if fechar:
+            conn.close()
+
+    return atualizados
+
+
+migrar_consenso_legado = migrar_consenso_para_json

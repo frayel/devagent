@@ -1,7 +1,7 @@
 ---
 id: 132c
 titulo: Migração de formato de consenso para JSON
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_132c.py
