@@ -1,8 +1,10 @@
 import logging
 import asyncio
+from datetime import datetime
 import os
 import time
 import re
+from typing import Any
 from urllib.parse import urlparse
 import httpx
 
@@ -418,3 +420,55 @@ def fetch_historico_diario_yfinance_chart(
     except httpx.HTTPError as e:
         logger.error(f"Error fetching chart {symbol} from yfinance: {e}")
         return None
+
+
+def fechamento_anterior(
+    serie: list[float],
+    preco: float | None,
+    hoje: bool | str | datetime | None = None,
+    meta: dict[str, Any] | None = None,
+    datas: list[Any] | None = None,
+) -> float | None:
+    """Calcula o fechamento regular anterior da série temporal (Specs 134 e 135).
+
+    Regras:
+    1. Série válida com >= 2 fechamentos, e última barra é de hoje (em BRT) ou preço atual igual ao último (tol 0,01%):
+       retorna serie[-2].
+    2. Série com >= 2 fechamentos cuja última barra é de pregão anterior e preço atual difere (antes da abertura):
+       retorna serie[-1].
+    3. Série com menos de 2 fechamentos: usa meta["previousClose"] ou meta["regularMarketPreviousClose"].
+    4. Se ausente, retorna None.
+    `chartPreviousClose` nunca entra em nenhum passo pois refere-se ao início da janela histórica.
+    """
+    valid_closes = [float(c) for c in serie if c is not None]
+    if len(valid_closes) >= 2:
+        is_hoje = False
+        if isinstance(hoje, bool):
+            is_hoje = hoje
+        elif hoje is not None and datas and len(datas) >= len(valid_closes):
+            hoje_str = (
+                hoje.strftime("%Y-%m-%d") if hasattr(hoje, "strftime") else str(hoje)
+            )
+            d_str = (
+                datas[-1].strftime("%Y-%m-%d")
+                if hasattr(datas[-1], "strftime")
+                else str(datas[-1])
+            )
+            is_hoje = d_str == hoje_str
+
+        is_igual_ultimo = (
+            preco is not None
+            and preco > 0
+            and abs(preco - valid_closes[-1]) / valid_closes[-1] < 0.0001
+        )
+        if is_hoje or is_igual_ultimo:
+            return float(valid_closes[-2])
+        else:
+            return float(valid_closes[-1])
+
+    if meta:
+        meta_prev = meta.get("previousClose") or meta.get("regularMarketPreviousClose")
+        if meta_prev is not None:
+            return float(meta_prev)
+
+    return None

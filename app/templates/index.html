@@ -260,37 +260,71 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Maiores altas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro rankings") %}
-    {% if highlights and highlights.highs %}
-        {% set linhas = [] %}
-        {% for a in highlights.highs %}
-            {% set celulas = [
-                {'tk': True, 'conteudo': a.ticker},
-                {'num': True, 'conteudo': a.price_formatted},
-                {'num': True, 'barra': True, 'valor_barra': a.change_percent, 'conteudo': variacao((a.change_percent_formatted) | e, a.change_percent)},
-                {'conteudo': sparkline(a.sparkline, "Evolução de " ~ a.ticker)}
-            ] %}
-            {% set _ = linhas.append(celulas) %}
-        {% endfor %}
-        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}, {'titulo': '10d'}], 'a') }}
+{% call painel(highlights.titulo_altas if highlights and highlights.titulo_altas else "Maiores altas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro rankings") %}
+    {% if highlights and (highlights.highs or highlights.em_revisao) %}
+        {% if highlights.highs %}
+            {% set linhas = [] %}
+            {% for a in highlights.highs %}
+                {% set celulas = [
+                    {'tk': True, 'conteudo': a.ticker},
+                    {'num': True, 'conteudo': a.price_formatted},
+                    {'num': True, 'barra': True, 'valor_barra': a.change_percent, 'conteudo': variacao((a.change_percent_formatted) | e, a.change_percent)},
+                    {'conteudo': sparkline(a.sparkline, "Evolução de " ~ a.ticker)}
+                ] %}
+                {% set _ = linhas.append(celulas) %}
+            {% endfor %}
+            {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}, {'titulo': '10d'}], 'a') }}
+        {% endif %}
+        {% if highlights.em_revisao %}
+            <div class="em-revisao espaco-topo">
+                <span class="sub bloco">Em revisão:</span>
+                {% for r in highlights.em_revisao %}
+                    <div class="item-revisao">
+                        <strong>{{ r.ticker }}</strong> {{ r.change_percent_formatted }} &middot; Último: {{ r.price_formatted }} &middot; Base: {{ r.base }} &middot; Janela: {{ r.janela }} &middot; Fonte: {{ r.fonte }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if highlights.ausentes_count and highlights.ausentes_count > 0 %}
+            <div class="rodape-ausentes sub espaco-topo">
+                Faltou dado para {{ highlights.ausentes_tickers|join(', ') if highlights.ausentes_tickers else highlights.ausentes_count ~ ' ticker(s)' }}.
+            </div>
+        {% endif %}
     {% else %}
         {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
-{% call painel("Maiores baixas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro rankings") %}
-    {% if highlights and highlights.lows %}
-        {% set linhas = [] %}
-        {% for a in highlights.lows %}
-            {% set celulas = [
-                {'tk': True, 'conteudo': a.ticker},
-                {'num': True, 'conteudo': a.price_formatted},
-                {'num': True, 'barra': True, 'valor_barra': (a.change_percent * -1) if a.change_percent < 0 else a.change_percent, 'conteudo': variacao((a.change_percent_formatted) | e, a.change_percent)},
-                {'conteudo': sparkline(a.sparkline, "Evolução de " ~ a.ticker)}
-            ] %}
-            {% set _ = linhas.append(celulas) %}
-        {% endfor %}
-        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}, {'titulo': '10d'}], 'b') }}
+{% call painel(highlights.titulo_baixas if highlights and highlights.titulo_baixas else "Maiores baixas", 4, "", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-micro rankings") %}
+    {% if highlights and (highlights.lows or highlights.em_revisao) %}
+        {% if highlights.lows %}
+            {% set linhas = [] %}
+            {% for a in highlights.lows %}
+                {% set celulas = [
+                    {'tk': True, 'conteudo': a.ticker},
+                    {'num': True, 'conteudo': a.price_formatted},
+                    {'num': True, 'barra': True, 'valor_barra': (a.change_percent * -1) if a.change_percent < 0 else a.change_percent, 'conteudo': variacao((a.change_percent_formatted) | e, a.change_percent)},
+                    {'conteudo': sparkline(a.sparkline, "Evolução de " ~ a.ticker)}
+                ] %}
+                {% set _ = linhas.append(celulas) %}
+            {% endfor %}
+            {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Preço', 'num': True}, {'titulo': 'Var.', 'num': True}, {'titulo': '10d'}], 'b') }}
+        {% endif %}
+        {% if highlights.em_revisao %}
+            <div class="em-revisao espaco-topo">
+                <span class="sub bloco">Em revisão:</span>
+                {% for r in highlights.em_revisao %}
+                    <div class="item-revisao">
+                        <strong>{{ r.ticker }}</strong> {{ r.change_percent_formatted }} &middot; Último: {{ r.price_formatted }} &middot; Base: {{ r.base }} &middot; Janela: {{ r.janela }} &middot; Fonte: {{ r.fonte }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if highlights.ausentes_count and highlights.ausentes_count > 0 %}
+            <div class="rodape-ausentes sub espaco-topo">
+                Faltou dado para {{ highlights.ausentes_tickers|join(', ') if highlights.ausentes_tickers else highlights.ausentes_count ~ ' ticker(s)' }}.
+            </div>
+        {% endif %}
     {% else %}
         {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}

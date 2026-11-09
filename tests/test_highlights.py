@@ -29,6 +29,7 @@ def spark_com_precos(precos: dict[str, float]) -> dict:
                         {
                             "meta": {
                                 "regularMarketPrice": preco,
+                                "previousClose": 90.0,
                                 "chartPreviousClose": 90.0,
                             }
                         }
@@ -41,7 +42,7 @@ def spark_com_precos(precos: dict[str, float]) -> dict:
 
 
 def generate_mock_yfinance_data(ticker, is_high=False, multiplier=1):
-    price = (100.0 + multiplier * 2) if is_high else (80.0 - multiplier * 2)
+    price = (92.0 + multiplier * 0.5) if is_high else (88.0 - multiplier * 0.5)
     return {
         "spark": {
             "result": [
@@ -51,6 +52,7 @@ def generate_mock_yfinance_data(ticker, is_high=False, multiplier=1):
                         {
                             "meta": {
                                 "regularMarketPrice": price,
+                                "previousClose": 90.0,
                                 "chartPreviousClose": 90.0,
                             }
                         }
@@ -67,7 +69,7 @@ def generate_mock_yfinance_batch_data(batch_tickers, global_offset=0):
         idx = global_offset + i
         is_high = idx % 2 == 0
         multiplier = idx // 2
-        price = (100.0 + multiplier * 2) if is_high else (80.0 - multiplier * 2)
+        price = (92.0 + multiplier * 0.5) if is_high else (88.0 - multiplier * 0.5)
         results.append(
             {
                 "symbol": f"{ticker}.SA",
@@ -75,6 +77,7 @@ def generate_mock_yfinance_batch_data(batch_tickers, global_offset=0):
                     {
                         "meta": {
                             "regularMarketPrice": price,
+                            "previousClose": 90.0,
                             "chartPreviousClose": 90.0,
                         }
                     }
@@ -141,8 +144,8 @@ def test_collect_and_save_pelo_yahoo(monkeypatch):
 
 @respx.mock
 def test_index_route(monkeypatch):
-    precos = {f"HIGH{i}": 100.0 + i * 2 for i in range(5)}
-    precos.update({f"LOW{i}": 80.0 - i * 2 for i in range(5)})
+    precos = {f"HIGH{i}": 92.0 + i * 1.0 for i in range(5)}
+    precos.update({f"LOW{i}": 88.0 - i * 1.0 for i in range(5)})
     monkeypatch.setattr("app.collectors.highlights.TICKERS", list(precos))
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     respx.get(url__regex=SPARK).respond(200, json=spark_com_precos(precos))
@@ -161,7 +164,7 @@ def test_index_route(monkeypatch):
 
 @respx.mock
 def test_fetch_less_than_5_assets(monkeypatch):
-    precos = {f"ASSET{i}": 100.0 + i * 2 for i in range(3)}
+    precos = {f"ASSET{i}": 92.0 + i * 1.0 for i in range(3)}
     monkeypatch.setattr("app.collectors.highlights.TICKERS", list(precos))
     monkeypatch.setattr("app.collectors.utils.time.sleep", lambda s: None)
     respx.get(url__regex=SPARK).respond(200, json=spark_com_precos(precos))
