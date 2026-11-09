@@ -290,3 +290,39 @@ def test_pausa_informa_o_motivo(mt5_ligado):
         mt5.barras("PETR4", "D1")
     with pytest.raises(mt5.Mt5Indisponivel, match="ConnectTimeout"):
         mt5.barras("VALE3", "D1")
+
+
+@respx.mock
+def test_ignorado_vai_a_rede_com_mt5_configurado(mt5_ligado):
+    """Spec 136: Dentro de mt5.ignorado(), uma URL do Yahoo vai à rede mesmo com MT5 configurado."""
+    rota_rates({"PETR4:D1": barras_diarias(30, 30.0)})
+    yahoo = respx.get(
+        url__regex=r"https://query[12]\.finance\.yahoo\.com/v8/finance/spark\?symbols=PETR4\.SA"
+    ).respond(
+        200,
+        json={
+            "spark": {
+                "result": [
+                    {
+                        "symbol": "PETR4.SA",
+                        "response": [{"meta": {"regularMarketPrice": 42.0}}],
+                    }
+                ]
+            }
+        },
+    )
+
+    url = "https://query1.finance.yahoo.com/v8/finance/spark?symbols=PETR4.SA"
+
+    with mt5.ignorado():
+        resp = fetch_with_retry(url)
+        assert (
+            resp.json()["spark"]["result"][0]["response"][0]["meta"][
+                "regularMarketPrice"
+            ]
+            == 42.0
+        )
+        assert yahoo.called
+
+    resp2 = fetch_with_retry(url)
+    assert resp2.headers.get("X-Fonte") == "mt5"

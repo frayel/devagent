@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Saúde técnica: confirmação por segunda fonte de variação extrema do Ibovespa (Spec 136). Exige confirmação entre MT5 e Yahoo Finance para variações entre 10% e 20% com tolerância de até 0,5 p.p.; adiciona contexto ignorado() em mt5.py para consulta direta ao Yahoo; mantém descarte de variações acima de 20%; atualiza referências ao caso relatado de 15,99% em 29/10/2026 em app/, auditoria/ e changelog.
 - Saúde técnica: variação diária das ações sem janela de 15 dias e quarentena de outliers (Spec 135). Corrige o cálculo de previous_close em `highlights.py` compartilhando a função `fechamento_anterior` em `app/collectors/utils.py` sem ler `chartPreviousClose`, adiciona quarentena de variação extrema (`|change_percent| > 15.0%`) com confirmação de segunda fonte (MT5/Yahoo) e lista "Em revisão", adiciona títulos dinâmicos com a data do pregão da série ("Maiores altas · pregão dd/mm/aaaa"), tratamento de tickers sem base no rodapé, dublê do Yahoo fiel a `range` e teste de fronteira contra o uso indevido de `chartPreviousClose`.
 - Saúde técnica: variação do Ibovespa do dia e sinal de revisão (Spec 134). Corrige o cálculo de previous_close pelas 4 regras sem chartPreviousClose, adiciona limiares de revisão (3,0% ou 5000 pts) com selo "em revisão", trata fechamento ausente com estado indisponível sem 0,00%, e ajusta título dinâmico ("Ibovespa hoje" / "Ibovespa") e carimbo de data/hora em BRT.
 - Poda: remoção de arquivos mortos na raiz e configuração centralizada de log (Spec 133). Remove imagens e arquivos de texto órfãos da raiz, código morto não utilizado em `app/main.py` (`security = HTTPBasic()`, `verificar_credenciais`), atualiza `.gitignore` e centraliza `logging.basicConfig` no início de `app/main.py`, removendo configurações de log como efeito colateral na importação de 21 coletores.
@@ -21,7 +22,7 @@
 - Spec 124: Seletor de pregão mostra os números do dia escolhido em todos os painéis, isolando leitura com lendo_pregao.
 - Spec 129: o Postgres passa a usar um pool de conexões. Antes, cada leitura abria uma conexão nova (em 29/10, cerca de 1,6 s cada), e a `/sistema` e a página inicial demoravam segundos. O item Banco de dados da `/sistema` mostra o custo de abrir conexão e acusa Atenção acima de 500 ms.
 - **Sistema**: o item Banco de dados mostra a versão do servidor e o tamanho do banco em uso. Documentação atualizada: o Postgres de produção não é mais o Neon (ADR 009).
-- Fix: o coletor do Ibovespa aceita variação diária de até 20% (era 12%). Em 29/10/2026 o índice variou 15,99% de verdade, com o circuit breaker estendido, e o dado era descartado.
+- Fix: o coletor do Ibovespa aceita variação diária de até 20% (era 12%). Caso relatado em 29/10/2026 de que o índice teria variado 15,99% com o circuit breaker estendido (relatado, não confirmado por fonte independente), e o dado era descartado.
 - Fix: a página `/sistema` não conta mais issue `producao-incorreta` ou `deploy-falhou` como Problema próprio; elas aparecem como Atenção, e a `sistema-com-problema` deixa de depender delas para fechar.
 - Fix (#592): a página inicial respondia 500 com snapshot da Maré gravado antes da spec 123 (`ativos_json` obrigatório). O campo ganhou padrão e a leitura ignora chaves de outras versões.
 - spec 119b: Adicionado validador da chave API do Gemini em background.

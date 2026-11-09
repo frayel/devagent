@@ -12,6 +12,13 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Saúde Técnica] Spec 136 - Variação extrema do Ibovespa só entra se segunda fonte confirma:
+  - Adicionado gerenciador de contexto `ignorado()` e função `em_modo_ignorado()` em `app/collectors/mt5.py` para permitir que chamadas ao Yahoo sigam diretamente à rede sem interceptação do MT5.
+  - No coletor `app/collectors/ibovespa.py`, variações de magnitude normal (`|variação| <= 10%`) gravam sem chamadas extras.
+  - Variações extremas (`10% < |variação| <= 20%`) consultam a outra fonte (`obter_variacao_segunda_fonte`): se MT5, consulta Yahoo com `mt5.ignorado()`; se Yahoo, consulta MT5 com `mt5.exclusivo()`. Se concordarem em até 0,5 p.p., o dado é gravado com a fonte primária e log de confirmação; se divergirem ou não houver segunda fonte, a gravação é recusada (retorna `False`) e as variações são logadas.
+  - Variações acima de 20% continuam sendo sempre descartadas.
+  - Menções ao caso de 29/10/2026 foram atualizadas em `app/`, `auditoria/` e `CHANGELOG.md` para indicar caso relatado e não confirmado por fonte independente.
+  - Testes de aceite completos em `tests/test_aceite_136.py`.
 - [Saúde Técnica] Spec 135 - Variação diária das ações sem janela de 15 dias e quarentena de outliers:
   - Compartilhada a função `fechamento_anterior` em `app/collectors/utils.py` com as 4 regras sem acessar `chartPreviousClose`, utilizada por `highlights.py` e `ibovespa.py`.
   - Quarentena de variação extrema (`OUTLIER_VARIACAO_DIA = 15.0`): variações acima de 15% tentam confirmação com a segunda fonte (`consultar_segunda_fonte`); se confirmada até 0,5 p.p., retorna ao ranking diário com fontes combinadas; caso contrário, é movida para a lista `em_revisao` (`paineis.altas_baixas.em_revisao` no snapshot).

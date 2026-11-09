@@ -1,7 +1,7 @@
 ---
 id: 136
 titulo: Variação extrema do Ibovespa só entra no painel se uma segunda fonte confirma
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: tests/test_aceite_136.py

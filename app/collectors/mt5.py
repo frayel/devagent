@@ -192,6 +192,21 @@ def em_modo_exclusivo() -> bool:
     return bool(getattr(_local, "exclusivo", False))
 
 
+@contextmanager
+def ignorado() -> Iterator[None]:
+    """Dentro do bloco, URLs do Yahoo seguem direto à rede, sem interceptação do MT5 (Spec 136)."""
+    anterior = getattr(_local, "ignorado", False)
+    _local.ignorado = True
+    try:
+        yield
+    finally:
+        _local.ignorado = anterior
+
+
+def em_modo_ignorado() -> bool:
+    return bool(getattr(_local, "ignorado", False))
+
+
 # --------------------------------------------------------------------------
 # Cliente da mt5api
 # --------------------------------------------------------------------------
@@ -501,7 +516,7 @@ def interceptar(url: str) -> httpx.Response | None:
     Devolve a resposta montada com o MT5, ou None para seguir ao Yahoo.
     Em modo exclusivo, levanta `httpx.ConnectError` em vez de seguir.
     """
-    if not configurado() or "finance.yahoo.com" not in url:
+    if em_modo_ignorado() or not configurado() or "finance.yahoo.com" not in url:
         return None
     try:
         corpo = resposta_para(url)

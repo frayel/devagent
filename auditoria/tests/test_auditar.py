@@ -133,7 +133,7 @@ def _painel_com_variacao(pct: float) -> Painel:
 
 
 def test_variacao_real_de_16_por_cento_passa():
-    """29/10/2026: o índice variou 15,99% com o circuit breaker estendido."""
+    """29/10/2026: caso relatado de 15,99% com o circuit breaker estendido (relatado)."""
     falhas = _falhas(checar_coerencia(_painel_com_variacao(15.99)))
     assert "ibov.variacao_plausivel" not in falhas
     assert "ibov.historico_vs_valor" not in falhas
