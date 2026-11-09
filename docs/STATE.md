@@ -12,6 +12,13 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- Correção de resiliência do disjuntor e coleta do Ibovespa (#793):
+  - Resolvido travamento do disjuntor na partida a frio em ambientes com Postgres configurado (Render/Supabase): `_reset_disjuntor()` executado após `abrir_pool()` no lifespan.
+  - Removida chamada indevida de `init_db()` na importação de `app/database.py`, garantindo cumprimento da spec 128 (nenhuma conexão ao banco na importação de módulos).
+  - Ajustado `_ConexaoDoPool` para não abrir disjuntor de 30 s para `PoolTimeout` (contenção temporária de pool de conexões) e abrir o pool sob demanda se fechado.
+  - Adicionadas retentativas com backoff em `save_ibovespa_data` para proteger contra oscilações de boot.
+  - Saneamento de loopback IPv6 `[::1]` em `NO_PROXY`/`no_proxy` para evitar `httpx.InvalidURL: Invalid port: ':1]'`.
+  - Fuso horário BRT corrigido em consultas de instrumentação de coletas.
 - Migração para Antigravity Remote e modelo híbrido (ADR 031):
   - Validação de raias no CI via marcador HTML no corpo do PR (`<!-- devagent:raia:<nome> -->`), sem chamadas de rede à API externa do Jules.
   - Pasta `.agents/` para diários dos especialistas (com fallback retrocompatível a `.jules/`).

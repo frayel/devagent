@@ -98,3 +98,67 @@ def test_diagnostico_cache_bypass(monkeypatch):
     result = diagnostico()
     assert "erro" in result
     assert result["erro"] == "Postgres configurado e inacessível desde 10:00"
+
+
+def test_abrir_pool_reseta_disjuntor(monkeypatch):
+    """Regressão #793: abrir_pool deve resetar o disjuntor para que o app não acorde travado."""
+    import app.banco as banco
+
+    banco._disjuntor_aberto_ate = 9999999999.0
+    banco._disjuntor_aberto_desde = "10:00"
+
+    mock_pool = MagicMock()
+    monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@mock/db")
+    monkeypatch.setattr(banco, "get_backend_type", lambda: "postgres")
+    monkeypatch.setattr(banco, "_obter_pool", lambda db_url: mock_pool)
+
+    banco.abrir_pool()
+
+    assert mock_pool.open.called
+    assert banco._disjuntor_aberto_ate is None
+    assert banco._disjuntor_aberto_desde is None
+
+
+def test_pool_timeout_nao_abre_disjuntor(monkeypatch):
+    """Regressão #793: PoolTimeout é contenção interna temporária do pool e não deve
+
+    abrir o disjuntor de 30s para o banco inteiro.
+    """
+    import app.banco as banco
+    from psycopg_pool import PoolTimeout
+
+    banco._disjuntor_aberto_ate = None
+    banco._disjuntor_aberto_desde = None
+
+    mock_pool = MagicMock()
+    mock_pool.closed = False
+    mock_pool.getconn.side_effect = PoolTimeout("pool exhausted")
+
+    with pytest.raises(banco.DBInacessivelError):
+        banco._ConexaoDoPool(mock_pool)
+
+    # Disjuntor NÃO deve ter sido aberto para PoolTimeout
+    assert banco._disjuntor_aberto_ate is None
+    assert banco._disjuntor_aberto_desde is None
+
+
+def test_conexao_do_pool_auto_abre_se_pool_fechado(monkeypatch):
+    """Regressão #793: _ConexaoDoPool deve chamar pool.open() se o pool estiver fechado
+
+    em vez de travar o disjuntor imediatamente.
+    """
+    import app.banco as banco
+
+    mock_conn = MagicMock()
+    mock_pool = MagicMock()
+    mock_pool.closed = True
+
+    def mock_open(wait=True):
+        mock_pool.closed = False
+
+    mock_pool.open.side_effect = mock_open
+    mock_pool.getconn.return_value = mock_conn
+
+    conn = banco._ConexaoDoPool(mock_pool)
+    assert mock_pool.open.called
+    assert conn._conn is mock_conn

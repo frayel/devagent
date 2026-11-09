@@ -556,9 +556,6 @@ def get_latest_fator_mola_data() -> FatorMolaData | None:
     return FatorMolaData(**payload_copy)
 
 
-init_db()
-
-
 def save_scanner_capitulacao_data(data: ScannerCapitulacaoData) -> None:
     from app.banco import gravar_snapshot
 
@@ -1417,7 +1414,7 @@ def get_coletas_vazias_count(painel: str) -> int:
     from app.banco import ler_snapshot
     from datetime import datetime as dt
 
-    hoje = dt.now(timezone.utc).astimezone().date()
+    hoje = dt.now(timezone.utc).astimezone(BRT).date()
     payload = ler_snapshot("instrumentacao", hoje)
     if payload and "vazias" in payload:
         return payload["vazias"].get(painel, 0)
@@ -1429,7 +1426,7 @@ def get_coletas_vazias_desde(desde: datetime) -> dict[str, int]:
     from app.banco import ler_snapshot
     from datetime import datetime as dt
 
-    hoje = dt.now(timezone.utc).astimezone().date()
+    hoje = dt.now(timezone.utc).astimezone(BRT).date()
     payload = ler_snapshot("instrumentacao", hoje)
     if payload and "vazias" in payload:
         return payload["vazias"]
@@ -1441,7 +1438,7 @@ def get_tempos_coleta_desde(desde: datetime) -> dict[str, float]:
     from app.banco import ler_snapshot
     from datetime import datetime as dt
 
-    hoje = dt.now(timezone.utc).astimezone().date()
+    hoje = dt.now(timezone.utc).astimezone(BRT).date()
     payload = ler_snapshot("instrumentacao", hoje)
     if payload and "tempos" in payload:
         return payload["tempos"]
@@ -1453,7 +1450,7 @@ def get_rodadas_coleta_desde(desde: datetime) -> dict[str, int]:
     from app.banco import ler_snapshot
     from datetime import datetime as dt
 
-    hoje = dt.now(timezone.utc).astimezone().date()
+    hoje = dt.now(timezone.utc).astimezone(BRT).date()
     payload = ler_snapshot("instrumentacao", hoje)
     if payload and "rodadas" in payload:
         return payload["rodadas"]

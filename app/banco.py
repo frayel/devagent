@@ -122,6 +122,7 @@ def abrir_pool() -> None:
     db_url = os.environ.get("DATABASE_URL")
     if db_url and get_backend_type() == "postgres":
         _obter_pool(db_url).open(wait=True)
+        _reset_disjuntor()
 
 
 def fechar_pool() -> None:
@@ -151,17 +152,31 @@ class _ConexaoDoPool:
             if _disjuntor_aberto_ate and time.time() < _disjuntor_aberto_ate:
                 raise DBInacessivelError("Disjuntor aberto")
         try:
+            if getattr(pool, "closed", False):
+                try:
+                    pool.open(wait=True)
+                    _reset_disjuntor()
+                except Exception:
+                    pass
             self._conn = pool.getconn()
             with _disjuntor_lock:
                 _disjuntor_aberto_ate = None
                 _disjuntor_aberto_desde = None
         except Exception as e:
-            with _disjuntor_lock:
-                if _disjuntor_aberto_desde is None:
-                    from datetime import datetime
+            try:
+                from psycopg_pool import PoolTimeout
 
-                    _disjuntor_aberto_desde = datetime.now().strftime("%H:%M")
-                _disjuntor_aberto_ate = time.time() + 30
+                is_timeout = isinstance(e, PoolTimeout)
+            except ImportError:
+                is_timeout = "PoolTimeout" in type(e).__name__
+
+            if not is_timeout:
+                with _disjuntor_lock:
+                    if _disjuntor_aberto_desde is None:
+                        from datetime import datetime
+
+                        _disjuntor_aberto_desde = datetime.now().strftime("%H:%M")
+                    _disjuntor_aberto_ate = time.time() + 30
             raise DBInacessivelError("Conexão falhou") from e
 
     def __getattr__(self, nome):
@@ -803,7 +818,7 @@ def diagnostico() -> dict:
     # Com o pool, a latência acima não inclui abrir conexão; o custo de abrir
     # vem das estatísticas do pool (média das conexões já abertas).
     stats = estatisticas_pool()
-    if stats.get("connections_num"):
+    if stats.get("connections_num") and stats.get("connections_ms") is not None:
         info["conexao_ms"] = round(stats["connections_ms"] / stats["connections_num"])
 
     _diagnostico_cache = info
