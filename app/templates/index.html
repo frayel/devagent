@@ -144,12 +144,15 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro sentimento-risco") %}
+{% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação. O percentual do gauge exclui quem ficou em zero.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro sentimento-risco") %}
     {% if highlights and highlights.dispersion_pct is not none %}
         {{ gauge(highlights.dispersion_pct, "em alta", 0, 100, "{:.0f}%", resumo="Dispersão, ações em alta") }}
         <div class="legenda num">
             <span>{{ highlights.up_count }} subiram</span>
             <span>{{ highlights.down_count }} caíram</span>
+            {% if highlights.get('neutral_count') is not none and highlights.get('neutral_count') > 0 %}
+            <span>{{ highlights.get('neutral_count') }} estáveis</span>
+            {% endif %}
         </div>
     {% else %}
         {{ estado('sem_registro' if is_historical else 'indisponivel') }}

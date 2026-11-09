@@ -12,6 +12,20 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Experiência] Spec 140 - A manchete não chama de alta ampla um pregão com poucas ações em alta:
+  - Definido enum único de humor: `alta_ampla`, `baixa_ampla`, `misto`, `sem_direcao`, `indisponivel`.
+  - Implementadas as 8 regras da manchete em ordem estrita em `app/services/manchete.py`:
+    1. Sem Ibovespa ou variação indisponível -> `indisponivel` ("Resumo do mercado indisponível no momento.").
+    2. Pregões divergentes entre Ibovespa, dispersão ou motores -> `indisponivel` ("Os painéis não estão no mesmo pregão; a leitura do dia fica suspensa.").
+    3. `revisao_variacao` verdadeiro -> `misto` (movimento em revisão, sem menção a otimismo generalizado ou alta ampla).
+    4. `fracao_em_alta < 0.20` com índice positivo -> `misto` com sinal do índice e contagens de altas, baixas e total.
+    5. Conflito de motores (2 ou mais motores com sinal oposto ao do índice) -> `misto`.
+    6. Sem conflito, sem revisão, índice positivo, `fracao_em_alta >= 0.50` e apetite "Tomando risco" -> `alta_ampla` ("Dia de otimismo generalizado com forte tomada de risco."). Espelho de baixa ("Defensivo") mantido.
+    7. Sinais mistos com contagens da amostra; avisa sobre motores ausentes quando não for regra 6.
+    8. Variação do índice igual a zero -> `sem_direcao` ("O mercado opera sem direção definida.").
+  - Gauge de dispersão mantido em `up_count / (up_count + down_count)` com neutros no `total_count`; tooltip atualizado indicando exclusão de quem ficou em zero; legenda com suporte a contagem de neutros/estáveis.
+  - Endpoint `/api/snapshot` passa a publicar `paineis.manchete` com `humor`, `texto`, `coletado_em` e `fonte`.
+  - Testes de aceite completos em `tests/test_aceite_140.py`.
 - [Saúde Técnica] Spec 139 - O Verificador vê todo merge na main e examina todo PR que mexe num limite:
   - `merges_do_desenvolvimento` em `devagent/adaptadores/jules.py` deixa de filtrar por `do_agente`, incluindo PRs da raia de desenvolvimento abertos por humanos.
   - Implementada paginação na busca de PRs fechados até encontrar uma página anterior a `desde`, com limite de 5 páginas.

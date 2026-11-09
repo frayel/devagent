@@ -1637,6 +1637,57 @@ def snapshot(
 
         elif is_historical:
             resp["paineis"]["anomalia_fechamento"] = None
+
+        # Manchete (Spec 140)
+        ibov_input = None
+        if data:
+            ibov_input = {
+                "valor": data.current_price,
+                "variacao_pct": variation_pct,
+                "is_positive": variation_pct > 0
+                if variation_pct is not None
+                else False,
+                "revisao_variacao": revisao_variacao,
+                "pregao": getattr(data, "pregao_data", None),
+                "estado": estado_ibov,
+            }
+
+        highs_input = None
+        if highlights_data:
+            highs_input = {
+                "up_count": getattr(highlights_data, "up_count", None),
+                "down_count": getattr(highlights_data, "down_count", None),
+                "total_count": getattr(highlights_data, "total_count", None),
+                "pregao": getattr(highlights_data, "pregao_data", None),
+            }
+
+        risco_input = None
+        if apetite_risco_data:
+            risco_input = {"estado": getattr(apetite_risco_data, "estado", None)}
+
+        motores_input = None
+        if motores_data and getattr(motores_data, "motores_json", None):
+            try:
+                motores_input = {
+                    "pregao": getattr(motores_data, "pregao_data", None),
+                    "motores": json.loads(motores_data.motores_json),
+                }
+            except Exception:
+                motores_input = None
+
+        manchete_obj = gerar_manchete(
+            ibov_input,
+            highs_input,
+            risco_input,
+            motores_data=motores_input,
+        )
+        resp["paineis"]["manchete"] = {
+            "humor": manchete_obj.humor,
+            "texto": manchete_obj.texto,
+            "coletado_em": agora.isoformat(),
+            "fonte": "composto",
+        }
+
         resp["consultor"] = {
             "atualizado_em": datetime.now(timezone(timedelta(hours=-3))).isoformat(),
             "ativos_avaliados": len(CARTEIRA_IBOVESPA),
@@ -1710,7 +1761,12 @@ def index(
         forca_relativa = get_forca_relativa_view_data()
         escudo_quedas = get_escudo_quedas_view_data()
 
-        manchete = gerar_manchete(ibovespa_data, highs_dict, risco_dict)
+        manchete = gerar_manchete(
+            ibovespa_data,
+            highlights,
+            risco_dict,
+            motores_data=motores_cards,
+        )
 
         coesao = get_coesao_view_data()
         atrasadas_rally = get_atrasadas_rally_view_data()

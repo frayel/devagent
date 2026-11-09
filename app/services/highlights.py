@@ -69,6 +69,7 @@ def get_highlights_view_data() -> dict[str, Any] | None:
     )
 
     dispersion_pct = None
+    neutral_count = None
     if (
         data.total_count
         and data.up_count is not None
@@ -80,6 +81,7 @@ def get_highlights_view_data() -> dict[str, Any] | None:
             if (data.up_count + data.down_count) > 0
             else 0
         )
+        neutral_count = max(0, data.total_count - (data.up_count + data.down_count))
 
     pregao_str = getattr(data, "pregao_data", None)
     if pregao_str:
@@ -97,11 +99,13 @@ def get_highlights_view_data() -> dict[str, Any] | None:
         "up_count": data.up_count,
         "down_count": data.down_count,
         "total_count": data.total_count,
+        "neutral_count": neutral_count,
         "dispersion_pct": dispersion_pct,
         "em_revisao": em_revisao_formatted,
         "titulo_altas": titulo_altas,
         "titulo_baixas": titulo_baixas,
         "pregao_data": pregao_str,
+        "pregao": pregao_str,
         "ausentes_count": getattr(data, "ausentes_count", 0),
         "ausentes_tickers": ausentes_tickers,
     }
