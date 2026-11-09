@@ -8,7 +8,7 @@ import httpx
 
 from app.database import IbovespaData, save_ibovespa_data
 from app.collectors import mt5
-from app.collectors.utils import fetch_with_retry
+from app.collectors.utils import fetch_with_retry, fechamento_anterior
 
 logger = logging.getLogger(__name__)
 
@@ -66,31 +66,20 @@ def fetch_yfinance() -> IbovespaData | None:
             .strftime("%Y-%m-%d")
         )
 
-        previous_close: float | None = None
-
-        if len(valid_closes) >= 2:
-            is_hoje = valid_dates[-1] == current_date_str
-            is_igual_ultimo = (
-                current_price > 0
-                and abs(current_price - valid_closes[-1]) / valid_closes[-1] < 0.0001
+        previous_close = fechamento_anterior(
+            valid_closes,
+            current_price,
+            hoje=current_date_str,
+            meta=meta,
+            datas=valid_dates,
+        )
+        if previous_close is None:
+            logger.warning(
+                "previous_close ausente em meta e série; usando current_price como fallback."
             )
-            if is_hoje or is_igual_ultimo:
-                previous_close = float(valid_closes[-2])
-            else:
-                previous_close = float(valid_closes[-1])
-        else:
-            meta_prev = meta.get("previousClose") or meta.get(
-                "regularMarketPreviousClose"
-            )
-            if meta_prev is not None:
-                previous_close = float(meta_prev)
-            else:
-                logger.warning(
-                    "previous_close ausente em meta e série; usando current_price como fallback."
-                )
-                previous_close = float(current_price)
+            previous_close = float(current_price)
 
-        previous_close = float(previous_close) if previous_close is not None else 0.0
+        previous_close = float(previous_close)
 
         calc_closes = valid_closes.copy()
         if current_price and (not calc_closes or current_price != calc_closes[-1]):

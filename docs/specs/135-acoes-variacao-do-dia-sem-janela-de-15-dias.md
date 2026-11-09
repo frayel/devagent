@@ -1,7 +1,7 @@
 ---
 id: 135
 titulo: A variação diária das ações não usa o fechamento de 15 dias atrás
-status: ready
+status: done
 esforco: G
 gaveta: saúde técnica
 aceite: tests/test_aceite_135.py

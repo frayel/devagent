@@ -28,6 +28,10 @@ class HighlightsData:
     up_count: int | None = None
     down_count: int | None = None
     total_count: int | None = None
+    em_revisao_json: str = "[]"
+    pregao_data: str | None = None
+    ausentes_count: int = 0
+    ausentes_json: str = "[]"
 
 
 @dataclass
@@ -460,6 +464,10 @@ def save_highlights_data(data: HighlightsData) -> None:
         "up_count": data.up_count,
         "down_count": data.down_count,
         "total_count": data.total_count,
+        "em_revisao_json": getattr(data, "em_revisao_json", "[]"),
+        "pregao_data": getattr(data, "pregao_data", None),
+        "ausentes_count": getattr(data, "ausentes_count", 0),
+        "ausentes_json": getattr(data, "ausentes_json", "[]"),
     }
     gravar_snapshot("maiores_altas_baixas", hoje, "ao_vivo", data.fonte, payload)
 
@@ -478,6 +486,10 @@ def get_latest_highlights_data() -> HighlightsData | None:
             up_count=payload.get("up_count"),
             down_count=payload.get("down_count"),
             total_count=payload.get("total_count"),
+            em_revisao_json=payload.get("em_revisao_json", "[]"),
+            pregao_data=payload.get("pregao_data"),
+            ausentes_count=payload.get("ausentes_count", 0),
+            ausentes_json=payload.get("ausentes_json", "[]"),
         )
     return None
 

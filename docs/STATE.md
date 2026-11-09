@@ -12,6 +12,14 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Saúde Técnica] Spec 135 - Variação diária das ações sem janela de 15 dias e quarentena de outliers:
+  - Compartilhada a função `fechamento_anterior` em `app/collectors/utils.py` com as 4 regras sem acessar `chartPreviousClose`, utilizada por `highlights.py` e `ibovespa.py`.
+  - Quarentena de variação extrema (`OUTLIER_VARIACAO_DIA = 15.0`): variações acima de 15% tentam confirmação com a segunda fonte (`consultar_segunda_fonte`); se confirmada até 0,5 p.p., retorna ao ranking diário com fontes combinadas; caso contrário, é movida para a lista `em_revisao` (`paineis.altas_baixas.em_revisao` no snapshot).
+  - Títulos dos painéis de altas e baixas exibem dinamicamente a data do pregão da série ("Maiores altas · pregão dd/mm/aaaa").
+  - Tickers sem base ou preço não alteram `up_count` nem `down_count` e são reportados no rodapé ("Faltou dado para ...").
+  - `tests/yahoo_falso.py` fiel ao parâmetro `range` da URL (15d com 15 barras e `chartPreviousClose` anterior à primeira barra; penúltimo close em `previousClose`).
+  - Teste de fronteira `tests/test_fronteira_chart_previous_close.py` varre coletores e impede leitura de `chartPreviousClose` com `range != 1d`.
+  - Testes de aceite completos em `tests/test_aceite_135.py`.
 - [Saúde Técnica] Spec 134 - Variação do Ibovespa do dia e sinal de revisão:
   - Definidas as constantes `LIMIAR_PCT_REVISAO = 3.0` e `LIMIAR_PONTOS_REVISAO = 5000.0` no coletor de Ibovespa.
   - O cálculo de `previous_close` em `app/collectors/ibovespa.py` segue as 4 regras da spec sem acessar `chartPreviousClose`.

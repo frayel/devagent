@@ -22,12 +22,16 @@ def format_asset(asset: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "ticker": asset.get("ticker", ""),
+        "price": price,
         "price_formatted": price_formatted,
         "change_percent": change_percent,
         "change_percent_formatted": change_formatted,
         "is_positive": change_percent > 0,
         "is_negative": change_percent < 0,
         "sparkline": sparkline,
+        "base": asset.get("base"),
+        "fonte": asset.get("fonte"),
+        "janela": asset.get("janela"),
     }
 
 
@@ -42,8 +46,23 @@ def get_highlights_view_data() -> dict[str, Any] | None:
     except json.JSONDecodeError:
         return None
 
+    em_revisao_raw = []
+    if getattr(data, "em_revisao_json", None):
+        try:
+            em_revisao_raw = json.loads(data.em_revisao_json)
+        except json.JSONDecodeError:
+            em_revisao_raw = []
+
+    ausentes_tickers = []
+    if getattr(data, "ausentes_json", None):
+        try:
+            ausentes_tickers = json.loads(data.ausentes_json)
+        except json.JSONDecodeError:
+            ausentes_tickers = []
+
     highs_formatted = [format_asset(h) for h in highs]
     lows_formatted = [format_asset(low) for low in lows]
+    em_revisao_formatted = [format_asset(r) for r in em_revisao_raw]
 
     time_formatted = data.timestamp.astimezone(timezone(timedelta(hours=-3))).strftime(
         "%d/%m/%Y %H:%M:%S BRT"
@@ -62,6 +81,14 @@ def get_highlights_view_data() -> dict[str, Any] | None:
             else 0
         )
 
+    pregao_str = getattr(data, "pregao_data", None)
+    if pregao_str:
+        titulo_altas = f"Maiores altas · pregão {pregao_str}"
+        titulo_baixas = f"Maiores baixas · pregão {pregao_str}"
+    else:
+        titulo_altas = "Maiores altas"
+        titulo_baixas = "Maiores baixas"
+
     return {
         "highs": highs_formatted,
         "lows": lows_formatted,
@@ -71,4 +98,10 @@ def get_highlights_view_data() -> dict[str, Any] | None:
         "down_count": data.down_count,
         "total_count": data.total_count,
         "dispersion_pct": dispersion_pct,
+        "em_revisao": em_revisao_formatted,
+        "titulo_altas": titulo_altas,
+        "titulo_baixas": titulo_baixas,
+        "pregao_data": pregao_str,
+        "ausentes_count": getattr(data, "ausentes_count", 0),
+        "ausentes_tickers": ausentes_tickers,
     }

@@ -25,7 +25,7 @@ _PREGOES = {
     "5d": 5,
     "10d": 10,
     "15d": 15,
-    "1mo": 22,
+    "1mo": 21,
     "2mo": 42,
     "3mo": 63,
     "6mo": 126,
@@ -84,8 +84,10 @@ def _fechamentos(simbolo: str, n: int) -> list[float]:
     return valores
 
 
-def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
-    n = _PREGOES.get(intervalo_range, 22)
+def _resultado(
+    simbolo: str, intervalo_range: str, intervalo: str, tem_range: bool = True
+) -> dict:
+    n = _PREGOES.get(intervalo_range, 21)
     if intervalo != "1d":
         n = 26  # intradiário: 26 barras de 15 min
     serie = _fechamentos(simbolo, n)
@@ -107,18 +109,24 @@ def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
         fechamentos[-3] = 8.0
         fechamentos[-2] = 7.0
         fechamentos[-1] = 6.8
-        for i in range(1, 23):
+        for i in range(1, min(len(volumes) + 1, 23)):
             volumes[-i] = 100000
         volumes[-1] = 5000000
         opens = [10.0] * n
         opens[-1] = 6.5
+        chart_prev = (
+            anterior
+            if (tem_range and intervalo_range != "1d")
+            else (fechamentos[-2] if len(fechamentos) > 1 else 10.0)
+        )
+        prev_close = fechamentos[-2] if len(fechamentos) > 1 else 10.0
         return {
             "meta": {
                 "symbol": simbolo,
                 "currency": "BRL",
                 "regularMarketPrice": fechamentos[-1],
-                "chartPreviousClose": fechamentos[-2] if len(fechamentos) > 1 else 10.0,
-                "previousClose": fechamentos[-2] if len(fechamentos) > 1 else 10.0,
+                "chartPreviousClose": chart_prev,
+                "previousClose": prev_close,
                 "regularMarketDayLow": 5.0,
                 "regularMarketDayHigh": 7.0,
                 "regularMarketVolume": volumes[-1],
@@ -148,6 +156,13 @@ def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
         volumes[-1] *= 4  # pico de volume no último pregão
     ultimo = fechamentos[-1]
 
+    chart_prev = (
+        anterior
+        if (tem_range and intervalo_range != "1d")
+        else (fechamentos[-2] if len(fechamentos) > 1 else anterior)
+    )
+    prev_close = fechamentos[-2] if len(fechamentos) > 1 else anterior
+
     if "BBDC3" in simbolo:
         highs = [round(v * 1.01, 2) for v in fechamentos]
         if n >= 2:
@@ -159,8 +174,8 @@ def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
                 "symbol": simbolo,
                 "currency": "BRL",
                 "regularMarketPrice": ultimo,
-                "chartPreviousClose": anterior,
-                "previousClose": anterior,
+                "chartPreviousClose": chart_prev,
+                "previousClose": prev_close,
                 "regularMarketDayLow": round(ultimo * 0.97, 2),
                 "regularMarketDayHigh": round(ultimo * 1.01, 2),
                 "regularMarketVolume": volumes[-1],
@@ -185,8 +200,8 @@ def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
             "symbol": simbolo,
             "currency": "BRL",
             "regularMarketPrice": ultimo,
-            "chartPreviousClose": fechamentos[-2] if len(fechamentos) > 1 else anterior,
-            "previousClose": fechamentos[-2] if len(fechamentos) > 1 else anterior,
+            "chartPreviousClose": chart_prev,
+            "previousClose": prev_close,
             "regularMarketDayLow": round(ultimo * 0.97, 2),
             "regularMarketDayHigh": round(ultimo * 1.01, 2),
             "regularMarketVolume": volumes[-1],
@@ -210,6 +225,7 @@ def _resultado(simbolo: str, intervalo_range: str, intervalo: str) -> dict:
 def responder(request: httpx.Request) -> httpx.Response:
     url = urlparse(str(request.url))
     q = parse_qs(url.query)
+    tem_range = "range" in q
     intervalo_range = q.get("range", ["1mo"])[0]
     intervalo = q.get("interval", ["1d"])[0]
     if "finance.yahoo.com" in url.netloc and "/v8/finance/spark" in url.path:
@@ -219,7 +235,11 @@ def responder(request: httpx.Request) -> httpx.Response:
                 "result": [
                     {
                         "symbol": s,
-                        "response": [_resultado(s, intervalo_range, intervalo)],
+                        "response": [
+                            _resultado(
+                                s, intervalo_range, intervalo, tem_range=tem_range
+                            )
+                        ],
                     }
                     for s in simbolos
                     if s
@@ -232,7 +252,9 @@ def responder(request: httpx.Request) -> httpx.Response:
         simbolo = unquote(url.path.rsplit("/", 1)[-1])
         corpo = {
             "chart": {
-                "result": [_resultado(simbolo, intervalo_range, intervalo)],
+                "result": [
+                    _resultado(simbolo, intervalo_range, intervalo, tem_range=tem_range)
+                ],
                 "error": None,
             }
         }

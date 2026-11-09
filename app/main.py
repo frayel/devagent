@@ -997,12 +997,22 @@ def snapshot(
                 if highlights_data.lows_json
                 else []
             )
+            em_revisao = (
+                json.loads(highlights_data.em_revisao_json)
+                if getattr(highlights_data, "em_revisao_json", None)
+                else []
+            )
             altas_baixas_panel = {
                 "coletado_em": highlights_data.timestamp.isoformat(),
                 "fonte": getattr(highlights_data, "fonte", "yfinance"),
                 "altas": highs,
                 "baixas": lows,
+                "em_revisao": em_revisao,
             }
+            if getattr(highlights_data, "pregao_data", None):
+                altas_baixas_panel["pregao_data"] = highlights_data.pregao_data
+            if getattr(highlights_data, "ausentes_count", 0):
+                altas_baixas_panel["ausentes_count"] = highlights_data.ausentes_count
 
             up_count = getattr(highlights_data, "up_count", None)
             down_count = getattr(highlights_data, "down_count", None)
