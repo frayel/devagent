@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+import time
 from datetime import datetime, timezone, timedelta
 
 import httpx
@@ -137,9 +138,21 @@ def collect_and_save() -> bool:
         data = fetch_yfinance()
 
     if data:
-        save_ibovespa_data(data)
-        logger.info(f"Saved Ibovespa data. Price: {data.current_price}")
-        return True
+        # Tenta salvar com retries para tolerar inicialização/aquecimento transitório do banco
+        for tentativa in range(3):
+            try:
+                save_ibovespa_data(data)
+                logger.info(f"Saved Ibovespa data. Price: {data.current_price}")
+                return True
+            except Exception as e:
+                logger.warning(
+                    f"Falha ao salvar dados do Ibovespa (tentativa {tentativa + 1}/3): {e}"
+                )
+                if tentativa < 2:
+                    time.sleep(1.0)
+                else:
+                    raise
+        return False
     else:
         logger.error("Failed to collect data from all sources.")
         return False

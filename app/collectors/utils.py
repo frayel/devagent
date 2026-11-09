@@ -1,11 +1,20 @@
 import logging
 import asyncio
+import os
 import time
 import re
 from urllib.parse import urlparse
 import httpx
 
 from app.collectors import registro_fontes
+
+# Evita crash do parser de proxy do httpx quando NO_PROXY contém [::1] (Invalid port: ':1]')
+for _var in ("NO_PROXY", "no_proxy"):
+    _val = os.environ.get(_var)
+    if _val and "[::1]" in _val:
+        os.environ[_var] = (
+            _val.replace(",[::1]", "").replace("[::1],", "").replace("[::1]", "")
+        )
 
 logger = logging.getLogger(__name__)
 

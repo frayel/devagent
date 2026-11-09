@@ -18,6 +18,8 @@ def setup_db(monkeypatch, tmp_path):
 
     app.banco._db_initialized = False
     app.banco._snapshot_cache.clear()
+    app.banco._pool = None
+    app.banco._diagnostico_cache = None
     app.database.init_db()
 
     # O MT5 só entra nos testes que o configuram de propósito.

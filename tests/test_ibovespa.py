@@ -170,3 +170,33 @@ def test_fechamento_anterior_antes_da_abertura():
     data = fetch_yfinance()
     assert data is not None
     assert data.previous_close == 167564.0
+
+
+@respx.mock
+def test_collect_and_save_retry_on_transient_db_error(monkeypatch):
+    """Regressão #793: collect_and_save deve tentar novamente se save_ibovespa_data
+
+    falhar temporariamente por disjuntor/inicialização do banco.
+    """
+    import app.collectors.ibovespa as ibov_mod
+    from app.banco import DBInacessivelError
+
+    yfinance_data = load_fixture("yfinance_response.json")
+    respx.get(
+        "https://query2.finance.yahoo.com/v8/finance/chart/^BVSP?range=1y&interval=1d"
+    ).respond(status_code=200, json=yfinance_data)
+
+    tentativas = [0]
+    orig_save = ibov_mod.save_ibovespa_data
+
+    def mock_save(data):
+        tentativas[0] += 1
+        if tentativas[0] == 1:
+            raise DBInacessivelError("Disjuntor aberto")
+        return orig_save(data)
+
+    monkeypatch.setattr(ibov_mod, "save_ibovespa_data", mock_save)
+    monkeypatch.setattr(ibov_mod.time, "sleep", lambda s: None)
+
+    assert ibov_mod.collect_and_save() is True
+    assert tentativas[0] == 2
