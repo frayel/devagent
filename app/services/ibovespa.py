@@ -130,6 +130,7 @@ def get_ibovespa_view_data(agora: datetime | None = None) -> dict[str, Any] | No
         "mm200_signal": mm200_signal,
         "mm21_dist_pct": distancia_da_media(data.current_price, data.mm21),
         "mm200_dist_pct": distancia_da_media(data.current_price, data.mm200),
+        "pregao": getattr(data, "pregao_data", None),
     }
 
 

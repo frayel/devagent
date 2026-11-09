@@ -1,7 +1,7 @@
 ---
 id: 140
 titulo: A manchete não chama de alta ampla um pregão com poucas ações em alta
-status: ready
+status: done
 esforco: M
 gaveta: experiência
 aceite: tests/test_aceite_140.py
