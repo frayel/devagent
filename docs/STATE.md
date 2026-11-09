@@ -12,6 +12,14 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Saúde Técnica] Spec 137 - A fonte de referência da auditoria nunca é a que o produto usou:
+  - Tabela explícita `FONTES_EXCLUIDAS` em `auditoria/auditar.py`: `ref_yahoo` é excluído por `yfinance` e `yahoo`; `ref_stooq` é excluído por `stooq`; `mt5` não exclui nenhuma das referências.
+  - Função `obter_referencia(evitar)` quebra rótulos compostos por `+` (ex.: `yfinance+mt5`), normaliza em caixa baixa e descarta qualquer referência cujo conjunto de exclusão tenha interseção com as fontes do produto.
+  - Rótulos desconhecidos não descartam referências e registram aviso `fonte do produto desconhecida: <rótulo>`.
+  - Detalhamento de `ibov.confere_com_fonte` e `ibov.historico_confere` exibe ambas as pontas: `produto: <rótulo>; referência: <nome>`.
+  - Se todas as referências forem descartadas ou estiverem indisponíveis, `ibov.fonte_independente` assume status `inconclusivo` explicando os motivos, nunca gerando `OK`.
+  - Tabela documentada em `auditoria/README.md`.
+  - Testes de aceite completos em `tests/test_aceite_137.py`.
 - [Saúde Técnica] Spec 136 - Variação extrema do Ibovespa só entra se segunda fonte confirma:
   - Adicionado gerenciador de contexto `ignorado()` e função `em_modo_ignorado()` em `app/collectors/mt5.py` para permitir que chamadas ao Yahoo sigam diretamente à rede sem interceptação do MT5.
   - No coletor `app/collectors/ibovespa.py`, variações de magnitude normal (`|variação| <= 10%`) gravam sem chamadas extras.

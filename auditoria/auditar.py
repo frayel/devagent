@@ -222,12 +222,33 @@ def ref_stooq() -> Referencia:
 
 FONTES_REFERENCIA: list[Callable[[], Referencia]] = [ref_yahoo, ref_stooq]
 
+# Mapeamento explícito entre referências da auditoria e fontes do produto (Spec 137)
+FONTES_EXCLUIDAS: dict[str, set[str]] = {
+    "ref_yahoo": {"yfinance", "yahoo"},
+    "ref_stooq": {"stooq"},
+}
+FONTES_CONHECIDAS: set[str] = {"yfinance", "yahoo", "stooq", "mt5"}
+
 
 def obter_referencia(evitar: str | None) -> tuple[Referencia | None, list[str]]:
-    """Primeira fonte que responder, pulando a que produção declara usar."""
+    """Primeira fonte que responder, pulando a que produção declara usar (Spec 137)."""
     erros: list[str] = []
+    partes: list[str] = []
+    if evitar:
+        partes = [p.strip().lower() for p in evitar.split("+") if p.strip()]
+        for p in partes:
+            if p not in FONTES_CONHECIDAS:
+                erros.append(f"fonte do produto desconhecida: {p}")
+
     for f in FONTES_REFERENCIA:
-        if evitar and evitar.lower() in f.__name__:
+        excluidas = FONTES_EXCLUIDAS.get(f.__name__, set())
+        if not excluidas:
+            if "yahoo" in f.__name__:
+                excluidas = FONTES_EXCLUIDAS.get("ref_yahoo", set())
+            elif "stooq" in f.__name__:
+                excluidas = FONTES_EXCLUIDAS.get("ref_stooq", set())
+
+        if any(p in excluidas for p in partes):
             continue
         try:
             return f(), erros
@@ -564,16 +585,29 @@ def checar_referencia(
             )
         ]
     r: list[Resultado] = []
+    rotulo_produto = p.fonte or "desconhecido"
+    prefixo_pontas = f"produto: {rotulo_produto}; referência: {ref.fonte}"
+    if erros:
+        prefixo_pontas += f"; aviso: {'; '.join(erros)}"
+
     if p.valor is not None and ref.valor:
         dif = abs(p.valor - ref.valor) / ref.valor
+        detalhe_valor = (
+            f"exibido {br(p.valor)}; referência {br(ref.valor)}; "
+            f"diferença {dif * 100:.2f}% (limite {TOLERANCIA_PRECO * 100:.1f}%)"
+        )
         r.append(
             Resultado(
                 "ibov.confere_com_fonte",
                 OK if dif <= TOLERANCIA_PRECO else FALHA,
                 f"Valor exibido confere com {ref.fonte}",
-                f"exibido {br(p.valor)}; referência {br(ref.valor)}; "
-                f"diferença {dif * 100:.2f}% (limite {TOLERANCIA_PRECO * 100:.1f}%)",
-                {"exibido": p.valor, "referencia": ref.valor, "fonte": ref.fonte},
+                f"{prefixo_pontas}; {detalhe_valor}",
+                {
+                    "exibido": p.valor,
+                    "referencia": ref.valor,
+                    "fonte": ref.fonte,
+                    "produto": rotulo_produto,
+                },
             )
         )
     hoje = agora.astimezone(calendario.BRT).date().isoformat()
@@ -592,7 +626,7 @@ def checar_referencia(
                 "ibov.historico_confere",
                 OK if not divergentes else FALHA,
                 f"Fechamentos do gráfico conferem com {ref.fonte}",
-                f"{comparados} datas comparadas; divergentes: {divergentes[:5] or 'nenhuma'}",
+                f"{prefixo_pontas}; {comparados} datas comparadas; divergentes: {divergentes[:5] or 'nenhuma'}",
             )
         )
     elif p.datas:
@@ -601,7 +635,7 @@ def checar_referencia(
                 "ibov.historico_confere",
                 FALHA,
                 f"Nenhuma data do gráfico existe em {ref.fonte}",
-                f"datas exibidas {p.datas[0]} a {p.datas[-1]}",
+                f"{prefixo_pontas}; datas exibidas {p.datas[0]} a {p.datas[-1]}",
             )
         )
     return r
