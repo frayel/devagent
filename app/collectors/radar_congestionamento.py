@@ -8,7 +8,6 @@ from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
 from app.services.sparkline import build_sparkline
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

@@ -9,7 +9,6 @@ from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

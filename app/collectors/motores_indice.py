@@ -7,7 +7,6 @@ import httpx
 from app.database import MotoresIndiceData, save_motores_indice_data
 from app.collectors.utils import fetch_with_retry
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Grupos de ações para Motores do Índice

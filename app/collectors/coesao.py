@@ -7,7 +7,6 @@ from app.database import CoesaoData, save_coesao_data
 from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Spec: VALE3.SA, PETR4.SA, ITUB4.SA, BBDC4.SA, BBAS3.SA, WEGE3.SA, ABEV3.SA, RENT3.SA, SUZB3.SA, BPAC11.SA

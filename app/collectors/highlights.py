@@ -9,7 +9,6 @@ from app.database import HighlightsData, save_highlights_data
 from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # List of highly liquid B3 tickers

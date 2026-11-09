@@ -4,3 +4,6 @@ data.db
 server.log
 telas/
 painel.db
+/*.db
+/*.png
+commit_*.txt

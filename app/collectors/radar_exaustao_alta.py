@@ -10,7 +10,6 @@ from app.collectors.highlights import TICKERS
 from app.collectors.utils import fetch_historico_diario_yfinance_spark
 from app.database import ExaustaoAltaData, save_exaustao_alta_data
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

@@ -16,8 +16,7 @@ from app.consultor.universo import (
     COMPOSICAO_VIGENTE_ATE,
 )
 import secrets
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import HTTPException, status
 import os
 from fastapi import FastAPI, Request, Query
 from app import calendario
@@ -88,6 +87,12 @@ from app.database import (
 )
 from app import agendador
 from app.services import sistema as sistema_servico
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s:%(name)s:%(message)s",
+)
+logger = logging.getLogger(__name__)
 
 # Quando esta instância subiu: o Render reinicia o processo a cada deploy e a
 # cada vez que acorda o serviço hibernado (página /sistema, spec 082).
@@ -328,9 +333,6 @@ def pagina_sistema(request: Request):
     )
 
 
-security = HTTPBasic()
-
-
 def exigir_senha(request: Request) -> None:
     """HTTP Basic com CONSULTOR_SENHA (usuário `consultor`); sem a variável, libera.
 
@@ -358,23 +360,6 @@ def exigir_senha(request: Request) -> None:
     senha_ok = secrets.compare_digest(senha, senha_correta)
     if not (usuario_ok and senha_ok):
         raise negado
-
-
-def verificar_credenciais(credentials: HTTPBasicCredentials = Depends(security)):
-    senha_correta = os.environ.get("CONSULTOR_SENHA")
-    if not senha_correta:
-        return True
-
-    is_user_ok = secrets.compare_digest(credentials.username, "consultor")
-    is_pass_ok = secrets.compare_digest(credentials.password, senha_correta)
-
-    if not (is_user_ok and is_pass_ok):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciais incorretas",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return True
 
 
 @app.get("/consultor")

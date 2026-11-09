@@ -12,6 +12,13 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Poda] Spec 133 - Poda de arquivos mortos e configuração de log na importação:
+  - Removidos arquivos órfãos da raiz: `commit_description.txt`, `screenshot_desktop.png`, `telas_desktop.png` e `verification.png`.
+  - Atualizado `.gitignore` com regras para ignorar `*.db` e `*.png` na raiz, e `commit_*.txt`.
+  - Removido código morto em `app/main.py` (`security = HTTPBasic()`, `verificar_credenciais` e import de `Depends`).
+  - Centralizada a configuração de `logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")` no início de `app/main.py`.
+  - Removidas chamadas a `logging.basicConfig` que causavam efeito colateral de configuração global de log na importação de 21 coletores em `app/collectors/`.
+  - Criados testes de aceite em `tests/test_aceite_133.py`.
 - [Saúde Técnica] Spec 132c - Migração de formato de consenso para JSON:
   - Implementada função idempotente `migrar_consenso_para_json` em `app/consultor/armazenamento.py`, chamada durante `init_db()`.
   - Converte registros legados gravados em formato `repr` de dicionário Python (`"{'compra': 3}"`) para JSON equivalente (`'{"compra": 3}'`) usando `ast.literal_eval` seguro e `json.dumps`.
