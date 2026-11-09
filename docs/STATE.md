@@ -12,6 +12,13 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Saúde Técnica] Spec 138 - A auditoria confere a variação do dia do Ibovespa, não só o preço:
+  - Adicionada constante `TOLERANCIA_VARIACAO = 0.5` (0,5 ponto percentual).
+  - Implementada checagem interna `ibov.fechamento_anterior_coerente` em `checar_coerencia`: se o valor exibido coincide com o último ponto do gráfico (tolerância de 0,05%), exige que `fechamento_anterior` coincida com o penúltimo ponto do gráfico (mesma tolerância); caso contrário, falha explicitando ambos os valores. Se o valor diferir do último ponto (ex.: antes da abertura) ou se o dado estiver ausente, gera `inconclusivo`.
+  - Implementada checagem externa `ibov.variacao_confere_com_fonte` em `checar_referencia`: calcula a variação da fonte independente entre o fechamento do dia `d` e o último fechamento anterior `a`, comparando com `variacao_pct` com tolerância de até 0,5 p.p.; gera `inconclusivo` caso não haja referência, `a` não exista, ou a referência coincida com a fonte do produto.
+  - Adicionado comentário de esclarecimento sobre o escopo e limitações de `ibov.variacao_coerente`.
+  - Documentação atualizada em `auditoria/README.md`.
+  - Testes de aceite completos em `tests/test_aceite_138.py`.
 - [Saúde Técnica] Spec 137 - A fonte de referência da auditoria nunca é a que o produto usou:
   - Tabela explícita `FONTES_EXCLUIDAS` em `auditoria/auditar.py`: `ref_yahoo` é excluído por `yfinance` e `yahoo`; `ref_stooq` é excluído por `stooq`; `mt5` não exclui nenhuma das referências.
   - Função `obter_referencia(evitar)` quebra rótulos compostos por `+` (ex.: `yfinance+mt5`), normaliza em caixa baixa e descarta qualquer referência cujo conjunto de exclusão tenha interseção com as fontes do produto.

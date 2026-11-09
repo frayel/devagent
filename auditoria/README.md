@@ -22,8 +22,10 @@ Não há revisão humana: o agente pode alterar a auditoria e o `automerge.yml` 
 |---|---|
 | Aplicação | `/healthz` 200, página 200, aviso legal presente, sem erros de JavaScript, gráficos Plotly desenhados com dados |
 | Fonte independente | valor exibido a no máximo 1,5% do Yahoo Finance (ou Stooq, se o Yahoo falhar); fechamentos do gráfico a no máximo 0,5% |
+| Variação com fonte independente | variação do dia confere com a fonte externa independente com tolerância de até 0,5 p.p. (`ibov.variacao_confere_com_fonte`) |
 | Frescor | gráfico chega ao pregão mais recente (calendário da B3 em `calendario.py`); coleta com menos de 45 min durante o pregão; coleta feita no último pregão fora dele |
 | Coerência | variação % bate com a variação em pontos; variação diária abaixo de 20% (era 12%; caso relatado em 29/10/2026 de que o índice teria variado 15,99% com o circuit breaker estendido, relatado e não confirmado por fonte independente); valor em faixa plausível; histórico ordenado, com pelo menos 15 pregões e sem datas de mais de 60 dias |
+| Fechamento anterior coerente | fechamento anterior igual ao penúltimo ponto do gráfico (tolerância 0,05%) quando o valor exibido coincide com o último ponto (`ibov.fechamento_anterior_coerente`) |
 | Vazamento de teste | nenhum valor de `tests/fixtures/` aparece em produção |
 
 Fonte independente fora do ar gera resultado `inconclusivo`, que não reprova.
