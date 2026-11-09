@@ -114,7 +114,7 @@ def test_sensores_marcados_e_no_inicio_do_prompt(monkeypatch) -> None:
         if "/pulls/4/files" in url:
             return [
                 {
-                    "filename": "app/collectors/ibovespa.py",
+                    "filename": "app/coletor.py",
                     "patch": "@@ -50,1 +50,1 @@\n-VARIACAO_DIARIA_MAXIMA = 12.0\n+VARIACAO_DIARIA_MAXIMA = 20.0\n",
                 }
             ]
