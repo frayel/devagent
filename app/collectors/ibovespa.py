@@ -13,10 +13,11 @@ from app.collectors.utils import fetch_with_retry, fechamento_anterior
 logger = logging.getLogger(__name__)
 
 # Variação diária acima disto é tratada como dado errado da fonte e descartada.
-# Era 12%: em 29/10/2026 o Ibovespa variou 15,99% de verdade, com os limites
-# do circuit breaker da B3 estendidos naquele dia, e o coletor descartou o
-# dado das duas fontes.
+# Era 12%: caso relatado em 29/10/2026 de que o Ibovespa teria variado 15,99% (relatado, não confirmado por fonte independente).
+# Variações > 10% exigem confirmação por segunda fonte (Spec 136).
 VARIACAO_DIARIA_MAXIMA = 20.0  # %
+LIMIAR_CONFIRMACAO_EXTREMA = 10.0  # % (Spec 136)
+DIVERGENCIA_MAXIMA_CONFIRMACAO = 0.5  # p.p. (Spec 136)
 
 # Limiares de sinal de revisão (Spec 134)
 LIMIAR_PCT_REVISAO = 3.0  # % estrito (|pct| > 3.0)
@@ -112,36 +113,112 @@ def fetch_yfinance() -> IbovespaData | None:
         return None
 
 
+def obter_variacao_segunda_fonte(fonte_primaria: str) -> float | None:
+    """Consulta a segunda fonte de mercado para confirmar variação extrema do Ibovespa (Spec 136)."""
+    try:
+        if fonte_primaria == "mt5":
+            with mt5.ignorado():
+                dado_yahoo = fetch_yfinance()
+                if (
+                    dado_yahoo
+                    and dado_yahoo.previous_close
+                    and dado_yahoo.previous_close > 0
+                ):
+                    return (
+                        (dado_yahoo.current_price - dado_yahoo.previous_close)
+                        / dado_yahoo.previous_close
+                    ) * 100
+        else:
+            if mt5.configurado():
+                with mt5.exclusivo():
+                    dado_mt5 = fetch_yfinance()
+                    if (
+                        dado_mt5
+                        and dado_mt5.previous_close
+                        and dado_mt5.previous_close > 0
+                    ):
+                        return (
+                            (dado_mt5.current_price - dado_mt5.previous_close)
+                            / dado_mt5.previous_close
+                        ) * 100
+    except Exception as e:
+        logger.debug(f"Segunda fonte indisponível: {e}")
+    return None
+
+
 def collect_and_save() -> bool:
     logger.info("Starting collection...")
     data = None
+    fonte_primaria = None
     if mt5.configurado():
-        # MetaTrader 5 é a fonte preferencial; sem ele, segue a ordem antiga.
-        with mt5.exclusivo():
-            data = fetch_yfinance()
+        try:
+            with mt5.exclusivo():
+                data = fetch_yfinance()
+            if data:
+                fonte_primaria = "mt5"
+        except Exception as e:
+            logger.info(f"MT5 indisponível ({e}); tentando Yahoo...")
+
     if not data:
         logger.info("Falling back to yfinance...")
         data = fetch_yfinance()
+        if data:
+            fonte_primaria = "yfinance"
 
-    if data:
-        # Tenta salvar com retries para tolerar inicialização/aquecimento transitório do banco
-        for tentativa in range(3):
-            try:
-                save_ibovespa_data(data)
-                logger.info(f"Saved Ibovespa data. Price: {data.current_price}")
-                return True
-            except Exception as e:
-                logger.warning(
-                    f"Falha ao salvar dados do Ibovespa (tentativa {tentativa + 1}/3): {e}"
-                )
-                if tentativa < 2:
-                    time.sleep(1.0)
-                else:
-                    raise
-        return False
-    else:
+    if not data or not fonte_primaria:
         logger.error("Failed to collect data from all sources.")
         return False
+
+    if data.previous_close and data.previous_close > 0:
+        var_pct = (
+            (data.current_price - data.previous_close) / data.previous_close
+        ) * 100
+
+        if abs(var_pct) > VARIACAO_DIARIA_MAXIMA:
+            logger.error(
+                f"Variação implausível descartada: {var_pct:+.2f}% (teto {VARIACAO_DIARIA_MAXIMA}%)"
+            )
+            return False
+
+        if abs(var_pct) > LIMIAR_CONFIRMACAO_EXTREMA:
+            outra_fonte = "yfinance" if fonte_primaria == "mt5" else "mt5"
+            var_segunda = obter_variacao_segunda_fonte(fonte_primaria)
+
+            if var_segunda is None:
+                logger.error(
+                    f"Variação acima de 10% ({var_pct:+.2f}%) sem segunda fonte: "
+                    f"a outra fonte ({outra_fonte}) não respondeu ou não está configurada."
+                )
+                return False
+
+            diff = abs(var_pct - var_segunda)
+            if diff > DIVERGENCIA_MAXIMA_CONFIRMACAO:
+                logger.error(
+                    f"Variação acima de 10% divergente: {var_pct:+.2f}% ({fonte_primaria}) "
+                    f"e {var_segunda:+.2f}% ({outra_fonte}) (diferença de {diff:.2f} p.p. > {DIVERGENCIA_MAXIMA_CONFIRMACAO} p.p.)"
+                )
+                return False
+
+            logger.info(
+                f"variação acima de 10% confirmada por {fonte_primaria} e {outra_fonte} "
+                f"({var_pct:+.2f}% vs {var_segunda:+.2f}%)"
+            )
+
+    # Tenta salvar com retries para tolerar inicialização/aquecimento transitório do banco
+    for tentativa in range(3):
+        try:
+            save_ibovespa_data(data)
+            logger.info(f"Saved Ibovespa data. Price: {data.current_price}")
+            return True
+        except Exception as e:
+            logger.warning(
+                f"Falha ao salvar dados do Ibovespa (tentativa {tentativa + 1}/3): {e}"
+            )
+            if tentativa < 2:
+                time.sleep(1.0)
+            else:
+                raise
+    return False
 
 
 if __name__ == "__main__":
