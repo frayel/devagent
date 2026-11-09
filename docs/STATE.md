@@ -12,6 +12,15 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Saúde Técnica] Spec 139 - O Verificador vê todo merge na main e examina todo PR que mexe num limite:
+  - `merges_do_desenvolvimento` em `devagent/adaptadores/jules.py` deixa de filtrar por `do_agente`, incluindo PRs da raia de desenvolvimento abertos por humanos.
+  - Implementada paginação na busca de PRs fechados até encontrar uma página anterior a `desde`, com limite de 5 páginas.
+  - Priorização de sensores via `checar_sensor_pr` e `PADRAO_SENSOR`: PRs que alteram `auditoria/` ou modificam limites (`MAXIMO/A`, `LIMITE`, `TOLERANCIA`, `TETO`) no `patch` são marcados `[sensor]` e ordenados no início do prompt.
+  - Fallback gracioso para falha na listagem de arquivos (`/files`): o PR entra sem marca e com indicação `arquivos não consultados`.
+  - O prompt lista os 15 PRs mais recentes mais todos os `[sensor]`, indicando `+N PRs omitidos; liste com git log --merges` quando restarem PRs de fora.
+  - Checklist em `devagent/agents/raias.md` atualizado com itens *Verdade do número* e *Sensores*.
+  - Registrado ADR 031 (`devagent/decisoes/031-verificador-ve-todo-merge-e-todo-sensor.md`) e atualizado índice de ADRs no `devagent/CICLO.md`.
+  - Testes de aceite completos em `devagent/tests/test_aceite_139.py`.
 - [Saúde Técnica] Spec 138 - A auditoria confere a variação do dia do Ibovespa, não só o preço:
   - Adicionada constante `TOLERANCIA_VARIACAO = 0.5` (0,5 ponto percentual).
   - Implementada checagem interna `ibov.fechamento_anterior_coerente` em `checar_coerencia`: se o valor exibido coincide com o último ponto do gráfico (tolerância de 0,05%), exige que `fechamento_anterior` coincida com o penúltimo ponto do gráfico (mesma tolerância); caso contrário, falha explicitando ambos os valores. Se o valor diferir do último ponto (ex.: antes da abertura) ou se o dado estiver ausente, gera `inconclusivo`.

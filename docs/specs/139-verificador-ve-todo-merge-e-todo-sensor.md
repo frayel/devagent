@@ -1,7 +1,7 @@
 ---
 id: 139
 titulo: O Verificador vê todo merge na main e examina todo PR que mexe num limite
-status: ready
+status: done
 esforco: M
 gaveta: saúde técnica
 aceite: devagent/tests/test_aceite_139.py
