@@ -12,6 +12,13 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Saúde Técnica] Spec 134 - Variação do Ibovespa do dia e sinal de revisão:
+  - Definidas as constantes `LIMIAR_PCT_REVISAO = 3.0` e `LIMIAR_PONTOS_REVISAO = 5000.0` no coletor de Ibovespa.
+  - O cálculo de `previous_close` em `app/collectors/ibovespa.py` segue as 4 regras da spec sem acessar `chartPreviousClose`.
+  - Tratamento de fechamento ausente em `app/services/ibovespa.py` e `app/main.py`: `variacao_indisponivel: True`, variação percentual nula e `estado: "indisponivel"`, sem exibir `0,00%` no card.
+  - Variações extremas acima dos limiares ativam `revisao_variacao: True`, exibindo o selo `<span class="selo alerta selo-revisao">em revisão</span>` e mantendo tom neutro no badge de variação.
+  - Título do card ajustado dinamicamente para `"Ibovespa hoje"` apenas se a coleta for da data civil atual em BRT, ou `"Ibovespa"` para pregões anteriores.
+  - Testes de aceite completos em `tests/test_aceite_134.py`.
 - [Poda] Spec 133 - Poda de arquivos mortos e configuração de log na importação:
   - Removidos arquivos órfãos da raiz: `commit_description.txt`, `screenshot_desktop.png`, `telas_desktop.png` e `verification.png`.
   - Atualizado `.gitignore` com regras para ignorar `*.db` e `*.png` na raiz, e `commit_*.txt`.
