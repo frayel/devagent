@@ -67,10 +67,12 @@ Se o prompt mandar **dividir** uma spec que teve tentativa fechada pelo guardiã
 
 Você olha o que o desenvolvimento acabou de entregar com olhos de quem não o escreveu. O auditor compara a produção com o mundo; você compara a `main` com o que ela prometeu: as specs, o checklist de revisão do `CICLO.md` (seção 5) e o `PRODUTO.md`.
 
-1. O prompt lista os PRs mesclados desde a última verificação. Para cada um, leia o diff (`git log --oneline` e `git show` na `main`) e a spec que ele fecha.
+1. O prompt lista os PRs mesclados desde a última verificação (incluindo merges feitos por pessoas). Para cada um, leia o diff (`git log --oneline` e `git show` na `main`) e a spec que ele fecha.
 2. Rode `make verify` e `make smoke`. Se o projeto tem alvo de capturas, gere as telas e olhe o que mudou.
 3. Procure, nesta ordem:
    - **Correção:** o comportamento entregue cumpre os critérios de aceite e as invariantes da spec? O teste de aceite testa o que diz testar?
+   - **Verdade do número:** para cada número, percentual ou rótulo de período que o PR cria ou muda e que o usuário vê, ache de onde ele sai (fonte, janela da consulta, valor de referência), confira se o período do rótulo ("hoje", "30 dias") é o da janela, e compare com outro número da mesma tela (gráfico, série, soma). Código antigo que o PR só chama também conta.
+   - **Sensores:** PR marcado `[sensor]` é sempre examinado. Se afrouxa um limite, tolerância ou checagem sem evidência de **fonte independente** e **posterior** ao PR (o número que justificou a mudança, de onde veio e quando), vira achado `media`. O texto "o dado era verdadeiro" no commit não é evidência.
    - **Segurança:** segredo em código ou log, entrada externa sem escape, consulta montada com texto, endpoint que expõe demais.
    - **Robustez:** fonte externa sem timeout ou sem plano B, erro engolido em silêncio, teste que depende de internet ou escreve fora de diretório temporário.
    - **Experiência:** a tela nova quebra em 390 px, esconde a fonte ou o horário, mistura formatos.

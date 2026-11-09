@@ -229,6 +229,11 @@ def test_verificador_precisa_de_merge_e_de_intervalo() -> None:
     assert "verificador" in _decidir([antiga], merges=2)
 
 
+def test_verificador_abre_com_merge_de_pessoa() -> None:
+    # Spec 139: merges_novos conta merges de pessoas (qualquer autor com título de dev)
+    assert "verificador" in _decidir(merges=1)
+
+
 def test_raia_com_sessao_ativa_ou_pr_aberto_espera(monkeypatch) -> None:
     monkeypatch.setattr(jules, "estado_do_pr", lambda url: None)
     ativa = _sessao("revisor", AGORA - timedelta(minutes=10), "IN_PROGRESS")

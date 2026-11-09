@@ -715,12 +715,89 @@ def complemento_da_raia(persona: str) -> str:
             "nenhuma outra spec."
         )
     if persona == "verificador":
-        merges = merges_do_desenvolvimento(desde=ultima_verificacao())
-        if not merges:
-            return ""
-        lista = ", ".join(f"#{pr['number']} ({pr['title']})" for pr in merges[:15])
-        return f"Verifique o que estes PRs levaram à main: {lista}."
+        return prompt_do_verificador()
     return ""
+
+
+PADRAO_SENSOR = re.compile(
+    r"^[+-].*\b\w*(MAXIM[AO]|LIMITE|TOLERANCIA|TETO)\w*\s*=", re.MULTILINE
+)
+
+
+def checar_sensor_pr(pr_number: int) -> tuple[bool, bool]:
+    """Consulta os arquivos de um PR e retorna (is_sensor, erro_arquivos).
+
+    É sensor se alterar qualquer arquivo em auditoria/ ou se o patch
+    tiver linha adicionada/removida casando PADRAO_SENSOR.
+    """
+    repo = PROJETO["repositorio"]
+    try:
+        arquivos = github_get(f"/repos/{repo}/pulls/{pr_number}/files")
+    except Exception:  # noqa: BLE001
+        return False, True
+
+    if not isinstance(arquivos, list):
+        return False, True
+
+    for arq in arquivos:
+        nome = arq.get("filename") or ""
+        if nome.startswith("auditoria/") or "/auditoria/" in nome:
+            return True, False
+        patch = arq.get("patch") or ""
+        if PADRAO_SENSOR.search(patch):
+            return True, False
+
+    return False, False
+
+
+def prompt_do_verificador(merges: list[dict[str, Any]] | None = None) -> str:
+    """Monta o prompt para a sessão do Verificador com os PRs mesclados."""
+    if merges is None:
+        merges = merges_do_desenvolvimento(desde=ultima_verificacao())
+    if not merges:
+        return ""
+
+    info_prs: list[tuple[dict[str, Any], bool, bool]] = []
+    for pr in merges:
+        is_sensor, erro = checar_sensor_pr(pr["number"])
+        info_prs.append((pr, is_sensor, erro))
+
+    sensores_fora = [info for info in info_prs[15:] if info[1]]
+    selecionados_set = {pr["number"] for pr in merges[:15]} | {
+        info[0]["number"] for info in sensores_fora
+    }
+    total_omitidos = len(merges) - len(selecionados_set)
+
+    # Sensores primeiro no prompt, mantendo ordem cronológica decrescente
+    sensores = [
+        info for info in info_prs if info[0]["number"] in selecionados_set and info[1]
+    ]
+    demais = [
+        info
+        for info in info_prs
+        if info[0]["number"] in selecionados_set and not info[1]
+    ]
+    ordenados = sensores + demais
+
+    itens_formatados = []
+    for pr, is_sensor, erro in ordenados:
+        rotulo = f"#{pr['number']}"
+        if is_sensor:
+            itens_formatados.append(f"{rotulo} [sensor] ({pr['title']})")
+        elif erro:
+            itens_formatados.append(
+                f"{rotulo} ({pr['title']}) (arquivos não consultados)"
+            )
+        else:
+            itens_formatados.append(f"{rotulo} ({pr['title']})")
+
+    lista = ", ".join(itens_formatados)
+    if total_omitidos > 0:
+        return (
+            f"Verifique o que estes PRs levaram à main: {lista}. "
+            f"+{total_omitidos} PRs omitidos; liste com git log --merges."
+        )
+    return f"Verifique o que estes PRs levaram à main: {lista}."
 
 
 def iniciar(persona: str, dry_run: bool) -> int:
@@ -958,21 +1035,49 @@ def ultima_verificacao(sessoes: list[dict[str, Any]] | None = None) -> datetime:
 
 def merges_do_desenvolvimento(desde: datetime) -> list[dict[str, Any]]:
     """PRs da raia de desenvolvimento mesclados depois de `desde`, mais novos antes."""
-    try:
-        prs = github_get(
-            f"/repos/{PROJETO['repositorio']}/pulls"
-            "?state=closed&sort=updated&direction=desc&per_page=50"
-        )
-    except (urllib.error.URLError, OSError, ValueError):
-        return []
-    return [
-        pr
-        for pr in prs
-        if pr.get("merged_at")
-        and _data({"createTime": pr["merged_at"]}, "createTime") > desde
-        and raia_do_titulo(pr.get("title") or "") == DESENVOLVIMENTO
-        and do_agente((pr.get("user") or {}).get("login"))
-    ]
+    if desde.tzinfo is None:
+        desde = desde.replace(tzinfo=timezone.utc)
+    todos_merges: list[dict[str, Any]] = []
+    vistos: set[int] = set()
+    repo = PROJETO["repositorio"]
+    for pagina in range(1, 6):
+        try:
+            prs = github_get(
+                f"/repos/{repo}/pulls"
+                f"?state=closed&sort=updated&direction=desc&per_page=50&page={pagina}"
+            )
+        except (urllib.error.URLError, OSError, ValueError):
+            break
+        if not prs or not isinstance(prs, list):
+            break
+
+        for pr in prs:
+            num = pr.get("number")
+            if num in vistos:
+                continue
+            if pr.get("merged_at"):
+                merged_dt = _data({"createTime": pr["merged_at"]}, "createTime")
+                if (
+                    merged_dt > desde
+                    and raia_do_titulo(pr.get("title") or "") == DESENVOLVIMENTO
+                ):
+                    todos_merges.append(pr)
+                    if num is not None:
+                        vistos.add(num)
+
+        datas_atualizacao = [
+            _data({"createTime": pr["updated_at"]}, "createTime")
+            for pr in prs
+            if pr.get("updated_at")
+        ]
+        if datas_atualizacao and min(datas_atualizacao) < desde:
+            break
+
+    todos_merges.sort(
+        key=lambda pr: _data({"createTime": pr["merged_at"]}, "createTime"),
+        reverse=True,
+    )
+    return todos_merges
 
 
 def raias_com_pr_aberto() -> set[str]:
