@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Poda: remoção de arquivos mortos na raiz e configuração centralizada de log (Spec 133). Remove imagens e arquivos de texto órfãos da raiz, código morto não utilizado em `app/main.py` (`security = HTTPBasic()`, `verificar_credenciais`), atualiza `.gitignore` e centraliza `logging.basicConfig` no início de `app/main.py`, removendo configurações de log como efeito colateral na importação de 21 coletores.
 - Saúde técnica: migração de formato de consenso para JSON no banco do Consultor (Spec 132c). Converte de forma idempotente em init_db registros legados gravados em repr de dicionário Python para JSON válido.
 - Fix: preserva detalhes de falhas sistêmicas e evita sobreposição do último erro no agendador (#769). Exceções na inicialização dos painéis não são mais mascaradas como "erro fatal" genérico em `estado["detalhes"]`, e falhas de infraestrutura (banco, rede, disjuntor) têm precedência e são preservadas em `estado["ultimo_erro"]` em vez de serem sobrescritas por falhas pontuais de coletores posteriores.
 - Fix: resolve travamento do disjuntor na partida a frio e falha na coleta do Ibovespa (#793). Reseta o disjuntor no `abrir_pool`, remove execução precipitada de `init_db()` na importação de `app/database.py`, evita abertura de disjuntor de 30 s para contenção temporária de pool (`PoolTimeout`), adiciona retentativa de gravação no salvamento do Ibovespa e saneia `[::1]` em `NO_PROXY`/`no_proxy` evitando `InvalidURL` no httpx. Corrige também fuso horário BRT nas consultas de instrumentação.

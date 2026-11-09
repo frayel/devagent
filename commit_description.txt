@@ -1,5 +1,0 @@
-Closes #764
-
-A causa raiz é que o serviço da web no Render (tier gratuito) entra em hibernação após 15 minutos de inatividade. Quando a auditoria o acorda no dia seguinte, o serviço retorna imediatamente os últimos dados persistidos no Postgres (do dia anterior) antes de a coleta assíncrona atualizar os dados, o que causa o alerta de frescor.
-
-Ajuste exato fora do repositório: Configurar um serviço de monitoramento externo (como UptimeRobot, cron-job.org ou Render Cron Job) para fazer chamadas HTTP periódicas (a cada 10-14 minutos) para a rota `/healthz` durante o horário de pregão, impedindo o serviço de hibernar e garantindo a coleta contínua.

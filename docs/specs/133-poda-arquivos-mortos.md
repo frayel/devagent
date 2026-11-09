@@ -1,7 +1,7 @@
 ---
 id: 133
 titulo: Poda de arquivos mortos e configuração de log na importação
-status: ready
+status: done
 esforco: P
 gaveta: poda
 aceite: tests/test_aceite_133.py

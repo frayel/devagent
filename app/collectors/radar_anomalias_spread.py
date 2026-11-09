@@ -8,7 +8,6 @@ from app.database import RadarAnomaliasSpreadData, save_radar_anomalias_spread_d
 from app.collectors.utils import fetch_with_retry
 from app.collectors.highlights import TICKERS
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 CESTA_LIQUIDEZ = TICKERS[:10]

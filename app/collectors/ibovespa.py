@@ -10,7 +10,6 @@ from app.database import IbovespaData, save_ibovespa_data
 from app.collectors import mt5
 from app.collectors.utils import fetch_with_retry
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Variação diária acima disto é tratada como dado errado da fonte e descartada.

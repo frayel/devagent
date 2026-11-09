@@ -10,7 +10,6 @@ from app.collectors import mt5
 from app.collectors.utils import fetch_historico_diario_yfinance_spark
 from app.collectors.highlights import TICKERS
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
