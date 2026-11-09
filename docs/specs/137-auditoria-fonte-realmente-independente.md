@@ -1,7 +1,7 @@
 ---
 id: 137
 titulo: A fonte de referência da auditoria nunca é a que o produto usou
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_137.py

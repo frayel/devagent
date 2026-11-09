@@ -28,6 +28,17 @@ Não há revisão humana: o agente pode alterar a auditoria e o `automerge.yml` 
 
 Fonte independente fora do ar gera resultado `inconclusivo`, que não reprova.
 
+### Fontes de referência da auditoria
+
+A fonte de referência nunca é a mesma que o produto usou (Spec 137):
+
+| Referência | Fontes do produto que a excluem |
+|---|---|
+| `ref_yahoo` | `yfinance`, `yahoo` |
+| `ref_stooq` | `stooq` |
+
+`mt5` não exclui nenhuma das duas, porque é outra origem.
+
 ## Rodar localmente
 
 ```
