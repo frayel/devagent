@@ -12,6 +12,10 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Experiência] Spec 143 - O fator peso pesado explica o sinal da conta:
+  - `app/services/fator_peso_pesado.py` monta a apresentação do card e do `/api/snapshot` (`valor`, `sentido`, `frase`, `proporcao`, `proporcao_bruta`, `limitado`). Sinal com menos tipográfico (−), uma casa, padrão brasileiro.
+  - `app/collectors/fator_peso_pesado.py`: contribuição = var% / 100 × peso / 100 × IBOV anterior (antes o peso entrava como 12 em vez de 12%, e a razão saía 100 vezes maior, quase sempre no teto). Grava `proporcao_bruta` e `proporcao` limitada a ±500%; denominador zero e nome faltando não gravam. Fechamento anterior por `fechamento_anterior` (spec 134), com `chartPreviousClose` só como último recurso em `range=1d`.
+  - Testes de aceite em `tests/test_aceite_143.py`.
 - [Experiência] Spec 142 - A lista de ganhos não repete a pressão vendedora:
   - `app/collectors/concentracao.py`: os dois coletores compartilham `_historico`, `_contribuicoes` e `_corte_metade`. Concentração de Ganhos lista só pontos teóricos positivos; Pressão Vendedora, só negativos. Cada lista corta em 50% da soma das contribuições do próprio sinal, sem teto de 3 ou 5 linhas, e grava todas as linhas em `top3_json` (o nome do campo ficou por compatibilidade com o `/api/snapshot`).
   - Frases: o N é o número de linhas e "K de 10 da cesta" diz quantos tickers tinham base e último preço. Índice em queda: ganhos "compensam" a queda. Índice em alta: a pressão "segurou" a alta, e o card não some mais. Parcela acima de 100% não passa por `min(100, ...)` e avisa que o restante da cesta compensou.

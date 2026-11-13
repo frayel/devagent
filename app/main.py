@@ -1541,14 +1541,9 @@ def snapshot(
         fator_peso_pesado_data = get_latest_fator_peso_pesado_data()
 
         if fator_peso_pesado_data:
-            resp["paineis"]["fator_peso_pesado"] = {
-                "proporcao": fator_peso_pesado_data.proporcao,
-                "mercado_lateral": fator_peso_pesado_data.mercado_lateral,
-                "coletado_em": fator_peso_pesado_data.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": fator_peso_pesado_data.fonte,
-            }
+            from app.services.fator_peso_pesado import apresentar as _fpp
+
+            resp["paineis"]["fator_peso_pesado"] = _fpp(fator_peso_pesado_data)
         elif is_historical:
             resp["paineis"]["fator_peso_pesado"] = None
         if radar_absorcao_cruzada_data:
@@ -2006,16 +2001,9 @@ def index(
 
         radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
         fator_peso_pesado_data_raw = get_latest_fator_peso_pesado_data()
-        fator_peso_pesado_data = None
-        if fator_peso_pesado_data_raw:
-            fator_peso_pesado_data = {
-                "proporcao": fator_peso_pesado_data_raw.proporcao,
-                "mercado_lateral": fator_peso_pesado_data_raw.mercado_lateral,
-                "coletado_em": fator_peso_pesado_data_raw.timestamp.astimezone(
-                    timezone(timedelta(hours=-3))
-                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                "fonte": fator_peso_pesado_data_raw.fonte,
-            }
+        from app.services.fator_peso_pesado import apresentar as _fpp
+
+        fator_peso_pesado_data = _fpp(fator_peso_pesado_data_raw)
 
         radar_absorcao_cruzada = None
         if radar_absorcao_cruzada_data:
