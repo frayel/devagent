@@ -1,7 +1,7 @@
 ---
 id: 142
 titulo: A lista de ganhos não repete a pressão vendedora
-status: ready
+status: done
 esforco: M
 gaveta: experiência
 aceite: tests/test_aceite_142.py

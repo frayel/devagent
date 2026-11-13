@@ -12,6 +12,11 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Experiência] Spec 142 - A lista de ganhos não repete a pressão vendedora:
+  - `app/collectors/concentracao.py`: os dois coletores compartilham `_historico`, `_contribuicoes` e `_corte_metade`. Concentração de Ganhos lista só pontos teóricos positivos; Pressão Vendedora, só negativos. Cada lista corta em 50% da soma das contribuições do próprio sinal, sem teto de 3 ou 5 linhas, e grava todas as linhas em `top3_json` (o nome do campo ficou por compatibilidade com o `/api/snapshot`).
+  - Frases: o N é o número de linhas e "K de 10 da cesta" diz quantos tickers tinham base e último preço. Índice em queda: ganhos "compensam" a queda. Índice em alta: a pressão "segurou" a alta, e o card não some mais. Parcela acima de 100% não passa por `min(100, ...)` e avisa que o restante da cesta compensou.
+  - Os dois cards usam o corte de 0,1% (`Ibovespa estável, sem concentração definida.`) e o estado `vazio` quando não há contribuição do sinal, sem copiar a lista do outro painel.
+  - Testes de aceite em `tests/test_aceite_142.py`.
 - [Fix] Tickers fora da bolsa saem das listas e do alerta do Yahoo (Passo 1, problema da página de saúde):
   - Treze tickers que saíram da B3 ou trocaram de código ficaram nas listas do código, e o Yahoo responde 404 para eles. Viraram o sucessor: RRRP3→BRAV3, ARZZ3/SOMA3→AZZA3, BRFS3/MRFG3→MBRF3, CCRO3→MOTV3, EMBR3→EMBJ3, NTCO3→NATU3. Saíram sem sucessor: AZUL4, CIEL3, CRFB3, JBSS3, PETZ3. Arquivos: `app/consultor/universo.py`, `sensibilidade_juros.py`, `assimetria_risco_retorno.py`, `concentracao_ordens.py`.
   - `banco.get_simbolos_suspensos` só lista símbolos que falharam nas últimas 48 h (`JANELA_SIMBOLO_PEDIDO`): ticker que o código não pede mais (CPLE6, ELET3, "Elet6") sai do alerta.

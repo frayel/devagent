@@ -229,8 +229,10 @@
   {% endif %}
 {% endcall %}
 
-{% call painel("Pressão Vendedora", 12, "Mostra a contribuição dos 5 ativos com o pior desempenho absoluto para a queda do Ibovespa no dia atual.", concentracao_vendedora.fonte if concentracao_vendedora else "", concentracao_vendedora.time if concentracao_vendedora else "", "visao-macro visao-geral escondido" if not concentracao_vendedora else "visao-macro visao-geral") %}
-    {% if concentracao_vendedora %}
+{% call painel("Pressão Vendedora", 12, "Só as contribuições negativas da cesta: quantas ações explicam metade dos pontos perdidos, caia ou suba o índice.", concentracao_vendedora.fonte if concentracao_vendedora else "", concentracao_vendedora.time if concentracao_vendedora else "", "visao-macro visao-geral escondido" if not concentracao_vendedora else "visao-macro visao-geral") %}
+    {% if concentracao_vendedora and concentracao_vendedora.resumo.estado in ('estavel', 'vazio') %}
+        <div class="vazio">{{ concentracao_vendedora.resumo.mensagem }}</div>
+    {% elif concentracao_vendedora %}
         <div class="destaque-texto">{{ concentracao_vendedora.resumo.mensagem }}</div>
         {% set linhas = [] %}
         {% for a in concentracao_vendedora.top3 %}
@@ -247,9 +249,9 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Concentração de Ganhos", 12, "Mostra quantas ações explicam 50% dos pontos de variação do índice hoje.", concentracao.fonte if concentracao else "", concentracao.time if concentracao else "", "visao-macro visao-geral escondido" if not concentracao else "visao-macro visao-geral") %}
+{% call painel("Concentração de Ganhos", 12, "Só as contribuições positivas da cesta: quantas ações explicam metade dos pontos ganhos, suba ou caia o índice.", concentracao.fonte if concentracao else "", concentracao.time if concentracao else "", "visao-macro visao-geral escondido" if not concentracao else "visao-macro visao-geral") %}
     {% if concentracao %}
-        {% if concentracao.resumo.estado == 'estavel' %}
+        {% if concentracao.resumo.estado in ('estavel', 'vazio') %}
             <div class="vazio">{{ concentracao.resumo.mensagem }}</div>
         {% else %}
             <div class="destaque-texto">{{ concentracao.resumo.mensagem }}</div>
