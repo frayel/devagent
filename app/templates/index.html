@@ -2,6 +2,12 @@
 {% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado, gauge, sparkline %}
 
 {% block content %}
+{#- Carimbo dos cards críticos (spec 141): rodapé com a data do pregão e selo de desatualizado. -#}
+{%- set _cb = carimbos if carimbos is defined and carimbos else {} -%}
+{%- set c_ibov = _cb.get('ibovespa') or {} -%}
+{%- set c_mare = _cb.get('mare') or {} -%}
+{%- set c_disp = _cb.get('altas_baixas') or {} -%}
+{%- set c_mot = _cb.get('motores_indice') or {} -%}
 <!-- Manchete Dinâmica -->
 <div class="span-12 manchete-container">
     <p class="manchete-texto texto-centro">{{ manchete }}</p>
@@ -17,7 +23,7 @@
 </div>
 
 <!-- Linha 1: Ibovespa e Maré do mercado -->
-{% call painel(data.titulo if data and data.titulo else "Ibovespa hoje", 8, "", data.fonte if data else "", data.time if data else "", "visao-macro painel-ibovespa visao-geral") %}
+{% call painel(data.titulo if data and data.titulo else "Ibovespa hoje", 8, "", data.fonte if data else "", c_ibov.get('rodape') or (data.time if data else ""), "visao-macro painel-ibovespa visao-geral", c_ibov.get('desatualizado', False)) %}
     {% if data %}
         {% if data.revisao_variacao %}<span class="selo alerta selo-revisao">em revisão</span>{% endif %}
         {% if data.variacao_indisponivel %}
@@ -44,7 +50,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Maré do mercado", 4, "Índice de 0 a 100. Fluxo (40%): parcela do volume financeiro da cesta de 30 ações que foi para ações em alta, uma aproximação do fluxo de ordens, que não tem fonte gratuita. Calma (35%): 100 menos o percentil da volatilidade de queda de 10 pregões do Ibovespa nos 252 anteriores; só os dias de queda contam, então uma alta forte não reduz a calma. Volume (25%): ritmo do volume contra a média de 21 pregões, ajustado pela hora do pregão, no sentido da maioria. A Maré descreve o humor do momento. Não é recomendação de compra ou venda.", mare.fonte if mare else "", mare.time if mare else "", "visao-macro painel-mare visao-geral") %}
+{% call painel("Maré do mercado", 4, "Índice de 0 a 100. Fluxo (40%): parcela do volume financeiro da cesta de 30 ações que foi para ações em alta, uma aproximação do fluxo de ordens, que não tem fonte gratuita. Calma (35%): 100 menos o percentil da volatilidade de queda de 10 pregões do Ibovespa nos 252 anteriores; só os dias de queda contam, então uma alta forte não reduz a calma. Volume (25%): ritmo do volume contra a média de 21 pregões, ajustado pela hora do pregão, no sentido da maioria. A Maré descreve o humor do momento. Não é recomendação de compra ou venda.", mare.fonte if mare else "", c_mare.get('rodape') or (mare.time if mare else ""), "visao-macro painel-mare visao-geral", c_mare.get('desatualizado', False)) %}
     {% if mare %}
         {% if mare.parcial %}<span class="selo alerta">parcial · sem {{ mare.ausentes }}</span>{% endif %}
         {{ gauge(mare.valor, "", 0, 100, "{:.0f}", faixas=mare.faixas, resumo="Maré do mercado, de 0 a 100", grande=False, escala=["0", "100"]) }}
@@ -130,7 +136,7 @@
 {% endcall %}
 
 {% set motores_span = 6 if clima_global else 12 %}
-{% call painel("Motores do Índice", motores_span, "Desempenho dos 3 principais grupos de ações que ditam o rumo do Ibovespa.", "B3", "", "painel-motores-indice visao-geral escondido" if not motores_cards else "painel-motores-indice visao-geral") %}
+{% call painel("Motores do Índice", motores_span, "Desempenho dos 3 principais grupos de ações que ditam o rumo do Ibovespa.", c_mot.get('fonte', ''), c_mot.get('rodape', ''), "painel-motores-indice visao-geral escondido" if not motores_cards and not motores_sem_carimbo else "painel-motores-indice visao-geral", c_mot.get('desatualizado', False)) %}
     {% if motores_cards %}
         <div class="motores-grid">
             {% for motor in motores_cards %}
@@ -144,7 +150,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação. O percentual do gauge exclui quem ficou em zero.", highlights.fonte if highlights else "", highlights.time if highlights else "", "visao-macro sentimento-risco") %}
+{% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação. O percentual do gauge exclui quem ficou em zero.", highlights.fonte if highlights else "", c_disp.get('rodape') or (highlights.time if highlights else ""), "visao-macro sentimento-risco", c_disp.get('desatualizado', False)) %}
     {% if highlights and highlights.dispersion_pct is not none %}
         {{ gauge(highlights.dispersion_pct, "em alta", 0, 100, "{:.0f}%", resumo="Dispersão, ações em alta") }}
         <div class="legenda num">

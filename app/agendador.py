@@ -61,8 +61,39 @@ def intervalo(agora: datetime) -> timedelta:
     return FORA_DO_PREGAO
 
 
+# Variáveis cujo valor nunca aparece em log nem em /api/coleta (spec 141).
+SEGREDOS_DO_AMBIENTE = (
+    "MT5_API_KEY",
+    "DATABASE_URL",
+    "GITHUB_TOKEN",
+    "GEMINI_API_KEY",
+    "JULES_API_KEY",
+    "RENDER_API_KEY",
+    "CONSULTOR_SENHA",
+)
+
+
 def _mask_secrets(text: str) -> str:
-    return re.sub(r"([?&]token=)[^&\s]+", r"\1***", text)
+    text = re.sub(r"([?&](?:token|key|api_key)=)[^&\s]+", r"\1***", text)
+    for var in SEGREDOS_DO_AMBIENTE:
+        valor = os.environ.get(var)
+        if valor and len(valor) >= 4:
+            text = text.replace(valor, "***")
+    return text
+
+
+def _avisar_falha(mensagem: str, nome: str, e: BaseException) -> None:
+    """Aviso de coletor que falhou: fonte, tipo da exceção e texto mascarado.
+
+    Sem traceback: a mensagem de uma exceção HTTP pode trazer a chave da URL.
+    """
+    logger.warning(
+        "%s %s: %s: %s",
+        mensagem,
+        nome,
+        type(e).__name__,
+        _mask_secrets(str(e))[:300],
+    )
 
 
 class _Memoria(logging.Handler):
@@ -388,13 +419,13 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                     except Exception:
                         logger.exception("Falha ao salvar coleta vazia para %s", nome)
             except Exception as e:  # noqa: BLE001 - o laço não pode morrer
-                logger.exception("Coleta de %s falhou", nome)
+                _avisar_falha("Coleta falhou:", nome, e)
                 msg = _formatar_erro(nome, e)
                 if estado_detalhes_manual is not None:
                     estado_detalhes_manual.append(_mask_secrets(msg))
                 _registrar_erro(msg, eh_sistemico=_eh_erro_sistemico(e))
         except Exception as e:
-            logger.exception("Falha ao inicializar ou coletar %s", nome)
+            _avisar_falha("Falha ao inicializar ou coletar:", nome, e)
             msg = _formatar_erro(nome, e, prefixo="erro fatal")
             if estado_detalhes_manual is not None:
                 estado_detalhes_manual.append(_mask_secrets(msg))

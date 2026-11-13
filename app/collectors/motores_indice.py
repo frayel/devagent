@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 import httpx
 
+from app.calendario import BRT
 from app.database import MotoresIndiceData, save_motores_indice_data
 from app.collectors.utils import fetch_with_retry
 
@@ -46,6 +47,8 @@ MOTORES = {
 
 def fetch_yfinance() -> MotoresIndiceData | None:
     motores_resultados: list[dict[str, float | str]] = []
+    # Pregão da barra mais recente usada na variação (spec 141).
+    ultima_barra: int | None = None
 
     with httpx.Client(timeout=10.0) as client:
         for nome_motor, tickers in MOTORES.items():
@@ -71,6 +74,9 @@ def fetch_yfinance() -> MotoresIndiceData | None:
                     if price is None or prev_close is None or prev_close == 0:
                         continue
 
+                    hora_barra = meta.get("regularMarketTime")
+                    if isinstance(hora_barra, (int, float)):
+                        ultima_barra = max(ultima_barra or 0, int(hora_barra))
                     change_percent = ((price - prev_close) / prev_close) * 100
                     soma_variacao += change_percent
                     contador += 1
@@ -93,10 +99,19 @@ def fetch_yfinance() -> MotoresIndiceData | None:
     # Ordenar por variação absoluta decrescente (do maior impacto para o menor)
     motores_resultados.sort(key=lambda x: abs(float(x["variacao"])), reverse=True)
 
+    pregao_data = None
+    if ultima_barra:
+        pregao_data = (
+            datetime.fromtimestamp(ultima_barra, tz=timezone.utc)
+            .astimezone(BRT)
+            .date()
+            .isoformat()
+        )
     return MotoresIndiceData(
         timestamp=datetime.now(timezone.utc),
         motores_json=json.dumps(motores_resultados),
         fonte="yfinance",
+        pregao_data=pregao_data,
     )
 
 

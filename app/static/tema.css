@@ -76,6 +76,10 @@ header .marca span { color: var(--texto-3); font-weight: 400; }
   background: var(--alta);
 }
 
+/* Pregão em leitura (spec 141). Pregões mistos usam o token de alerta, com texto. */
+.pregao-leitura { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pregao-leitura.mistos { color: var(--alerta); }
+
 header .hora { margin-left: auto; font-size: var(--fs-meta); color: var(--texto-3); }
 
 .grade {

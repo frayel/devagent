@@ -12,6 +12,13 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Experiência] Spec 141 - Cada card diz de qual pregão é o número:
+  - Helper único `app/services/carimbo.py`: formata `dd/mm/aaaa HH:MM BRT` em `America/Sao_Paulo`, deriva o pregão do número da última barra (nunca promove D−1 a D0) e marca desatualizado só durante o pregão (10:00–17:00 de dia útil), com TTL de 30 min por chave (`TTL_MINUTOS`).
+  - Cabeçalho mostra o pregão em leitura e o as-of a partir de Ibovespa, Maré, Dispersão e Motores; datas divergentes viram "Pregões mistos"; sessão anterior ao último pregão esperado diz "pregão anterior".
+  - Rodapé dos quatro cards críticos com fonte e carimbo (e o pregão quando difere do dia da coleta); Motores ganhou rodapé e, sem carimbo, fica indisponível; selo `desatualizado` no token `--alerta` sem apagar o número.
+  - `/api/snapshot`: `ibovespa`, `mare`, `altas_baixas` e `motores_indice` ganham `pregao`; `motores_indice` vira objeto `{pregao, coletado_em, fonte, motores}`. A manchete recebe os mesmos pregões.
+  - Agendador: coletor que falha registra aviso com fonte e tipo da exceção, com segredos do ambiente mascarados; o snapshot anterior mantém o `coletado_em`.
+  - Testes de aceite em `tests/test_aceite_141.py`.
 - [Experiência] Spec 140 - A manchete não chama de alta ampla um pregão com poucas ações em alta:
   - Definido enum único de humor: `alta_ampla`, `baixa_ampla`, `misto`, `sem_direcao`, `indisponivel`.
   - Implementadas as 8 regras da manchete em ordem estrita em `app/services/manchete.py`:
