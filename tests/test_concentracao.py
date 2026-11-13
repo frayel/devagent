@@ -144,7 +144,9 @@ def test_fetch_concentracao_vendedora_queda():
 
     resumo = json.loads(data.resumo_json)
     assert resumo["estado"] == "vendedora"
-    assert "piores ativos hoje respondem por" in resumo["mensagem"]
+    assert "pontos de queda do índice" in resumo["mensagem"]
+    top = json.loads(data.top3_json)
+    assert all(a["pontos"] < 0 for a in top)
 
 
 @respx.mock
@@ -170,5 +172,9 @@ def test_fetch_concentracao_vendedora_alta():
     respx.get(mock_url_2).respond(json=mock_response)
 
     data = fetch_concentracao_vendedora_yfinance()
-    # Should return None when Ibovespa is positive
-    assert data is None
+    # Spec 142: com o índice em alta o card não some; sem contribuição
+    # negativa na cesta, publica o estado vazio.
+    assert data is not None
+    resumo = json.loads(data.resumo_json)
+    assert resumo["estado"] == "vazio"
+    assert json.loads(data.top3_json) == []
