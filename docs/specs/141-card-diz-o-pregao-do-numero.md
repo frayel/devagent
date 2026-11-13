@@ -1,7 +1,7 @@
 ---
 id: 141
 titulo: Cada card diz de qual pregão é o número
-status: ready
+status: done
 esforco: M
 gaveta: experiência
 aceite: tests/test_aceite_141.py

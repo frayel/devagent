@@ -1,7 +1,10 @@
-{% macro painel(titulo, span, metodo, fonte, horario, extra_class="") %}
+{#- desatualizado: durante o pregão, coleta mais velha que o TTL do card (spec 141).
+    O número continua; o selo avisa. -#}
+{% macro painel(titulo, span, metodo, fonte, horario, extra_class="", desatualizado=False) %}
 <section class="painel span-{{ span }} {{ extra_class }}">
   <div class="cab">
     <h2>{{ titulo }}</h2>
+    {% if desatualizado %}<span class="selo alerta selo-desatualizado">desatualizado</span>{% endif %}
     {% if metodo %}
     <details>
       <summary aria-label="Método">i</summary>

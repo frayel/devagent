@@ -73,6 +73,8 @@ Hoje o auditor extrai os números do HTML, o que quebra se o template mudar. A a
 
 `fonte` é o nome do coletor que produziu o dado (`mt5` ou `yfinance`; `mt5+yfinance` quando parte veio de cada um). O auditor usa esse campo para escolher uma referência diferente.
 
+`pregao` (`AAAA-MM-DD`, spec 141) é a data do pregão a que o número pertence: a da última barra usada na variação, não a do relógio. Os quatro cards críticos o publicam: `ibovespa`, `mare`, `altas_baixas` e `motores_indice`. Este último é um objeto `{pregao, coletado_em, fonte, motores}`, com `estado: "indisponivel"` quando o snapshot não tem carimbo.
+
 Painéis com checagem própria: `apetite_risco`, `armadilha_abertura` e `mare` (escala 0 a 100, faixa coerente com o valor, pesos somando 1, valor igual à média ponderada, histórico de até 21 pregões anterior à coleta).
 
 ## Painel novo, checagem nova

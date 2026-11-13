@@ -86,14 +86,19 @@ def _semear(db_path: str) -> None:
         )
     )
 
+    # O gráfico termina no pregão da coleta, como em produção: senão o
+    # cabeçalho acusaria pregões mistos (spec 141).
+    from app import calendario
+    from app.services.carimbo import pregao_de
+
+    dias = [pregao_de(agora)]
+    while len(dias) < 30:
+        dias.insert(0, calendario.pregao_anterior(dias[0]))
     datas, fechamentos, v = [], [], 96_000.0
-    dia = datetime.now(timezone.utc).date() - timedelta(days=45)
-    while len(datas) < 30:
-        dia += timedelta(days=1)
-        if dia.weekday() < 5:
-            v *= 1 + (((len(datas) * 7919) % 23) - 10) / 1000
-            datas.append(dia.isoformat())
-            fechamentos.append(round(v, 2))
+    for dia in dias:
+        v *= 1 + (((len(datas) * 7919) % 23) - 10) / 1000
+        datas.append(dia.isoformat())
+        fechamentos.append(round(v, 2))
 
     db.save_ibovespa_data(
         db.IbovespaData(

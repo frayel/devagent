@@ -30,6 +30,7 @@ import json
 from datetime import datetime, timezone, timedelta
 from datetime import timezone as dt_timezone
 from app.services.ibovespa import get_ibovespa_view_data
+from app.services import carimbo as carimbo_servico
 from app.services.manchete import gerar_manchete
 from app.database import get_latest_highlights_data, get_latest_apetite_risco_data
 from app.services.highlights import get_highlights_view_data
@@ -256,6 +257,53 @@ def obter_pregoes_disponiveis(agora, mercado_aberto, pregao_corr):
             break
 
     return pregoes[: PREGOES_NO_SELETOR + 1]
+
+
+def _carimbos_criticos(agora: datetime) -> dict[str, dict[str, Any] | None]:
+    """Carimbo dos quatro cards críticos da narrativa (spec 141).
+
+    Lê os snapshots do contexto atual (pregão em leitura). Card sem dado fica None.
+    """
+    from app.database import get_latest_ibovespa_data, get_latest_mare_data
+
+    resultado: dict[str, dict[str, Any] | None] = {
+        chave: None for chave in carimbo_servico.CARDS_CRITICOS
+    }
+    ibov = get_latest_ibovespa_data()
+    if ibov:
+        ultima_barra = None
+        try:
+            datas = json.loads(ibov.history_json or "{}").get("dates") or []
+            ultima_barra = datas[-1] if datas else None
+        except (ValueError, AttributeError):
+            ultima_barra = None
+        resultado["ibovespa"] = carimbo_servico.carimbo(
+            "ibovespa", ibov.timestamp, getattr(ibov, "fonte", ""), agora, ultima_barra
+        )
+    mare_dado = get_latest_mare_data()
+    if mare_dado:
+        resultado["mare"] = carimbo_servico.carimbo(
+            "mare", mare_dado.timestamp, mare_dado.fonte, agora
+        )
+    destaques = get_latest_highlights_data()
+    if destaques:
+        resultado["altas_baixas"] = carimbo_servico.carimbo(
+            "altas_baixas",
+            destaques.timestamp,
+            getattr(destaques, "fonte", ""),
+            agora,
+            getattr(destaques, "pregao_data", None),
+        )
+    motores = get_latest_motores_indice_data()
+    if motores and motores.timestamp is not None:
+        resultado["motores_indice"] = carimbo_servico.carimbo(
+            "motores_indice",
+            motores.timestamp,
+            motores.fonte,
+            agora,
+            motores.pregao_data,
+        )
+    return resultado
 
 
 HORAS_VAZIOS = 3
@@ -912,6 +960,12 @@ def snapshot(
         app.banco.lendo_pregao(data_ref if is_historical else None),
         app.banco.req_snapshot_cache_ctx(),
     ):
+        carimbos = _carimbos_criticos(agora)
+
+        def _pregao(chave: str) -> str | None:
+            c = carimbos.get(chave)
+            return c["pregao_iso"] if c else None
+
         resp: dict[str, Any] = {
             "gerado_em": agora.isoformat(),
             "estado_mercado": estado_mercado,
@@ -969,6 +1023,7 @@ def snapshot(
                 "variacao_pct": variation_pct,
                 "revisao_variacao": revisao_variacao,
                 "coletado_em": data.timestamp.isoformat(),
+                "pregao": _pregao("ibovespa"),
                 "fonte": getattr(data, "fonte", "yfinance"),
                 "historico": {
                     "datas": history_data.get("dates", []),
@@ -1004,6 +1059,7 @@ def snapshot(
             )
             altas_baixas_panel = {
                 "coletado_em": highlights_data.timestamp.isoformat(),
+                "pregao": _pregao("altas_baixas"),
                 "fonte": getattr(highlights_data, "fonte", "yfinance"),
                 "altas": highs,
                 "baixas": lows,
@@ -1137,7 +1193,18 @@ def snapshot(
 
         motores_data = get_latest_motores_indice_data()
         if motores_data:
-            resp["paineis"]["motores_indice"] = json.loads(motores_data.motores_json)
+            # Objeto com carimbo (spec 141); `motores` é a lista que antes ia crua.
+            motores_painel: dict[str, Any] = {
+                "pregao": _pregao("motores_indice"),
+                "coletado_em": motores_data.timestamp.isoformat()
+                if motores_data.timestamp
+                else None,
+                "fonte": motores_data.fonte,
+                "motores": json.loads(motores_data.motores_json),
+            }
+            if motores_data.timestamp is None:
+                motores_painel["estado"] = "indisponivel"
+            resp["paineis"]["motores_indice"] = motores_painel
 
         elif is_historical:
             resp["paineis"]["motores_indice"] = None
@@ -1249,7 +1316,7 @@ def snapshot(
         # Maré do mercado (spec 027). Sem coleta válida, chave vazia.
         mare_data = get_latest_mare_data()
         resp["paineis"]["mare"] = (
-            mare_servico.snapshot(mare_data)
+            {**mare_servico.snapshot(mare_data), "pregao": _pregao("mare")}
             if mare_data
             else {"fonte": "nd", "coletado_em": agora.isoformat()}
         )
@@ -1648,7 +1715,7 @@ def snapshot(
                 if variation_pct is not None
                 else False,
                 "revisao_variacao": revisao_variacao,
-                "pregao": getattr(data, "pregao_data", None),
+                "pregao": _pregao("ibovespa"),
                 "estado": estado_ibov,
             }
 
@@ -1658,7 +1725,7 @@ def snapshot(
                 "up_count": getattr(highlights_data, "up_count", None),
                 "down_count": getattr(highlights_data, "down_count", None),
                 "total_count": getattr(highlights_data, "total_count", None),
-                "pregao": getattr(highlights_data, "pregao_data", None),
+                "pregao": _pregao("altas_baixas"),
             }
 
         risco_input = None
@@ -1669,7 +1736,7 @@ def snapshot(
         if motores_data and getattr(motores_data, "motores_json", None):
             try:
                 motores_input = {
-                    "pregao": getattr(motores_data, "pregao_data", None),
+                    "pregao": _pregao("motores_indice"),
                     "motores": json.loads(motores_data.motores_json),
                 }
             except Exception:
@@ -1723,8 +1790,13 @@ def index(
         app.banco.req_snapshot_cache_ctx(),
         app.banco.lendo_pregao(data_ref if is_historical else None),
     ):
+        carimbos = _carimbos_criticos(agora)
         motores_data = get_latest_motores_indice_data()
         motores_cards = json.loads(motores_data.motores_json) if motores_data else None
+        # Motores sem carimbo não mostram percentual solto (spec 141).
+        motores_sem_carimbo = bool(motores_cards) and carimbos["motores_indice"] is None
+        if motores_sem_carimbo:
+            motores_cards = None
 
         clima_global_data = get_latest_clima_global_data()
         clima_global = None
@@ -1761,11 +1833,22 @@ def index(
         forca_relativa = get_forca_relativa_view_data()
         escudo_quedas = get_escudo_quedas_view_data()
 
+        def _com_pregao(view: dict | None, chave: str) -> dict | None:
+            c = carimbos[chave]
+            if view is None or c is None:
+                return view
+            return {**view, "pregao": c["pregao_iso"]}
+
         manchete = gerar_manchete(
-            ibovespa_data,
-            highlights,
+            _com_pregao(ibovespa_data, "ibovespa"),
+            _com_pregao(highlights, "altas_baixas"),
             risco_dict,
-            motores_data=motores_cards,
+            motores_data={
+                "pregao": carimbos["motores_indice"]["pregao_iso"],
+                "motores": motores_cards,
+            }
+            if motores_cards and carimbos["motores_indice"]
+            else motores_cards,
         )
 
         coesao = get_coesao_view_data()
@@ -2094,6 +2177,16 @@ def index(
                 "liquidez_abertura": liquidez_abertura,
                 "mare": mare,
                 "motores_cards": motores_cards,
+                "motores_sem_carimbo": motores_sem_carimbo,
+                "carimbos": carimbos,
+                "pregoes_mistos": carimbo_servico.pregoes_mistos(
+                    list(carimbos.values())
+                ),
+                "rotulo_pregao": ""
+                if is_historical
+                else carimbo_servico.rotulo_cabecalho(
+                    list(carimbos.values()), agora, mercado_aberto
+                ),
                 "clima_global": clima_global,
                 "correlacao_di": correlacao_di,
                 "relogio": relogio,

@@ -1200,9 +1200,13 @@ class RadarDivergenciaVolumeData:
 
 @dataclass
 class MotoresIndiceData:
-    timestamp: datetime
+    # Snapshot sem carimbo (gravado por outra versão) lê como None, e o card
+    # fica indisponível em vez de mostrar percentual sem origem (spec 141).
+    timestamp: datetime | None
     motores_json: str
     fonte: str = "yfinance"
+    # Pregão (AAAA-MM-DD) da barra usada na variação (spec 141).
+    pregao_data: str | None = None
 
 
 @dataclass
@@ -1307,9 +1311,11 @@ def get_latest_fator_peso_pesado_data() -> FatorPesoPesadoData | None:
 def save_motores_indice_data(data: MotoresIndiceData) -> None:
     from app.banco import gravar_snapshot
 
+    if data.timestamp is None:
+        raise ValueError("motores_indice sem timestamp não é gravado")
     hoje = data.timestamp.astimezone(BRT).date()
     payload = data.__dict__.copy()
-    payload["timestamp"] = payload["timestamp"].isoformat()
+    payload["timestamp"] = data.timestamp.isoformat()
     gravar_snapshot("motores_indice", hoje, "ao_vivo", data.fonte, payload)
 
 
@@ -1320,9 +1326,15 @@ def get_latest_motores_indice_data() -> MotoresIndiceData | None:
     payload = ler_snapshot("motores_indice")
     if not payload:
         return None
-    payload_copy = payload.copy()
-    if "timestamp" in payload_copy:
-        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
+    campos = {f.name for f in fields(MotoresIndiceData)}
+    payload_copy = {k: v for k, v in payload.items() if k in campos}
+    if "motores_json" not in payload_copy:
+        return None
+    ts = payload_copy.get("timestamp")
+    try:
+        payload_copy["timestamp"] = datetime.fromisoformat(ts) if ts else None
+    except (TypeError, ValueError):
+        payload_copy["timestamp"] = None
     return MotoresIndiceData(**payload_copy)
 
 

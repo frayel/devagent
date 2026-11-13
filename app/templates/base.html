@@ -52,7 +52,11 @@
                 </select>
                 <noscript><button type="submit">Ver</button></noscript>
             </form>
-            {% else %}
+            {% endif %}
+            {% if rotulo_pregao is defined and rotulo_pregao %}
+            {#- Pregão em leitura e as-of, dos cards críticos (spec 141). -#}
+            <span class="pregao-leitura{% if pregoes_mistos %} mistos{% endif %}">{{ rotulo_pregao }}</span>
+            {% elif not datas_seletor %}
                 {% set estado_mercado = estado_mercado|default('fechado', true) %}
                 {% if estado_mercado == 'aberto' %}
                     Ao vivo &middot; atualizado às {{ data.time if data else '' }}
