@@ -210,13 +210,20 @@ def main() -> int:
 
     # Saúde de produção (ADR 016): o que a página do produto acusa agora.
     problemas_em_producao = False
+    so_falta_entrega = False
     try:
         dados = saude.ler(espera=90)
     except saude.Indisponivel as exc:
         print(f"\nSaúde de produção indisponível: {exc}")
     else:
         print("\n" + saude.resumo(dados))
-        problemas_em_producao = bool(saude.pendentes(dados, "problema"))
+        todos = saude.pendentes(dados, "problema")
+        problemas_em_producao = bool(saude.pedem_correcao(dados))
+        so_falta_entrega = bool(todos) and not problemas_em_producao
+        if so_falta_entrega:
+            for i in estado["issues"]:
+                if saude.LABEL in i["labels"]:
+                    i["cura_por_entrega"] = True
 
     prontas = specs_prontas()
     em_revisao = {p.name for p in fila_da_revisao(prontas)}
@@ -233,7 +240,12 @@ def main() -> int:
         ),
         None,
     )
-    if problemas_em_producao and bloqueada:
+    if so_falta_entrega:
+        print(
+            "\n>> O problema de produção é só a falta de entrega na main: a entrega "
+            "desta sessão é a correção. Siga o ciclo (Passo 2, 4 ou 6) normalmente."
+        )
+    elif problemas_em_producao and bloqueada:
         print(
             f"\n>> Os problemas de produção já estão na issue #{bloqueada['numero']}, "
             "bloqueada à espera de ação humana. Não insista neles; siga o ciclo."

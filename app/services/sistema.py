@@ -60,6 +60,9 @@ class Item:
     link: str | None = None
     causa: str = ""
     acao: str = ""
+    # "entrega": o problema some quando a raia de desenvolvimento entrega algo
+    # na main. O núcleo não manda a sessão "corrigir" esse item (issue #807).
+    cura: str = ""
 
     def __post_init__(self):
         texto = f"{self.resumo} {self.detalhe}".lower()
@@ -904,6 +907,7 @@ def verificar_atividade(github: dict[str, Any], agora: datetime) -> Item:
         main.get("mensagem", ""),
         main["data"],
         main.get("url"),
+        cura="entrega",
     )
 
 

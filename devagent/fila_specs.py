@@ -64,6 +64,9 @@ def _de_producao(issues: list[dict[str, Any]]) -> list[dict[str, Any]]:
             for i in issues
             if set(i.get("labels", [])) & set(LABELS_DE_PRODUCAO)
             and "bloqueado" not in i.get("labels", [])
+            # Issue de saúde cujos problemas todos se curam com uma entrega
+            # (`saude.pedem_correcao` vazio): segui-la é seguir o ciclo (#807).
+            and not i.get("cura_por_entrega")
         ),
         key=lambda i: i["numero"],
     )
