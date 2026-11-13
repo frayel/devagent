@@ -31,7 +31,6 @@ TICKERS = [
     "WEGE3",
     "RENT3",
     "SUZB3",
-    "JBSS3",
     "RADL3",
     "LREN3",
     "BPAC11",
@@ -40,7 +39,7 @@ TICKERS = [
     "RAIL3",
     "SBSP3",
     "VIVT3",
-    "BRFS3",
+    "MBRF3",
     "HAPV3",
     "RDOR3",
     "CMIG4",
@@ -48,7 +47,7 @@ TICKERS = [
     "TOTS3",
     "EGIE3",
     "CSAN3",
-    "CCRO3",
+    "MOTV3",
     "TIMS3",
 ]
 

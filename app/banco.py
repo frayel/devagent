@@ -4,7 +4,7 @@ import os
 import threading
 import time
 from typing import Literal
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -950,6 +950,30 @@ def is_simbolo_suspenso(fonte: str, simbolo: str) -> bool:
         conn.close()
 
 
+# Um símbolo suspenso volta a ser tentado depois de 24 h (is_simbolo_suspenso).
+# Se o código ainda o pede, a nova falha renova `ultimo_status`; se ninguém o
+# pede mais (ticker removido das listas), a linha fica parada. Sem esta janela,
+# a página de saúde acusava para sempre tickers que o código já não usa
+# (CPLE6, ELET3 e "Elet6" seguiam no alerta meses depois de saírem das listas).
+JANELA_SIMBOLO_PEDIDO = timedelta(hours=48)
+
+
+def _ainda_pedidos(linhas: list[dict], agora: datetime | None = None) -> list[dict]:
+    agora = agora or datetime.now(timezone.utc)
+    vivos = []
+    for linha in linhas:
+        try:
+            ultimo = datetime.fromisoformat(str(linha["ultimo_status"]))
+        except ValueError:
+            vivos.append(linha)
+            continue
+        if ultimo.tzinfo is None:
+            ultimo = ultimo.replace(tzinfo=timezone.utc)
+        if agora - ultimo <= JANELA_SIMBOLO_PEDIDO:
+            vivos.append(linha)
+    return vivos
+
+
 def get_simbolos_suspensos() -> list[dict]:
     try:
         init_db()
@@ -963,31 +987,35 @@ def get_simbolos_suspensos() -> list[dict]:
                     "SELECT fonte, simbolo, desde, ultimo_status, tentativas FROM simbolos_sem_cotacao WHERE tentativas >= 3"
                 )
                 rows = cursor.fetchall()
-                return [
-                    {
-                        "fonte": row[0],
-                        "simbolo": row[1],
-                        "desde": str(row[2]),
-                        "ultimo_status": str(row[3]),
-                        "tentativas": row[4],
-                    }
-                    for row in rows
-                ]
+                return _ainda_pedidos(
+                    [
+                        {
+                            "fonte": row[0],
+                            "simbolo": row[1],
+                            "desde": str(row[2]),
+                            "ultimo_status": str(row[3]),
+                            "tentativas": row[4],
+                        }
+                        for row in rows
+                    ]
+                )
         else:
             cursor = conn.cursor()
             cursor.execute(
                 "SELECT fonte, simbolo, desde, ultimo_status, tentativas FROM simbolos_sem_cotacao WHERE tentativas >= 3"
             )
             rows = cursor.fetchall()
-            return [
-                {
-                    "fonte": row[0],
-                    "simbolo": row[1],
-                    "desde": row[2],
-                    "ultimo_status": row[3],
-                    "tentativas": row[4],
-                }
-                for row in rows
-            ]
+            return _ainda_pedidos(
+                [
+                    {
+                        "fonte": row[0],
+                        "simbolo": row[1],
+                        "desde": row[2],
+                        "ultimo_status": row[3],
+                        "tentativas": row[4],
+                    }
+                    for row in rows
+                ]
+            )
     finally:
         conn.close()

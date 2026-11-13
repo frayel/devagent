@@ -12,6 +12,11 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Fix] Tickers fora da bolsa saem das listas e do alerta do Yahoo (Passo 1, problema da página de saúde):
+  - Treze tickers que saíram da B3 ou trocaram de código ficaram nas listas do código, e o Yahoo responde 404 para eles. Viraram o sucessor: RRRP3→BRAV3, ARZZ3/SOMA3→AZZA3, BRFS3/MRFG3→MBRF3, CCRO3→MOTV3, EMBR3→EMBJ3, NTCO3→NATU3. Saíram sem sucessor: AZUL4, CIEL3, CRFB3, JBSS3, PETZ3. Arquivos: `app/consultor/universo.py`, `sensibilidade_juros.py`, `assimetria_risco_retorno.py`, `concentracao_ordens.py`.
+  - `banco.get_simbolos_suspensos` só lista símbolos que falharam nas últimas 48 h (`JANELA_SIMBOLO_PEDIDO`): ticker que o código não pede mais (CPLE6, ELET3, "Elet6") sai do alerta.
+  - A carteira em `universo.py` não foi conferida contra a B3 nesta correção (só os sucessores diretos). A conferência completa é a spec 094 (draft).
+  - Testes em `tests/test_simbolos_sem_cotacao_saude.py`.
 - [Experiência] Spec 141 - Cada card diz de qual pregão é o número:
   - Helper único `app/services/carimbo.py`: formata `dd/mm/aaaa HH:MM BRT` em `America/Sao_Paulo`, deriva o pregão do número da última barra (nunca promove D−1 a D0) e marca desatualizado só durante o pregão (10:00–17:00 de dia útil), com TTL de 30 min por chave (`TTL_MINUTOS`).
   - Cabeçalho mostra o pregão em leitura e o as-of a partir de Ibovespa, Maré, Dispersão e Motores; datas divergentes viram "Pregões mistos"; sessão anterior ao último pregão esperado diz "pregão anterior".
