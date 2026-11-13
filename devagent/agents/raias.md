@@ -43,6 +43,7 @@ Se o prompt mandar **dividir** uma spec que teve tentativa fechada pelo guardiã
    - o problema é uma pergunta do usuário, e o título não precisa de "e";
    - os critérios de aceite são testáveis sem internet, e o campo `aceite:` aponta o teste;
    - as fontes têm plano B; números e recomendações têm amostra, janela e método;
+   - **toda fórmula traz um exemplo numérico de ponta a ponta**: do dado bruto, como a fonte o entrega e com a unidade de cada campo (fração ou percentual, unidade ou milhar), até o número exibido. Critério de aceite que já começa no resultado esconde o erro de escala: uma fórmula copiada sem a unidade de um peso dado em percentual saiu 100 vezes maior e passou na revisão. Se faltar, acrescente o exemplo à spec;
    - as **Invariantes de produção** existem e são verificáveis sem ler o código;
    - o *Fora do escopo* está explícito;
    - o tamanho cabe numa sessão: meça com `grep -rl` quantos arquivos, somando código e testes, referenciam o que a spec remove ou renomeia (mais de ~15 é grande demais);
