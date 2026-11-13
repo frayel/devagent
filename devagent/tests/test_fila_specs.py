@@ -247,3 +247,16 @@ def test_marcar_correcoes_so_le_issues_de_producao(
     assert issues[0]["correcao_mergeada"] is True
     assert "correcao_mergeada" not in issues[1]
     assert lidas == ["/repos/dono/repo/issues/1/comments?per_page=100"]
+
+
+def test_issue_de_saude_curada_por_entrega_nao_trava_a_fila(raiz: Path) -> None:
+    """Issue #807: o aviso mandava corrigir a main parada e proibia entregar."""
+    issue = {"numero": 807, "titulo": "Saúde", "labels": ["sistema-com-problema"]}
+    texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, [issue])
+    assert "#807" in texto and "068b" not in texto
+
+    issue["cura_por_entrega"] = True
+    assert fila_specs.producao_pendente([issue]) == []
+    texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, [issue])
+    assert "#807" not in texto
+    assert "docs/specs/068b-regras.md" in texto

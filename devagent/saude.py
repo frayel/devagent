@@ -10,7 +10,9 @@ núcleo não sabe o que cada item significa: só lê o nível. Contrato mínimo:
         "nivel": "ok" | "atencao" | "problema",
         "pendentes": [
           {"nivel": "problema" | "atencao", "grupo": "...", "nome": "...",
-           "resumo": "...", "detalhe": "...", "link": "..."}
+           "resumo": "...", "detalhe": "...", "link": "...",
+           "cura": "entrega"}        # opcional: o item some quando a raia
+                                     # de desenvolvimento entrega na main
         ]
       }
     }
@@ -153,6 +155,21 @@ def pendentes(dados: dict[str, Any], nivel: str) -> list[dict[str, Any]]:
             lista.append(p)
 
     return lista
+
+
+CURA_POR_ENTREGA = "entrega"
+
+
+def pedem_correcao(dados: dict[str, Any]) -> list[dict[str, Any]]:
+    """Problemas que a sessão precisa corrigir antes de seguir o ciclo.
+
+    Fica de fora o problema que declara `cura: "entrega"` (por exemplo, a main
+    parada): a correção dele é justamente entregar. Mandar a sessão tratar só
+    a issue e proibir o resto travou a main de 09/11 a 13/11 (issue #807).
+    """
+    return [
+        p for p in pendentes(dados, "problema") if p.get("cura") != CURA_POR_ENTREGA
+    ]
 
 
 def _linha(p: dict[str, Any]) -> str:

@@ -159,3 +159,24 @@ def test_item_em_atencao_ha_mais_de_24h_vira_problema():
     assert atencoes[1]["nome"] == "3"
     assert atencoes[2]["nome"] == "4"
     assert atencoes[3]["nome"] == "Issues que pedem ação"
+
+
+def test_problema_curado_por_entrega_nao_pede_correcao() -> None:
+    """Issue #807: main parada não pode virar "corrija só isto"."""
+    dados = {
+        "geral": {
+            "pendentes": [
+                {
+                    "nivel": "problema",
+                    "grupo": "F",
+                    "nome": "parada",
+                    "cura": "entrega",
+                },
+            ]
+        }
+    }
+    assert len(saude.pendentes(dados, "problema")) == 1
+    assert saude.pedem_correcao(dados) == []
+
+    dados["geral"]["pendentes"].append({"nivel": "problema", "nome": "outro"})
+    assert [p["nome"] for p in saude.pedem_correcao(dados)] == ["outro"]
