@@ -1,5 +1,16 @@
+import os
+import tempfile
+
 import pytest
 from jinja2 import StrictUndefined
+
+# Banco da sessão de testes, definido antes de qualquer módulo de teste importar
+# a aplicação. Na coleta, `import app.main` já lê o banco (os alertas de
+# `app/collectors/sistema.py` são carregados na importação), antes de o fixture
+# `setup_db` existir; sem isto, essa leitura criava `data.db` na raiz do
+# repositório. Subprocessos que herdam o ambiente também usam este caminho.
+_DIR_DB_SESSAO = tempfile.mkdtemp(prefix="testes-db-")
+os.environ["DATABASE_PATH"] = os.path.join(_DIR_DB_SESSAO, "sessao.db")
 
 
 @pytest.fixture(autouse=True)
@@ -26,8 +37,6 @@ def setup_db(monkeypatch, tmp_path):
     for var in ("MT5_API_URL", "MT5_API_KEY", "MT5_SIMBOLOS", "MT5_FUSO_SERVIDOR"):
         monkeypatch.delenv(var, raising=False)
     # Evita crash do parser de proxy do httpx quando NO_PROXY contém [::1]
-    import os
-
     for var in ("NO_PROXY", "no_proxy"):
         val = os.environ.get(var)
         if val and "[::1]" in val:
