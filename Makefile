@@ -17,11 +17,14 @@ install-prod:
 	$(PY) -m pip install -r requirements.txt
 
 ## Tudo que o CI exige antes do merge.
+## As ferramentas rodam como módulos do $(PY), o mesmo em que `make install`
+## instalou as versões fixadas: um binário solto no PATH (ex.: um ruff mais novo
+## em ~/.local/bin) não entra no lugar e não acusa erros falsos.
 verify:
-	ruff check .
-	ruff format --check .
-	mypy app
-	pytest -m "not rede" -q
+	$(PY) -m ruff check .
+	$(PY) -m ruff format --check .
+	$(PY) -m mypy app
+	$(PY) -m pytest -m "not rede" -q
 
 ## Sobe a aplicação com o startCommand do render.yaml e confere o health check.
 smoke:
