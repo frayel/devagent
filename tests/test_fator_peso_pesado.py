@@ -45,22 +45,9 @@ def mock_yfinance(respx_mock):
 def test_fator_peso_pesado_sucesso(mock_yfinance, setup_db):
     init_db()
     mock_yfinance("^BVSP", 131000, 130000)  # IBOV sobe 1000 pontos
-    # We want top 5 to contribute 800 pts.
-    # Total formula: sum(var_pct * weight / 100) * ibov_prev = 800
-    # sum(var_pct * weight / 100) = 800 / 130000 = 0.0061538
-    # Let's just make VALE3 vary and the others 0.
-    # VALE3 weight = 12.0
-    # var_pct * 12.0 / 100 = 800 / 130000
-    # var_pct = (800 / 130000) * 100 / 12 = 0.051282
-    # var_pct = (curr - prev)/prev * 100 => 0.051282 * prev = (curr-prev)*100
-    # Let prev = 100 => curr = 100 + (0.051282) = 100.051282
-
-    # Actually, simpler:
-    # PTS contrib VALE = 800 => (var_pct * 12 / 100) * 130000 = 800
-    # var_pct = 800 / (12 * 1300) = 800 / 15600 = 5.128205 %
-    # prev = 100, curr = 105.128205
-
-    mock_yfinance("VALE3.SA", 100.05128205, 100.0)
+    # As 5 maiores contribuem 800 pts, só pela VALE3 (peso 12%):
+    # var% / 100 × 12 / 100 × 130000 = 800 => var% = 5,128205% (spec 143).
+    mock_yfinance("VALE3.SA", 105.128205, 100.0)
     mock_yfinance("PETR4.SA", 100.0, 100.0)
     mock_yfinance("ITUB4.SA", 100.0, 100.0)
     mock_yfinance("PETR3.SA", 100.0, 100.0)

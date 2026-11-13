@@ -1,7 +1,7 @@
 ---
 id: 143
 titulo: O fator peso pesado explica o sinal da conta
-status: ready
+status: done
 esforco: M
 gaveta: experiência
 aceite: tests/test_aceite_143.py

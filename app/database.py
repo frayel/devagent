@@ -1216,6 +1216,8 @@ class FatorPesoPesadoData:
     mercado_lateral: bool
     resumo_json: str
     fonte: str = "yfinance"
+    # Razão antes do teto de ±500% (spec 143); None em snapshots antigos.
+    proporcao_bruta: float | None = None
 
 
 def save_liquidez_abertura_data(data: LiquidezAberturaData) -> None:

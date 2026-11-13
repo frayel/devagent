@@ -4,7 +4,8 @@ from datetime import datetime, timezone
 import httpx
 
 from app.database import FatorPesoPesadoData, save_fator_peso_pesado_data
-from app.collectors.utils import fetch_with_retry
+from app.collectors.utils import fechamento_anterior, fetch_with_retry
+from app.services.fator_peso_pesado import limitar
 
 logger = logging.getLogger(__name__)
 
@@ -18,13 +19,25 @@ TICKERS_PESO = {
 
 
 def _parse_chart(data: dict) -> dict:
+    """Preço atual e fechamento do pregão anterior (base da spec 134).
+
+    `chartPreviousClose` só entra quando a resposta não traz nem série nem
+    `previousClose`: com `range=1d` ele coincide com o pregão anterior.
+    """
     if "chart" in data and "result" in data["chart"] and data["chart"]["result"]:
         result = data["chart"]["result"][0]
-        meta = result["meta"]
-        return {
-            "current_price": meta.get("regularMarketPrice"),
-            "previous_close": meta.get("chartPreviousClose"),
-        }
+        meta = result.get("meta") or {}
+        preco = meta.get("regularMarketPrice")
+        try:
+            closes = result["indicators"]["quote"][0]["close"] or []
+        except (KeyError, IndexError, TypeError):
+            closes = []
+        anterior = fechamento_anterior(closes, preco, meta=meta)
+        if anterior is None:
+            anterior = meta.get("chartPreviousClose")
+        if preco is None or anterior is None:
+            return {}
+        return {"current_price": float(preco), "previous_close": float(anterior)}
     return {}
 
 
@@ -36,24 +49,21 @@ def collect_and_save() -> bool:
 
         ibov_data = _parse_chart(ibov_resp.json())
 
-        if (
-            not ibov_data
-            or "current_price" not in ibov_data
-            or "previous_close" not in ibov_data
-        ):
+        if not ibov_data or not ibov_data.get("previous_close"):
             logger.warning("Fator Peso Pesado: IBOV missing price data")
             return False
 
         ibov_current = ibov_data["current_price"]
         ibov_prev = ibov_data["previous_close"]
         ibov_var_pts = ibov_current - ibov_prev
-        ibov_var_pct = (ibov_var_pts / ibov_prev) * 100 if ibov_prev else 0
+        ibov_var_pct = (ibov_var_pts / ibov_prev) * 100
 
         if abs(ibov_var_pct) < 0.1:
             save_fator_peso_pesado_data(
                 FatorPesoPesadoData(
                     timestamp=datetime.now(timezone.utc),
                     proporcao=0.0,
+                    proporcao_bruta=0.0,
                     mercado_lateral=True,
                     resumo_json=json.dumps({}),
                     fonte="yfinance",
@@ -71,13 +81,15 @@ def collect_and_save() -> bool:
                 resp = fetch_with_retry(url, timeout=10.0)
                 data = _parse_chart(resp.json())
 
-                if data and "current_price" in data and "previous_close" in data:
+                if data and data.get("previous_close"):
                     curr = data["current_price"]
                     prev = data["previous_close"]
                     var_pct = ((curr - prev) / prev * 100) if prev else 0.0
 
-                    # Contribuição em pontos teóricos: (var % * peso / 100) * IBOV anterior
-                    pts = (var_pct * weight / 100) * ibov_prev
+                    # Contribuição em pontos teóricos (specs 046 e 143): peso em
+                    # % do índice (VALE3 = 12%), logo var% / 100 × peso / 100 ×
+                    # IBOV anterior. VALE3 +1% com o índice em 130.000 = 156 pts.
+                    pts = (var_pct / 100) * (weight / 100) * ibov_prev
                     contrib_pts += pts
                     details[ticker] = {"var_pct": var_pct, "contrib_pts": pts}
                 else:
@@ -87,17 +99,16 @@ def collect_and_save() -> bool:
                 logger.warning("Fator Peso Pesado: Failed to fetch %s: %s", ticker, e)
                 return False
 
-        proporcao = (contrib_pts / ibov_var_pts) * 100 if ibov_var_pts else 0.0
-
-        if proporcao > 500.0:
-            proporcao = 500.0
-        elif proporcao < -500.0:
-            proporcao = -500.0
+        if not ibov_var_pts:
+            # Denominador zero não é publicado (spec 143).
+            return False
+        bruta = (contrib_pts / ibov_var_pts) * 100
 
         save_fator_peso_pesado_data(
             FatorPesoPesadoData(
                 timestamp=datetime.now(timezone.utc),
-                proporcao=proporcao,
+                proporcao=limitar(bruta),
+                proporcao_bruta=bruta,
                 mercado_lateral=False,
                 resumo_json=json.dumps(details),
                 fonte="yfinance",
