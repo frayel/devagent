@@ -359,10 +359,27 @@ def snapshot(dado: Any) -> dict[str, Any]:
     }
 
 
+def _peso_visivel(
+    k: str, valor: float | None, pesos_usados: dict[str, float]
+) -> int | None:
+    """Percentual inteiro do peso que o componente teve no valor (spec 144).
+
+    Ausente não tem peso. Sem pesos usados (leitura com menos de dois
+    componentes, que o coletor não grava), vale o nominal da 027.
+    """
+    if valor is None:
+        return None
+    return _arredondar(pesos_usados.get(k, PESOS[k]) * 100)
+
+
 def view(dado: Any) -> dict[str, Any] | None:
     if dado is None:
         return None
     snap = snapshot(dado)
+    # Peso visível (spec 144): o que entrou na conta, não o nominal da 027.
+    _, pesos_usados, _ = indice(
+        {"fluxo": dado.fluxo, "calma": dado.calma, "volume": dado.volume}
+    )
     historico = [p["valor"] for p in snap["historico"]]
     serie = historico + [dado.valor]
     comparacao = None
@@ -379,11 +396,12 @@ def view(dado: Any) -> dict[str, Any] | None:
                 "valor": None
                 if snap["componentes"][k] is None
                 else _arredondar(snap["componentes"][k]),
-                "peso": round(PESOS[k] * 100),
+                "peso": _peso_visivel(k, snap["componentes"][k], pesos_usados),
             }
             for k in ("fluxo", "calma", "volume")
         ],
         "parcial": snap["parcial"],
+        "cobertura": f"{len(PESOS) - len(snap['ausentes'])} de {len(PESOS)} componentes",
         "heatmap": snap.get("heatmap", []),
         "ausentes": ", ".join(NOMES[k] for k in snap["ausentes"]),
         "sparkline": build_sparkline(serie),

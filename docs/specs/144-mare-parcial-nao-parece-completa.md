@@ -1,7 +1,7 @@
 ---
 id: 144
 titulo: A Maré parcial não parece um índice completo
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_144.py
