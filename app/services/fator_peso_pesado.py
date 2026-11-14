@@ -31,7 +31,9 @@ def formatar_razao(valor: float) -> str:
 
 
 def frase(proporcao: float, limitado: bool) -> str:
-    modulo = formatar_razao(abs(proporcao))
+    # O sentido já está nas palavras; o número da frase é o módulo, sem sinal
+    # (spec 143). `formatar_razao` poria "+" em todo valor positivo.
+    modulo = f"{abs(proporcao):.1f}".replace(".", ",") + "%"
     if proporcao >= 0:
         texto = (
             "As 5 maiores ações andaram no mesmo sentido do Ibovespa, "

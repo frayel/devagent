@@ -79,3 +79,17 @@ def test_fator_peso_pesado_mercado_lateral(mock_yfinance, setup_db):
     assert data is not None
     assert data.mercado_lateral is True
     assert data.proporcao == 0.0
+
+
+@pytest.mark.parametrize(
+    ("proporcao", "modulo"),
+    [(-50.8, "50,8%"), (50.8, "50,8%"), (150.0, "150,0%"), (-150.0, "150,0%")],
+)
+def test_frase_traz_o_modulo_sem_sinal(proporcao, modulo):
+    """Issue #835: o sentido está nas palavras; o número da frase não tem sinal."""
+    from app.services.fator_peso_pesado import frase
+
+    texto = frase(proporcao, False)
+    assert f"somando {modulo} do tamanho" in texto
+    assert "+" not in texto
+    assert "−" not in texto
