@@ -63,6 +63,9 @@ class Item:
     # "entrega": o problema some quando a raia de desenvolvimento entrega algo
     # na main. O núcleo não manda a sessão "corrigir" esse item (issue #807).
     cura: str = ""
+    # False: a Atenção não vira Problema depois de 24 h aberta (devagent/saude.py).
+    # Vale para medidas de manutenção e lacunas que o tempo não agrava.
+    envelhece: bool = True
 
     def __post_init__(self):
         texto = f"{self.resumo} {self.detalhe}".lower()
@@ -307,7 +310,8 @@ def verificar_historico_pregoes(datas: list[str], agora: datetime) -> Item:
 
     if falhas:
         detalhe += f" Faltam snapshots na janela recente: {', '.join(falhas)}"
-        return Item("Histórico de pregões", ATENCAO, resumo, detalhe)
+        # Lacuna de dias passados: o tempo não a agrava nem a corrige.
+        return Item("Histórico de pregões", ATENCAO, resumo, detalhe, envelhece=False)
 
     return Item("Histórico de pregões", OK, resumo, detalhe)
 
@@ -464,6 +468,8 @@ def verificar_tempo_coleta(tempos: dict[str, float]) -> Item:
         nivel,
         f"rodada completa em {total / 60:.1f} min".replace(".", ","),
         detalhe,
+        # Lentidão é medida da rodada de manutenção, não defeito a corrigir já.
+        envelhece=False,
     )
 
 
@@ -863,6 +869,8 @@ def verificar_issues(github: dict[str, Any], agora: datetime) -> Item:
         nivel,
         f"{len(linhas)} aberta{'s' if len(linhas) > 1 else ''}",
         "; ".join(linhas[:6]),
+        # Cada issue listada tem fluxo próprio; o item só as torna visíveis.
+        envelhece=False,
     )
 
 

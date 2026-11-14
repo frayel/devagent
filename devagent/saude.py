@@ -11,8 +11,11 @@ núcleo não sabe o que cada item significa: só lê o nível. Contrato mínimo:
         "pendentes": [
           {"nivel": "problema" | "atencao", "grupo": "...", "nome": "...",
            "resumo": "...", "detalhe": "...", "link": "...",
-           "cura": "entrega"}        # opcional: o item some quando a raia
+           "cura": "entrega",        # opcional: o item some quando a raia
                                      # de desenvolvimento entrega na main
+           "desde": "2026-01-01T00:00:00+00:00",  # opcional: aberto desde
+           "envelhece": false}       # opcional (padrão true): false impede
+                                     # que a atenção vire problema em 24 h
         ]
       }
     }
@@ -123,6 +126,12 @@ def ler(
 
 
 def pendentes(dados: dict[str, Any], nivel: str) -> list[dict[str, Any]]:
+    """Itens do nível pedido, com a atenção aberta há mais de 24 h promovida.
+
+    O item que declara `"envelhece": false` fica no nível que a página diz:
+    o produto sabe quais atenções são medida de manutenção (lentidão, lacuna
+    histórica, issue com fluxo próprio) e não defeito que piora com o tempo.
+    """
     from datetime import datetime, timezone, timedelta
 
     agora = datetime.now(timezone.utc)
@@ -133,19 +142,11 @@ def pendentes(dados: dict[str, Any], nivel: str) -> list[dict[str, Any]]:
         desde = p.get("desde")
 
         efetivo = n
-        if n in ("atencao", "inativo") and desde:
+        if n in ("atencao", "inativo") and desde and p.get("envelhece", True):
             try:
                 dt = datetime.fromisoformat(desde)
                 if agora - dt > timedelta(hours=24):
-                    if "Faltam snapshots" in p.get("detalhe", ""):
-                        pass
-                    elif p.get("nome") in (
-                        "Issues que pedem ação",
-                        "Duração da coleta",
-                    ):
-                        pass
-                    else:
-                        efetivo = "problema"
+                    efetivo = "problema"
             except ValueError:
                 pass
 
