@@ -6,6 +6,8 @@ Use no Passo 5, ou sempre que a Retrospectiva de uma execução apontar uma melh
 
 Toda mudança começa por um problema observado: um relatório em `docs/runs/`, uma issue, um PR que precisou de correção, um CI que falhou. Cite o link no PR. Mudança sem evidência é opinião, e opinião envelhece mal em instruções.
 
+**Efeito colateral se data antes de se culpar.** Quando a evidência é um artefato que apareceu sem ninguém pedir (arquivo, banco, processo, porta ocupada), rode `stat -c '%w %y %n' <arquivo>` (criação e última alteração; para processo, `ps -o lstart= -p <pid>`) e compare com a hora de cada comando da rodada antes de apontar o culpado. Um sintoma que aparece "depois da suíte" foi atribuído aos testes em quatro retrospectivas seguidas; a hora de criação apontava outro comando em um passo.
+
 ## 2. Escolher o lugar certo
 
 Primeiro pergunte: **isto vale para qualquer projeto ou só para este produto?** O núcleo (`devagent/`) é reaproveitado em outros repositórios; o que você ensina a ele, todos os projetos aprendem.
