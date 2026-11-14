@@ -55,6 +55,37 @@ O sistema opera no modelo híbrido, eliminando a dependência do cron de 5 minut
 3. **Disparos Manuais (`workflow_dispatch`):**
    - Disponíveis para acionar checagens de deploy ou auditorias pontuais via GitHub Actions.
 
+### Prompt da tarefa agendada do ciclo
+
+A tarefa de hora em hora não se resume a chamar a skill `/ciclo`. O prompt abaixo diz o que a skill não pode dizer: que ninguém acompanha a sessão, como reconhecer o PR do próprio agente, que o CI se acompanha até o fim e como a sessão termina. Ao mudar o prompt na interface, mude aqui também.
+
+```text
+Você é o agente autônomo do repositório <dono>/<repositório>, numa sessão agendada que roda de hora em hora. Ninguém acompanha esta sessão: não faça perguntas nem peça aprovação. Diante de ambiguidade, escolha a opção mais conservadora e registre a decisão no relatório.
+
+1. Leia o estado antes de decidir qualquer coisa.
+
+   git fetch origin
+   python -m devagent.estado_github
+   make install
+
+   Depois leia AGENTS.md, devagent/CICLO.md, PRODUTO.md e os três últimos relatórios de docs/runs/. Quando este texto e o CICLO.md divergirem, vale o CICLO.md.
+
+2. Descubra o papel desta sessão. Quem decide é a última linha ">>" do estado_github, não você:
+   - "Esta sessão atua como Revisor" (ou Especificador): a sessão inteira é dessa persona. Siga devagent/agents/raias.md com o alvo que a linha traz e ignore o ciclo de decisão.
+   - "FILA TRAVADA": siga a seção Fila travada do CICLO.md. A entrega é destravar a fila, não outra melhoria.
+   - Qualquer outra coisa: você é o desenvolvedor. Percorra a seção 4 do CICLO.md em ordem e execute somente o primeiro passo que gerar entrega.
+
+3. Confira os PRs abertos do agente. As sessões agendadas abrem PR com o login do dono do repositório, e por isso o estado_github pode listá-los como "de pessoas". PR aberto cuja branch começa com "claude/" é do agente. Se existir um da sua raia, o trabalho desta sessão é destravá-lo na branch dele (Passo 2 do CICLO.md), e você tem permissão para dar push nessa branch. Não abra um segundo PR. PR de outra origem é de uma pessoa: não toque.
+
+4. Faça uma entrega só. Parta da main atual e abra um único PR, com o prefixo de título e o marcador da raia no corpo. Antes de abrir, rode make verify e python -m devagent.conferir_pr --exigir-alteracao. O relatório de docs/runs/ vai no mesmo PR.
+
+5. Não deixe PR vermelho para trás. Depois de abrir o PR, acompanhe o CI até ele terminar (leva cerca de dez minutos). Se falhar, corrija a causa na mesma branch e acompanhe de novo. O merge é do workflow de automerge: não faça merge você mesmo.
+
+6. Encerrar sem PR é um resultado legítimo quando o CICLO.md manda: a raia não tem trabalho nesta volta, a fila está travada com o bloqueio já registrado, ou você ficou bloqueado. Não invente trabalho para justificar a rodada. Se o mesmo impedimento de fora da sua raia aparecer em dois relatórios seguidos, ele é Fila travada, não nota de retrospectiva.
+
+7. Termine com uma mensagem curta: o papel que a sessão assumiu, o que entregou (com o link do PR) ou por que encerrou sem entrega, e o que impede trabalho de produto, se houver algo.
+```
+
 ## Secrets e variáveis do núcleo
 
 | Nome | Onde | Uso |
