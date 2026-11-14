@@ -63,6 +63,11 @@ O sistema opera no modelo híbrido, eliminando a dependência do cron de 5 minut
 | `PRODUCTION_URL` | ambiente do agente; variável (não secret) do GitHub, opcional | sobrescreve `producao_url` do `devagent.toml` |
 | `DEVAGENT_CONFIG` | ambiente, opcional | caminho de outro `devagent.toml` |
 | `SAUDE_SENHA` | secret do GitHub e ambiente do agente, se a página de saúde pede senha | senha do HTTP Basic da página de saúde; o usuário fica em `[saude] usuario` no `devagent.toml` |
+| `GITHUB_TOKEN` ou `GH_TOKEN` | Actions (automático) e ambiente do agente, opcional | token da API do GitHub para `estado_github`, guardião e auditoria; sem ele, a API pública, com limite menor |
+| `CHROMIUM_PATH` | ambiente, opcional | executável do Chromium para a checagem de navegador da auditoria (`devagent/auditoria/nucleo.py`); sem ele, o navegador instalado pelo Playwright |
+| `JULES_API_KEY`, `JULES_SOURCE`, `JULES_LIMITE_DIARIO`, `JULES_INTERVALO_MINUTOS` | secret do GitHub, opcional, legado | executor anterior (`devagent/adaptadores/jules.py`, só manual desde o ADR 032): chave da API, fonte (padrão `sources/github/<repositorio>`), cota diária e intervalo mínimo entre sessões |
+
+As variáveis `GITHUB_*` que o Actions define sozinho (`GITHUB_REPOSITORY`, `GITHUB_EVENT_NAME`, `GITHUB_EVENT_PATH`, `GITHUB_BASE_REF`) não precisam de configuração. O `devagent/tests/test_variaveis_documentadas.py` reprova variável lida pelo núcleo que não esteja nesta seção.
 
 ## Render: cuidados do adaptador
 
