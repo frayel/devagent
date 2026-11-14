@@ -12,7 +12,10 @@ Ao invocar esta skill (ou digitar `/ciclo`), execute uma iteração completa do 
    git fetch origin
    python -m devagent.estado_github
    python -m devagent.saude
+   make install
    ```
+
+   O `make install` vem antes de qualquer `make verify`: o ambiente da sessão não traz as ferramentas fixadas em `requirements-dev.txt`, e sem elas o `verify` falha com "No module named ruff".
 
 2. **Ordem de Prioridade (execute apenas o primeiro que gerar entrega):**
    - **Passo 1 (Saúde & Produção):** Se houver issue `deploy-falhou`, `producao-incorreta` ou `sistema-com-problema`, investigue a causa raiz, corrija com teste de regressão e abra PR `fix:`.
