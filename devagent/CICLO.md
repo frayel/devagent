@@ -16,7 +16,7 @@ Você trabalha em ciclos curtos. **Cada execução resolve uma única coisa** e 
 
 | Camada | Onde | O que contém |
 |---|---|---|
-| Núcleo | `devagent/`, `.github/workflows/`, `devagent.toml` | este ciclo, personas, skills de processo, guardião, adaptadores (Antigravity, Render), harness da auditoria |
+| Núcleo | `devagent/`, `.github/workflows/`, `devagent.toml` | este ciclo, personas, skills de processo, guardião, adaptadores (Render; Jules legado), harness da auditoria |
 | Projeto | `PRODUTO.md`, `Makefile`, código da aplicação, `tests/`, `auditoria/`, `docs/` | o produto, o stack, as specs, o domínio, as checagens de produção |
 
 Elas se falam por três contratos:
@@ -40,7 +40,7 @@ devagent/
   guardiao_prs.py      # regras do guardião de PRs (roda no GitHub Actions)
   config.py            # lê o devagent.toml
   smoke.sh             # sobe a aplicação e confere o health check
-  adaptadores/         # executores (antigravity, jules legado), render_status.py e render_blueprint.py (deploy)
+  adaptadores/         # jules.py (executor legado, só manual), render_status.py e render_blueprint.py (deploy)
   auditoria/           # harness da auditoria e transformação de achados em issues
   agents/              # personas: auditor, especialistas
   skills/              # procedimentos de processo, um arquivo por tarefa recorrente
