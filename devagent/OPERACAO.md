@@ -34,6 +34,7 @@ Todos ficam em `.github/workflows/` porque o GitHub exige. São do núcleo; o pr
 | `auditoria-producao.yml` | horários do projeto, após deploy | `make audit` contra produção; abre ou fecha issues `producao-incorreta`. Job `saude`: lê a página de saúde do produto (`python -m devagent.saude`, ADR 016) e abre, atualiza ou fecha a issue `sistema-com-problema` |
 | `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | `devagent/guardiao_prs.py`: cobra `@antigravity` (até 3x), fecha PR sem reação em 3 h (o de raia paralela fecha sem `tentativa-falhou`; a raia recomeça na rodada seguinte), com conflito grande (> 3 arquivos ou > 40 linhas, sem contar trechos só de acréscimo, ADR 017) ou substituído (`Substitui #N`); abre issue `tentativa-falhou` com a spec do PR, salvo se o conteúdo do PR já está na `main` (ADR 014) ou se é especialista sem achado (ADRs 019 e 020); fecha na hora PR de verificação sem achado novo em `docs/verificacao/achados/`, sem issue (ADR 025); fecha `tentativa-falhou` órfã, cuja spec já está `done` na `main` ou que não cita spec (ADR 020); fecha issues citadas com `Closes #N` em PRs mergeados nos últimos 7 dias; aplica `prioridade` a issue `bug` aberta há mais de 24 h (ADR 030); apaga branches órfãs com mais de 24 h |
 | `auditoria-achados.yml` | de hora em hora e após merge de PR `auditoria:` ou `verificação:` | `devagent/auditoria/achados_para_issues.py`: abre issues para os achados do auditor LLM em `docs/auditoria/achados/` e do Verificador em `docs/verificacao/achados/` (label `verificacao`; `alta` e `media` com `prioridade`) |
+| `jules.yml` e `auditoria-llm.yml` | só manual (`workflow_dispatch`) | legado do executor anterior (`devagent/adaptadores/jules.py`): iniciam sessões pela API do Jules. Sem agendamento desde o ADR 032; precisam de `JULES_API_KEY` |
 
 O `automerge.yml` não tem caminhos protegidos: todo PR com CI verde entra (ADR 007).
 
@@ -44,7 +45,8 @@ Merges feitos pelo `GITHUB_TOKEN` não fecham issues pelas palavras-chave `Close
 O sistema opera no modelo híbrido, eliminando a dependência do cron de 5 minutos e da API do Jules:
 
 1. **Automação agendada no Antigravity Remote (a cada 2h):**
-   - Garante o batimento contínuo do projeto: executa verificações de produção, destrava PRs pendentes, roda a persona de especialista (Sentinel na madrugada, Bolt pela manhã), audita e implementa specs prontas.
+   - Garante o batimento contínuo do projeto: a sessão do desenvolvedor (skill `/ciclo`) percorre o ciclo de decisão do `CICLO.md` (produção, PR aberto, specs revisadas, documentação e issues).
+   - Especialistas (Sentinel de madrugada, Bolt pela manhã), auditor e raias paralelas rodam em tarefas agendadas próprias, cujo prompt nomeia a persona. A sessão do desenvolvedor nunca assume uma persona pelo horário nem pela fila (`devagent/agents/especialistas.md`, regra 7, e ADR 024).
    - Configurada diretamente na interface do Antigravity Remote apontando para o workspace.
 2. **Modo Contínuo Sob Demanda (`/goal`):**
    - Quando o desenvolvedor precisa acelerar entregas ou fechar um lote de trabalho, aciona o comando `/goal` com a meta (ex: implementar as 3 próximas specs ou corrigir issues prioritárias). O agente encadeia múltiplos passos e commits até concluir o objetivo.
