@@ -72,9 +72,7 @@ def _faltando_no_indice(pasta: Path, texto: str) -> list[str]:
         return []
     prefixo = pasta.relative_to(RAIZ).as_posix()
     return sorted(
-        p.name
-        for p in pasta.glob("*.md")
-        if f"`{prefixo}/{p.name}`" not in texto
+        p.name for p in pasta.glob("*.md") if f"`{prefixo}/{p.name}`" not in texto
     )
 
 
