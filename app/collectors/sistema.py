@@ -1,14 +1,12 @@
 """Estado do fluxo de desenvolvimento e do deploy, para a página /sistema (spec 082).
 
-Lê o GitHub (workflows, PRs, issues, commits), a API do Jules e a API do
+Lê o GitHub (workflows, PRs, issues, commits) e a API do
 Render num laço em segundo plano e guarda o resultado em memória. A página só
 lê esse retrato: visita nenhuma dispara requisição (PRODUTO.md, seção 5).
 
 Variáveis de ambiente, todas opcionais:
     GITHUB_TOKEN        token só de leitura; sem ele o GitHub limita a 60
                         consultas por hora e o retrato é refeito a cada 20 min
-    JULES_API_KEY       liga a leitura das sessões do Jules
-    JULES_LIMITE_DIARIO teto de sessões em 24 h do plano do Jules
     RENDER_API_KEY      liga a leitura do último deploy no Render
     RENDER_SERVICE_ID   id do serviço; o Render já define esta variável
     RENDER_GIT_COMMIT   commit em produção; o Render já define esta variável
@@ -36,7 +34,6 @@ logger = logging.getLogger(__name__)
 
 RAIZ = Path(__file__).resolve().parent.parent.parent
 GITHUB = "https://api.github.com"
-JULES = "https://jules.googleapis.com/v1alpha"
 RENDER = "https://api.render.com/v1"
 TIMEOUT = 10.0
 INTERVALO_COM_TOKEN = 5 * 60
@@ -51,8 +48,6 @@ retrato: dict[str, Any] = {
     "atualizado_em": None,
     "github": None,
     "github_erro": None,
-    "jules": None,
-    "jules_erro": None,
     "render": None,
     "render_erro": None,
 }
@@ -246,34 +241,8 @@ def ler_github(client: httpx.Client) -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------
-# Jules e Render
+# Render
 # --------------------------------------------------------------------------
-
-
-def ler_jules(client: httpx.Client) -> dict[str, Any] | None:
-    chave = os.environ.get("JULES_API_KEY", "").strip()
-    if not chave:
-        return None
-    _enforce_rate_limit("jules.googleapis.com")
-    resposta = client.get(
-        f"{JULES}/sessions?pageSize=100",
-        headers={"x-goog-api-key": chave, "User-Agent": USER_AGENT},
-        timeout=TIMEOUT,
-    )
-    resposta.raise_for_status()
-    fonte = f"sources/github/{repositorio()}"
-    sessoes = [
-        {
-            "titulo": s.get("title", ""),
-            "estado": s.get("state", ""),
-            "criada_em": s.get("createTime"),
-            "atualizada_em": s.get("updateTime") or s.get("createTime"),
-            "url": s.get("url"),
-        }
-        for s in resposta.json().get("sessions", [])
-        if (s.get("sourceContext") or {}).get("source") == fonte
-    ]
-    return {"sessoes": sessoes}
 
 
 def ler_render(client: httpx.Client) -> dict[str, Any] | None:
@@ -362,7 +331,6 @@ def atualizar(client: httpx.Client | None = None) -> None:
     try:
         for parte, leitor in (
             ("github", ler_github),
-            ("jules", ler_jules),
             ("render", ler_render),
         ):
             try:

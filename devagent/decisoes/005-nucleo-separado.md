@@ -22,4 +22,4 @@ O dono do projeto quer reaproveitar o agente, mas também quer que ele continue 
 - O agente continua podendo melhorar o núcleo, por PR `agent:`, com o CI garantindo que a melhoria permaneça genérica.
 - `python -m devagent.instalar` leva o núcleo a outro projeto; melhorias posteriores chegam copiando a pasta de novo.
 - Os comandos mudaram de caminho (`python -m devagent.estado_github` no lugar de `python scripts/estado_github.py`). Relatórios antigos em `docs/runs/` citam os caminhos antigos e não foram reescritos.
-- Os horários de `auditoria-producao.yml` e `auditoria-llm.yml` continuam amarrados ao produto: o GitHub não permite agendamento configurável por arquivo.
+- O horário de `auditoria-producao.yml` continua amarrados ao produto: o GitHub não permite agendamento configurável por arquivo.

@@ -7,7 +7,7 @@ Ele tem duas camadas:
 | Camada | Onde | Quando roda | O que entrega |
 |---|---|---|---|
 | Determinística | harness em `devagent/auditoria/nucleo.py`, checagens deste produto em `auditoria/auditar.py`, workflow `auditoria-producao.yml` | a cada 30 min no pregão, antes da abertura, após cada deploy | issue `producao-incorreta`, fechada sozinha quando volta a passar |
-| Exploratória (LLM) | persona `devagent/agents/auditor.md`, tarefa agendada no Jules | uma vez por dia | relatório e achados em `docs/auditoria/`, que viram issues pelo `auditoria-achados.yml` |
+| Exploratória (LLM) | persona `devagent/agents/auditor.md`, tarefa agendada no Antigravity Remote | uma vez por dia | relatório e achados em `docs/auditoria/`, que viram issues pelo `auditoria-achados.yml` |
 
 ## Separação de poderes
 

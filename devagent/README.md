@@ -44,7 +44,7 @@ O instalador copia `devagent/` e os workflows e cria `AGENTS.md`, `PRODUTO.md`, 
 1. Preencha `PRODUTO.md` e `devagent.toml` (inclusive `termos_do_dominio`).
 2. Ajuste os alvos do `Makefile` ao stack.
 3. Escreva `auditoria/auditar.py` com as checagens do produto, usando `devagent.auditoria.nucleo` (`checar_saude`, `checar_pagina`, `checar_navegador`, `numeros_dos_fixtures`, `executar`).
-4. Revise os horários de `auditoria-producao.yml` e `auditoria-llm.yml`.
+4. Revise os horários de `auditoria-producao.yml`.
 5. Crie os secrets de `devagent/OPERACAO.md` e escreva a spec `001` do MVP.
 
 ## Atualizar um projeto que já usa o núcleo

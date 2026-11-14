@@ -40,7 +40,7 @@ devagent/
   guardiao_prs.py      # regras do guardião de PRs (roda no GitHub Actions)
   config.py            # lê o devagent.toml
   smoke.sh             # sobe a aplicação e confere o health check
-  adaptadores/         # executores (antigravity, jules legado), render_status.py e render_blueprint.py (deploy)
+  adaptadores/         # executores (antigravity), render_status.py e render_blueprint.py (deploy)
   auditoria/           # harness da auditoria e transformação de achados em issues
   agents/              # personas: auditor, especialistas
   skills/              # procedimentos de processo, um arquivo por tarefa recorrente
@@ -57,7 +57,7 @@ docs/
   skills/              # procedimentos que só fazem sentido neste produto
   auditoria/           # relatórios, achados e diário do auditor (escritos só por ele)
 auditoria/             # checagens de produção deste produto (PROTEGIDO)
-.agents/               # diários dos especialistas (compatível com o legado .jules/)
+.agents/               # diários dos especialistas
 ```
 
 A estrutura do código da aplicação está no `PRODUTO.md`. Se algum destes arquivos não existir, criá-lo faz parte da primeira execução.
@@ -78,7 +78,7 @@ Se a sessão foi acionada para atuar num PR aberto (via comentário `@antigravit
 Toda execução só termina bem com uma entrega concreta: um PR que muda o produto, as specs, o backlog ou o próprio agente. Por isso:
 
 - **Um passo que se aplica mas não gera mudança não encerra a execução.** As verificações do Passo 1 passaram, a publicação do Passo 3 já estava em dia, a issue escolhida já tem spec: escreva uma linha no relatório e siga para o próximo passo da lista, nesta mesma sessão.
-- **Nunca abra PR só com o relatório em `docs/runs/` ou só com um diário de `.agents/` (ou `.jules/`).** O relatório vai no PR da entrega. O job `disciplina` reprova PR só de registro (regra 6 do `conferir_pr`), salvo quando o corpo fecha issues (`Closes #N`), como no Passo 6.
+- **Nunca abra PR só com o relatório em `docs/runs/` ou só com um diário de `.agents/`.** O relatório vai no PR da entrega. O job `disciplina` reprova PR só de registro (regra 6 do `conferir_pr`), salvo quando o corpo fecha issues (`Closes #N`), como no Passo 6.
 - **As exceções são as paradas obrigatórias:** existe PR da raia de desenvolvimento aberto (Passo 2, onde só se mexe nele), você ficou bloqueado (seção 6) ou chegou ao Passo 7, que é da raia de especificação. Nelas a execução termina sem PR novo.
 
 O modelo de operação é híbrido (ADR 031): automações agendadas a cada 2h mantêm o batimento e a manutenção do projeto, enquanto execuções sob demanda (`/goal`) aceleram lotes de trabalho. Uma sessão que termina com entrega permite à próxima rodada partir do novo estado da `main`.

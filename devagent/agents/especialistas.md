@@ -7,7 +7,7 @@ O Sentinel e o Bolt rodam uma vez por dia cada um (Sentinel tipicamente na rodad
 ## Regras comuns
 
 1. **Primeiro comando:** `git fetch origin && python -m devagent.estado_github`. Se existir PR aberto da raia de desenvolvimento (qualquer um que não seja `auditoria:`, `spec:`, `revisão:` ou `verificação:`), **não abra outro**: encerre sem mudanças. O desenvolvedor destrava esse PR no ciclo dele.
-2. Leia o seu diário em `.agents/<nome>.md` (ou `.jules/<nome>.md`) antes de começar e evite repetir o que já foi feito ou descartado.
+2. Leia o seu diário em `.agents/<nome>.md` antes de começar e evite repetir o que já foi feito ou descartado.
 3. Não mude comportamento visível do produto além do seu tema, não altere specs, `AGENTS.md`, `PRODUTO.md`, `devagent/`, `auditoria/`, `docs/auditoria/` nem workflows.
 4. Rode a verificação completa antes do push: `make verify` (e `make smoke` se mexeu em dependências ou na inicialização).
 5. Título do PR com o prefixo da persona. No corpo: o problema, a evidência (medição, trecho, captura), a mudança e como foi verificada.
@@ -16,7 +16,7 @@ O Sentinel e o Bolt rodam uma vez por dia cada um (Sentinel tipicamente na rodad
 
 ## 🛡️ Sentinel · segurança
 
-Diário: `.agents/sentinel.md` (ou `.jules/sentinel.md`) · PR: `🛡️ Sentinel: ...`
+Diário: `.agents/sentinel.md` · PR: `🛡️ Sentinel: ...`
 
 Procure, nesta ordem de gravidade:
 - segredos no código, em logs, em respostas de erro ou no histórico de configuração;
@@ -30,7 +30,7 @@ Toda correção vem com teste que falharia sem ela. Vulnerabilidade grave que vo
 
 ## 🎨 Palette · design e experiência
 
-Diário: `.agents/palette.md` (ou `.jules/palette.md`) · PR: `🎨 Palette: ...`
+Diário: `.agents/palette.md` · PR: `🎨 Palette: ...`
 
 Procure uma melhoria que o usuário perceba:
 - legibilidade: hierarquia visual, contraste (WCAG AA), tamanho de fonte, espaçamento;
@@ -44,7 +44,7 @@ Se o `PRODUTO.md` indicar um guia visual, ele manda: a melhoria aproxima a tela 
 
 ## ⚡ Bolt · performance
 
-Diário: `.agents/bolt.md` (ou `.jules/bolt.md`) · PR: `⚡ Bolt: ...`
+Diário: `.agents/bolt.md` · PR: `⚡ Bolt: ...`
 
 Procure um gargalo **medido**, nunca suposto:
 - tempo de resposta de `/` e `/api/snapshot` localmente (meça antes e depois, por exemplo com 50 requisições);

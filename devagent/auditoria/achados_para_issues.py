@@ -1,6 +1,6 @@
 """Transforma achados do auditor LLM em issues do GitHub.
 
-O auditor LLM roda no Jules, que só entrega trabalho por PR. Ele registra cada
+O auditor LLM só entrega trabalho por PR. Ele registra cada
 achado como um arquivo em docs/auditoria/achados/. Depois do merge, este
 script abre uma issue para cada achado com `status: aberto` que ainda não
 tenha issue (o id do achado no corpo evita duplicatas).

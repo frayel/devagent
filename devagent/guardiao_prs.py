@@ -4,11 +4,11 @@ Roda no GitHub Actions (workflow pr-guardiao.yml) com o gh CLI autenticado:
     python -m devagent.guardiao_prs ...
 
 Modos:
-    --ci-falhou BRANCH --run-id ID   CI falhou num PR: cobra o Jules ou fecha o PR
+    --ci-falhou BRANCH --run-id ID   CI falhou num PR: cobra o agente ou fecha o PR
     --varredura                      conflitos, PRs sem reação, substituídos, branches órfãs
 
 Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
-    - CI falhou: comenta @jules com o log, até MAX_TENTATIVAS. Depois fecha o PR.
+    - CI falhou: comenta @antigravity com o log, até MAX_TENTATIVAS. Depois fecha o PR.
     - Especialista sem achado: PR de Sentinel, Palette ou Bolt vazio ou só com
       o diário fecha sem issue; não é trabalho perdido (ADRs 019 e 020).
     - Verificação sem achado: PR `verificação:` que não cria arquivo em
@@ -20,7 +20,7 @@ Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
       sem cobrar o agente, e abre `tentativa-falhou` (ADR 018). Cobrar só
       gerava sessões filhas com PRs vazios (#402 e #403, em 22/10).
     - Sem reação: se o guardião cobrou e não houve commit novo em SEM_REACAO_HORAS, fecha.
-    - Conflito pequeno (<= CONFLITO_MAX_ARQUIVOS e <= CONFLITO_MAX_LINHAS): pede ao Jules
+    - Conflito pequeno (<= CONFLITO_MAX_ARQUIVOS e <= CONFLITO_MAX_LINHAS): pede ao agente
       para resolver. Conflito grande: fecha o PR; o próximo ciclo refaz a partir da main.
     - PR cujo corpo diz "Substitui #N": fecha o #N.
     - Issue citada com Closes/Fixes/Resolves num PR mergeado nos últimos 7 dias: fecha.
@@ -34,7 +34,7 @@ Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
       alterou depois que a branch saiu dela fecha como redundante (ADR 024).
     - Bug aberto há mais de 24 h ganha o label `prioridade` e passa a ser
       tratado no Passo 1.6, antes da fila de specs (ADR 030).
-    - Só PRs e branches do Jules: PR ou branch de pessoa fica intocado.
+    - Só PRs e branches do agente: PR ou branch de pessoa fica intocado.
 """
 
 from __future__ import annotations
@@ -106,7 +106,7 @@ def data(iso: str) -> datetime:
 
 
 def prs_do_agente() -> list[dict[str, Any]]:
-    """PRs abertos pelo Jules, menos os do auditor.
+    """PRs abertos pelo agente, menos os do auditor.
 
     PR de pessoa (o dono do produto) não é cobrado nem fechado: o guardião
     cuidaria dele como se fosse do agente e abriria `tentativa-falhou` (ADR 024).
@@ -169,7 +169,7 @@ def pendentes_fora_da_main(ref: str, main: str = "origin/main") -> list[str]:
 
 
 def absorvido_pela_main(branch: str) -> bool:
-    """True se só faltam na main registros de execução (docs/runs/, .jules/)."""
+    """True se só faltam na main registros de execução (docs/runs/, .agents/)."""
     try:
         sh("git", "fetch", "-q", "origin", "main", branch)
         faltam = pendentes_fora_da_main(f"origin/{branch}")
@@ -863,7 +863,7 @@ def varredura() -> None:
         p["headRefName"]
         for p in gh_json("pr", "list", "--state", "open", "--json", "headRefName")
     }
-    do_jules = {
+    branches_do_agente = {
         p["headRefName"]
         for p in gh_json(
             "pr",
@@ -888,7 +888,7 @@ def varredura() -> None:
         nome, _, quando = linha.partition(" ")
         if nome in {"HEAD", "main"} or nome in abertas or not quando:
             continue
-        if nome not in do_jules:
+        if nome not in branches_do_agente:
             continue
         if agora() - data(quando) > timedelta(hours=ORFA_HORAS):
             sh("git", "push", "-q", "origin", "--delete", nome, check=False)

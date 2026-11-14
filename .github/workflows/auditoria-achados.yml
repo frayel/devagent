@@ -1,6 +1,6 @@
 name: Achados da auditoria
 
-# Abre issues para os achados que o auditor LLM (Jules) registrou em
+# Abre issues para os achados que o auditor LLM registrou em
 # docs/auditoria/achados/ e o verificador geral em docs/verificacao/achados/
 # (raia de verificação, ADR 021). Merges feitos pelo GITHUB_TOKEN não disparam
 # eventos de push, por isso o automerge.yml chama este workflow depois de

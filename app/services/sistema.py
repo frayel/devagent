@@ -1,7 +1,7 @@
 """Avaliação do estado do sistema para a página /sistema (spec 082).
 
 Junta o que é local (banco, agendador, registro das fontes, configuração,
-fila de specs) com o retrato remoto do monitor (GitHub, Jules, Render) e
+fila de specs) com o retrato remoto do monitor (GitHub e Render) e
 devolve uma lista de verificações com nível: ok, atenção, problema ou
 inativo. Funções puras sobre os dados recebidos, com `agora` injetável, para
 os testes não dependerem do relógio nem da rede.
@@ -45,8 +45,6 @@ INTEGRACOES: tuple[tuple[str, str | None, str], ...] = (
 LABELS_COM_ISSUE_PROPRIA = ("deploy-falhou", "producao-incorreta")
 LABELS_ATENCAO = ("prioridade", "tentativa-falhou", "bloqueado")
 
-JULES_ESPERANDO = {"AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK"}
-JULES_ATIVOS = JULES_ESPERANDO | {"QUEUED", "PLANNING", "IN_PROGRESS", "PAUSED"}
 
 
 @dataclass
@@ -624,117 +622,9 @@ def _runs_do(github: dict[str, Any], caminho: str) -> list[dict[str, Any]]:
     return sorted(runs, key=lambda r: r["criado_em"] or "", reverse=True)
 
 
-def verificar_rodadas_jules(
-    github: dict[str, Any], intervalo_min: int, agora: datetime
-) -> Item:
-    nome = "Disparo das rodadas (cron-job.org)"
-    if intervalo_min <= 0:
-        return Item(
-            nome,
-            INATIVO,
-            "desativado (ADR 031)",
-            "Disparo externo pelo cron-job.org desativado com a migração para Antigravity Remote.",
-        )
-    runs = [
-        r
-        for r in _runs_do(github, ".github/workflows/jules.yml")
-        if r["evento"] == "workflow_dispatch"
-    ]
-    if not runs:
-        return Item(
-            nome,
-            PROBLEMA,
-            "nenhum disparo recente do jules.yml",
-            "O cron-job.org dispara o workflow Jules por workflow_dispatch.",
-        )
-    ultimo = runs[0]
-    idade = _idade(ultimo["criado_em"], agora) or timedelta(0)
-    nivel = OK
-    if idade > timedelta(minutes=intervalo_min * 3):
-        nivel = ATENCAO
-    if idade > timedelta(minutes=max(30, intervalo_min * 6)):
-        nivel = PROBLEMA
-    concluidos = [r for r in runs if r["status"] == "completed"][:10]
-    falhas = [r for r in concluidos if r["conclusao"] == "failure"]
-    if concluidos[:3] and all(r["conclusao"] == "failure" for r in concluidos[:3]):
-        nivel = PROBLEMA
-    elif falhas:
-        nivel = _pior([nivel, ATENCAO])
-    detalhe = (
-        f"Esperado a cada {intervalo_min} min. "
-        f"{len(falhas)} falha{'s' if len(falhas) != 1 else ''} nos últimos "
-        f"{len(concluidos)} disparos."
-    )
-    if nivel != OK and idade > timedelta(minutes=intervalo_min * 3):
-        detalhe += " O cron-job.org parou de disparar ou o GitHub recusou o pedido."
-    return Item(
-        nome,
-        nivel,
-        f"último {ha_quanto(ultimo['criado_em'], agora)}",
-        detalhe,
-        ultimo["criado_em"],
-        ultimo.get("url"),
-    )
-
-
-def verificar_sessoes_jules(
-    jules: dict[str, Any] | None, erro: str | None, limite: int, agora: datetime
-) -> Item:
-    nome = "Sessões do Jules"
-    if erro:
-        return Item(nome, ATENCAO, "API do Jules não respondeu", erro)
-    if jules is None:
-        return Item(
-            nome,
-            INATIVO,
-            "sem JULES_API_KEY",
-            "Defina JULES_API_KEY no Render para ver as sessões ativas e a cota.",
-        )
-    sessoes = jules.get("sessoes", [])
-    ativas = [s for s in sessoes if s["estado"] in JULES_ATIVOS]
-    dia = [
-        s
-        for s in sessoes
-        if (_idade(s["criada_em"], agora) or timedelta.max) < timedelta(hours=24)
-    ]
-    falhas = [s for s in dia if s["estado"] == "FAILED"]
-    esperando = [
-        s
-        for s in ativas
-        if s["estado"] in JULES_ESPERANDO
-        and (_idade(s["atualizada_em"], agora) or timedelta(0)) > timedelta(minutes=30)
-    ]
-    paradas = [
-        s
-        for s in ativas
-        if (_idade(s["atualizada_em"], agora) or timedelta(0)) > timedelta(hours=3)
-    ]
-    nivel = OK
-    notas = []
-    if esperando:
-        nivel = ATENCAO
-        notas.append(f"{len(esperando)} esperando resposta há mais de 30 min")
-    if paradas:
-        nivel = ATENCAO
-        notas.append(f"{len(paradas)} sem atualização há mais de 3 h")
-    if falhas:
-        nivel = ATENCAO
-        notas.append(f"{len(falhas)} falharam nas últimas 24 h")
-    if limite and len(dia) >= limite:
-        nivel = PROBLEMA
-        notas.append("cota diária esgotada")
-    resumo = f"{len(ativas)} ativa{'s' if len(ativas) != 1 else ''} · {len(dia)}"
-    resumo += f" de {limite} em 24 h" if limite else " em 24 h"
-    titulos = "; ".join(f"{s['titulo']} ({s['estado']})" for s in ativas[:3])
-    detalhe = ". ".join(filter(None, ["; ".join(notas), titulos]))
-    return Item(nome, nivel, resumo, detalhe)
-
-
 def verificar_workflows(github: dict[str, Any], agora: datetime) -> list[Item]:
     itens = []
     for wf in github.get("workflows", []):
-        if wf["arquivo"] == "jules.yml":
-            continue
         runs = [
             r for r in _runs_do(github, wf["caminho"]) if r["status"] == "completed"
         ]
@@ -991,12 +881,6 @@ def montar(
 ) -> dict[str, Any]:
     ambiente = dict(os.environ) if ambiente is None else ambiente
     github = remoto.get("github")
-    intervalo_raw = ambiente.get("JULES_DISPARO_MINUTOS", "0") or "0"
-    try:
-        intervalo_jules = int(intervalo_raw)
-    except ValueError:
-        intervalo_jules = 0
-    limite_jules = ambiente.get("JULES_LIMITE_DIARIO", "").strip()
 
     aplicacao = verificar_versao(github, sha_local, agora)
     aplicacao += verificar_render(remoto.get("render"), remoto.get("render_erro"))
@@ -1022,13 +906,6 @@ def montar(
     workflows: list[Item] = []
     if github:
         desenvolvimento += [
-            verificar_rodadas_jules(github, intervalo_jules, agora),
-            verificar_sessoes_jules(
-                remoto.get("jules"),
-                remoto.get("jules_erro"),
-                int(limite_jules) if limite_jules.isdigit() else 0,
-                agora,
-            ),
             verificar_prs(github, agora),
             verificar_issues(github, agora),
             verificar_atividade(github, agora),
@@ -1060,7 +937,7 @@ def montar(
         "gerado_em": agora.isoformat(),
         "remoto_em": remoto.get("atualizado_em"),
         # Contrato do núcleo (devagent/saude.py, ADR 016): o monitor ainda não
-        # leu GitHub, Jules e Render desde que a instância subiu.
+        # leu GitHub e Render desde que a instância subiu.
         "parcial": monitor_ligado and not remoto.get("atualizado_em"),
         "geral": resumo_geral(grupos),
         "grupos": grupos,

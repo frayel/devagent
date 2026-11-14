@@ -76,8 +76,6 @@ def test_disparos_perdidos_desconta_a_hora_de_folga():
 
 def test_workflows_do_repositorio_le_os_crons_dos_arquivos():
     workflows = {w["arquivo"]: w for w in monitor.workflows_do_repositorio()}
-    # Com a migração para Antigravity Remote (ADR 031), jules.yml não tem cron no GitHub Actions.
-    assert workflows["jules.yml"]["crons"] == []
     assert len(workflows["auditoria-producao.yml"]["crons"]) == 3
     assert workflows["ci.yml"]["nome"] == "CI"
 
@@ -241,37 +239,6 @@ def _run(caminho, evento, conclusao, idade, status="completed"):
     }
 
 
-def test_rodadas_do_jules_paradas_viram_problema():
-    jules = ".github/workflows/jules.yml"
-    em_dia = _github(
-        runs=[_run(jules, "workflow_dispatch", "success", timedelta(minutes=3))]
-    )
-    assert s.verificar_rodadas_jules(em_dia, 5, AGORA).nivel == s.OK
-    parado = _github(
-        runs=[_run(jules, "workflow_dispatch", "success", timedelta(minutes=45))]
-    )
-    item = s.verificar_rodadas_jules(parado, 5, AGORA)
-    assert item.nivel == s.PROBLEMA
-    assert "cron-job.org" in item.detalhe
-    falhando = _github(
-        runs=[
-            _run(jules, "workflow_dispatch", "failure", timedelta(minutes=m))
-            for m in (2, 7, 12)
-        ]
-    )
-    assert s.verificar_rodadas_jules(falhando, 5, AGORA).nivel == s.PROBLEMA
-
-
-def test_rodadas_do_jules_desativadas_viram_inativo():
-    jules = ".github/workflows/jules.yml"
-    parado = _github(
-        runs=[_run(jules, "workflow_dispatch", "success", timedelta(days=2))]
-    )
-    item = s.verificar_rodadas_jules(parado, 0, AGORA)
-    assert item.nivel == s.INATIVO
-    assert "ADR 031" in item.resumo or "ADR 031" in item.detalhe
-
-
 def test_workflow_falho_no_pr_e_atencao_e_agendado_falho_e_problema():
     ci = ".github/workflows/ci.yml"
     aud = ".github/workflows/auditoria-producao.yml"
@@ -294,25 +261,6 @@ def test_workflow_falho_no_pr_e_atencao_e_agendado_falho_e_problema():
     itens = {i.nome: i for i in s.verificar_workflows(github, AGORA)}
     assert itens["CI"].nivel == s.ATENCAO
     assert itens["Auditoria de produção"].nivel == s.PROBLEMA
-
-
-def test_cron_de_reserva_do_jules_nao_acusa_agendamento_perdido():
-    # O GitHub descarta a maior parte dos disparos frequentes; o cron do
-    # jules.yml é só reserva do relógio externo e não pode virar alerta.
-    jules = ".github/workflows/jules.yml"
-    github = _github(
-        workflows=[
-            {
-                "arquivo": "jules.yml",
-                "caminho": jules,
-                "nome": "Jules",
-                "crons": ["11,41 * * * *"],
-            }
-        ],
-        runs=[_run(jules, "workflow_dispatch", "success", timedelta(minutes=3))],
-        ultimo_agendado={jules: _run(jules, "schedule", "success", timedelta(days=2))},
-    )
-    assert [i.nome for i in s.verificar_workflows(github, AGORA)] == []
 
 
 def test_agendamentos_descartados_pelo_github_pedem_atencao():
@@ -375,69 +323,7 @@ def test_issues_e_prs_que_pedem_acao():
     assert s.verificar_prs(_github(), AGORA).nivel == s.OK
 
 
-def test_sessoes_do_jules_esperando_resposta():
-    jules = {
-        "sessoes": [
-            {
-                "titulo": "Desenvolvedor · ciclo",
-                "estado": "AWAITING_USER_FEEDBACK",
-                "criada_em": iso(timedelta(hours=1)),
-                "atualizada_em": iso(timedelta(minutes=45)),
-                "url": None,
-            },
-            {
-                "titulo": "antiga",
-                "estado": "COMPLETED",
-                "criada_em": iso(timedelta(hours=30)),
-                "atualizada_em": iso(timedelta(hours=29)),
-                "url": None,
-            },
-        ]
-    }
-    item = s.verificar_sessoes_jules(jules, None, 100, AGORA)
-    assert item.nivel == s.ATENCAO
-    assert item.resumo == "1 ativa · 1 de 100 em 24 h"
-    assert s.verificar_sessoes_jules(None, None, 0, AGORA).nivel == s.INATIVO
-
-
 def test_resumo_geral_poe_problemas_primeiro():
-    estado = s.montar(
-        agora=AGORA,
-        inicio=AGORA - timedelta(hours=1),
-        remoto={"github": _github(), "atualizado_em": AGORA.isoformat()},
-        sha_local=None,
-        banco={
-            "tipo": "SQLite",
-            "database_url": True,
-            "tamanho": "1 MB",
-            "latencia_ms": 1,
-            "tabelas": 3,
-        },
-        coleta_ligada=True,
-        estado_coleta={"ultima_coleta": (AGORA - timedelta(minutes=5)).isoformat()},
-        intervalo_coleta=timedelta(minutes=15),
-        vazios={"mare": 2},
-        horas_vazios=3,
-        tempos={"mare": 12.0},
-        fontes={},
-        pausa_mt5=None,
-        prontas=["082-x"],
-        historico_pregoes=[],
-        ambiente={"JULES_DISPARO_MINUTOS": "5"},
-    )
-    geral = estado["geral"]
-    assert geral["nivel"] == s.PROBLEMA  # jules.yml sem disparo
-    niveis = [p["nivel"] for p in geral["pendentes"]]
-    assert niveis == sorted(niveis, key=lambda n: -s.PESO[n])
-    assert {g["titulo"] for g in estado["grupos"]} >= {
-        "Aplicação e banco",
-        "Coleta",
-        "Integrações externas",
-        "Fluxo de desenvolvimento",
-    }
-
-
-def test_resumo_geral_sem_disparo_jules_padrao_inativo():
     estado = s.montar(
         agora=AGORA,
         inicio=AGORA - timedelta(hours=1),
@@ -462,11 +348,16 @@ def test_resumo_geral_sem_disparo_jules_padrao_inativo():
         historico_pregoes=[],
         ambiente={},
     )
-    fluxo = next(
-        g for g in estado["grupos"] if g["titulo"] == "Fluxo de desenvolvimento"
-    )
-    cron_item = next(i for i in fluxo["itens"] if "cron-job.org" in i["nome"])
-    assert cron_item["nivel"] == s.INATIVO
+    geral = estado["geral"]
+    assert geral["nivel"] in s.PESO
+    niveis = [p["nivel"] for p in geral["pendentes"]]
+    assert niveis == sorted(niveis, key=lambda n: -s.PESO[n])
+    assert {g["titulo"] for g in estado["grupos"]} >= {
+        "Aplicação e banco",
+        "Coleta",
+        "Integrações externas",
+        "Fluxo de desenvolvimento",
+    }
 
 
 def test_specs_prontas_le_a_fila_do_repositorio():
@@ -481,7 +372,6 @@ def test_specs_prontas_le_a_fila_do_repositorio():
 
 @respx.mock
 def test_falha_do_github_guarda_o_erro_e_mantem_o_retrato_anterior(monkeypatch):
-    monkeypatch.delenv("JULES_API_KEY", raising=False)
     monkeypatch.delenv("RENDER_API_KEY", raising=False)
     monitor.retrato["github"] = {"anterior": True}
     respx.get(url__startswith="https://api.github.com/").mock(
@@ -490,7 +380,7 @@ def test_falha_do_github_guarda_o_erro_e_mantem_o_retrato_anterior(monkeypatch):
     monitor.atualizar()
     assert monitor.retrato["github"] == {"anterior": True}
     assert monitor.retrato["github_erro"] == "HTTP 500"
-    assert monitor.retrato["jules"] is None and monitor.retrato["atualizado_em"]
+    assert monitor.retrato["atualizado_em"]
 
 
 def test_pagina_sistema_renderiza_sem_vazar_segredos(monkeypatch):

@@ -1,1 +1,1 @@
-"""Adaptadores do núcleo: executor de agente (Jules) e plataforma de deploy (Render)."""
+"""Adaptadores do núcleo: plataforma de deploy (Render)."""

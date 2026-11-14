@@ -48,7 +48,6 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
   - Endpoint `/api/snapshot` passa a publicar `paineis.manchete` com `humor`, `texto`, `coletado_em` e `fonte`.
   - Testes de aceite completos em `tests/test_aceite_140.py`.
 - [Saúde Técnica] Spec 139 - O Verificador vê todo merge na main e examina todo PR que mexe num limite:
-  - `merges_do_desenvolvimento` em `devagent/adaptadores/jules.py` deixa de filtrar por `do_agente`, incluindo PRs da raia de desenvolvimento abertos por humanos.
   - Implementada paginação na busca de PRs fechados até encontrar uma página anterior a `desde`, com limite de 5 páginas.
   - Priorização de sensores via `checar_sensor_pr` e `PADRAO_SENSOR`: PRs que alteram `auditoria/` ou modificam limites (`MAXIMO/A`, `LIMITE`, `TOLERANCIA`, `TETO`) no `patch` são marcados `[sensor]` e ordenados no início do prompt.
   - Fallback gracioso para falha na listagem de arquivos (`/files`): o PR entra sem marca e com indicação `arquivos não consultados`.
@@ -116,10 +115,10 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
   - Saneamento de loopback IPv6 `[::1]` em `NO_PROXY`/`no_proxy` para evitar `httpx.InvalidURL: Invalid port: ':1]'`.
   - Fuso horário BRT corrigido em consultas de instrumentação de coletas.
 - Migração para Antigravity Remote e modelo híbrido (ADR 031):
-  - Validação de raias no CI via marcador HTML no corpo do PR (`<!-- devagent:raia:<nome> -->`), sem chamadas de rede à API externa do Jules.
-  - Pasta `.agents/` para diários dos especialistas (com fallback retrocompatível a `.jules/`).
+  - Validação de raias no CI via marcador HTML no corpo do PR (`<!-- devagent:raia:<nome> -->`), sem chamadas de rede a API externa.
+  - Pasta `.agents/` para diários dos especialistas.
   - Reconhecimento dos logins do Antigravity no guardião de PRs e conferência de disciplina.
-  - Removido schedule de cron do GitHub Actions (`jules.yml` e `auditoria-llm.yml`).
+  - Removido schedule de cron do GitHub Actions.
   - Criada skill `/ciclo` (`.agents/skills/ciclo/SKILL.md`) para execução autônoma.
 - [Saúde Técnica] Spec 132a - Leitura tolerante de consenso (JSON, dict, texto) implementada e `ast.literal_eval` removido de `app/main.py`.
 
@@ -157,7 +156,7 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
 - Spec 082 (Página de sistema):
   - `/sistema` e `/api/sistema`, protegidas pela `CONSULTOR_SENHA`; link "Sistema" no cabeçalho.
   - `app/collectors/registro_fontes.py`: resultado final de cada chamada às fontes externas, por integração.
-  - `app/collectors/sistema.py`: monitor em segundo plano do GitHub, do Jules e do Render (5 min com `GITHUB_TOKEN`, 20 min sem).
+  - `app/collectors/sistema.py`: monitor em segundo plano do GitHub e do Render (5 min com `GITHUB_TOKEN`, 20 min sem).
   - `app/services/sistema.py` e `app/services/cron.py`: níveis de cada verificação e agendamentos perdidos.
 
 - Spec 068b (Consultor Regras de Decisão):

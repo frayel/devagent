@@ -1,6 +1,6 @@
 # devagent · Painel B3
 
-**Projeto experimental.** Este repositório existe para medir até onde um agente de IA consegue desenvolver e manter um software sozinho, sem intervenção humana. O agente (Google Jules) escreve as especificações, implementa, revisa o próprio trabalho, publica em produção e corrige o que quebra. Nenhuma pessoa aprova planos, revisa PRs ou faz merge (ADR 007). Quando o agente trava, o dono do experimento intervém, e cada intervenção fica registrada para ser contada.
+**Projeto experimental.** Este repositório existe para medir até onde um agente de IA consegue desenvolver e manter um software sozinho, sem intervenção humana. O agente escreve as especificações, implementa, revisa o próprio trabalho, publica em produção e corrige o que quebra. Nenhuma pessoa aprova planos, revisa PRs ou faz merge (ADR 007). Quando o agente trava, o dono do experimento intervém, e cada intervenção fica registrada para ser contada.
 
 O software construído é um painel de apoio à decisão para investidores da B3. Ele é o objeto do experimento, não o objetivo.
 
@@ -31,7 +31,7 @@ Um painel financeiro foi escolhido de propósito. Ele tem dados reais que mudam 
 1. **Um sistema em produção mantido sem mãos humanas no código.** O ponto de chegada é a intervenção humana restrita a montar a infraestrutura (contas, chaves, relógio) e a observar. Até aqui não foi assim: parte dos commits tem autoria humana, inclusive no código do produto, e cada uma delas aponta um trilho que ainda falta.
 2. **Um núcleo reaproveitável.** O processo do agente vive em [`devagent/`](devagent/README.md), separado das regras do produto (ADR 005), para ser levado a outros projetos com `python -m devagent.instalar <destino>`.
 3. **Evidência, não impressão.** Cada execução deixa um relatório com retrospectiva em [`docs/runs/`](docs/runs/), cada decisão de processo vira um ADR e cada falha de produção vira uma issue. O histórico do repositório é o registro do experimento.
-4. **Um mapa dos limites.** Saber onde a autonomia se sustenta e onde ela quebra é tão útil quanto um painel que funcione. Cada ponto em que foi preciso mudar os trilhos (o guardião de PRs, a retomada depois de ambiente reiniciado, o relógio externo do Jules) registra um limite encontrado.
+4. **Um mapa dos limites.** Saber onde a autonomia se sustenta e onde ela quebra é tão útil quanto um painel que funcione. Cada ponto em que foi preciso mudar os trilhos (o guardião de PRs, a retomada depois de ambiente reiniciado) registra um limite encontrado.
 
 ### Regras do jogo
 
@@ -66,7 +66,7 @@ make audit         # audita produção
 
 O agente tem duas camadas de instruções, lidas a partir do [`AGENTS.md`](AGENTS.md):
 
-- [`devagent/`](devagent/README.md) é o **núcleo**: o ciclo de decisão ([`devagent/CICLO.md`](devagent/CICLO.md)), as personas, as skills de processo, o guardião de PRs, os adaptadores do Jules e do Render e o harness da auditoria. Não conhece o produto (um teste garante) e pode ser levado a outro projeto com `python -m devagent.instalar <destino>`.
+- [`devagent/`](devagent/README.md) é o **núcleo**: o ciclo de decisão ([`devagent/CICLO.md`](devagent/CICLO.md)), as personas, as skills de processo, o guardião de PRs, o adaptador do Render e o harness da auditoria. Não conhece o produto (um teste garante) e pode ser levado a outro projeto com `python -m devagent.instalar <destino>`.
 - [`PRODUTO.md`](PRODUTO.md) é o **projeto**: o painel, o stack, as regras de coleta e o índice da documentação deste produto.
 
 Os dois vivem no mesmo repositório para que o agente continue aprimorando o núcleo. Em resumo, cada execução faz uma única coisa, na primeira situação que se aplicar:
@@ -81,10 +81,10 @@ Os dois vivem no mesmo repositório para que o agente continue aprimorando o nú
 
 Para pedir algo ao agente, abra uma issue. O label `prioridade` faz o agente tratá-la no Passo 1, antes de specs e features; sem o label, ela espera na fila do Passo 6. Defeitos conhecidos também podem ser registrados na seção *Correções* de `docs/BACKLOG.md`, que entra no mesmo Passo 1.
 
-Nenhum PR fica parado: o guardião (`pr-guardiao.yml`) cobra o Jules quando o CI falha e, sem reação, fecha o PR e registra o motivo para o próximo ciclo refazer o trabalho.
+Nenhum PR fica parado: o guardião (`pr-guardiao.yml`) cobra o agente quando o CI falha e, sem reação, fecha o PR e registra o motivo para o próximo ciclo refazer o trabalho.
 
 Procedimentos recorrentes ficam em [`devagent/skills/`](devagent/skills/) (processo) e [`docs/skills/`](docs/skills/) (produto); conhecimento durável em [`docs/context/`](docs/context/). Cada execução deixa um relatório com retrospectiva em [`docs/runs/`](docs/runs/).
 
 ## Entrega
 
-PR do agente → CI → merge automático → deploy no Render → verificação do deploy. O agente é acordado a cada 30 min por um relógio externo (cron-job.org chamando o `jules.yml`), porque o agendamento do GitHub Actions descarta a maior parte dos disparos frequentes (ADR 010). Detalhes, variáveis e a configuração do relógio em [`devagent/OPERACAO.md`](devagent/OPERACAO.md) e na seção 10 do [`PRODUTO.md`](PRODUTO.md).
+PR do agente → CI → merge automático → deploy no Render → verificação do deploy. O agente é acordado por automações agendadas no Antigravity Remote (ADR 031). Detalhes e variáveis em [`devagent/OPERACAO.md`](devagent/OPERACAO.md) e na seção 10 do [`PRODUTO.md`](PRODUTO.md).

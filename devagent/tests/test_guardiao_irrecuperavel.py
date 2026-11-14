@@ -26,7 +26,7 @@ def test_pr_so_de_registro_e_irrecuperavel() -> None:
 def test_registro_que_fecha_issue_nao_e_irrecuperavel() -> None:
     assert (
         guardiao_prs.motivo_irrecuperavel(
-            ["docs/runs/x.md", ".jules/sentinel.md"], "Closes #12"
+            ["docs/runs/x.md", ".agents/sentinel.md"], "Closes #12"
         )
         == ""
     )
@@ -44,7 +44,7 @@ def test_ci_falhou_fecha_sem_cobrar(monkeypatch: pytest.MonkeyPatch) -> None:
     pr = {
         "number": 402,
         "title": "Implementa spec 075",
-        "headRefName": "jules-1",
+        "headRefName": "agente-1",
         "body": "",
         "url": "u",
     }
@@ -62,7 +62,7 @@ def test_ci_falhou_fecha_sem_cobrar(monkeypatch: pytest.MonkeyPatch) -> None:
         chamadas["fechou"] = (p["number"], registrar)
 
     monkeypatch.setattr(guardiao_prs, "fechar", fechar)
-    guardiao_prs.ci_falhou("jules-1", "1")
+    guardiao_prs.ci_falhou("agente-1", "1")
     assert chamadas["fechou"] == (402, True)
     assert "comentou" not in chamadas
 
@@ -72,7 +72,7 @@ SENTINEL = {"number": 406, "title": "🛡️ Sentinel: repasse de sessão limpo"
 
 
 def test_especialista_so_com_diario_e_sem_achado() -> None:
-    arquivos = [".jules/sentinel.md", "docs/runs/2026-10-22-0704.md"]
+    arquivos = [".agents/sentinel.md", "docs/runs/2026-10-22-0704.md"]
     assert guardiao_prs.sem_achado_de_especialista(SENTINEL, arquivos)
 
 
@@ -84,7 +84,7 @@ def test_desenvolvedor_so_com_relatorio_nao_e_sem_achado() -> None:
 def test_especialista_com_codigo_nao_e_sem_achado() -> None:
     pr = {"title": "⚡ Bolt: índice novo", "body": ""}
     assert not guardiao_prs.sem_achado_de_especialista(
-        pr, ["app/x.py", ".jules/bolt.md"]
+        pr, ["app/x.py", ".agents/bolt.md"]
     )
 
 
@@ -104,7 +104,7 @@ def test_ci_falhou_de_especialista_sem_achado_nao_abre_issue(
     chamadas: list[Any] = []
     monkeypatch.setattr(guardiao_prs, "prs_do_agente", lambda: [pr])
     monkeypatch.setattr(
-        guardiao_prs, "arquivos_do_pr", lambda n: [".jules/sentinel.md"]
+        guardiao_prs, "arquivos_do_pr", lambda n: [".agents/sentinel.md"]
     )
     monkeypatch.setattr(guardiao_prs, "sh", lambda *a, **k: chamadas.append(a) or "log")
     monkeypatch.setattr(

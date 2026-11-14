@@ -41,7 +41,7 @@ Merges feitos pelo `GITHUB_TOKEN` não fecham issues pelas palavras-chave `Close
 
 ## Agendamento e Execução (Modelo Híbrido · ADR 031)
 
-O sistema opera no modelo híbrido, eliminando a dependência do cron de 5 minutos e da API do Jules:
+O sistema opera no modelo híbrido, eliminando a dependência do cron de 5 minutos:
 
 1. **Automação agendada no Antigravity Remote (a cada 2h):**
    - Garante o batimento contínuo do projeto: executa verificações de produção, destrava PRs pendentes, roda a persona de especialista (Sentinel na madrugada, Bolt pela manhã), audita e implementa specs prontas.

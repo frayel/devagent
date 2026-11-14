@@ -39,7 +39,7 @@ Regras (mantenha em sincronia com devagent/CICLO.md, Passos 1 e 4):
        onde o título do PR existe. Na raia de desenvolvimento, as specs só
        podem ter a linha `status:` trocada para `done`: criar, dividir ou
        editar spec é das raias de especificação e de revisão (ADR 023). O
-       título precisa bater com a persona da sessão do Jules que abriu o PR;
+       marcador `<!-- devagent:raia:<nome> -->` no corpo, se houver, precisa bater com o título;
        PR `revisão:` só cria partes (NNNa) da spec que altera e traz as linhas
        de conferência; PR `verificação:` traz achado novo. PR de pessoa fica
        fora da regra (ADR 024).
@@ -56,8 +56,6 @@ import os
 import re
 import subprocess
 import sys
-import urllib.error
-import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -67,12 +65,10 @@ from devagent.raias import (
     PASTA_SPECS,
     PASTA_VERIFICACAO,
     REVISAO,
-    TAREFA_NO_CORPO,
     VERIFICACAO,
     do_agente,
     edicao_de_spec_proibida,
     fora_da_raia,
-    raia_da_sessao,
     raia_declarada,
     raia_do_titulo,
     spec_nova_fora_do_alvo,
@@ -90,7 +86,7 @@ PADRAO_DOCUMENTOS = {
     "secao_correcoes": "Correções",
 }
 # Prefixos de caminho que só registram a execução (relatório, diário).
-PADRAO_REGISTROS = ("docs/runs/", ".jules/", ".agents/")
+PADRAO_REGISTROS = ("docs/runs/", ".agents/")
 FECHA_ISSUE = re.compile(r"\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\s+#\d+", re.I)
 
 STATUS = re.compile(r"^status:\s*([\w-]+)\s*$", re.MULTILINE)
@@ -147,52 +143,16 @@ def autor_do_pr() -> str:
     )
 
 
-def titulo_da_sessao(corpo: str) -> str:
-    """Título da sessão do Jules que abriu o PR (o corpo traz `task/<id>`).
+def conferir_raia_declarada(res: Resultado, raia: str) -> None:
+    """A raia do título precisa bater com a raia declarada no corpo (ADRs 024 e 031).
 
-    Vazio se o PR não é do Jules, se falta JULES_API_KEY ou se a API não
-    responde: a regra que depende dele fica de fora, sem reprovar.
+    O marcador é `<!-- devagent:raia:<nome> -->`. Sem marcador, a regra não se aplica.
     """
-    m = TAREFA_NO_CORPO.search(corpo or "")
-    chave = os.environ.get("JULES_API_KEY")
-    if not m or not chave:
-        return ""
-    req = urllib.request.Request(
-        f"https://jules.googleapis.com/v1alpha/sessions/{m.group(1)}",
-        headers={"x-goog-api-key": chave},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            return str(json.loads(resp.read().decode()).get("title") or "")
-    except (urllib.error.URLError, OSError, ValueError):
-        return ""
-
-
-def conferir_raia_da_sessao(res: Resultado, raia: str, sessao: str | None) -> None:
-    """A raia do título precisa bater com a persona/raia declarada (ADRs 024 e 031).
-
-    Aceita marcador no corpo (<!-- devagent:raia:<nome> -->) ou sessão do Jules.
-    """
-    corpo = corpo_do_pr()
-    declarada = raia_declarada(corpo)
-    if declarada:
-        if declarada != raia:
-            res.falha(
-                f"O PR declara a raia `{declarada}` no corpo, mas o título o coloca na raia de `{raia}`. "
-                "Use o prefixo da sua raia (ADRs 024 e 031)."
-            )
-        return
-
-    if sessao is None:
-        if autor_do_pr() and not do_agente(autor_do_pr()):
-            return
-        sessao = titulo_da_sessao(corpo)
-    esperada = raia_da_sessao(sessao)
-    if esperada and esperada != raia:
+    declarada = raia_declarada(corpo_do_pr())
+    if declarada and declarada != raia:
         res.falha(
-            f"O PR foi aberto pela sessão `{sessao}`, que é da raia de {esperada}, "
-            f"mas o título o coloca na raia de {raia}. Use o prefixo da sua raia; "
-            "o trabalho de outra raia fica para a sessão dela (ADR 024)."
+            f"O PR declara a raia `{declarada}` no corpo, mas o título o coloca na raia de `{raia}`. "
+            "Use o prefixo da sua raia (ADRs 024 e 031)."
         )
 
 
@@ -267,7 +227,6 @@ def conferir(
     base: str | None = None,
     exigir_alteracao: bool | None = None,
     titulo: str | None = None,
-    sessao: str | None = None,
     corpo: str | None = None,
 ) -> Resultado:
     if exigir_alteracao is None:
@@ -374,7 +333,7 @@ def conferir(
                         "para `done` ao entregar (ADR 023). Tire a spec do PR."
                     )
         corpo = corpo_do_pr() if corpo is None else corpo
-        conferir_raia_da_sessao(res, raia, sessao)
+        conferir_raia_declarada(res, raia)
         specs_mudadas = sorted(
             a for a in alterados if a.startswith(PASTA_SPECS) and a.endswith(".md")
         )

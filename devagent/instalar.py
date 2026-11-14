@@ -28,8 +28,6 @@ WORKFLOWS = [
     "automerge.yml",
     "deploy-check.yml",
     "pr-guardiao.yml",
-    "jules.yml",
-    "auditoria-llm.yml",
     "auditoria-producao.yml",
     "auditoria-achados.yml",
 ]

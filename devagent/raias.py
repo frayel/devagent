@@ -13,9 +13,8 @@ O desenvolvimento não cria, não divide e não edita specs; só troca o
 `status:` para `done` ao entregar (ADR 023).
 
 As três raias auxiliares correm em paralelo com o desenvolvimento. A raia de
-um PR sai do prefixo do título, e o título precisa bater com a persona da
-sessão do Jules que abriu o PR (ADR 024): uma sessão do desenvolvedor não vira
-raia de especificação só por intitular o PR `spec:`. O job `disciplina` do CI
+um PR sai do prefixo do título, e o marcador `<!-- devagent:raia:<nome> -->`
+do corpo, quando existe, precisa bater com ele (ADRs 024 e 031). O job `disciplina` do CI
 (regra 8 do conferir_pr) reprova o PR que escreve fora da sua raia.
 
 Só usa a biblioteca padrão.
@@ -57,12 +56,10 @@ RAIAS = {
     AUDITORIA: Raia(AUDITORIA, "auditoria:", ("docs/auditoria/", "auditoria/")),
 }
 
-# Autor dos PRs abertos pelo agente (Jules, Antigravity ou configurado no projeto).
+# Autor dos PRs abertos pelo agente (Antigravity ou configurado no projeto).
 # PR de outro autor (o dono do produto, outra ferramenta) não é do agente:
 # o guardião não o cobra nem o fecha e ele não trava nenhuma raia (ADRs 024 e 031).
-AUTOR_DO_AGENTE = "google-labs-jules[bot]"
 AUTORES_CONHECIDOS = {
-    "google-labs-jules",
     "antigravity",
     "antigravity-bot",
     "gemini",
@@ -71,7 +68,7 @@ AUTORES_CONHECIDOS = {
 
 
 def do_agente(autor: str | None) -> bool:
-    """Aceita logins do agente (Jules, Antigravity) e opcionalmente bot_usuario do devagent.toml."""
+    """Aceita logins do agente (Antigravity) e opcionalmente bot_usuario do devagent.toml."""
     from devagent.config import PROJETO
 
     nome = (autor or "").removeprefix("app/").removesuffix("[bot]").lower()
@@ -86,28 +83,7 @@ def do_agente(autor: str | None) -> bool:
     return nome in AUTORES_CONHECIDOS
 
 
-# Título da sessão do Jules (PERSONAS em adaptadores/jules.py) -> raia.
-RAIA_DA_PERSONA = {
-    "Desenvolvedor": DESENVOLVIMENTO,
-    "Sentinel": DESENVOLVIMENTO,
-    "Palette": DESENVOLVIMENTO,
-    "Bolt": DESENVOLVIMENTO,
-    "Especificador": ESPECIFICACAO,
-    "Revisor": REVISAO,
-    "Verificador": VERIFICACAO,
-    "Auditor": AUDITORIA,
-}
-
-TAREFA_NO_CORPO = re.compile(r"jules\.google\.com/task/(\d+)")
 MARCADOR_RAIA = re.compile(r"<!--\s*devagent:raia:(\w+)\s*-->", re.I)
-
-
-def raia_da_sessao(titulo_sessao: str) -> str | None:
-    """A raia de uma sessão pelo título dela; None se não é persona conhecida."""
-    for persona, raia in RAIA_DA_PERSONA.items():
-        if (titulo_sessao or "").startswith(persona):
-            return raia
-    return None
 
 
 # Caminhos que o desenvolvimento não escreve: pertencem a outra raia.

@@ -150,7 +150,7 @@ Para `devagent/skills/manutencao.md`:
 
 **Exemplo de bom achado.** "Às 14:37 BRT de 28/09/2026 o painel mostrava 130.000 pontos. No mesmo minuto, o Yahoo Finance (`^BVSP`) mostrava 183.476,86 e o Stooq (`^BVP`), 183.460,12. A diferença é de 29%. O gráfico termina em 27/09/2023, e os três fechamentos exibidos são idênticos aos de `tests/fixtures/brapi_response.json`."
 
-**Agenda.** O `auditoria-producao.yml` roda a cada 30 min durante o pregão (10h às 18h BRT), antes da abertura e uma vez por dia no fim de semana; o `auditoria-llm.yml`, nos dias úteis às 18h41 BRT, depois do fechamento.
+**Agenda.** O `auditoria-producao.yml` roda a cada 30 min durante o pregão (10h às 18h BRT), antes da abertura e uma vez por dia no fim de semana. O auditor LLM roda como automação agendada no Antigravity Remote, nos dias úteis depois do fechamento.
 
 ## 10. Configuração do produto
 
@@ -170,9 +170,6 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `GEMINI_MODELO` | Render, opcional | força um modelo do Gemini; sem ela, o app descobre o Flash-Lite estável mais novo pela API |
 | `GEMINI_MAX_CHAMADAS_DIA` | Render, opcional | teto diário de chamadas ao Gemini; padrão `200` |
 | `GITHUB_TOKEN` | Render, secreto, opcional | token só de leitura (Actions, Issues, Pull requests, Contents) para a página `/sistema`; sem ele, o GitHub limita a 60 consultas por hora e o monitor relê a cada 20 min em vez de 5 |
-| `JULES_API_KEY` | Render, secreto, opcional | mostra em `/sistema` as sessões do Jules (ativas, esperando resposta, falhas e cota) |
-| `JULES_LIMITE_DIARIO` | Render, opcional | teto de sessões do Jules em 24 h, para a página acusar a cota esgotada |
-| `JULES_DISPARO_MINUTOS` | Render, opcional | intervalo em minutos do cron externo entre disparos do `jules.yml`, para `/sistema` acusar atraso; padrão `0` (desativado conforme ADR 031; não confundir com `JULES_INTERVALO_MINUTOS`, que espaça as sessões no GitHub) |
 | `RENDER_API_KEY` | Render, secreto, opcional | mostra em `/sistema` o status do último deploy (o `RENDER_SERVICE_ID` e o `RENDER_GIT_COMMIT` o Render já define) |
 | `MONITOR_SISTEMA` | opcional | `0` desliga o monitor em segundo plano da página `/sistema` |
 

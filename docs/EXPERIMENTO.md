@@ -34,7 +34,7 @@ Fontes: histórico do git, API do GitHub (PRs e issues) e `docs/runs/`.
 
 ### Limitações
 
-- **Relógio.** A tarefa agendada da interface do Jules parava esperando aprovação; o cron do GitHub descarta a maior parte dos disparos frequentes; o vigia contínuo cobrava 1.440 min/dia de Actions dormindo. O relógio passou para o cron-job.org (ADR 010).
+- **Relógio.** A tarefa agendada da interface do executor parava esperando aprovação; o cron do GitHub descarta a maior parte dos disparos frequentes; o vigia contínuo cobrava 1.440 min/dia de Actions dormindo. O relógio passou para o cron-job.org (ADR 010).
 - **Sensores agendados também sofrem o descarte.** Em 48 h, a auditoria de produção rodou 6 de 38 vezes previstas. A autocorreção trabalha com uma fração da visão que deveria ter.
 - **Infraestrutura gratuita.** O Render hiberna e apaga o disco, misturando falhas da plataforma com falhas do agente.
 - **Amostra de um.** Um produto, um agente, duas semanas. Não dá para separar o quanto vem do modelo e o quanto vem dos trilhos.
