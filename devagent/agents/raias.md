@@ -12,12 +12,14 @@ O desenvolvimento é uma raia única: só ele mexe no código. As três raias de
 
 O título do PR precisa bater com a sua raia e o corpo deve incluir o marcador correspondente: `<!-- devagent:raia:especificacao -->`, `<!-- devagent:raia:revisao -->` ou `<!-- devagent:raia:verificacao -->` (ADRs 024 e 032). O job `disciplina` confere esse marcador e os arquivos permitidos. Se a tarefa da sua raia não existe nesta volta, encerre sem PR; não faça o trabalho de outra.
 
+Você chega aqui por dois caminhos (ADR 033): a tarefa que acionou a sessão nomeou a persona, ou o `estado_github` disse "Esta sessão atua como ..." porque o desenvolvimento não tinha trabalho de produto e a sua raia segurava a fila. Nos dois, a sessão é da persona do começo ao fim.
+
 A ordem de uma spec é sempre esta: o Especificador a escreve, o Revisor a revisa (e a divide, se preciso), o desenvolvimento a implementa. O desenvolvimento nunca cria, divide ou edita spec: o único toque dele é trocar o `status:` para `done` na entrega (ADR 023). Specs a partir de `revisao_obrigatoria_desde` (seção `[disciplina]` do `devagent.toml`) só entram na fila do desenvolvimento com o campo `revisada:` no cabeçalho. Assim duas raias nunca editam a mesma spec.
 
 ## Regras comuns
 
-1. **Primeiro comando:** `git fetch origin && python -m devagent.estado_github`. Se já existe PR aberto da sua raia, encerre sem mudanças: ele é de outra sessão.
-2. O prompt da sessão traz o alvo concreto (o número reservado, a spec a revisar, os PRs a verificar). Ele foi decidido antes da sessão começar, para as raias não disputarem o mesmo trabalho: siga-o.
+1. **Primeiro comando:** `git fetch origin && python -m devagent.estado_github && make install`.
+2. **O alvo vem do código, não do prompt:** rode `python -m devagent.papel revisor` (ou `especificador`, `verificador`). A resposta traz o alvo concreto (a spec a revisar, o número reservado, os merges a verificar), decidido pelo estado da `main` para as raias não disputarem o mesmo trabalho: siga-o. Se ela disser que não há trabalho, encerre sem PR e sem commit. Se já existe PR aberto e saudável da sua raia, a resposta é essa. Se o PR da sua raia está parado (CI falhando ou conflito), o alvo é destravá-lo na branch dele, pela skill `devagent/skills/destravar-pr.md`: PR de raia paralela que ninguém conserta trava a fila inteira.
 3. Não altere código da aplicação, testes, workflows, `devagent/`, `AGENTS.md`, `PRODUTO.md` nem arquivos fora da tabela acima. Não toque em PRs de outras raias.
 4. Sem achado, sem PR. Se a sua tarefa não gerar mudança que valha um PR, encerre sem commit. Não abra PR só com relatório ou diário.
 5. Não peça aprovação e não faça perguntas. Diante de ambiguidade, escolha a opção mais conservadora e registre a decisão no PR.
