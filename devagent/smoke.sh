@@ -11,9 +11,35 @@ export PORT
 START="${SMOKE_START:?defina SMOKE_START}"
 SAUDE="${SMOKE_SAUDE:-/healthz}"
 
+# Se a porta já responde antes de a aplicação subir, quem responderia ao
+# smoke é outro servidor (talvez de um smoke anterior, com código antigo).
+if curl -fsS -o /dev/null "http://127.0.0.1:$PORT$SAUDE" 2>/dev/null; then
+  echo "porta $PORT ocupada por outro servidor: o smoke não conferiria esta aplicação"
+  exit 1
+fi
+
 sh -c "$START" > server.log 2>&1 &
 pid=$!
-parar() { kill "$pid" 2>/dev/null; }
+
+# Encerra o processo e todos os descendentes: matar só o `sh -c` deixava o
+# servidor filho vivo, segurando a porta para o próximo smoke.
+encerrar_arvore() {
+  for filho in $(pgrep -P "$1" 2>/dev/null); do
+    encerrar_arvore "$filho"
+  done
+  kill "$1" 2>/dev/null
+}
+parar() {
+  encerrar_arvore "$pid"
+  wait "$pid" 2>/dev/null
+  # O servidor pode levar alguns segundos no encerramento gracioso: só sai
+  # quando a porta deixar de responder, para o próximo smoke achá-la livre.
+  j=0
+  while [ "$j" -lt 20 ] && curl -fsS -o /dev/null "http://127.0.0.1:$PORT$SAUDE" 2>/dev/null; do
+    j=$((j + 1))
+    sleep 0.5
+  done
+}
 
 i=0
 while [ "$i" -lt 30 ]; do
