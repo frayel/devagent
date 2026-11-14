@@ -13,6 +13,9 @@
   --alerta: #e5a54b;
   --alta-fundo: rgba(63,182,139,.12);
   --baixa-fundo: rgba(240,97,109,.12);
+  /* Área da série de preço: 10% da cor da linha (DESIGN.md, seção 5). */
+  --alta-area: rgba(63,182,139,.10);
+  --baixa-area: rgba(240,97,109,.10);
   --alerta-fundo: rgba(229,165,75,.12);
   --fs-meta: 12px;
   --fs-base: 14px;
@@ -257,6 +260,7 @@ footer { margin-top: 40px; text-align: center; font-size: var(--fs-meta); color:
 
 /* Modo Só Sinais */
 body.modo-so-sinais .grafico,
+body.modo-so-sinais .grafico-legenda,
 body.modo-so-sinais table,
 body.modo-so-sinais .visao-macro:not(.painel-ibovespa):not(.painel-tendencia):not(.painel-apetite):not(.painel-rotacao) {
     display: none !important;
@@ -363,6 +367,8 @@ body.modo-so-sinais .painel-rotacao .hero {
 
 /* Gráfico do Ibovespa: altura fixa (DESIGN.md, seção 5), sem salto de layout. */
 .painel-ibovespa .grafico { width: 100%; height: 200px; }
+/* Legenda da janela do gráfico (spec 145): o desenho é dos pregões, não do dia. */
+.grafico-legenda { margin: var(--e1) 0 0; font-size: var(--fs-meta); color: var(--texto-3); }
 
 /* Minigrafico de tabela */
 tbody td .spark { min-width: 60px; max-width: 100px; height: 32px; display: block; margin: 0 auto; }

@@ -31,12 +31,15 @@
         {% else %}
         {{ kpi(data.current_price|default("") + " pontos", "", (variacao((data.variation ~ " (" ~ data.variation_percent ~ ")") | e, 0 if data.revisao_variacao else (1 if data.is_positive else (-1 if data.is_negative else 0)))) | safe, True) }}
         {% endif %}
-        {% if data.history_dict and data.history_dict.dates %}
+        {% if data.serie %}
+        {#- Spec 145: a linha descreve a janela de pregões, não o dia. Cor pelo sinal do período. -#}
         <div id="grafico-ibovespa" class="grafico"
-             data-dates='{{ data.history_dict.dates | tojson | e }}'
-             data-closes='{{ data.history_dict.closes | tojson | e }}'
-             data-is-positive='{{ 'true' if data.is_positive else 'false' }}' role="img" aria-label="{{ data.get('resumo_serie', '') }}">
+             data-dates='{{ data.serie.datas | tojson | e }}'
+             data-closes='{{ data.serie.fechamentos | tojson | e }}'
+             data-tooltips='{{ data.serie.tooltips | tojson | e }}'
+             data-periodo-positivo='{{ 'true' if data.serie.periodo_positivo else 'false' }}' role="img" aria-label="{{ data.serie.resumo }}">
         </div>
+        <p class="grafico-legenda num">{{ data.serie.legenda }}{% if c_ibov.get('pregao_iso') and c_ibov.get('pregao_iso') != data.serie.fim_iso %} · card do pregão {{ c_ibov.get('pregao_str') or c_ibov.get('pregao_iso') }}{% endif %}</p>
         {% endif %}
         {% if data.mm21 or data.mm200 %}
         <div class="gauges espaco-topo">
