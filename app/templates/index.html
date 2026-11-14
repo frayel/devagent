@@ -177,7 +177,9 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Fator Peso Pesado", 4, "Razão, com sinal, entre a soma das contribuições teóricas das 5 ações de maior peso e a variação do Ibovespa em pontos. Positiva: as cinco andaram no mesmo sentido do índice; negativa: no sentido oposto. Acima de 100% em módulo, o restante do índice compensou. Pesos aproximados, somando 34%: VALE3 12, PETR4 8, ITUB4 7, PETR3 4, BBAS3 3. Contribuição de cada uma: variação % × peso × fechamento anterior do Ibovespa (o do pregão anterior). Com o índice a menos de 0,1% do fechamento anterior, a razão não é calculada. Teto de ±500%.", fator_peso_pesado_data.fonte if fator_peso_pesado_data else "", fator_peso_pesado_data.coletado_em if fator_peso_pesado_data else "", "visao-macro visao-geral") %}
+{# Spec 149: Fator e Concentração Setorial dividem a linha em 6 + 6, que fecha em 12 e em 6 colunas; sem a Concentração, o Fator ocupa a linha. #}
+{% set fator_span = 6 if concentracao_setorial else 12 %}
+{% call painel("Fator Peso Pesado", fator_span, "Razão, com sinal, entre a soma das contribuições teóricas das 5 ações de maior peso e a variação do Ibovespa em pontos. Positiva: as cinco andaram no mesmo sentido do índice; negativa: no sentido oposto. Acima de 100% em módulo, o restante do índice compensou. Pesos aproximados, somando 34%: VALE3 12, PETR4 8, ITUB4 7, PETR3 4, BBAS3 3. Contribuição de cada uma: variação % × peso × fechamento anterior do Ibovespa (o do pregão anterior). Com o índice a menos de 0,1% do fechamento anterior, a razão não é calculada. Teto de ±500%.", fator_peso_pesado_data.fonte if fator_peso_pesado_data else "", fator_peso_pesado_data.coletado_em if fator_peso_pesado_data else "", "visao-macro visao-geral") %}
     {% if fator_peso_pesado_data %}
         {% if fator_peso_pesado_data.mercado_lateral %}
             {{ kpi("Mercado lateral", "", '<div class="texto-2 espaco-topo-curto">O Ibovespa ficou praticamente parado no dia; a razão não é calculada.</div>' | safe) }}
@@ -191,7 +193,7 @@
 
 <!-- Linha 3: humor e rotação do dia -->
 
-{% call painel('Concentração Setorial', 4, 'Qual setor da bolsa está concentrando a alta de hoje, e qual atrai mais volume financeiro.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial visao-geral escondido' if not concentracao_setorial else 'visao-macro painel-concentracao-setorial visao-geral') %}
+{% call painel('Concentração Setorial', 6, 'Qual setor da bolsa está concentrando a alta de hoje, e qual atrai mais volume financeiro.', concentracao_setorial.fonte if concentracao_setorial else '', concentracao_setorial.coletado_em if concentracao_setorial else '', 'visao-macro painel-concentracao-setorial visao-geral escondido' if not concentracao_setorial else 'visao-macro painel-concentracao-setorial visao-geral') %}
   {% if not concentracao_setorial %}
     {{ estado('sem_registro' if is_historical else 'indisponivel') }}
   {% else %}
@@ -630,7 +632,6 @@
     {% endif %}
 {% endcall %}
 
-<div class="span-4">
     {% call painel("Anomalias de Spread", 4, "Ações de alta liquidez com spread (ask - bid) anormalmente superior à média, indicando possível retirada de ordens por formadores de mercado (pânico incipiente).", anomalias_spread.fonte if anomalias_spread else "", anomalias_spread.coletado_em if anomalias_spread else "", 'visao-micro alertas escondido' if not anomalias_spread or not anomalias_spread.alertas else 'visao-micro alertas') %}
         {% if not anomalias_spread %}
             <div class="estado vazia"><span class="icone">--</span> Sem dados</div>
@@ -657,7 +658,6 @@
             </table>
         {% endif %}
     {% endcall %}
-</div>
 
 {% call painel("Radar de Short Squeeze", 4, "Ações que vêm de forte queda recente mas hoje reagem com alta violenta e volume atípico (capitulação vendida).", short_squeeze.fonte if short_squeeze else "", short_squeeze.coletado_em if short_squeeze else "", 'visao-micro alertas escondido' if not short_squeeze or not short_squeeze.alertas else 'visao-micro alertas') %}
     {% if not short_squeeze %}

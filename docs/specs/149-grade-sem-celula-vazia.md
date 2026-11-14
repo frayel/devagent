@@ -1,7 +1,7 @@
 ---
 id: 149
 titulo: A grade não deixa célula vazia entre os painéis macro
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_149.py

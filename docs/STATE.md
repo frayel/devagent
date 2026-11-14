@@ -12,6 +12,9 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Experiência] Spec 149 - A grade não deixa célula vazia entre os painéis macro:
+  - `app/templates/index.html`: Fator Peso Pesado e Concentração Setorial em `span-6` cada (fecham em 12 e em 6 colunas); sem a Concentração, o Fator ocupa a linha (`fator_span`, como o `motores_span`). Removido o `<div class="span-4">` que envolvia a Anomalias de Spread: era filho direto da grade, ficava vazio na visão geral e deixava 8 colunas sobrando no fim.
+  - Testes de aceite em `tests/test_aceite_149.py` (empacotador de 12 e 6 colunas sobre o HTML renderizado, com e sem a Concentração Setorial).
 - [Experiência] Spec 147 - Os tiles da Maré têm contraste legível:
   - `app/static/tema.css`: `.heatmap-ativo` sem `opacity`; fundo `color-mix(in srgb, var(--ativo-cor) calc(var(--ativo-opacidade) * 60%), var(--superficie))` e texto branco opaco (pior caso 5,37:1).
   - `app/templates/index.html`: `▲`/`▼`/`■` junto do ticker no tile.
