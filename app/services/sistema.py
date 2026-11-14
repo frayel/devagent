@@ -46,7 +46,6 @@ LABELS_COM_ISSUE_PROPRIA = ("deploy-falhou", "producao-incorreta")
 LABELS_ATENCAO = ("prioridade", "tentativa-falhou", "bloqueado")
 
 
-
 @dataclass
 class Item:
     nome: str

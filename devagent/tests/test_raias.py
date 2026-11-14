@@ -262,14 +262,10 @@ def test_verificacao_sem_achado_reprova(repo: Path) -> None:
 
 def test_revisao_exige_conferencia_no_corpo(repo: Path) -> None:
     (repo / "docs/specs/001-a.md").write_text("---\nstatus: ready\nrevisada: x\n---\n")
-    falhas = conferir(
-        repo, "base", True, titulo="revisão: 001", corpo="ok"
-    ).falhas
+    falhas = conferir(repo, "base", True, titulo="revisão: 001", corpo="ok").falhas
     assert any("Tamanho:" in f for f in falhas)
     corpo = "Tamanho: 2 arquivos\nJá no código: não"
-    falhas = conferir(
-        repo, "base", True, titulo="revisão: 001", corpo=corpo
-    ).falhas
+    falhas = conferir(repo, "base", True, titulo="revisão: 001", corpo=corpo).falhas
     assert not any("Tamanho:" in f for f in falhas)
 
 
