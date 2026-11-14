@@ -38,6 +38,10 @@ jobs:
         python-version: "3.12"
     - name: Instalar dependências
       run: make install
+    # Spec 146: tests/test_aceite_146.py roda ui.js e graficos.js no Chromium
+    # headless; sem navegador o teste falha, não pula.
+    - name: Instalar o Chromium do Playwright
+      run: python -m playwright install --with-deps chromium
     - name: Verificar (make verify)
       run: make verify
 

@@ -1,7 +1,7 @@
 ---
 id: 146
 titulo: A página inicial não esconde erro de execução
-status: ready
+status: done
 esforco: M
 gaveta: experiência
 aceite: tests/test_aceite_146.py
