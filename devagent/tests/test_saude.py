@@ -137,28 +137,45 @@ def test_item_em_atencao_ha_mais_de_24h_vira_problema():
                     "grupo": "A",
                     "nome": "4",
                     "desde": antigo,
-                    "detalhe": "Faltam snapshots na janela recente",
+                    "envelhece": False,
                 },
                 {
                     "nivel": "atencao",
-                    "grupo": "Fluxo de desenvolvimento",
-                    "nome": "Issues que pedem ação",
+                    "grupo": "A",
+                    "nome": "5",
                     "desde": antigo,
+                    "envelhece": True,
                 },
             ]
         }
     }
 
     problemas = saude.pendentes(dados, "problema")
-    assert len(problemas) == 1
-    assert problemas[0]["nome"] == "1"
+    assert [p["nome"] for p in problemas] == ["1", "5"]
 
     atencoes = saude.pendentes(dados, "atencao")
-    assert len(atencoes) == 4
-    assert atencoes[0]["nome"] == "2"
-    assert atencoes[1]["nome"] == "3"
-    assert atencoes[2]["nome"] == "4"
-    assert atencoes[3]["nome"] == "Issues que pedem ação"
+    assert [p["nome"] for p in atencoes] == ["2", "3", "4"]
+
+
+def test_promocao_nao_depende_do_nome_do_item():
+    """O núcleo não conhece os itens do produto: só o campo `envelhece` decide."""
+    from datetime import datetime, timezone, timedelta
+
+    antigo = (datetime.now(timezone.utc) - timedelta(hours=25)).isoformat()
+    dados = {
+        "geral": {
+            "pendentes": [
+                {"nivel": "atencao", "nome": "Duração da coleta", "desde": antigo},
+                {
+                    "nivel": "atencao",
+                    "nome": "x",
+                    "detalhe": "Faltam snapshots",
+                    "desde": antigo,
+                },
+            ]
+        }
+    }
+    assert len(saude.pendentes(dados, "problema")) == 2
 
 
 def test_problema_curado_por_entrega_nao_pede_correcao() -> None:

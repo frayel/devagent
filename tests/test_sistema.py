@@ -708,16 +708,11 @@ def test_verificar_historico_pregoes_aceita_hoje_durante_pregao():
 def test_duracao_da_coleta_longa():
     from devagent.saude import pendentes
 
-    dados = {
-        "geral": {
-            "pendentes": [
-                {
-                    "nivel": "atencao",
-                    "nome": "Duração da coleta",
-                    "desde": "2026-10-29T02:07:01.846918+00:00",
-                }
-            ]
-        }
-    }
-    # Should ignore "Duração da coleta" when looking for problem escalations
+    # A página gera o item com `envelhece=False`; aberto há semanas, continua
+    # Atenção para o núcleo (medida de manutenção, não problema a corrigir).
+    grupo = s._grupo("Coleta", [s.verificar_tempo_coleta({"a": 700.0})])
+    geral = s.resumo_geral([grupo])
+    geral["pendentes"][0]["desde"] = "2026-10-29T02:07:01.846918+00:00"
+    dados = {"geral": geral}
     assert pendentes(dados, "problema") == []
+    assert [p["nome"] for p in pendentes(dados, "atencao")] == ["Duração da coleta"]
