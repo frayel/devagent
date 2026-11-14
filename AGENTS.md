@@ -16,4 +16,5 @@ A configuração que liga as duas está em `devagent.toml` e o contrato de verif
 ```bash
 git fetch origin
 python -m devagent.estado_github
+make install   # ferramentas fixadas no interpretador do projeto, antes de qualquer make verify
 ```

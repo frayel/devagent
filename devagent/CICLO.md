@@ -69,6 +69,7 @@ A estrutura do código da aplicação está no `PRODUTO.md`. Se algum destes arq
 ```bash
 git fetch origin
 python -m devagent.estado_github
+make install   # ferramentas fixadas no interpretador do projeto, antes de qualquer make verify
 ```
 
 Se a sessão foi acionada para atuar num PR aberto (via comentário `@antigravity`, webhook de CI ou indicação da tarefa), você já está na branch desse PR: trate-o pelo Passo 2 e não troque de branch. O script lista os PRs abertos com o estado do CI e de conflito, e as issues abertas. Depois leia `PRODUTO.md`, `docs/STATE.md`, os três últimos relatórios em `docs/runs/` e as specs. Consulte os índices da seção 9 e do `PRODUTO.md` e leia as skills e os contextos que tocam a tarefa. Então percorra a lista abaixo **em ordem** e execute **somente o primeiro item que gerar entrega**.
