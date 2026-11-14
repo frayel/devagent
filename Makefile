@@ -32,7 +32,10 @@ verify:
 	$(PY) -m pytest -m "not rede" -q
 
 ## Sobe a aplicação com o startCommand do render.yaml e confere o health check.
+## O banco SQLite vai para um diretório temporário (salvo DATABASE_PATH já
+## definido): sem isso, a aplicação criava data.db na raiz do repositório.
 smoke:
+	DATABASE_PATH="$${DATABASE_PATH:-$$(mktemp -d)/smoke.db}" \
 	SMOKE_START="$$($(PY) -m devagent.adaptadores.render_blueprint start)" \
 	SMOKE_SAUDE="$$($(PY) -m devagent.adaptadores.render_blueprint saude)" \
 	sh devagent/smoke.sh
