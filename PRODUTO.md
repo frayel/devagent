@@ -170,7 +170,7 @@ Variáveis de ambiente do produto (as do núcleo estão em `devagent/OPERACAO.md
 | `GEMINI_MODELO` | Render, opcional | força um modelo do Gemini; sem ela, o app descobre o Flash-Lite estável mais novo pela API |
 | `GEMINI_MAX_CHAMADAS_DIA` | Render, opcional | teto diário de chamadas ao Gemini; padrão `200` |
 | `GITHUB_TOKEN` | Render, secreto, opcional | token só de leitura (Actions, Issues, Pull requests, Contents) para a página `/sistema`; sem ele, o GitHub limita a 60 consultas por hora e o monitor relê a cada 20 min em vez de 5 |
-| `JULES_API_KEY` | Render, secreto, opcional | mostra em `/sistema` as sessões do Jules (ativas, esperando resposta, falhas e cota) |
+| `JULES_API_KEY` | Render, secreto, opcional, legado | mostra em `/sistema` as sessões do Jules (ativas, esperando resposta, falhas e cota); desde a ADR 031 o Jules saiu do fluxo, e um HTTP 404 da API aparece como Inativo. Pode ser removida do Render |
 | `JULES_LIMITE_DIARIO` | Render, opcional | teto de sessões do Jules em 24 h, para a página acusar a cota esgotada |
 | `JULES_DISPARO_MINUTOS` | Render, opcional | intervalo em minutos do cron externo entre disparos do `jules.yml`, para `/sistema` acusar atraso; padrão `0` (desativado conforme ADR 031; não confundir com `JULES_INTERVALO_MINUTOS`, que espaça as sessões no GitHub) |
 | `RENDER_API_KEY` | Render, secreto, opcional | mostra em `/sistema` o status do último deploy (o `RENDER_SERVICE_ID` e o `RENDER_GIT_COMMIT` o Render já define) |

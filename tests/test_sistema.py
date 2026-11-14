@@ -400,6 +400,17 @@ def test_sessoes_do_jules_esperando_resposta():
     assert s.verificar_sessoes_jules(None, None, 0, AGORA).nivel == s.INATIVO
 
 
+def test_sessoes_do_jules_404_e_integracao_desativada():
+    # ADR 031: a API do Jules saiu do fluxo; 404 não é queda passageira e não
+    # pode envelhecer até virar problema na página de saúde.
+    item = s.verificar_sessoes_jules(None, "HTTP 404", 0, AGORA)
+    assert item.nivel == s.INATIVO
+    assert "ADR 031" in item.resumo
+    assert "JULES_API_KEY" in item.detalhe
+    outro = s.verificar_sessoes_jules(None, "HTTP 503", 0, AGORA)
+    assert outro.nivel == s.ATENCAO
+
+
 def test_resumo_geral_poe_problemas_primeiro():
     estado = s.montar(
         agora=AGORA,
