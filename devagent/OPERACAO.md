@@ -67,7 +67,7 @@ O sistema opera no modelo híbrido, eliminando a dependência do cron de 5 minut
 ## Render: cuidados do adaptador
 
 - No plano gratuito, o serviço hiberna sem tráfego e o disco é efêmero: um SQLite local perde os dados a cada deploy ou reinício. Persistência exige disco persistente (plano pago) ou Postgres. Confira os planos atuais antes de decidir e registre a decisão em ADR.
-- O health check usa `healthCheckPath` do `render.yaml`; se a app não responder, o deploy fica `update_failed`. O `make smoke` lê o mesmo caminho.
+- O health check usa `healthCheckPath` do `render.yaml`; se a app não responder, o deploy fica `update_failed`. O `make smoke` lê o mesmo caminho. O `devagent/smoke.sh` reprova se a porta já responde antes de a aplicação subir e, ao sair, encerra o servidor e todos os processos filhos.
 - Diagnóstico: skill `devagent/skills/diagnosticar-deploy.md` e `python -m devagent.adaptadores.render_status`.
 
 ## Trocar um adaptador
