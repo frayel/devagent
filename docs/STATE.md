@@ -12,6 +12,11 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Experiência] Spec 146 - A página inicial não esconde erro de execução:
+  - `app/static/ui.js`: leitura e gravação da densidade em `localStorage` protegidas por `try/catch`; com o armazenamento bloqueado o handler de inicialização lançava e parava.
+  - `.github/workflows/ci.yml`: o job `test` instala o Chromium do Playwright antes do `make verify`.
+  - Templates sem mudança: os quatro cards críticos já usavam o estado indisponível; o teste os fixa.
+  - Testes de aceite em `tests/test_aceite_146.py`.
 - [Experiência] Spec 145 - O gráfico do Ibovespa usa a mesma base do número do dia:
   - `app/services/ibovespa.py` (`descrever_serie`): legenda "Últimos 30 pregões · dd/mm/aaaa a dd/mm/aaaa", `aria-label` com as duas datas e o retorno da janela, sinal do período (último contra primeiro ponto) e o texto do tooltip de cada ponto; o do último traz o fechamento anterior do card e a variação do dia em pontos e %.
   - `app/templates/index.html`: legenda visível abaixo do gráfico (cita o pregão do card quando ele difere do último ponto), `data-periodo-positivo` no lugar de `data-is-positive` e `data-tooltips`.

@@ -56,8 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnDensidade) {
         const grade = document.querySelector('.grade');
 
-        // Load state from localStorage
-        const densidadeState = localStorage.getItem('densidade');
+        // Spec 146: com o armazenamento bloqueado (cookies desligados, modo
+        // restrito), ler localStorage lança e derrubava o resto deste handler.
+        const lerDensidade = () => { try { return localStorage.getItem('densidade'); } catch (e) { return null; } };
+        const gravarDensidade = (v) => { try { localStorage.setItem('densidade', v); } catch (e) { /* sem memória da escolha */ } };
+        const densidadeState = lerDensidade();
         if (densidadeState === 'compacto') {
             grade.classList.add('compacto');
             btnDensidade.textContent = 'Confortável';
@@ -69,12 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 grade.classList.remove('compacto');
                 btnDensidade.textContent = 'Compacto';
                 btnDensidade.classList.remove('ativo');
-                localStorage.setItem('densidade', 'confortavel');
+                gravarDensidade('confortavel');
             } else {
                 grade.classList.add('compacto');
                 btnDensidade.textContent = 'Confortável';
                 btnDensidade.classList.add('ativo');
-                localStorage.setItem('densidade', 'compacto');
+                gravarDensidade('compacto');
             }
         });
     }
