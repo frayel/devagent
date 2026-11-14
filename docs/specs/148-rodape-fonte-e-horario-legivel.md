@@ -1,12 +1,13 @@
 ---
 id: 148
 titulo: O rodapé do card continua legível
-status: ready
+status: draft
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_148.py
 brief: P2-2
 depende_de: 141
+revisada: 2026-11-14
 ---
 
 ## Problema
@@ -46,3 +47,15 @@ A mesma razão de contraste da spec 147, aplicada a `--texto-3` sobre `--superfi
 
 ## Plano de validação
 `pytest -q tests/test_aceite_148.py tests/test_design.py` sem internet. O PR de implementação que alterar CSS roda `make telas` e olha o rodapé em 1440px e em 390px. Zoom de 200% entra nesse olhar. Esta rodada não produz a imagem.
+
+## Revisão
+14/11/2026. Marcada `draft`: a `main` já faz tudo o que a spec pede, e implementá-la não mudaria nada que o usuário vê. Conferido no código:
+
+- Tamanho: `app/static/tema.css:20` declara `--fs-meta: 12px` e `:162` declara `.rodape { margin-top: auto; font-size: var(--fs-meta); color: var(--texto-3); }`. Nenhuma outra regra muda o tamanho do `.rodape`.
+- Contraste, de ponta a ponta: `--texto-3` `#7d8796` tem canais 125, 135, 150 → linearizados 0,2051, 0,2423, 0,3050 → luminância 0,2126·0,2051 + 0,7152·0,2423 + 0,0722·0,3050 = 0,2389. `--superficie` `#121821` (18, 24, 33) → luminância 0,0089. Razão (0,2389 + 0,05) / (0,0089 + 0,05) = 4,90:1, acima de 4,5:1. O tema só tem a variante escura (`:root` único em `tema.css`).
+- Texto, não `title`: a macro `painel` em `app/templates/componentes.html:17` escreve `Fonte {{ fonte }} · {{ horario }}` como texto de `<div class="rodape">`, sem `title`. `tests/test_design.py:110-113` e `tests/test_aceite_141.py:171` já leem o horário dentro do `.rodape` renderizado.
+- Corte: `.painel` (`tema.css:117-126`) não declara `overflow`, tem `min-width: 0` e é coluna flex; o rodapé é o último filho do `section`. Os `overflow: hidden` do arquivo são de `.pregao-leitura`, `.medidor`, do cabeçalho e de `.heatmap-ativo`, nenhum no caminho do rodapé.
+
+O único acréscimo possível seria um teste de guarda (razão de contraste de `--texto-3` e tamanho do `.rodape`), sem mudança de tela. Isso é saúde técnica, não experiência: se o Especificador quiser a guarda, ela entra numa spec de manutenção (`gaveta:` de saúde técnica), que também zera a cadência vencida, e não nesta.
+
+Tamanho medido: `grep -rl rodape app tests` dá 5 arquivos de código e 2 de teste. Não há outra spec `ready` ou `draft` sobre o rodapé: 141 (presença do rodapé) e 147 (contraste dos tiles da Maré) estão `done` e são de outro assunto.
