@@ -41,5 +41,6 @@ Leia a subseção *Limites do autoaperfeiçoamento* da seção 9 do `devagent/CI
 
 - PR próprio com prefixo `agent:` (para `devagent/`, `AGENTS.md`, `PRODUTO.md` e skills) ou `docs:` (demais documentos).
 - Corpo do PR: problema observado, evidência, mudança, efeito esperado na próxima execução.
+- Se a mudança manda rodar um comando (primeiro comando da execução, passo de skill, alvo do `Makefile`), rode esse comando **exatamente como ficou escrito**, no ambiente da sessão, antes de abrir o PR, e cite a saída no corpo. Um equivalente que funcionou não prova a instrução: o `make install` posto no primeiro comando foi verificado com `python -m pip install` direto e quebrou na execução seguinte.
 - Atualize o índice certo (seção 9 do `CICLO.md` ou o do `PRODUTO.md`) se criou ou removeu arquivos.
 - Mudança no ciclo de decisão: ADR em `devagent/decisoes/`. Mudança no stack: ADR em `docs/decisions/`.
