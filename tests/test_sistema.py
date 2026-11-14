@@ -76,7 +76,7 @@ def test_disparos_perdidos_desconta_a_hora_de_folga():
 
 def test_workflows_do_repositorio_le_os_crons_dos_arquivos():
     workflows = {w["arquivo"]: w for w in monitor.workflows_do_repositorio()}
-    # Com a migração para Antigravity Remote (ADR 031), jules.yml não tem cron no GitHub Actions.
+    # Com a migração para Antigravity Remote (ADR 032), jules.yml não tem cron no GitHub Actions.
     assert workflows["jules.yml"]["crons"] == []
     assert len(workflows["auditoria-producao.yml"]["crons"]) == 3
     assert workflows["ci.yml"]["nome"] == "CI"
@@ -269,7 +269,7 @@ def test_rodadas_do_jules_desativadas_viram_inativo():
     )
     item = s.verificar_rodadas_jules(parado, 0, AGORA)
     assert item.nivel == s.INATIVO
-    assert "ADR 031" in item.resumo or "ADR 031" in item.detalhe
+    assert "ADR 032" in item.resumo or "ADR 032" in item.detalhe
 
 
 def test_workflow_falho_no_pr_e_atencao_e_agendado_falho_e_problema():
@@ -401,11 +401,11 @@ def test_sessoes_do_jules_esperando_resposta():
 
 
 def test_sessoes_do_jules_404_e_integracao_desativada():
-    # ADR 031: a API do Jules saiu do fluxo; 404 não é queda passageira e não
+    # ADR 032: a API do Jules saiu do fluxo; 404 não é queda passageira e não
     # pode envelhecer até virar problema na página de saúde.
     item = s.verificar_sessoes_jules(None, "HTTP 404", 0, AGORA)
     assert item.nivel == s.INATIVO
-    assert "ADR 031" in item.resumo
+    assert "ADR 032" in item.resumo
     assert "JULES_API_KEY" in item.detalhe
     outro = s.verificar_sessoes_jules(None, "HTTP 503", 0, AGORA)
     assert outro.nivel == s.ATENCAO

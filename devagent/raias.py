@@ -59,7 +59,7 @@ RAIAS = {
 
 # Autor dos PRs abertos pelo agente (Jules, Antigravity ou configurado no projeto).
 # PR de outro autor (o dono do produto, outra ferramenta) não é do agente:
-# o guardião não o cobra nem o fecha e ele não trava nenhuma raia (ADRs 024 e 031).
+# o guardião não o cobra nem o fecha e ele não trava nenhuma raia (ADRs 024 e 032).
 AUTOR_DO_AGENTE = "google-labs-jules[bot]"
 AUTORES_CONHECIDOS = {
     "google-labs-jules",
@@ -121,7 +121,7 @@ def _sem_acento(texto: str) -> str:
 
 
 def raia_declarada(corpo: str) -> str | None:
-    """Extrai a raia de um marcador HTML no corpo do PR: <!-- devagent:raia:<nome> --> (ADR 031)."""
+    """Extrai a raia de um marcador HTML no corpo do PR: <!-- devagent:raia:<nome> --> (ADR 032)."""
     m = MARCADOR_RAIA.search(corpo or "")
     if not m:
         return None

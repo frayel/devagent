@@ -28,7 +28,7 @@ Todos ficam em `.github/workflows/` porque o GitHub exige. São do núcleo; o pr
 
 | Arquivo | Dispara | Faz |
 |---|---|---|
-| `ci.yml` | PR e push na `main` | job `disciplina` com `python -m devagent.conferir_pr` (ADR 008, 024 e 031); `make install` e `make verify`; job `smoke` com `make install-prod` e `make smoke` |
+| `ci.yml` | PR e push na `main` | job `disciplina` com `python -m devagent.conferir_pr` (ADR 008, 024 e 032); `make install` e `make verify`; job `smoke` com `make install-prod` e `make smoke` |
 | `automerge.yml` | CI concluído com sucesso em PR | squash merge e remoção da branch; fecha as issues citadas com `Closes/Fixes/Resolves #N` no título, corpo ou commits do PR (exceto `deploy-falhou` e `producao-incorreta`) |
 | `deploy-check.yml` | após o auto-merge, a cada 6 h, manual | consulta a plataforma (`devagent/adaptadores/render_status.py`); abre ou fecha issues `deploy-falhou`; dispara a auditoria quando o deploy fica live |
 | `auditoria-producao.yml` | horários do projeto, após deploy | `make audit` contra produção; abre ou fecha issues `producao-incorreta`. Job `saude`: lê a página de saúde do produto (`python -m devagent.saude`, ADR 016) e abre, atualiza ou fecha a issue `sistema-com-problema` |
@@ -39,7 +39,7 @@ O `automerge.yml` não tem caminhos protegidos: todo PR com CI verde entra (ADR 
 
 Merges feitos pelo `GITHUB_TOKEN` não fecham issues pelas palavras-chave `Closes #N` (o GitHub não processa); por isso o `automerge.yml` as fecha explicitamente, e precisa da permissão `issues: write`. Esses merges também não disparam o `ci.yml` na `main`; por isso a verificação pós-merge fica no `deploy-check.yml`.
 
-## Agendamento e Execução (Modelo Híbrido · ADR 031)
+## Agendamento e Execução (Modelo Híbrido · ADR 032)
 
 O sistema opera no modelo híbrido, eliminando a dependência do cron de 5 minutos e da API do Jules:
 
@@ -71,4 +71,4 @@ O sistema opera no modelo híbrido, eliminando a dependência do cron de 5 minut
 ## Trocar um adaptador
 
 - **Outra plataforma de deploy:** escreva `devagent/adaptadores/<plataforma>_status.py` com a mesma saída (JSON e códigos 0, 1, 3), aponte o `deploy-check.yml` para ele e mude `[deploy] adaptador` no `devagent.toml`.
-- **Outro executor de agente:** as instruções estão em `AGENTS.md`, `devagent/CICLO.md` e `devagent/agents/`, desacopladas de APIs proprietárias (ADR 031).
+- **Outro executor de agente:** as instruções estão em `AGENTS.md`, `devagent/CICLO.md` e `devagent/agents/`, desacopladas de APIs proprietárias (ADR 032).
