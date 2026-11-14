@@ -39,6 +39,7 @@ devagent/
   estado_github.py     # PRs abertos (CI, conflito) e issues; primeiro comando da execução
   saude.py             # lê a página de saúde do produto (ADR 016)
   fila_specs.py        # qual é a próxima spec ready revisada (ADR 015)
+  papel.py             # o papel da sessão e o alvo de cada raia; alarme de fila travada (ADR 033)
   cadencias.py         # contadores das cadências do Passo 7 (ADR 024)
   raias.py             # as raias e o que cada uma pode escrever (ADR 021)
   conferir_pr.py       # disciplina do ciclo, conferida no job `disciplina` do CI (ADR 008)
@@ -83,13 +84,31 @@ make install   # ferramentas fixadas no interpretador do projeto, antes de qualq
 
 Se a sessão foi acionada para atuar num PR aberto (via comentário `@antigravity`, webhook de CI ou indicação da tarefa), você já está na branch desse PR: trate-o pelo Passo 2 e não troque de branch. O script lista os PRs abertos com o estado do CI e de conflito, e as issues abertas. Depois leia `PRODUTO.md`, `docs/STATE.md`, os três últimos relatórios em `docs/runs/` e as specs. Consulte os índices da seção 9 e do `PRODUTO.md` e leia as skills e os contextos que tocam a tarefa. Então percorra a lista abaixo **em ordem** e execute **somente o primeiro item que gerar entrega**.
 
+### O papel da sessão (vale antes de qualquer passo)
+
+O `estado_github` termina dizendo qual é o papel desta sessão (`python -m devagent.papel` para reler; ADR 033). Quase sempre é o desenvolvedor. Mas uma raia parada trava as outras, e o ciclo não espera por ela:
+
+- **Se a linha disser "Esta sessão atua como Revisor" (ou Especificador), a sessão inteira é dessa persona.** O desenvolvimento não tem trabalho de produto e essa raia segura a fila. Siga `devagent/agents/raias.md` com o alvo que a linha traz, abra o PR da raia (`revisão:` ou `spec:`, com o marcador dela) e encerre. Não percorra os passos abaixo e não misture as duas personas.
+- **Se a linha disser "FILA TRAVADA"**, há spec `ready` na fila, as últimas entregas não fecharam nenhuma e não há raia que a sessão possa assumir. Veja *Fila travada*, logo abaixo.
+
+A decisão é do código, não sua: não assuma persona que a linha não nomeou, nem pelo horário nem por achar que a fila pede.
+
+### Fila travada
+
+O Passo 5 não é refúgio. De 13/11 a 14/11, com oito specs esperando uma raia que ninguém acionava, dezessete entregas seguidas melhoraram o próprio agente; os relatórios repetiam "fora do alcance desta raia" e ninguém foi avisado. Quando o `estado_github` acusar `FILA TRAVADA`, ou quando dois relatórios seguidos citarem o mesmo impedimento de fora da raia:
+
+1. **A entrega da sessão é destravar.** Ache o que segura a fila: PR de outra raia parado, spec que nenhuma regra entrega a ninguém, tarefa agendada que não roda, checagem que reprova todo mundo.
+2. **Causa no repositório se corrige agora**, num PR `agent:` ou `fix:` com teste: uma regra do `papel.py`, do guardião ou do `conferir_pr`, uma instrução contraditória.
+3. **Causa fora do repositório** (tarefa agendada, credencial, painel) vai para a seção *Bloqueios* do `docs/STATE.md`, num PR `docs:`, com o ajuste exato que uma pessoa precisa fazer. Uma vez só.
+4. **Com o bloqueio já registrado, encerre sem PR.** Nenhuma outra melhoria do Passo 5 entra enquanto a fila estiver travada: uma rodada vazia mostra o problema, e dez PRs de manutenção o escondem.
+
 ### Execução sem entrega não existe
 
 Toda execução só termina bem com uma entrega concreta: um PR que muda o produto, as specs, o backlog ou o próprio agente. Por isso:
 
 - **Um passo que se aplica mas não gera mudança não encerra a execução.** As verificações do Passo 1 passaram, a publicação do Passo 3 já estava em dia, a issue escolhida já tem spec: escreva uma linha no relatório e siga para o próximo passo da lista, nesta mesma sessão.
 - **Nunca abra PR só com o relatório em `docs/runs/` ou só com um diário de `.agents/` (ou `.jules/`).** O relatório vai no PR da entrega. O job `disciplina` reprova PR só de registro (regra 6 do `conferir_pr`), salvo quando o corpo fecha issues (`Closes #N`), como no Passo 6.
-- **As exceções são as paradas obrigatórias:** existe PR da raia de desenvolvimento aberto (Passo 2, onde só se mexe nele), você ficou bloqueado (seção 6) ou chegou ao Passo 7, que é da raia de especificação. Nelas a execução termina sem PR novo.
+- **As exceções são as paradas obrigatórias:** existe PR da raia de desenvolvimento aberto (Passo 2, onde só se mexe nele), você ficou bloqueado (seção 6), a fila está travada com o bloqueio já registrado (*Fila travada*) ou chegou ao Passo 7, que é da raia de especificação. Nelas a execução termina sem PR novo.
 
 O modelo de operação é híbrido (ADR 032): automações agendadas a cada 2h mantêm o batimento e a manutenção do projeto, enquanto execuções sob demanda (`/goal`) aceleram lotes de trabalho. Uma sessão que termina com entrega permite à próxima rodada partir do novo estado da `main`.
 
@@ -159,7 +178,7 @@ Escolha a spec com `status: ready` de menor número, na ordem natural (068a, 068
 
 ### Passo 5 · Cuidar da documentação e do próprio agente
 
-Aplica-se quando existe pelo menos um destes sinais:
+Não se aplica com a fila travada (*Fila travada*, acima). Fora isso, aplica-se quando existe pelo menos um destes sinais:
 
 - Algum dos três últimos relatórios tem item pendente na seção *Retrospectiva*.
 - `README.md`, `PRODUTO.md`, `docs/STATE.md`, `docs/context/` ou `devagent/` descrevem algo diferente do que está na `main` (comando que não existe mais, feature não listada, variável nova não documentada).
@@ -264,6 +283,7 @@ Toda execução termina criando `docs/runs/AAAA-MM-DD-HHMM.md`:
 ## Retrospectiva
 - O que nas instruções, skills ou contextos atrapalhou, faltou ou estava errado nesta execução?
 - A lição é do núcleo (vale para qualquer projeto) ou do produto?
+- Algo fora desta raia impediu trabalho de produto? Se o relatório anterior já dizia o mesmo, isto não é nota de retrospectiva: é *Fila travada* (seção 4).
 - Melhoria proposta (vira trabalho do Passo 5), ou "nenhuma". Se ela traz um comando ou trecho de código, rode-o nesta sessão, no shell que vai executá-lo, antes de registrá-lo.
 ```
 
@@ -291,7 +311,7 @@ O núcleo mora neste mesmo repositório justamente para você poder aprimorá-lo
 | `devagent/skills/descobrir-ideias.md` | como gerar ideias originais e escolher a próxima | Passo 7 |
 | `devagent/skills/rever-experiencia.md` | como rever a tela inteira a partir das capturas e transformar problemas em ideias | Passo 7, em toda rodada e obrigatoriamente na cadência de experiência |
 | `devagent/skills/manutencao.md` | como medir a saúde técnica, decidir o que podar e transformar isso em spec | Passo 7, em toda rodada e obrigatoriamente na cadência de manutenção |
-| `devagent/decisoes/` | ADRs do núcleo: `001` guardião e Passo 2, `002` correções no Passo 1, `003` escopo aberto, `005` núcleo separado do projeto, `006` revisão de experiência, `007` sem revisão humana, `008` disciplina conferida no CI, `009` retomada depois de ambiente reiniciado, `010` relógio externo, `011` cadência de manutenção e poda, `012` rodada contínua, `013` sessões zumbis, `014` PR absorvido pela main, `015` próxima spec no prompt da sessão, `016` saúde de produção, `017` conflito só de acréscimo, `018` falha que ensina, `019` sessão que falha, `020` issues órfãs e bug na frente, `021` raias paralelas, `022` testes sem o evento do PR, `023` desenvolvimento não escreve spec, `024` revisão do ciclo, `025` a esteira não para, `026` produção quebrada é a sessão inteira, `027` bloqueio registrado no `STATE.md`, `028` ritmo pela cota restante, `029` estoque de specs revisadas, `030` bug que envelhece ganha prioridade, `031` verificador vê todo merge na main e examina todo PR que mexe num limite, `032` migração para Antigravity Remote e modelo híbrido | antes de mudar o ciclo de decisão |
+| `devagent/decisoes/` | ADRs do núcleo: `001` guardião e Passo 2, `002` correções no Passo 1, `003` escopo aberto, `005` núcleo separado do projeto, `006` revisão de experiência, `007` sem revisão humana, `008` disciplina conferida no CI, `009` retomada depois de ambiente reiniciado, `010` relógio externo, `011` cadência de manutenção e poda, `012` rodada contínua, `013` sessões zumbis, `014` PR absorvido pela main, `015` próxima spec no prompt da sessão, `016` saúde de produção, `017` conflito só de acréscimo, `018` falha que ensina, `019` sessão que falha, `020` issues órfãs e bug na frente, `021` raias paralelas, `022` testes sem o evento do PR, `023` desenvolvimento não escreve spec, `024` revisão do ciclo, `025` a esteira não para, `026` produção quebrada é a sessão inteira, `027` bloqueio registrado no `STATE.md`, `028` ritmo pela cota restante, `029` estoque de specs revisadas, `030` bug que envelhece ganha prioridade, `031` verificador vê todo merge na main e examina todo PR que mexe num limite, `032` migração para Antigravity Remote e modelo híbrido, `033` o papel da sessão sai do código e raia parada não deixa o ciclo ocioso | antes de mudar o ciclo de decisão |
 | `devagent/agents/` | personas do auditor, dos especialistas e das raias paralelas (`raias.md`) | quando acionado como uma delas |
 
 O índice do projeto está no `PRODUTO.md`. Ao criar um arquivo novo em `devagent/skills/`, acrescente-o a esta tabela no mesmo PR; em `docs/skills/` ou `docs/context/`, à tabela do `PRODUTO.md`. O `devagent/tests/test_estrutura.py` reprova arquivo fora dessas tabelas, como reprova módulo fora do mapa da seção 3.

@@ -24,6 +24,7 @@ import urllib.request
 from datetime import datetime, timezone
 from typing import Any
 
+from devagent import papel as papeis
 from devagent import saude
 from devagent.fila_specs import (
     LABELS_DE_PRODUCAO,
@@ -256,11 +257,22 @@ def main() -> int:
             f"que tem causa no repositório; o que depende de configuração externa "
             f"vai descrito na issue `{saude.LABEL}` com o label `bloqueado`."
         )
+    # O papel da sessão (ADR 033): desenvolvedor, salvo quando ele não tem
+    # trabalho de produto e outra raia segura a fila.
+    papel = papeis.decidir(
+        prontas,
+        estado["issues"],
+        estado["prs"],
+        problemas_em_producao,
+        papeis.titulos_da_main(),
+    )
     if agente:
         print(
             "\n>> Existe PR do agente aberto: siga o Passo 2 (destravar o PR). "
             "Não comece trabalho novo."
         )
+    elif papel.persona != papeis.DESENVOLVEDOR or papel.alvo:
+        print(f"\n>> {papel.frase()}")
     elif prontas or producao_pendente(estado["issues"]):
         print(f"\n>> {instrucao(prontas, issues=estado['issues'])}")
     return 0
