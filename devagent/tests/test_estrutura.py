@@ -56,3 +56,45 @@ def test_toda_pasta_do_nucleo_esta_na_estrutura():
     assert not faltando, (
         f"Pastas de devagent/ fora da estrutura da seção 3 do CICLO.md: {faltando}"
     )
+
+
+# Os índices de skills e contextos são o outro mapa que o agente lê para se
+# orientar: a seção 9 do CICLO.md lista `devagent/skills/` e o PRODUTO.md lista
+# `docs/context/` e `docs/skills/`. Ambos pedem "acrescente-o a esta tabela no
+# mesmo PR", e nenhum teste conferia; a retrospectiva de
+# docs/runs/2026-11-14-0839.md propôs estender a checagem a eles.
+
+RAIZ = NUCLEO.parent
+
+
+def _faltando_no_indice(pasta: Path, texto: str) -> list[str]:
+    if not pasta.is_dir():
+        return []
+    prefixo = pasta.relative_to(RAIZ).as_posix()
+    return sorted(
+        p.name for p in pasta.glob("*.md") if f"`{prefixo}/{p.name}`" not in texto
+    )
+
+
+def test_toda_skill_do_nucleo_esta_no_indice_da_secao_9():
+    ciclo = (NUCLEO / "CICLO.md").read_text(encoding="utf-8")
+    assert "## 9." in ciclo, "o CICLO.md perdeu a seção 9 (índice do núcleo)"
+    secao = ciclo.split("## 9.", 1)[1]
+    faltando = _faltando_no_indice(NUCLEO / "skills", secao)
+    assert not faltando, (
+        f"Skills de devagent/skills/ fora do índice da seção 9 do CICLO.md: {faltando}. "
+        "Acrescente uma linha com o arquivo, para que serve e quando ler."
+    )
+
+
+def test_todo_contexto_e_skill_do_projeto_esta_no_indice_do_produto():
+    produto = RAIZ / "PRODUTO.md"
+    if not produto.is_file():
+        return
+    texto = produto.read_text(encoding="utf-8")
+    faltando = _faltando_no_indice(RAIZ / "docs" / "context", texto)
+    faltando += _faltando_no_indice(RAIZ / "docs" / "skills", texto)
+    assert not faltando, (
+        f"Arquivos de docs/context/ ou docs/skills/ fora do índice do PRODUTO.md: {faltando}. "
+        "Acrescente-os à tabela de índice no mesmo PR."
+    )
