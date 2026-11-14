@@ -6,14 +6,19 @@ PY ?= python
 
 .PHONY: install install-prod verify smoke audit telas
 
+## Atualizar o pip é melhor esforço: o pip de um Python do sistema (Debian)
+## não se desinstala ("RECORD file not found") e não pode impedir a instalação
+## das dependências fixadas, que é o que o `make verify` precisa.
+PIP_UPGRADE = $(PY) -m pip install --upgrade pip || echo "make: pip não atualizado; seguindo com o pip instalado"
+
 ## Dependências de desenvolvimento (lint, tipos, testes).
 install:
-	$(PY) -m pip install --upgrade pip
+	$(PIP_UPGRADE)
 	$(PY) -m pip install -r requirements-dev.txt
 
 ## Só as dependências de produção, como o Render instala.
 install-prod:
-	$(PY) -m pip install --upgrade pip
+	$(PIP_UPGRADE)
 	$(PY) -m pip install -r requirements.txt
 
 ## Tudo que o CI exige antes do merge.
