@@ -1,4 +1,4 @@
-# ADR 031 · Migração do Jules para o Antigravity Remote e modelo híbrido
+# ADR 032 · Migração do Jules para o Antigravity Remote e modelo híbrido
 
 - **Data:** 2026-11-06 · **Status:** aceita
 - **Revê:** ADRs 009, 010, 012, 021, 024, 025, 028; CICLO.md; OPERACAO.md

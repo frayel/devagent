@@ -632,7 +632,7 @@ def verificar_rodadas_jules(
         return Item(
             nome,
             INATIVO,
-            "desativado (ADR 031)",
+            "desativado (ADR 032)",
             "Disparo externo pelo cron-job.org desativado com a migração para Antigravity Remote.",
         )
     runs = [
@@ -683,14 +683,14 @@ def verificar_sessoes_jules(
     nome = "Sessões do Jules"
     if erro == "HTTP 404":
         # 404 é recurso inexistente, não queda passageira: o Jules saiu do
-        # fluxo com a ADR 031 e a chave que sobrou no Render chama um endereço
+        # fluxo com a ADR 032 e a chave que sobrou no Render chama um endereço
         # que não existe mais. Não é defeito que piora com o tempo.
         return Item(
             nome,
             INATIVO,
-            "desativado (ADR 031)",
+            "desativado (ADR 032)",
             "A API do Jules respondeu HTTP 404. O desenvolvimento roda no "
-            "Antigravity Remote desde a ADR 031; remova JULES_API_KEY do Render "
+            "Antigravity Remote desde a ADR 032; remova JULES_API_KEY do Render "
             "para o monitor deixar de chamá-la.",
         )
     if erro:

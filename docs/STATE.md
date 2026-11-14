@@ -115,7 +115,7 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
   - Adicionadas retentativas com backoff em `save_ibovespa_data` para proteger contra oscilações de boot.
   - Saneamento de loopback IPv6 `[::1]` em `NO_PROXY`/`no_proxy` para evitar `httpx.InvalidURL: Invalid port: ':1]'`.
   - Fuso horário BRT corrigido em consultas de instrumentação de coletas.
-- Migração para Antigravity Remote e modelo híbrido (ADR 031):
+- Migração para Antigravity Remote e modelo híbrido (ADR 032):
   - Validação de raias no CI via marcador HTML no corpo do PR (`<!-- devagent:raia:<nome> -->`), sem chamadas de rede à API externa do Jules.
   - Pasta `.agents/` para diários dos especialistas (com fallback retrocompatível a `.jules/`).
   - Reconhecimento dos logins do Antigravity no guardião de PRs e conferência de disciplina.

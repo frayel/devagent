@@ -169,7 +169,7 @@ def titulo_da_sessao(corpo: str) -> str:
 
 
 def conferir_raia_da_sessao(res: Resultado, raia: str, sessao: str | None) -> None:
-    """A raia do título precisa bater com a persona/raia declarada (ADRs 024 e 031).
+    """A raia do título precisa bater com a persona/raia declarada (ADRs 024 e 032).
 
     Aceita marcador no corpo (<!-- devagent:raia:<nome> -->) ou sessão do Jules.
     """
@@ -179,7 +179,7 @@ def conferir_raia_da_sessao(res: Resultado, raia: str, sessao: str | None) -> No
         if declarada != raia:
             res.falha(
                 f"O PR declara a raia `{declarada}` no corpo, mas o título o coloca na raia de `{raia}`. "
-                "Use o prefixo da sua raia (ADRs 024 e 031)."
+                "Use o prefixo da sua raia (ADRs 024 e 032)."
             )
         return
 
