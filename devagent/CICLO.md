@@ -37,12 +37,19 @@ devagent/
   README.md            # como o núcleo funciona e como adotá-lo em outro projeto
   OPERACAO.md          # fluxo de entrega, workflows, variáveis do núcleo
   estado_github.py     # PRs abertos (CI, conflito) e issues; primeiro comando da execução
+  saude.py             # lê a página de saúde do produto (ADR 016)
+  fila_specs.py        # qual é a próxima spec ready revisada (ADR 015)
+  cadencias.py         # contadores das cadências do Passo 7 (ADR 024)
+  raias.py             # as raias e o que cada uma pode escrever (ADR 021)
+  conferir_pr.py       # disciplina do ciclo, conferida no job `disciplina` do CI (ADR 008)
+  aceite.py            # testes de aceite que só valem com a spec `done` (ADR 018)
   guardiao_prs.py      # regras do guardião de PRs (roda no GitHub Actions)
   config.py            # lê o devagent.toml
+  instalar.py          # instala o núcleo num projeto novo
   smoke.sh             # sobe a aplicação e confere o health check
   adaptadores/         # jules.py (executor legado, só manual), render_status.py e render_blueprint.py (deploy)
   auditoria/           # harness da auditoria e transformação de achados em issues
-  agents/              # personas: auditor, especialistas
+  agents/              # personas: auditor, especialistas e raias paralelas
   skills/              # procedimentos de processo, um arquivo por tarefa recorrente
   decisoes/            # ADRs sobre o ciclo e o núcleo
   modelos/             # AGENTS.md, PRODUTO.md, devagent.toml e Makefile para projetos novos
@@ -56,8 +63,10 @@ docs/
   context/             # conhecimento durável do projeto
   skills/              # procedimentos que só fazem sentido neste produto
   auditoria/           # relatórios, achados e diário do auditor (escritos só por ele)
+  verificacao/         # achados, relatórios e diário do Verificador (raia de verificação)
 auditoria/             # checagens de produção deste produto (PROTEGIDO)
 .agents/               # diários dos especialistas (compatível com o legado .jules/)
+  skills/ciclo/SKILL.md  # skill /ciclo: porta de entrada deste ciclo
 ```
 
 A estrutura do código da aplicação está no `PRODUTO.md`. Se algum destes arquivos não existir, criá-lo faz parte da primeira execução.
