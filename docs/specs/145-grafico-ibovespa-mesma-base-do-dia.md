@@ -1,7 +1,7 @@
 ---
 id: 145
 titulo: O gráfico do Ibovespa usa a mesma base do número do dia
-status: ready
+status: done
 esforco: M
 gaveta: experiência
 aceite: tests/test_aceite_145.py

@@ -12,6 +12,11 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Experiência] Spec 145 - O gráfico do Ibovespa usa a mesma base do número do dia:
+  - `app/services/ibovespa.py` (`descrever_serie`): legenda "Últimos 30 pregões · dd/mm/aaaa a dd/mm/aaaa", `aria-label` com as duas datas e o retorno da janela, sinal do período (último contra primeiro ponto) e o texto do tooltip de cada ponto; o do último traz o fechamento anterior do card e a variação do dia em pontos e %.
+  - `app/templates/index.html`: legenda visível abaixo do gráfico (cita o pregão do card quando ele difere do último ponto), `data-periodo-positivo` no lugar de `data-is-positive` e `data-tooltips`.
+  - `app/static/ui.js`: cor pelo sinal do período, preenchimento até o mínimo do período a 10% de opacidade (base invisível + `tonexty`, sem `tozeroy`), tooltip pelo texto do servidor. O `/api/snapshot` não muda.
+  - Testes de aceite em `tests/test_aceite_145.py`.
 - [Experiência] Spec 144 - A Maré parcial não parece um índice completo:
   - `app/services/mare.py` (`view`): o peso visível de cada componente é o reescalado que entrou na conta (`_peso_visivel`, percentual inteiro pelo `_arredondar`); componente ausente fica sem peso. Novo campo `cobertura` ("2 de 3 componentes").
   - `app/templates/index.html`: o selo vira `parcial · sem Calma · 2 de 3 componentes`, e o ausente mostra só "ausente". Com os três presentes, os pesos continuam 40, 35 e 25. O `/api/snapshot` não muda.

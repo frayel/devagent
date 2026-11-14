@@ -87,29 +87,44 @@ document.addEventListener("DOMContentLoaded", () => {
     if (graficoIbovespa) {
         var dates = JSON.parse(graficoIbovespa.getAttribute('data-dates'));
         var closes = JSON.parse(graficoIbovespa.getAttribute('data-closes'));
-        var is_positive = graficoIbovespa.getAttribute('data-is-positive') === 'true';
+        var tooltips = JSON.parse(graficoIbovespa.getAttribute('data-tooltips') || '[]');
+        // Spec 145: a cor segue o sinal do período (último contra primeiro ponto),
+        // não o do dia, que continua no card (DESIGN.md, seção 5).
+        var periodo_positivo = graficoIbovespa.getAttribute('data-periodo-positivo') === 'true';
 
         // O Plotly não entende var(--x): resolve os tokens do tema para cores reais.
         var css = function(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
-        var cor = css(is_positive ? '--alta' : '--baixa');
+        var cor = css(periodo_positivo ? '--alta' : '--baixa');
+        var validos = closes.filter(function(c) { return c !== null && isFinite(c); });
+        var minimo = Math.min.apply(null, validos);
+        var maximo = Math.max.apply(null, validos);
 
+        // Base invisível no mínimo do período: o preenchimento vai até ela, não até zero.
+        var base = {
+            x: dates,
+            y: dates.map(function() { return minimo; }),
+            type: 'scatter',
+            mode: 'lines',
+            line: { width: 0 },
+            hoverinfo: 'skip',
+            showlegend: false
+        };
         var trace = {
             x: dates,
             y: closes,
             type: 'scatter',
             mode: 'lines',
             line: { color: cor, width: 1.5 },
-            // Preenche até a base do eixo, que fica 2% abaixo do mínimo (DESIGN.md, seção 5).
-            fill: 'tozeroy',
-            fillcolor: css(is_positive ? '--alta-fundo' : '--baixa-fundo'),
-            hovertemplate: '%{x|%d/%m/%Y}<br><b>%{y:,.0f}</b><extra></extra>'
+            fill: 'tonexty',
+            fillcolor: css(periodo_positivo ? '--alta-area' : '--baixa-area'),
+            text: tooltips,
+            // O texto de cada ponto vem pronto do servidor; o último traz o
+            // fechamento anterior e a variação do dia (spec 145).
+            hovertemplate: '%{text}<extra></extra>'
         };
 
         if (typeof Painel !== 'undefined' && Painel.grafico) {
-            var validos = closes.filter(function(c) { return c !== null && isFinite(c); });
-            var minimo = Math.min.apply(null, validos);
-            var maximo = Math.max.apply(null, validos);
-            Painel.grafico('grafico-ibovespa', [trace], {
+            Painel.grafico('grafico-ibovespa', [base, trace], {
                 margin: { t: 16, r: 64, b: 24, l: 8 },
                 // Eixo Y nunca começa em zero: 2% abaixo do mínimo do período.
                 yaxis: {
