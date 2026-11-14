@@ -1,7 +1,7 @@
 ---
 id: 147
 titulo: Os tiles da Maré têm contraste legível
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_147.py

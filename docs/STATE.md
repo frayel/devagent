@@ -12,6 +12,10 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Experiência] Spec 147 - Os tiles da Maré têm contraste legível:
+  - `app/static/tema.css`: `.heatmap-ativo` sem `opacity`; fundo `color-mix(in srgb, var(--ativo-cor) calc(var(--ativo-opacidade) * 60%), var(--superficie))` e texto branco opaco (pior caso 5,37:1).
+  - `app/templates/index.html`: `▲`/`▼`/`■` junto do ticker no tile.
+  - Testes de aceite em `tests/test_aceite_147.py`.
 - [Experiência] Spec 146 - A página inicial não esconde erro de execução:
   - `app/static/ui.js`: leitura e gravação da densidade em `localStorage` protegidas por `try/catch`; com o armazenamento bloqueado o handler de inicialização lançava e parava.
   - `.github/workflows/ci.yml`: o job `test` instala o Chromium do Playwright antes do `make verify`.
