@@ -264,7 +264,7 @@ Toda execução termina criando `docs/runs/AAAA-MM-DD-HHMM.md`:
 ## Retrospectiva
 - O que nas instruções, skills ou contextos atrapalhou, faltou ou estava errado nesta execução?
 - A lição é do núcleo (vale para qualquer projeto) ou do produto?
-- Melhoria proposta (vira trabalho do Passo 5), ou "nenhuma".
+- Melhoria proposta (vira trabalho do Passo 5), ou "nenhuma". Se ela traz um comando ou trecho de código, rode-o nesta sessão, no shell que vai executá-lo, antes de registrá-lo.
 ```
 
 ## 8. Configuração do núcleo
