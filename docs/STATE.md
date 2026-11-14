@@ -12,6 +12,10 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Experiência] Spec 144 - A Maré parcial não parece um índice completo:
+  - `app/services/mare.py` (`view`): o peso visível de cada componente é o reescalado que entrou na conta (`_peso_visivel`, percentual inteiro pelo `_arredondar`); componente ausente fica sem peso. Novo campo `cobertura` ("2 de 3 componentes").
+  - `app/templates/index.html`: o selo vira `parcial · sem Calma · 2 de 3 componentes`, e o ausente mostra só "ausente". Com os três presentes, os pesos continuam 40, 35 e 25. O `/api/snapshot` não muda.
+  - Testes de aceite em `tests/test_aceite_144.py`.
 - [Experiência] Spec 143 - O fator peso pesado explica o sinal da conta:
   - `app/services/fator_peso_pesado.py` monta a apresentação do card e do `/api/snapshot` (`valor`, `sentido`, `frase`, `proporcao`, `proporcao_bruta`, `limitado`). Sinal com menos tipográfico (−), uma casa, padrão brasileiro.
   - `app/collectors/fator_peso_pesado.py`: contribuição = var% / 100 × peso / 100 × IBOV anterior (antes o peso entrava como 12 em vez de 12%, e a razão saía 100 vezes maior, quase sempre no teto). Grava `proporcao_bruta` e `proporcao` limitada a ±500%; denominador zero e nome faltando não gravam. Fechamento anterior por `fechamento_anterior` (spec 134), com `chartPreviousClose` só como último recurso em `range=1d`.
