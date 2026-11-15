@@ -37,6 +37,18 @@
 | Alerta de "Volume Oculto" Intraday | Ações onde o volume de negócios destoa do book aparente | brapi.dev | M | Baixo |
 
 
+## Ideias (Passo 7 - 2026-11-15 4)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Capacidade nova: ações em vários radares (spec 155) | Responde: qual ação aparece em mais de um radar agora, e em quais? Original: nenhum concorrente cruza os próprios alertas; o sistema já tem os 20 resultados na mesma requisição. Primeira fatia: card no topo da aba Alertas, mínimo de 2 radares frescos, nomes dos radares e "de R radares lidos". | snapshots dos radares | M | Baixo (radares correlacionados: o ⓘ avisa) |
+| Capacidade nova: a confluência tem memória | Responde: quando uma ação esteve em 3 ou mais radares, o que ela fez nos 5 pregões seguintes? Original: o sistema avalia os próprios sinais cruzados, com o tamanho da amostra. Segunda fatia da 155: gravar a confluência no snapshot diário e, com 20 pregões, mostrar retorno médio e quantos casos. | snapshots, `series_diarias` | G | Médio (amostra curta, viés de sobrevivência) |
+| Saúde técnica: radares correlacionados medidos | Responde: quais radares citam as mesmas ações quase sempre? Medida a fazer: sobreposição (Jaccard) das listas por pregão nos snapshots. Ganho: base para descontar a correlação na confluência e candidato natural a fusão (as três exaustões). Original: a poda decidida pela redundância medida, não pelo vazio. | snapshots | M | Baixo |
+| Saúde técnica: `snapshot()` lê os 20 radares por um laço | Responde: o `/api/snapshot` precisa de 20 blocos quase iguais? Medida: 38 ocorrências de `alertas_json` e 49 `except Exception` em `app/main.py` (2.209 linhas); `RADARES` já lista chave e campo. Ganho: um laço sobre `RADARES` com um getter por chave, e a forma de cada painel do snapshot fica uniforme (hoje há lista, dict e objeto). | N/A | M | Médio (muda o contrato do snapshot: conferir `auditoria/README.md`) |
+| Experiência: "Só Sinais" começa pela confluência | Responde: o investidor com 1 minuto vê primeiro o que mais radares concordam? Depois da 155, a aba "Só Sinais" abriria com o card de confluência em vez dos cards na ordem fixa. | N/A | P | Baixo |
+| Capacidade nova: radar contra radar | Responde: há ação apontada ao mesmo tempo por um radar de alta e um de queda (Exaustão de Alta e Compradores de Fundo, por exemplo)? Original: o conflito entre os próprios sinais vira informação de incerteza, não ruído. Exige classificar cada radar por direção. | snapshots dos radares | M | Médio (a direção de alguns radares é ambígua) |
+| Poda (descartada por ora): tirar a contagem de radares da aba Alertas | Responde: o "de R radares lidos" repete a seção "Sem alertas"? Descartada: a seção lista nomes, e R é o denominador da confluência; os dois servem a perguntas diferentes. Rever se o card da 155 ficar vazio na maior parte das coletas (critério de poda do `PRODUTO.md`). | N/A | P | Baixo |
+
 ## Ideias (Passo 7 - 2026-11-15 3)
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |
