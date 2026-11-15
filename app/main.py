@@ -328,8 +328,13 @@ def estado_do_sistema() -> dict:
             agora - timedelta(hours=HORAS_VAZIOS)
         )
         tempos = database.get_tempos_coleta_desde(agora - timedelta(hours=24))
+        # Critério de poda: uma consulta para a janela de 10 pregões (spec 153).
+        historico_poda = banco_module.ler_snapshots_datas(
+            "instrumentacao", sistema_servico.ultimos_pregoes(agora)
+        )
     except Exception:  # tabelas ainda não criadas: a verificação do banco acusa
         vazios, rodadas, tempos = {}, {}, {}
+        historico_poda = {}
     return sistema_servico.montar(
         agora=agora,
         inicio=INICIO,
@@ -349,6 +354,7 @@ def estado_do_sistema() -> dict:
         prontas=sistema_servico.specs_prontas(),
         monitor_ligado=monitor_sistema.monitor_ligado(),
         modelo_gemini=gemini_modelo.descricao(),
+        historico_poda=historico_poda,
     )
 
 

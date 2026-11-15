@@ -1,7 +1,7 @@
 ---
 id: 153
 titulo: A página /sistema aponta os painéis que cumprem o critério de poda
-status: ready
+status: done
 esforco: P
 gaveta: poda
 aceite: tests/test_aceite_153.py

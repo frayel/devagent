@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -451,6 +451,71 @@ def verificar_paineis_vazios(
     )
 
 
+JANELA_PODA = 10  # pregões; critério de poda do PRODUTO.md
+MIN_RODADAS_PODA = 10  # em média uma coleta por pregão
+
+
+def ultimos_pregoes(agora: datetime, n: int = JANELA_PODA) -> list[date]:
+    """Os `n` pregões fechados mais recentes, do mais novo ao mais antigo."""
+    from app.calendario import pregao_anterior, ultimo_pregao_fechado
+
+    if n <= 0:
+        return []
+    datas = [ultimo_pregao_fechado(agora)]
+    while len(datas) < n:
+        datas.append(pregao_anterior(datas[-1]))
+    return datas
+
+
+def verificar_candidatos_poda(historico: dict[date, dict], pregoes: list[date]) -> Item:
+    """Critério de poda do PRODUTO.md sobre a instrumentação diária (spec 153).
+
+    Candidato: R ≥ 10 coletas na janela e vazio em estritamente mais da metade
+    delas (2 × V > R). É decisão de produto, não defeito: Atenção que não
+    envelhece.
+    """
+    nome = "Candidatos à poda"
+    n = len(pregoes)
+    presentes = [d for d in pregoes if isinstance(historico.get(d), dict)]
+    if len(presentes) < n or not n:
+        return Item(
+            nome,
+            OK,
+            f"histórico de {len(presentes)} de {n} pregões; o critério precisa de {n}",
+            envelhece=False,
+        )
+    total_r: dict[str, int] = {}
+    total_v: dict[str, int] = {}
+    for d in presentes:
+        payload = historico[d]
+        for p, r in (payload.get("rodadas") or {}).items():
+            total_r[p] = total_r.get(p, 0) + int(r)
+        for p, v in (payload.get("vazias") or {}).items():
+            total_v[p] = total_v.get(p, 0) + int(v)
+    candidatos = []
+    for p, r in total_r.items():
+        v = total_v.get(p, 0)
+        if r >= MIN_RODADAS_PODA and 2 * v > r:
+            candidatos.append((p, v, r, round(100 * v / r)))
+    if not candidatos:
+        return Item(
+            nome,
+            OK,
+            f"nenhum painel vazio em mais da metade das coletas dos últimos {n} pregões",
+            envelhece=False,
+        )
+    candidatos.sort(key=lambda c: (-c[3], c[0]))
+    plural = len(candidatos) > 1
+    return Item(
+        nome,
+        ATENCAO,
+        f"{len(candidatos)} {'painéis vazios' if plural else 'painel vazio'} em mais "
+        f"da metade das coletas dos últimos {n} pregões",
+        ", ".join(f"{p} ({v} de {r}, {pct}%)" for p, v, r, pct in candidatos),
+        envelhece=False,
+    )
+
+
 def verificar_tempo_coleta(tempos: dict[str, float]) -> Item:
     if not tempos:
         return Item("Duração da coleta", INATIVO, "sem medições")
@@ -881,6 +946,7 @@ def montar(
     ambiente: dict[str, str] | None = None,
     monitor_ligado: bool = False,
     modelo_gemini: str | None = None,
+    historico_poda: dict[date, dict] | None = None,
 ) -> dict[str, Any]:
     ambiente = dict(os.environ) if ambiente is None else ambiente
     github = remoto.get("github")
@@ -895,6 +961,8 @@ def montar(
         coleta_ligada, estado_coleta, intervalo_coleta, inicio, agora
     )
     coleta.append(verificar_paineis_vazios(vazios, horas_vazios, rodadas))
+    if historico_poda is not None:
+        coleta.append(verificar_candidatos_poda(historico_poda, ultimos_pregoes(agora)))
     coleta.append(verificar_tempo_coleta(tempos))
 
     integracoes = verificar_integracoes(
