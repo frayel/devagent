@@ -4,7 +4,7 @@
     "tipo": "correcao",
     "texto": "O Fator Peso Pesado mostrava um trecho de código de página antes e depois da frase que explica o número. Agora só a frase aparece.",
     "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Fator Peso Pesado"},
-    "pr": "#877"
+    "pr": "#878"
   },
   {
     "data": "2026-11-15",
