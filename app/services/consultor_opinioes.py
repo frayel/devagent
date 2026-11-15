@@ -5,7 +5,7 @@ import time
 from datetime import datetime, timezone, timedelta
 import httpx
 
-from app.consultor.armazenamento import get_connection
+from app.consultor.armazenamento import data_iso, get_connection
 from app.consultor.universo import CARTEIRA_IBOVESPA
 from app.consultor.pre_filtro import normalizar
 from app.collectors import registro_fontes
@@ -175,6 +175,10 @@ def save_opiniao(
     data_materia: str,
     link: str,
 ) -> None:
+    # A data vai para o banco em ISO 8601 UTC (spec 158): o prefixo de 10
+    # caracteres é o dia, para a deduplicação e para o consenso.
+    agora = datetime.now(timezone.utc).isoformat()
+    data_materia = data_iso(data_materia) or agora
     conn, backend = get_connection()
     try:
         cur = conn.cursor()
@@ -192,8 +196,8 @@ def save_opiniao(
             cur.execute(
                 """
                 INSERT INTO consultor_opinioes
-                (guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                (guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link, extraida_em)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (ticker, casa, recomendacao, data_materia) DO NOTHING
                 """,
                 (
@@ -206,14 +210,15 @@ def save_opiniao(
                     trecho,
                     data_materia,
                     link,
+                    agora,
                 ),
             )
         else:
             cur.execute(
                 """
                 INSERT OR IGNORE INTO consultor_opinioes
-                (guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (guid, ticker, casa, recomendacao, preco_alvo, resumo, trecho, data_materia, link, extraida_em)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     guid,
@@ -225,6 +230,7 @@ def save_opiniao(
                     trecho,
                     data_materia,
                     link,
+                    agora,
                 ),
             )
         conn.commit()

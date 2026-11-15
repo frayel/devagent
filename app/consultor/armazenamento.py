@@ -1,9 +1,11 @@
 import ast
 import logging
+import re
 
 
 import json
 from datetime import datetime, timezone, timedelta
+from email.utils import parsedate_to_datetime
 
 from app.banco import get_connection
 
@@ -21,6 +23,132 @@ _consultor_db_initialized = False
 def reset_db_init():
     global _consultor_db_initialized
     _consultor_db_initialized = False
+
+
+def ler_data(texto) -> datetime | None:
+    """Lê uma data em ISO 8601 ou RFC 822 (o `pubDate` do RSS), em UTC.
+
+    Nunca levanta exceção: devolve `None` quando não reconhece o texto.
+    Data sem fuso é tratada como UTC.
+    """
+    if texto is None:
+        return None
+    if isinstance(texto, datetime):
+        dt = texto
+    else:
+        bruto = str(texto).strip()
+        if not bruto:
+            return None
+        try:
+            dt = datetime.fromisoformat(bruto.replace("Z", "+00:00"))
+        except ValueError:
+            try:
+                dt = parsedate_to_datetime(bruto)
+            except (TypeError, ValueError, IndexError):
+                return None
+            if dt is None:
+                return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def data_iso(texto) -> str | None:
+    """A data de `texto` em ISO 8601 UTC, ou `None` se ilegível."""
+    dt = ler_data(texto)
+    return dt.isoformat() if dt else None
+
+
+_NUMERO = re.compile(r"\d[\d.,]*")
+_MILHAR_COM_PONTO = re.compile(r"^\d{1,3}(\.\d{3})+$")
+
+
+def ler_preco_alvo(texto) -> float | None:
+    """Lê o preço-alvo como o Gemini escreve (`"R$ 1.234,50"`, `"82.5"`).
+
+    Devolve `None` quando não há número; nunca levanta exceção.
+    """
+    if texto is None or isinstance(texto, bool):
+        return None
+    if isinstance(texto, (int, float)):
+        return float(texto) if texto > 0 else None
+    m = _NUMERO.search(str(texto))
+    if not m:
+        return None
+    numero = m.group(0).rstrip(".,")
+    if "," in numero:
+        numero = numero.replace(".", "").replace(",", ".")
+    elif _MILHAR_COM_PONTO.match(numero):
+        numero = numero.replace(".", "")
+    try:
+        valor = float(numero)
+    except ValueError:
+        return None
+    return valor if valor > 0 else None
+
+
+def migrar_datas_para_iso(conn, backend: str | None) -> int:
+    """Reescreve em ISO 8601 UTC as datas gravadas no formato do RSS (spec 158).
+
+    Idempotente: só lê as linhas que ainda não começam por `AAAA-MM-DD`.
+    Uma opinião que, convertida, repete outra já gravada é apagada.
+    """
+    backend = backend or "sqlite"
+    nao_iso = "NOT LIKE '____-__-__%'"
+    atualizados = 0
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            f"SELECT guid, data_publicacao FROM consultor_fila_materias WHERE data_publicacao {nao_iso}"
+        )
+        for guid, bruto in cursor.fetchall():
+            novo = data_iso(bruto)
+            if novo:
+                cursor.execute(
+                    sql_para(
+                        backend,
+                        "UPDATE consultor_fila_materias SET data_publicacao = ? WHERE guid = ?",
+                    ),
+                    (novo, guid),
+                )
+                atualizados += 1
+
+        cursor.execute(
+            f"SELECT id, ticker, casa, recomendacao, data_materia FROM consultor_opinioes WHERE data_materia {nao_iso}"
+        )
+        for row_id, ticker, casa, recomendacao, bruto in cursor.fetchall():
+            novo = data_iso(bruto)
+            if not novo:
+                continue
+            cursor.execute(
+                sql_para(
+                    backend,
+                    "SELECT id FROM consultor_opinioes WHERE ticker = ? AND casa = ? AND recomendacao = ? AND data_materia = ?",
+                ),
+                (ticker, casa, recomendacao, novo),
+            )
+            if cursor.fetchone():
+                cursor.execute(
+                    sql_para(backend, "DELETE FROM consultor_opinioes WHERE id = ?"),
+                    (row_id,),
+                )
+            else:
+                cursor.execute(
+                    sql_para(
+                        backend,
+                        "UPDATE consultor_opinioes SET data_materia = ? WHERE id = ?",
+                    ),
+                    (novo, row_id),
+                )
+            atualizados += 1
+        conn.commit()
+    except Exception as e:
+        logging.warning(f"Erro ao migrar datas do consultor para ISO: {e}")
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+    return atualizados
 
 
 def init_db():
@@ -224,6 +352,7 @@ def init_db():
                 pass
             conn.commit()
 
+        migrar_datas_para_iso(conn, backend)
         migrar_consenso_para_json(conn, backend)
     except Exception as e:
         logging.warning(f"Erro ao inicializar banco do consultor: {e}")
@@ -244,6 +373,13 @@ def save_materia(
     conn, backend = get_connection()
     agora = datetime.now(timezone.utc).isoformat()
     tickers_json = json.dumps(tickers_citados)
+    data_convertida = data_iso(data_publicacao)
+    if data_convertida is None:
+        logging.warning(
+            f"Data de publicação ilegível na matéria {guid}: {data_publicacao!r}; usando a hora da coleta"
+        )
+        data_convertida = agora
+    data_publicacao = data_convertida
 
     try:
         if backend == "postgres":

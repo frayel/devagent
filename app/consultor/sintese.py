@@ -1,7 +1,9 @@
 from datetime import datetime, timezone, timedelta
 
+from app.consultor.armazenamento import ler_data, ler_preco_alvo
 
-def calcular_consenso(opinioes):
+
+def calcular_consenso(opinioes, referencia: datetime | None = None):
     if not opinioes:
         return {
             "consenso": "cobertura insuficiente",
@@ -10,21 +12,15 @@ def calcular_consenso(opinioes):
             "potencial": None,
             "detalhes": {},
         }
-    casas = {}
-    limite = datetime.now(timezone.utc) - timedelta(days=30)
+    casas: dict[str, dict] = {}
+    agora = referencia or datetime.now(timezone.utc)
+    if agora.tzinfo is None:
+        agora = agora.replace(tzinfo=timezone.utc)
+    limite = agora - timedelta(days=30)
     for op in opinioes:
-        dt_str = (
-            op["data_materia"].replace("Z", "+00:00")
-            if "Z" in op["data_materia"]
-            else op["data_materia"]
-        )
-        try:
-            data_op = datetime.fromisoformat(dt_str)
-        except ValueError:
-            continue
-        if data_op.tzinfo is None:
-            data_op = data_op.replace(tzinfo=timezone.utc)
-        if data_op < limite:
+        # A data pode vir em ISO ou no formato do RSS (spec 158).
+        data_op = ler_data(op.get("data_materia"))
+        if data_op is None or data_op < limite:
             continue
         casa = op["casa"]
         if casa not in casas or data_op > casas[casa]["data"]:
@@ -53,8 +49,9 @@ def calcular_consenso(opinioes):
         else:
             neutro += 1
 
-        if dados["preco_alvo"]:
-            alvos.append(float(dados["preco_alvo"]))
+        alvo = ler_preco_alvo(dados["preco_alvo"])
+        if alvo is not None:
+            alvos.append(alvo)
 
     total = len(casas)
     if (
@@ -69,6 +66,8 @@ def calcular_consenso(opinioes):
         and (venda / float(total)) >= 0.66666667
     ):
         consenso = "venda"
+    elif neutro >= total * (2.0 / 3.0) and neutro > 0:
+        consenso = "neutro"
     else:
         consenso = "dividido"
 
@@ -108,6 +107,8 @@ def obter_decisao_final(avaliacao, consenso_casas, fechamento, mm21):
     if tecnico == "Comprar":
         if consenso == "dividido":
             frase = "casas divididas"
+        elif consenso == "neutro":
+            frase = "casas neutras"
         elif consenso == "venda":
             decisao = "Aguardar"
             gatilho = "nova opinião de casa ou fechamento acima da máxima de 20 pregões"
@@ -115,6 +116,8 @@ def obter_decisao_final(avaliacao, consenso_casas, fechamento, mm21):
     elif tecnico == "Vender":
         if consenso == "dividido":
             frase = "casas divididas"
+        elif consenso == "neutro":
+            frase = "casas neutras"
         elif consenso == "compra":
             decisao = "Aguardar"
             mm200 = avaliacao.get("mm200", 0)

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from app.calendario import ultimo_pregao_fechado, e_pregao
+from app.consultor.armazenamento import ler_data
 
 BRT = timezone(timedelta(hours=-3))
 
@@ -49,8 +50,10 @@ def construir_informacoes_de(dados):
     if opinioes_recentes:
         max_dt = None
         for op in opinioes_recentes:
-            dt_pub = parse_iso(op.get("publicada_em"))
+            # O coletor grava `data_materia`; ler_data aceita ISO e RFC 822.
+            dt_pub = ler_data(op.get("data_materia"))
             if dt_pub:
+                dt_pub = dt_pub.astimezone(BRT)
                 if max_dt is None or dt_pub > max_dt:
                     max_dt = dt_pub
         if max_dt:
