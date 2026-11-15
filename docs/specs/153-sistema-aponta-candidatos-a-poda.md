@@ -5,6 +5,7 @@ status: ready
 esforco: P
 gaveta: poda
 aceite: tests/test_aceite_153.py
+revisada: 2026-11-15
 ---
 
 ## Problema
@@ -26,10 +27,10 @@ Resultado: as rodadas de manutenção propõem podas pelo gosto ("Poda: Remoçã
 - Leituras de `instrumentacao` por carga de `/sistema` hoje: 3 (uma por `get_*_desde`, todas do mesmo dia; dentro de uma requisição o `_req_snapshot_cache` as junta). Com o critério lido dia a dia seriam mais 10 idas ao Postgres, a ~300 ms cada em produção (spec 152, *Medidas*): ~3 s a mais por carga. Por isso a leitura da janela é **uma** consulta.
 
 ## Comportamento esperado
-- Nova função `app.banco.ler_snapshots_datas(painel: str, datas: list[date]) -> dict[date, dict]`: **uma** consulta (`SELECT data_referencia, payload FROM snapshots_paineis WHERE painel = ? AND data_referencia IN (...)`), nos dois backends (Postgres e SQLite), devolvendo o payload de cada data que existe. Datas sem snapshot não aparecem no resultado. Banco inacessível (`DBInacessivelError`) devolve `{}`, como `listar_datas`.
+- Nova função `app.banco.ler_snapshots_datas(painel: str, datas: list[date]) -> dict[date, dict]`: **uma** consulta (`SELECT data_referencia, payload FROM snapshots_paineis WHERE painel = ? AND data_referencia IN (...)`), nos dois backends (Postgres e SQLite), devolvendo o payload de cada data que existe. Datas sem snapshot não aparecem no resultado. As chaves são sempre `date` (no SQLite a coluna volta como texto `AAAA-MM-DD` e é convertida com `date.fromisoformat`) e o payload é sempre `dict` (decodificado do JSON quando o backend devolve texto, como faz `ler_snapshot`). Lista `datas` vazia devolve `{}` sem ir ao banco (`IN ()` é erro de SQL). Banco inacessível (`DBInacessivelError`) devolve `{}`, como `listar_datas`. Não filtra por `estado` (a instrumentação grava `ao_vivo`).
 - Nova função `app.services.sistema.ultimos_pregoes(agora: datetime, n: int = 10) -> list[date]`: os `n` pregões fechados mais recentes, do `calendario.ultimo_pregao_fechado(agora)` para trás, por `calendario.pregao_anterior`.
 - Nova função pura `app.services.sistema.verificar_candidatos_poda(historico: dict[date, dict], pregoes: list[date]) -> Item`, com `nome` **"Candidatos à poda"** (campos do `Item` existente: `nome`, `nivel`, `resumo`, `detalhe`), que soma `rodadas` e `vazias` de cada painel nas datas de `pregoes` presentes em `historico` e aplica o critério da seção *Cálculos*.
-- `estado_do_sistema()` (`app/main.py`) lê a janela uma vez (`ler_snapshots_datas("instrumentacao", ultimos_pregoes(agora))`, dentro do mesmo `try` dos outros leitores; exceção vira `{}`) e passa o resultado a `sistema_servico.montar` por um parâmetro novo opcional `historico_poda: dict | None = None`. `montar` acrescenta o item ao grupo `coleta`, logo depois de "Painéis sem dados". Com `historico_poda=None` (chamadas antigas, inclusive as de `tests/test_sistema.py`), o item não entra e a saída de `montar` é a mesma de hoje.
+- `estado_do_sistema()` (`app/main.py`) lê a janela uma vez (`ler_snapshots_datas("instrumentacao", ultimos_pregoes(agora))`, dentro do mesmo `try` dos outros leitores; exceção vira `{}`) e passa o resultado a `sistema_servico.montar` por um parâmetro novo opcional `historico_poda: dict | None = None`. `montar` acrescenta o item à lista `coleta` (grupo de título "Coleta"), logo depois de "Painéis sem dados". Com `historico_poda=None` (chamadas antigas, inclusive as de `tests/test_sistema.py`), o item não entra e a saída de `montar` é a mesma de hoje.
 - Estados do item:
   - **Histórico curto** (menos de 10 dos 10 pregões têm snapshot `instrumentacao`): `ok`, resumo `histórico de N de 10 pregões; o critério precisa de 10`, sem lista. Nenhum painel é apontado com janela incompleta.
   - **Ninguém cumpre o critério:** `ok`, resumo `nenhum painel vazio em mais da metade das coletas dos últimos 10 pregões`.
@@ -42,9 +43,10 @@ Nenhuma externa. Só o snapshot `instrumentacao` em `snapshots_paineis`, já gra
 ## Cálculos
 Para cada painel `p`, somando só as datas de `pregoes` presentes em `historico`:
 
-- `R(p) = Σ rodadas[p]` (coletas que terminaram, contagem inteira);
+- `R(p) = Σ rodadas[p]` (coletas que terminaram, contagem inteira); o agendador (`app/agendador.py`, laço da rodada) põe em `tempos` todo painel cujo `collect_and_save()` retornou, com ou sem dado, e em `vazias` só os que retornaram `False`; por isso, dia a dia, `vazias[p] ≤ rodadas[p]` e `V(p)/R(p)` fica entre 0 e 1;
 - `V(p) = Σ vazias[p]` (coletas sem dado, contagem inteira; painel ausente em `vazias` conta 0);
-- `p` é candidato se `R(p) ≥ 10` **e** `V(p) / R(p) > 0,5` (estritamente mais da metade, como diz o critério do `PRODUTO.md`).
+- `p` é candidato se `R(p) ≥ 10` **e** `2 × V(p) > R(p)` (estritamente mais da metade, como diz o critério do `PRODUTO.md`; a comparação em inteiros evita arredondamento de ponto flutuante).
+- `P(p) = round(100 × V(p) / R(p))`, com o `round` do Python, exibido como inteiro seguido de `%`.
 
 `R(p) ≥ 10` (em média uma coleta por pregão) evita apontar painel que quase não roda na janela, como os de janela `fechamento` ou `pre_abertura` com poucas rodadas.
 
@@ -78,7 +80,7 @@ Um snapshot de uma data fora de `pregoes` (por exemplo, sábado 14/11, com colet
 - Arquivos tocados: `app/banco.py`, `app/services/sistema.py`, `app/main.py` e o novo `tests/test_aceite_153.py`. Medido com `grep -rl "verificar_paineis_vazios\|def montar\|estado_do_sistema" app tests`: 3 arquivos (2 de código, 1 de teste, que não muda).
 
 ## Invariantes de produção
-- `GET /api/sistema` (com a senha) tem, no grupo de coleta, um item com `nome` `Candidatos à poda`, com `nivel` `ok` ou `atencao`, nunca `problema`.
+- `GET /api/sistema` (com a senha) tem, no grupo de coleta, um item com `nome` `Candidatos à poda` (grupo de título "Coleta"), com `nivel` `ok` ou `atencao`, nunca `problema`.
 - Se o `nivel` é `atencao`, cada painel da lista traz `V de R, P%` com `R ≥ 10`, `2 × V > R` e `P` = `round(100 × V / R)` (por isso `P ≥ 50`: 141 de 280 é candidato e aparece como 50%).
 - Se o resumo diz "histórico de N de 10 pregões", então N < 10 e nenhum painel é listado.
 
@@ -88,4 +90,8 @@ Um snapshot de uma data fora de `pregoes` (por exemplo, sábado 14/11, com colet
 - Separar as coletas "feitas durante o pregão" das tentativas de fechamento (18h-20h) e da pré-abertura: o snapshot diário não guarda a hora de cada coleta. A aproximação conta todas as coletas do dia de pregão; está registrada aqui para a rodada de poda pesar.
 - Fazer os `get_*_desde` respeitarem `desde` e mudar o item "Painéis sem dados" (ideia do backlog de 15/11).
 - Mudar como a instrumentação grava (spec 152) ou o prazo de `remover_snapshots_antigos`.
+- Coleta que levanta exceção: o agendador não a registra nem em `rodadas` nem em `vazias`, então um painel que sempre falha com exceção não aparece aqui. Ele já aparece nos erros da coleta em `/sistema`; contá-lo no critério pede mudar a instrumentação (spec 152), fora daqui.
 - Mostrar o histórico de poda na página pública ou no `/api/snapshot`: é diagnóstico de operação, fica em `/sistema`.
+
+## Revisão
+Revisada em 15/11/2026. O exemplo de datas foi conferido contra `app/calendario.py` (`ultimo_pregao_fechado` de 15/11 03h BRT dá 13/11; 2/11 é feriado). Acrescentados: conversão de tipos de `ler_snapshots_datas` no SQLite e lista vazia sem consulta; critério em inteiros (`2 × V > R`) e `round` do Python para P; por que `V ≤ R` (agendador); limitação das coletas com exceção no *Fora do escopo*; o grupo é identificado pelo título "Coleta".
