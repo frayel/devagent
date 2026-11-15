@@ -146,7 +146,7 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
   - Pasta `.agents/` para diários dos especialistas (com fallback retrocompatível a `.jules/`).
   - Reconhecimento dos logins do Antigravity no guardião de PRs e conferência de disciplina.
   - Removido schedule de cron do GitHub Actions (`jules.yml` e `auditoria-llm.yml`).
-  - Criada skill `/ciclo` (`.agents/skills/ciclo/SKILL.md`) para execução autônoma.
+  - Criada skill `/ciclo` para execução autônoma; desde 15/11 em `.claude/skills/ciclo/SKILL.md`, ao lado de `/revisor`, `/especificador` e `/verificador`.
 - [Saúde Técnica] Spec 132a - Leitura tolerante de consenso (JSON, dict, texto) implementada e `ast.literal_eval` removido de `app/main.py`.
 
 - Spec 131: Histórico do Consultor sem consultas repetidas por recomendação

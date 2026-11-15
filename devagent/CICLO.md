@@ -67,7 +67,7 @@ docs/
   verificacao/         # achados, relatórios e diário do Verificador (raia de verificação)
 auditoria/             # checagens de produção deste produto (PROTEGIDO)
 .agents/               # diários dos especialistas (compatível com o legado .jules/)
-  skills/ciclo/SKILL.md  # skill /ciclo: porta de entrada deste ciclo
+.claude/skills/         # porta de entrada de cada tarefa agendada: /ciclo, /revisor, /especificador, /verificador
 ```
 
 A estrutura do código da aplicação está no `PRODUTO.md`. Se algum destes arquivos não existir, criá-lo faz parte da primeira execução.
