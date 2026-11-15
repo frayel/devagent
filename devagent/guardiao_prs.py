@@ -57,7 +57,7 @@ from devagent.conferir_pr import (
 )
 from devagent.config import VERIFICACAO
 from devagent.raias import VERIFICACAO as RAIA_VERIFICACAO
-from devagent.raias import do_agente, do_desenvolvimento, raia_do_titulo
+from devagent.raias import do_desenvolvimento, pr_do_agente, raia_do_titulo
 
 MAX_TENTATIVAS = 3
 SEM_REACAO_HORAS = 3
@@ -117,7 +117,7 @@ def prs_do_agente() -> list[dict[str, Any]]:
         p
         for p in prs
         if not p["title"].startswith("auditoria:")
-        and do_agente((p.get("author") or {}).get("login"))
+        and pr_do_agente((p.get("author") or {}).get("login"), p.get("body"))
     ]
 
 
@@ -871,11 +871,11 @@ def varredura() -> None:
             "--state",
             "closed",
             "--json",
-            "headRefName,author",
+            "headRefName,author,body",
             "--limit",
             "200",
         )
-        if do_agente((p.get("author") or {}).get("login"))
+        if pr_do_agente((p.get("author") or {}).get("login"), p.get("body"))
     }
     sh("git", "fetch", "-q", "--prune", "origin")
     saida = sh(

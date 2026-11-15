@@ -88,6 +88,18 @@ def do_agente(autor: str | None) -> bool:
 MARCADOR_RAIA = re.compile(r"<!--\s*devagent:raia:(\w+)\s*-->", re.I)
 
 
+def pr_do_agente(autor: str | None, corpo: str | None) -> bool:
+    """O PR é do agente: login conhecido ou marcador de raia no corpo (ADR 032).
+
+    As sessões agendadas abrem PR com o login do dono do repositório, então o
+    autor sozinho não distingue o agente da pessoa: de 13/11 a 15/11 nenhum PR
+    do agente foi reconhecido, e a regra 8 e o guardião os tratavam como PRs
+    de pessoa. Todo PR do agente traz `<!-- devagent:raia:<nome> -->` no corpo;
+    PR escrito à mão não traz.
+    """
+    return do_agente(autor) or raia_declarada(corpo or "") is not None
+
+
 # Caminhos que o desenvolvimento não escreve: pertencem a outra raia.
 RESERVADOS_DO_DESENVOLVIMENTO = (PASTA_VERIFICACAO,)
 
