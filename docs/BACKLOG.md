@@ -37,6 +37,15 @@
 | Alerta de "Volume Oculto" Intraday | Ações onde o volume de negócios destoa do book aparente | brapi.dev | M | Baixo |
 
 
+## Ideias (Passo 7 - 2026-11-15)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Saúde técnica: instrumentação grava uma vez por rodada (spec 152) | Responde: quanto da rodada é gasto registrando a própria rodada? Medida: 2 idas ao banco por coletor (~84 por rodada de pregão, ~25 s a 300 ms cada). Ganho: 84 → 2. | N/A | P | Baixo |
+| Saúde técnica: `/sistema` respeita a janela que anuncia | Responde: "nenhuma coleta vazia nas últimas 3 h" é verdade? Medida: `get_coletas_vazias_desde`, `get_rodadas_coleta_desde` e `get_tempos_coleta_desde` ignoram `desde` e leem o dia inteiro em BRT. Ganho: rótulo e número batem. | N/A | P | Baixo |
+| Saúde técnica: duração de parede da rodada | Responde: quanto a rodada leva de verdade? Medida: "Duração da coleta" soma só `collect_and_save`, sem leituras de controle nem instrumentação. Ganho: o número de `/sistema` passa a incluir o custo do banco. | N/A | P | Baixo |
+| Poda: tabela `instrumentacao_coleta_tempo` | Responde: alguém ainda grava ali? Medida: só `init_db` a cria (`app/database.py:288`); nenhuma gravação no código. Ganho: uma tabela e um índice a menos. Depois da 152. | N/A | P | Baixo |
+
 ## Ideias (Passo 7 - 2026-10-15)
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |
