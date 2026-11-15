@@ -360,24 +360,6 @@
     {% endif %}
 {% endcall %}
 
-{% call painel('Inflexão de Tendência', 4, 'Ações que caíram >5% em 15 dias, mas hoje revertem com alta > 2%.', radar_inflexao.fonte if radar_inflexao else '', radar_inflexao.coletado_em if radar_inflexao else '', 'visao-micro rankings') %}
-    {% if not radar_inflexao %}
-        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
-    {% elif not radar_inflexao.alertas %}
-        <div class="vazio">Nenhuma ação com inflexão no momento.</div>
-    {% else %}
-        {% set linhas = [] %}
-        {% for a in radar_inflexao.alertas %}
-            {% set celulas = [
-                {'tk': True, 'conteudo': a.ticker},
-                {'num': True, 'conteudo': variacao((('+' ~ a.variacao_hoje ~ '%')) | e, a.variacao_hoje)}
-            ] %}
-            {% set _ = linhas.append(celulas) %}
-        {% endfor %}
-        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Variação', 'num': True}], 'radar-inflexao') }}
-    {% endif %}
-{% endcall %}
-
 {% call painel('Anomalia de Peso', 4, 'Ações que mais impactam o Ibovespa no dia (estimativa em pontos).', anomalia_peso.fonte if anomalia_peso else '', anomalia_peso.coletado_em if anomalia_peso else '', 'visao-micro rankings escondido' if not anomalia_peso else 'visao-micro rankings') %}
     {% if not anomalia_peso %}
         {{ estado('sem_registro' if is_historical else 'indisponivel') }}
@@ -986,11 +968,12 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Radar de Inflexão", 4, "Ações que caíram muito e hoje estão subindo forte, indicando possível quebra de inércia.", radar_inflexao.fonte if radar_inflexao else "", radar_inflexao.coletado_em if radar_inflexao else "", radares.classes['radar_inflexao']) %}
+{#- Spec 151: o único painel do sinal de inflexão (antes repetido em Rankings). -#}
+{% call painel("Radar de Inflexão", 4, "Ações em queda acumulada abaixo de −5% que hoje sobem mais de +2%. Janela de 16 fechamentos diários: a queda vai do 16º fechamento antes do último (índice −16) até o penúltimo (−2), e o hoje compara o último (−1) com o penúltimo. Até 5 nomes, do mais caído ao menos caído. Fonte: fechamentos diários de um mês (spark); quem respondeu aparece no rodapé.", radar_inflexao.fonte if radar_inflexao else "", radar_inflexao.coletado_em if radar_inflexao else "", radares.classes['radar_inflexao']) %}
     {% if not radar_inflexao %}
         {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% elif not radar_inflexao.alertas %}
-        <div class="vazio">Nenhuma inflexão detectada hoje.</div>
+        <div class="vazio">Sem nomes nos dois cortes neste pregão.</div>
     {% else %}
         {% set linhas = [] %}
         {% for a in radar_inflexao.alertas %}

@@ -1,7 +1,7 @@
 ---
 id: 151
 titulo: A inflexão aparece uma vez só
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_151.py
