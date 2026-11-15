@@ -5,6 +5,7 @@ status: ready
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_154.py
+revisada: 2026-11-15
 ---
 
 ## Problema
@@ -14,8 +15,10 @@ O `PRODUTO.md` (seção *Manutenção neste produto*) define o candidato à poda
 
 Fora do pregão o agendador ainda roda (`app/agendador.py`):
 
-- de 18h15 às 20h, a cada 30 minutos (`intervalo`), com as **tentativas de fechamento** dos painéis de janela `pregao` (só os que ainda não têm snapshot `final`) e os de janela `fechamento`;
+- depois das 18h15 até as 20h, a cada 30 minutos (`intervalo`), com as **tentativas de fechamento** dos painéis de janela `pregao` (só os que ainda não têm snapshot `final`) e os de janela `fechamento`;
 - antes da abertura, a partir das 7h, os de janela `pre_abertura` (`clima_global`), e a cada 2 horas no resto do dia, com as **partidas a frio** de painel sem snapshot.
+
+"Durante o pregão" aqui é o que `calendario.mercado_aberto` já diz: dia de pregão e hora BRT entre `ABERTURA` (10h) e `FIM_DA_JANELA` (18h15), as duas pontas inclusive. A rodada que o agendador faz às 9h55 (`INICIO_PREGAO`) não conta; a de 18h15 em ponto conta.
 
 São justamente as coletas com mais chance de voltar vazias: depois do fechamento muitos radares intraday não têm o que mostrar. Um painel saudável no pregão pode passar da metade só por elas, e um painel ruim no pregão pode ficar abaixo dela. A rodada de poda (backlog, "Poda: rodada de poda com os números da 153") ainda não aconteceu: é a hora de corrigir o instrumento, antes de ele decidir o que sai.
 
@@ -61,12 +64,12 @@ Mesmo cenário com 30/10 só com `rodadas` e `vazias` (snapshot antigo): `ok`, `
 - [ ] `tests/test_aceite_154.py`, com `exigir_spec_done("154")`:
   - num SQLite temporário, os dois passos do exemplo da gravação, com `durante_pregao=True` e depois `False`, deixam o payload exatamente como o exemplo diz, campo a campo;
   - `durante_pregao=False` sobre payload sem `rodadas_pregao` não cria a chave;
-  - `_coletar()` com o relógio em 16/11/2026 10h15 BRT chama `gravar_instrumentacao_rodada` com `durante_pregao=True`, e às 18h45 BRT com `False` (coletores e banco espionados como em `tests/test_aceite_152.py`);
+  - `_coletar()` com o relógio em 16/11/2026 10h15 BRT chama `gravar_instrumentacao_rodada` com `durante_pregao=True`, e às 18h45 BRT com `False` (coletores e banco espionados como em `tests/test_aceite_152.py`). O relógio é fixado trocando `agendador.datetime` por uma subclasse de `datetime` cujo `now(tz)` devolve o instante do teste, **sem** substituir `calendario.mercado_aberto`: o teste prova que o valor vem do relógio do início da rodada;
   - `verificar_candidatos_poda` com o `historico` do exemplo do critério devolve `atencao` e o resumo e o detalhe exatos, sem `fator_peso_pesado`;
   - com 30/10 sem `rodadas_pregao`: `ok` e `histórico de 9 de 10 pregões; o critério precisa de 10`.
-- [ ] `tests/test_aceite_153.py` continua verde **sem mudar expectativa**: as fixtures do `historico` ganham `rodadas_pregao` e `vazias_pregao` com os mesmos números de `rodadas` e `vazias` (o teste de `ler_snapshots_datas` não muda).
+- [ ] `tests/test_aceite_153.py` continua verde **sem mudar expectativa**: todo payload que os testes passam a `verificar_candidatos_poda` ganha `rodadas_pregao` e `vazias_pregao` com os mesmos números de `rodadas` e `vazias` (o `PAYLOAD_DIA` e os payloads escritos dentro de `test_um_candidato_no_singular`, `test_ninguem_acima_da_metade` e `test_data_fora_dos_pregoes_e_ignorada`). Nenhum `assert` muda, e o teste de `ler_snapshots_datas` não muda.
 - [ ] `tests/test_aceite_152.py`, `tests/test_instrumentacao.py` e `tests/test_sistema.py` continuam verdes sem mudança.
-- Arquivos tocados: `app/database.py`, `app/agendador.py`, `app/services/sistema.py`, `tests/test_aceite_153.py` (só fixtures) e o novo `tests/test_aceite_154.py`. Medido com `grep -rl "gravar_instrumentacao_rodada\|verificar_candidatos_poda" app tests`: 3 de código e 2 de teste.
+- Arquivos tocados: `app/database.py`, `app/agendador.py`, `app/services/sistema.py`, `tests/test_aceite_153.py` (só fixtures) e o novo `tests/test_aceite_154.py`. Medido com `grep -rl "gravar_instrumentacao_rodada\|verificar_candidatos_poda" app tests`: 3 de código (`app/database.py`, `app/agendador.py`, `app/services/sistema.py`) e 2 de teste (`tests/test_aceite_152.py`, que não muda, e `tests/test_aceite_153.py`), mais o teste novo.
 
 ## Invariantes de produção
 - `GET /api/sistema` (com a senha) continua com o item `Candidatos à poda` no grupo "Coleta", `ok` ou `atencao`, nunca `problema`.
