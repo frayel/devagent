@@ -632,3 +632,37 @@ def test_duracao_da_coleta_longa():
     dados = {"geral": geral}
     assert pendentes(dados, "problema") == []
     assert [p["nome"] for p in pendentes(dados, "atencao")] == ["Duração da coleta"]
+
+
+def test_guardiao_que_roda_a_cada_merge_nao_acusa_agendamento_perdido():
+    # 15/11: o GitHub rodou o agendamento de hora em hora do guardião só às
+    # 04:57 e 07:57, mas a varredura rodava depois de cada merge
+    # (workflow_run). A página dizia "4 agendamentos não rodaram".
+    gua = ".github/workflows/pr-guardiao.yml"
+    wf = {
+        "arquivo": "pr-guardiao.yml",
+        "caminho": gua,
+        "nome": "Guardião de PRs",
+        "crons": ["23 * * * *"],
+    }
+    agendado = _run(gua, "schedule", "success", timedelta(hours=7))
+    github = _github(
+        workflows=[wf],
+        runs=[
+            _run(gua, "workflow_run", "success", timedelta(minutes=40)),
+            _run(gua, "workflow_run", "skipped", timedelta(minutes=20)),
+        ],
+        ultimo_agendado={gua: agendado},
+    )
+    item = s.verificar_workflows(github, AGORA)[0]
+    assert item.nivel == s.OK
+    assert "não rodaram" not in item.resumo
+    # Sem nenhuma execução real desde o agendamento, o atraso volta a aparecer.
+    so_puladas = _github(
+        workflows=[wf],
+        runs=[_run(gua, "workflow_run", "skipped", timedelta(minutes=20))],
+        ultimo_agendado={gua: agendado},
+    )
+    item = s.verificar_workflows(so_puladas, AGORA)[0]
+    assert item.nivel == s.ATENCAO
+    assert "agendamentos não rodaram" in item.resumo

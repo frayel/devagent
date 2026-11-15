@@ -4,11 +4,13 @@ name: Achados da auditoria
 # docs/auditoria/achados/ e o verificador geral em docs/verificacao/achados/
 # (raia de verificação, ADR 021). Merges feitos pelo GITHUB_TOKEN não disparam
 # eventos de push, por isso o automerge.yml chama este workflow depois de
-# fazer merge de um PR `auditoria:` ou `verificação:`, e ele também roda de
-# hora em hora.
+# fazer merge de um PR `auditoria:` ou `verificação:`. O agendamento diário
+# é só reserva: achado novo chega por merge, e o GitHub descartava a maior
+# parte do agendamento de hora em hora, o que acendia a atenção de
+# "agendamentos não rodaram" em /sistema sem nada estar parado.
 on:
   schedule:
-    - cron: "53 * * * *"
+    - cron: "53 10 * * *"
   workflow_dispatch:
 
 permissions:
