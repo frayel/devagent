@@ -23,9 +23,6 @@ jobs:
       with:
         python-version: "3.12"
     - name: Conferir disciplina do ciclo
-      env:
-        # Lê a persona da sessão que abriu o PR (regra 8, ADR 024).
-        JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
       run: python -m devagent.conferir_pr
 
   test:

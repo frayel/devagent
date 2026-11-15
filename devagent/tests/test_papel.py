@@ -126,14 +126,18 @@ def test_fila_travada_sem_raia_para_assumir_avisa_o_desenvolvedor(raiz: Path) ->
     assert not p.frase()
 
 
-def test_persona_nomeada_sem_trabalho_tem_alvo_vazio(raiz: Path) -> None:
+def test_persona_nomeada_sem_trabalho_tem_alvo_vazio(
+    raiz: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     a = _spec(raiz / "docs/specs", "144-a.md", revisada=True)
     cheias = [a] * (papel.FILA_PARA_ESPECIFICAR + 1)
     assert not papel.para_persona(papel.REVISOR, [a], [], []).alvo
     assert not papel.para_persona(papel.ESPECIFICADOR, cheias, [], []).alvo
     assert not papel.para_persona(papel.VERIFICADOR, [a], [], [], merges=[]).alvo
-    alvo = papel.para_persona(papel.VERIFICADOR, [a], [], [], merges=["fix: x"]).alvo
-    assert "fix: x" in alvo
+    monkeypatch.setattr(papel, "github_get", lambda caminho: [])
+    merge = {"number": 7, "title": "fix: x", "merged_at": "2026-11-03T10:00:00Z"}
+    alvo = papel.para_persona(papel.VERIFICADOR, [a], [], [], merges=[merge]).alvo
+    assert "#7 (fix: x)" in alvo
 
 
 def test_ultima_verificacao_nunca_passa_da_janela(tmp_path: Path) -> None:

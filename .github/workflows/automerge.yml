@@ -1,7 +1,7 @@
 name: Auto-merge
 
 # Faz squash merge de qualquer PR assim que o workflow CI passa.
-# O Jules abre PRs mas não faz merge; este workflow fecha o ciclo.
+# O agente abre PRs mas não faz merge; este workflow fecha o ciclo.
 # Não há caminhos protegidos nem revisão humana: todo PR com CI verde entra
 # (ADR 007).
 on:

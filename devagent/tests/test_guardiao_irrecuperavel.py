@@ -44,7 +44,7 @@ def test_ci_falhou_fecha_sem_cobrar(monkeypatch: pytest.MonkeyPatch) -> None:
     pr = {
         "number": 402,
         "title": "Implementa spec 075",
-        "headRefName": "jules-1",
+        "headRefName": "agente-1",
         "body": "",
         "url": "u",
     }
@@ -62,7 +62,7 @@ def test_ci_falhou_fecha_sem_cobrar(monkeypatch: pytest.MonkeyPatch) -> None:
         chamadas["fechou"] = (p["number"], registrar)
 
     monkeypatch.setattr(guardiao_prs, "fechar", fechar)
-    guardiao_prs.ci_falhou("jules-1", "1")
+    guardiao_prs.ci_falhou("agente-1", "1")
     assert chamadas["fechou"] == (402, True)
     assert "comentou" not in chamadas
 

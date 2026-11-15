@@ -76,8 +76,9 @@ def test_disparos_perdidos_desconta_a_hora_de_folga():
 
 def test_workflows_do_repositorio_le_os_crons_dos_arquivos():
     workflows = {w["arquivo"]: w for w in monitor.workflows_do_repositorio()}
-    # Com a migração para Antigravity Remote (ADR 032), jules.yml não tem cron no GitHub Actions.
-    assert workflows["jules.yml"]["crons"] == []
+    # O jules.yml saiu do repositório com o legado do Jules (ADR 032).
+    assert "jules.yml" not in workflows
+    assert workflows["ci.yml"]["crons"] == []
     assert len(workflows["auditoria-producao.yml"]["crons"]) == 3
     assert workflows["ci.yml"]["nome"] == "CI"
 

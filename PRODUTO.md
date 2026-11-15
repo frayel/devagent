@@ -150,7 +150,7 @@ Para `devagent/skills/manutencao.md`:
 
 **Exemplo de bom achado.** "Às 14:37 BRT de 28/09/2026 o painel mostrava 130.000 pontos. No mesmo minuto, o Yahoo Finance (`^BVSP`) mostrava 183.476,86 e o Stooq (`^BVP`), 183.460,12. A diferença é de 29%. O gráfico termina em 27/09/2023, e os três fechamentos exibidos são idênticos aos de `tests/fixtures/brapi_response.json`."
 
-**Agenda.** O `auditoria-producao.yml` roda a cada 30 min durante o pregão (10h às 18h BRT), antes da abertura e uma vez por dia no fim de semana; o `auditoria-llm.yml`, nos dias úteis às 18h41 BRT, depois do fechamento.
+**Agenda.** O `auditoria-producao.yml` roda a cada 30 min durante o pregão (10h às 18h BRT), antes da abertura e uma vez por dia no fim de semana; o auditor LLM (persona de `devagent/agents/auditor.md`) roda como tarefa agendada do agente, nos dias úteis depois do fechamento, quando essa tarefa está ativa (`devagent/OPERACAO.md`, *Agendamento e Execução*).
 
 ## 10. Configuração do produto
 
