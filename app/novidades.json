@@ -1,6 +1,13 @@
 [
   {
     "data": "2026-11-15",
+    "tipo": "correcao",
+    "texto": "O Fator Peso Pesado mostrava um trecho de código de página antes e depois da frase que explica o número. Agora só a frase aparece.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Fator Peso Pesado"},
+    "pr": "#878"
+  },
+  {
+    "data": "2026-11-15",
     "tipo": "novidade",
     "texto": "Esta página: o que mudou no painel nos últimos 60 dias e onde ver cada mudança. O rodapé de todas as páginas diz quando houve a última novidade.",
     "onde": {"pagina": "/novidades", "pagina_nome": "Novidades"},

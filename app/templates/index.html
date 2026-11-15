@@ -184,7 +184,7 @@
         {% if fator_peso_pesado_data.mercado_lateral %}
             {{ kpi("Mercado lateral", "", '<div class="texto-2 espaco-topo-curto">O Ibovespa ficou praticamente parado no dia; a razão não é calculada.</div>' | safe) }}
         {% else %}
-            {{ kpi(fator_peso_pesado_data.valor, "", ('<div class="texto-2 espaco-topo-curto">' ~ (fator_peso_pesado_data.frase | e) ~ '</div>') | safe, is_hero=True) }}
+            {{ kpi(fator_peso_pesado_data.valor, "", ('<div class="texto-2 espaco-topo-curto">' | safe) ~ (fator_peso_pesado_data.frase | e) ~ ('</div>' | safe), is_hero=True) }}
         {% endif %}
     {% else %}
         {{ estado('sem_registro' if is_historical else 'indisponivel') }}
