@@ -20,9 +20,10 @@ A ordem de uma spec é sempre esta: o Especificador a escreve, o Revisor a revis
 
 1. **Primeiro comando:** `git fetch origin && python -m devagent.estado_github && make install`.
 2. **O alvo vem do código, não do prompt:** rode `python -m devagent.papel revisor` (ou `especificador`, `verificador`). A resposta traz o alvo concreto (a spec a revisar, o número reservado, os merges a verificar), decidido pelo estado da `main` para as raias não disputarem o mesmo trabalho: siga-o. Se ela disser que não há trabalho, encerre sem PR e sem commit. Se já existe PR aberto e saudável da sua raia, a resposta é essa. Se o PR da sua raia está parado (CI falhando ou conflito), o alvo é destravá-lo na branch dele, pela skill `devagent/skills/destravar-pr.md`: PR de raia paralela que ninguém conserta trava a fila inteira.
-3. Não altere código da aplicação, testes, workflows, `devagent/`, `AGENTS.md`, `PRODUTO.md` nem arquivos fora da tabela acima. Não toque em PRs de outras raias.
-4. Sem achado, sem PR. Se a sua tarefa não gerar mudança que valha um PR, encerre sem commit. Não abra PR só com relatório ou diário.
-5. Não peça aprovação e não faça perguntas. Diante de ambiguidade, escolha a opção mais conservadora e registre a decisão no PR.
+3. **Confira o alvo de novo imediatamente antes de abrir o PR:** `python -m devagent.papel conferir revisor NNN` (ou `especificador NNN`, com o número reservado). Ele relê a `main` e os PRs abertos de agora. Saída diferente de 0 quer dizer que outra sessão chegou antes: descarte as alterações e encerre sem PR. Em 14/11 a tarefa do Revisor e a sessão do ciclo escolheram a spec 150 com um minuto de diferença, e as duas a reescreveram (#847 e #848).
+4. Não altere código da aplicação, testes, workflows, `devagent/`, `AGENTS.md`, `PRODUTO.md` nem arquivos fora da tabela acima. Não toque em PRs de outras raias.
+5. Sem achado, sem PR. Se a sua tarefa não gerar mudança que valha um PR, encerre sem commit. Não abra PR só com relatório ou diário.
+6. Não peça aprovação e não faça perguntas. Diante de ambiguidade, escolha a opção mais conservadora e registre a decisão no PR.
 
 ## ✍️ Especificador
 

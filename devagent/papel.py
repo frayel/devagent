@@ -12,6 +12,7 @@ Aqui a decisão volta para o código, sem depender de quem agenda as sessões:
     python -m devagent.papel revisor       # o alvo de uma persona nomeada
     python -m devagent.papel especificador
     python -m devagent.papel verificador
+    python -m devagent.papel conferir revisor 150   # o alvo ainda está livre?
 
 Sem argumento, a sessão é do desenvolvedor, salvo quando ele não tem trabalho
 de produto e outra raia está parada: aí a sessão assume essa raia por inteiro
@@ -323,8 +324,125 @@ def merges_do_desenvolvimento(desde: datetime) -> list[str]:
     return [t for t in titulos_da_main(desde) if raia_do_titulo(t) == DESENVOLVIMENTO]
 
 
+# ---------------------------------------------------------------------------
+# Conferência antes do PR. O alvo é decidido no início da sessão, e uma sessão
+# leva de 10 a 15 minutos. Em 14/11 21:38 a tarefa do Revisor escolheu a spec
+# 150 um minuto antes de a sessão do ciclo abrir o #847 com a mesma revisão: as
+# duas reescreveram a mesma spec. A sessão confere de novo, contra a `main` e
+# os PRs abertos de agora, imediatamente antes de abrir o PR.
+
+RAIA_DE = {
+    DESENVOLVEDOR: DESENVOLVIMENTO,
+    REVISOR: REVISAO,
+    ESPECIFICADOR: ESPECIFICACAO,
+}
+NUMERO_NO_TITULO = r"(?<![\d#])0*{n}(?![\d])"
+
+
+def _cita(titulo: str, numero: str) -> bool:
+    base = re.match(r"0*(\d+)([a-z]*)", numero)
+    if not base:
+        return False
+    alvo = base.group(1) + base.group(2)
+    return bool(re.search(NUMERO_NO_TITULO.format(n=re.escape(alvo)), titulo))
+
+
+def alvo_ocupado(
+    persona: str,
+    numero: str,
+    prs: list[dict[str, Any]],
+    texto_na_main: str | None,
+) -> str:
+    """Por que o alvo já não é desta sessão; vazio se ainda está livre (puro).
+
+    `texto_na_main` é a spec como está na `main` agora (None se não existe).
+    """
+    raia = RAIA_DE[persona]
+    for p in prs:
+        if p.get("raia") != raia:
+            continue
+        if raia != DESENVOLVIMENTO:
+            return (
+                f"já existe PR aberto da raia: #{p['numero']} ({p['titulo']}). "
+                "Cada raia tem um PR aberto por vez."
+            )
+        if _cita(p.get("titulo", ""), numero):
+            return f"o PR #{p['numero']} ({p['titulo']}) já cuida da spec {numero}."
+    if persona == ESPECIFICADOR:
+        if texto_na_main is not None:
+            return f"o número {numero} já está ocupado na main."
+        return ""
+    if texto_na_main is None:
+        return f"a spec {numero} não existe mais na main."
+    if persona == REVISOR and REVISADA_NO_CABECALHO.search(texto_na_main):
+        return f"a spec {numero} já foi revisada na main."
+    status = re.search(r"^status:\s*([\w-]+)", texto_na_main, re.MULTILINE)
+    if not status or status.group(1) != "ready":
+        estado = status.group(1) if status else "sem status"
+        return f"a spec {numero} está `{estado}` na main, não `ready`."
+    return ""
+
+
+REVISADA_NO_CABECALHO = re.compile(r"^revisada:\s*\S", re.MULTILINE)
+
+
+def spec_na_main(numero: str, pasta: str = "docs/specs") -> str | None:
+    """O texto da spec `numero` na origin/main, sem olhar a árvore de trabalho."""
+    try:
+        nomes = subprocess.run(
+            ["git", "ls-tree", "--name-only", "origin/main", f"{pasta}/"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        ).stdout.split()
+    except (OSError, subprocess.SubprocessError):
+        return None
+    m = re.match(r"0*(\d+)([a-z]*)", numero)
+    if not m:
+        return None
+    padrao = re.compile(rf"/0*{m.group(1)}{m.group(2)}-[^/]*\.md$")
+    for nome in nomes:
+        if padrao.search(nome):
+            return subprocess.run(
+                ["git", "show", f"origin/main:{nome}"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            ).stdout
+    return None
+
+
+def conferir(persona: str, numero: str) -> int:
+    from devagent import estado_github
+
+    subprocess.run(["git", "fetch", "-q", "origin"], timeout=120, check=False)
+    try:
+        prs = estado_github.coletar()["prs"]
+    except OSError as exc:
+        print(f"Não consegui ler os PRs abertos ({exc}): encerre sem PR.")
+        return 1
+    motivo = alvo_ocupado(persona, numero, prs, spec_na_main(numero))
+    if motivo:
+        print(
+            f"Alvo ocupado: {motivo} Outra sessão chegou antes. Descarte as "
+            "alterações e encerre sem PR."
+        )
+        return 1
+    print(f"Alvo livre: pode abrir o PR da spec {numero}.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = sys.argv[1:] if argv is None else argv
+    if args[:1] == ["conferir"]:
+        if len(args) != 3 or args[1].lower() not in RAIA_DE:
+            print(
+                "Uso: python -m devagent.papel conferir "
+                "<desenvolvedor | revisor | especificador> <número da spec>",
+                file=sys.stderr,
+            )
+            return 2
+        return conferir(args[1].lower(), args[2])
     persona = args[0].lower() if args else ""
     if persona and persona not in RAIA_DA_PERSONA:
         print(

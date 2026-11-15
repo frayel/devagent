@@ -34,7 +34,7 @@ Ao invocar esta skill (ou digitar `/ciclo`), você executa uma iteração do `de
 4. **Você não escolhe persona.** Sentinel, Palette, Bolt, Auditor e Verificador só são assumidos quando a tarefa que acionou a sessão os nomeia. Revisor e Especificador, só nesse caso ou quando o `estado_github` manda (item 2). Horário do dia ou a sua leitura da fila não transformam a sessão em outra persona, e uma sessão nunca mistura duas (`devagent/agents/especialistas.md`, regra 7, e ADRs 024 e 033).
 
 5. **Regras Obrigatórias (do desenvolvedor):**
-   - Execute `make verify` antes de abrir qualquer PR.
+   - Execute `make verify` antes de abrir qualquer PR e, se o PR entrega uma spec, `python -m devagent.papel conferir desenvolvedor NNN` imediatamente antes de abri-lo.
    - Inclua no corpo do PR o marcador `<!-- devagent:raia:desenvolvimento -->`.
    - Registre o relatório da execução em `docs/runs/AAAA-MM-DD-HHMM.md`, no PR da entrega (nunca um PR só com o relatório).
    - Tome decisões conservadoras diante de ambiguidades e conclua a entrega sem parar para pedir confirmações.
