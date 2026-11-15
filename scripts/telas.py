@@ -1,12 +1,16 @@
 """Capturas da interface para revisão visual (docs/DESIGN.md, seção 8).
 
 Sobe a aplicação com um banco temporário preenchido com dados de DEMONSTRAÇÃO,
-sem coleta automática, e salva duas capturas de página inteira:
+sem coleta automática, e salva capturas de página inteira de cada página em
+cada largura:
 
-    telas/desktop.png   1440 x 900
-    telas/celular.png    390 x 844
+    telas/desktop.png e telas/celular.png              página inicial (1440 e 390 px)
+    telas/<pagina>-<largura>.png                       as outras combinações
 
-Também confere se há rolagem horizontal em 390 px (sai com código 1 se houver).
+Em cada captura confere a regra de responsividade (PRODUTO.md, seção 6): a
+página não rola para o lado, nenhum elemento sai da tela e nenhum texto vaza
+da própria caixa. Tabela larga pode rolar dentro de um contêiner com
+`overflow-x: auto`. Sai com código 1 se achar algum problema.
 
 Uso: make telas            (ou: python scripts/telas.py --saida telas)
      python scripts/telas.py --pagina docs/design/referencia.html   # só captura um HTML local
@@ -30,7 +34,46 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-TAMANHOS = {"desktop": (1440, 900), "celular": (390, 844)}
+TAMANHOS = {
+    "celular-pequeno": (360, 740),
+    "celular": (390, 844),
+    "tablet": (768, 1024),
+    "desktop": (1440, 900),
+}
+# Páginas conferidas em cada largura (nome do arquivo, caminho).
+PAGINAS = (("inicio", "/"), ("consultor", "/consultor"), ("sistema", "/sistema"))
+
+# Elementos que saem da tela ou cujo texto vaza da caixa. Fica de fora o que
+# está dentro de um contêiner que rola de propósito (overflow-x auto/scroll),
+# dentro de <details> fechado ou dentro de SVG (gráficos desenham fora da
+# caixa por natureza).
+VAZAMENTOS_JS = r"""
+() => {
+  const vw = document.documentElement.clientWidth;
+  const rola = (el) => /(auto|scroll)/.test(getComputedStyle(el).overflowX);
+  const achados = [];
+  for (const el of document.querySelectorAll('body *')) {
+    if (el.closest('svg') || el.closest('details:not([open]) > :not(summary)')) continue;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) continue;
+    let anc = el.parentElement, protegido = false;
+    while (anc) { if (rola(anc)) { protegido = true; break; } anc = anc.parentElement; }
+    if (protegido) continue;
+    const fora = r.right - vw > 1 || r.left < -1;
+    const folha = el.children.length === 0 && (el.textContent || '').trim() !== '';
+    const vaza = folha && !rola(el) && el.scrollWidth - el.clientWidth > 1;
+    if (!fora && !vaza) continue;
+    const nome = el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') +
+      (typeof el.className === 'string' && el.className.trim()
+        ? '.' + el.className.trim().split(/\s+/).join('.') : '');
+    achados.push(`${nome} ${fora ? 'sai da tela' : 'texto vaza da caixa'} ` +
+      `(direita ${Math.round(r.right)}px, tela ${vw}px): "${(el.textContent || '').trim().slice(0, 40)}"`);
+  }
+  return achados;
+}
+"""
 
 
 def _porta_livre() -> int:
@@ -331,7 +374,24 @@ def _esperar(url: str, segundos: float = 30) -> None:
     raise SystemExit(f"A aplicação não respondeu em {url}")
 
 
-def _capturar(url: str, saida: Path) -> int:
+def _vazamentos(pagina) -> list[str]:
+    """Problemas de responsividade da página aberta (vazio = ok)."""
+    problemas = []
+    excesso = pagina.evaluate(
+        "document.documentElement.scrollWidth - document.documentElement.clientWidth"
+    )
+    if excesso > 0:
+        problemas.append(f"a página rola {excesso}px para o lado")
+    # Só o mais externo de cada cadeia interessa: o filho de um elemento que
+    # sai da tela também sai, e repetir não ajuda quem vai corrigir.
+    vistos: list[str] = []
+    for achado in pagina.evaluate(VAZAMENTOS_JS):
+        if len(vistos) < 8:
+            vistos.append(achado)
+    return problemas + vistos
+
+
+def _capturar(url: str, saida: Path, paginas=(("inicio", "/"),)) -> int:
     from playwright.sync_api import sync_playwright
 
     saida.mkdir(parents=True, exist_ok=True)
@@ -340,22 +400,28 @@ def _capturar(url: str, saida: Path) -> int:
         nav = pw.chromium.launch(
             executable_path=os.environ.get("CHROMIUM_PATH") or None
         )
-        for nome, (w, h) in TAMANHOS.items():
-            pagina = nav.new_page(
-                viewport={"width": w, "height": h}, color_scheme="dark"
-            )
-            pagina.goto(url, wait_until="networkidle")
-            pagina.wait_for_timeout(800)  # gráficos terminam de desenhar
-            arquivo = saida / f"{nome}.png"
-            pagina.screenshot(path=str(arquivo), full_page=True)
-            excesso = pagina.evaluate(
-                "document.documentElement.scrollWidth - document.documentElement.clientWidth"
-            )
-            if excesso > 0:
-                print(f"PROBLEMA: rolagem horizontal de {excesso}px em {nome} ({w}px)")
-                problemas += 1
-            print(f"captura: {arquivo}")
-            pagina.close()
+        for nome_pagina, caminho in paginas:
+            for nome, (w, h) in TAMANHOS.items():
+                pagina = nav.new_page(
+                    viewport={"width": w, "height": h}, color_scheme="dark"
+                )
+                pagina.goto(
+                    url.rstrip("/") + caminho if caminho != "/" else url,
+                    wait_until="networkidle",
+                )
+                pagina.wait_for_timeout(800)  # gráficos terminam de desenhar
+                prefixo = (
+                    ""
+                    if nome_pagina == "inicio" and nome in ("desktop", "celular")
+                    else f"{nome_pagina}-"
+                )
+                arquivo = saida / f"{prefixo}{nome}.png"
+                pagina.screenshot(path=str(arquivo), full_page=True)
+                for p in _vazamentos(pagina):
+                    print(f"PROBLEMA: {caminho} em {w}px: {p}")
+                    problemas += 1
+                print(f"captura: {arquivo}")
+                pagina.close()
         nav.close()
     return 1 if problemas else 0
 
@@ -385,7 +451,7 @@ def main() -> int:
         try:
             base = f"http://127.0.0.1:{porta}"
             _esperar(base + "/healthz")
-            return _capturar(base + "/", saida)
+            return _capturar(base + "/", saida, PAGINAS)
         finally:
             proc.terminate()
             proc.wait(timeout=10)
