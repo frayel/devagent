@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from devagent.adaptadores import jules
+from devagent import papel
 
 
 def test_merges_do_desenvolvimento_inclui_pessoas_e_filtra_outras_raias(
@@ -18,7 +18,7 @@ def test_merges_do_desenvolvimento_inclui_pessoas_e_filtra_outras_raias(
         {
             "number": 101,
             "title": "feat: alteração do bot",
-            "user": {"login": "google-labs-jules[bot]"},
+            "user": {"login": "antigravity[bot]"},
             "merged_at": "2026-11-02T10:00:00Z",
             "updated_at": "2026-11-02T10:00:00Z",
         },
@@ -32,16 +32,16 @@ def test_merges_do_desenvolvimento_inclui_pessoas_e_filtra_outras_raias(
         {
             "number": 103,
             "title": "spec: outra raia",
-            "user": {"login": "google-labs-jules[bot]"},
+            "user": {"login": "antigravity[bot]"},
             "merged_at": "2026-11-02T12:00:00Z",
             "updated_at": "2026-11-02T12:00:00Z",
         },
     ]
 
     monkeypatch.setattr(
-        jules, "github_get", lambda url: prs_mock if "page=1" in url else []
+        papel, "github_get", lambda url: prs_mock if "page=1" in url else []
     )
-    resultado = jules.merges_do_desenvolvimento(desde)
+    resultado = papel.merges_do_desenvolvimento(desde)
     numeros = [pr["number"] for pr in resultado]
     assert numeros == [102, 101]
 
@@ -83,19 +83,19 @@ def test_paginacao_merges_e_parada_em_pagina_anterior_a_desde(monkeypatch) -> No
                 return []
         return []
 
-    monkeypatch.setattr(jules, "github_get", mock_get)
-    resultado = jules.merges_do_desenvolvimento(desde)
+    monkeypatch.setattr(papel, "github_get", mock_get)
+    resultado = papel.merges_do_desenvolvimento(desde)
     # Todos os 50 da página 1 (mesclados depois de desde) aparecem
     assert len(resultado) == 50
     # A busca chamou a página 1 e parou na página 2 (que é anterior a desde), sem pedir a 3
     assert paginas_chamadas == [1, 2]
 
 
-def test_sensores_marcados_e_no_inicio_do_prompt(monkeypatch) -> None:
+def test_sensores_marcados_e_no_inicio_do_alvo(monkeypatch) -> None:
     """Um PR que altera auditoria/auditar.py, e um que troca
 
     VARIACAO_DIARIA_MAXIMA = 12.0 por 20.0 no patch, saem marcados [sensor] e no
-    início do prompt.
+    início do alvo.
     """
     merges = [
         {"number": 1, "title": "feat: comum 1", "merged_at": "2026-11-03T12:00:00Z"},
@@ -120,23 +120,23 @@ def test_sensores_marcados_e_no_inicio_do_prompt(monkeypatch) -> None:
             ]
         return [{"filename": "app/main.py", "patch": "@@ -1 +1 @@"}]
 
-    monkeypatch.setattr(jules, "github_get", mock_files)
-    prompt = jules.prompt_do_verificador(merges)
+    monkeypatch.setattr(papel, "github_get", mock_files)
+    alvo = papel.lista_do_verificador(merges)
 
     # Ambos saem marcados com [sensor]
-    assert "#2 [sensor] (refactor: auditoria)" in prompt
-    assert "#4 [sensor] (fix: novo limite)" in prompt
-    # E no início do prompt (antes dos comuns #1 e #3)
-    pos_2 = prompt.index("#2 [sensor]")
-    pos_4 = prompt.index("#4 [sensor]")
-    pos_1 = prompt.index("#1 (feat: comum 1)")
-    pos_3 = prompt.index("#3 (feat: comum 2)")
+    assert "#2 [sensor] (refactor: auditoria)" in alvo
+    assert "#4 [sensor] (fix: novo limite)" in alvo
+    # E no início do alvo (antes dos comuns #1 e #3)
+    pos_2 = alvo.index("#2 [sensor]")
+    pos_4 = alvo.index("#4 [sensor]")
+    pos_1 = alvo.index("#1 (feat: comum 1)")
+    pos_3 = alvo.index("#3 (feat: comum 2)")
     assert pos_2 < pos_1 and pos_2 < pos_3
     assert pos_4 < pos_1 and pos_4 < pos_3
 
 
 def test_sem_corte_silencioso_traz_sensor_e_indica_omitidos(monkeypatch) -> None:
-    """Com 20 PRs e 1 [sensor] antigo, o prompt traz 15 recentes + o sensor e
+    """Com 20 PRs e 1 [sensor] antigo, o alvo traz 15 recentes + o sensor e
 
     termina com +4 PRs omitidos.
     """
@@ -155,19 +155,19 @@ def test_sem_corte_silencioso_traz_sensor_e_indica_omitidos(monkeypatch) -> None
             return [{"filename": "auditoria/auditar.py", "patch": "@@ -1 +1 @@"}]
         return [{"filename": "app/main.py", "patch": "@@ -1 +1 @@"}]
 
-    monkeypatch.setattr(jules, "github_get", mock_files)
-    prompt = jules.prompt_do_verificador(merges)
+    monkeypatch.setattr(papel, "github_get", mock_files)
+    alvo = papel.lista_do_verificador(merges)
 
     # O sensor antigo #20 está presente e no início
-    assert "#20 [sensor]" in prompt
+    assert "#20 [sensor]" in alvo
     # Os 15 mais recentes estão presentes
     for i in range(1, 16):
-        assert f"#{i} (" in prompt
+        assert f"#{i} (" in alvo
     # PRs 16, 17, 18, 19 foram omitidos (total 4)
     for i in range(16, 20):
-        assert f"#{i} (" not in prompt
-    assert "+4 PRs omitidos" in prompt
-    assert prompt.endswith("+4 PRs omitidos; liste com git log --merges.")
+        assert f"#{i} (" not in alvo
+    assert "+4 PRs omitidos" in alvo
+    assert alvo.endswith("+4 PRs omitidos; liste com git log --merges.")
 
 
 def test_falha_simulada_em_files_nao_derruba_e_marca_nao_consultados(
@@ -175,7 +175,7 @@ def test_falha_simulada_em_files_nao_derruba_e_marca_nao_consultados(
 ) -> None:
     """Falha simulada em /files de um PR:
 
-    o prompt contém arquivos não consultados para ele e a função não levanta exceção.
+    o alvo contém arquivos não consultados para ele e a função não levanta exceção.
     """
     merges = [
         {
@@ -188,12 +188,12 @@ def test_falha_simulada_em_files_nao_derruba_e_marca_nao_consultados(
     def mock_files(url: str) -> list[dict[str, Any]]:
         raise OSError("conexão falhou")
 
-    monkeypatch.setattr(jules, "github_get", mock_files)
-    prompt = jules.prompt_do_verificador(merges)
+    monkeypatch.setattr(papel, "github_get", mock_files)
+    alvo = papel.lista_do_verificador(merges)
 
-    assert "#42" in prompt
-    assert "arquivos não consultados" in prompt
-    assert "[sensor]" not in prompt
+    assert "#42" in alvo
+    assert "arquivos não consultados" in alvo
+    assert "[sensor]" not in alvo
 
 
 def test_raias_md_e_adr_031_no_ciclo():

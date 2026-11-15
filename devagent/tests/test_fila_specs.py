@@ -1,4 +1,4 @@
-"""A fila de specs ready e o prompt do desenvolvedor (ADR 015)."""
+"""A fila de specs ready e a instrução do desenvolvedor (ADR 015)."""
 
 from __future__ import annotations
 
@@ -7,18 +7,10 @@ from pathlib import Path
 import pytest
 
 from devagent import fila_specs
-from devagent.adaptadores import jules
 
 
 def _spec(pasta: Path, nome: str, status: str) -> None:
     (pasta / nome).write_text(f"---\nid: 1\nstatus: {status}\n---\n", encoding="utf-8")
-
-
-@pytest.fixture(autouse=True)
-def sem_github(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(jules, "issues_de_tentativa", list)
-    monkeypatch.setattr(jules, "issues_de_prioridade", list)
-    monkeypatch.setattr(jules, "issues_de_producao", list)
 
 
 @pytest.fixture
@@ -54,23 +46,6 @@ def test_instrucao_aponta_a_menor(raiz: Path) -> None:
 def test_fila_vazia_sem_instrucao(tmp_path: Path) -> None:
     assert fila_specs.specs_prontas(tmp_path) == []
     assert fila_specs.instrucao([]) == ""
-
-
-def test_prompt_do_desenvolvedor_traz_a_proxima_spec(raiz: Path) -> None:
-    prompt = jules.prompt_de("desenvolvedor")
-    assert prompt.startswith(jules.PERSONAS["desenvolvedor"]["prompt"])
-    assert "068b-regras.md" in prompt
-
-
-def test_prompt_sem_fila_e_o_fixo(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.chdir(tmp_path)
-    assert jules.prompt_de("desenvolvedor") == jules.PERSONAS["desenvolvedor"]["prompt"]
-
-
-def test_auditor_nao_recebe_a_fila(raiz: Path) -> None:
-    assert jules.prompt_de("auditor") == jules.PERSONAS["auditor"]["prompt"]
 
 
 def _tentativa(numero: int, titulo: str, corpo: str = "") -> dict[str, object]:
@@ -109,22 +84,6 @@ def test_tentativa_citada_no_corpo(raiz: Path) -> None:
     ]
 
 
-def test_divisao_vai_para_o_revisor_nao_para_o_desenvolvedor(
-    raiz: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.chdir(raiz)
-    monkeypatch.setattr(
-        jules, "issues_de_tentativa", lambda: [_tentativa(9, "spec 068b falhou")]
-    )
-    monkeypatch.setattr(jules, "issues_de_prioridade", list)
-    dev = jules.prompt_de("desenvolvedor")
-    assert "não a divida" in dev
-    assert "use o número" not in dev
-    revisor = jules.prompt_de("revisor")
-    assert "dividir docs/specs/068b-regras.md" in revisor
-    assert "Closes #9" in revisor
-
-
 # ADR 020: issue `prioridade` passa na frente da fila (caso #418).
 def _prioridade(numero: int, *labels: str) -> dict[str, object]:
     return {
@@ -152,13 +111,6 @@ def test_prioridade_bloqueada_nao_desvia(raiz: Path) -> None:
 def test_prioridade_com_fila_vazia(tmp_path: Path) -> None:
     texto = fila_specs.instrucao([], tmp_path, [_prioridade(418)])
     assert "Closes #418" in texto
-
-
-def test_prompt_do_desenvolvedor_traz_a_prioridade(
-    raiz: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(jules, "issues_de_prioridade", lambda: [_prioridade(418)])
-    assert "Closes #418" in jules.prompt_de("desenvolvedor")
 
 
 # ADRs 024 e 026: issue de produção sem correção mesclada é a sessão inteira.
