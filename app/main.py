@@ -1770,6 +1770,11 @@ def snapshot(
             "horario": confluencia["horario"].isoformat()
             if confluencia["horario"]
             else None,
+            # Contrato do snapshot (auditoria/README.md, issue #872): todo
+            # painel publica `fonte` e `coletado_em`. O card é composto a
+            # partir dos radares e é montado agora, como a manchete.
+            "coletado_em": agora.isoformat(),
+            "fonte": "composto",
         }
 
         resp["consultor"] = {
