@@ -379,6 +379,19 @@
 {% endcall %}
 
 
+{% if confluencia and confluencia.acoes %}
+{% call painel("Em vários radares", 12, "Conta, para cada ação, quantos radares com coleta em dia a citam agora. Mínimo de 2 radares. Radares desatualizados (coleta com mais de 30 minutos durante o pregão) ou indisponíveis ficam de fora. Alguns radares medem coisas parecidas (as três exaustões, por exemplo) e podem citar a mesma ação pelo mesmo motivo: o número de radares não é uma probabilidade nem uma recomendação.", "os radares desta aba", confluencia.horario_texto, "visao-micro alertas painel-confluencia") %}
+    <ul class="confluencia">
+        {% for linha in confluencia.acoes %}
+        <li><span class="confluencia-tk">{{ linha.ticker }}</span> <span class="confluencia-n">{{ linha.radares|length }} radares</span> <span class="confluencia-nomes">{{ linha.radares|join(' · ') }}</span></li>
+        {% endfor %}
+        {% if confluencia.excedentes %}<li class="confluencia-resto">{{ confluencia.texto_excedentes }}</li>{% endif %}
+    </ul>
+    <div class="confluencia-lidos">de {{ confluencia.lidos }} radares lidos agora</div>
+    {% if not confluencia.horario_texto %}<div class="rodape">Fonte os radares desta aba</div>{% endif %}
+{% endcall %}
+{% endif %}
+
 {% if radares.secao %}
 <section class="painel span-12 visao-micro alertas aviso-vazio" aria-labelledby="titulo-sem-alertas">
     <div class="cab"><h2 id="titulo-sem-alertas">Sem alertas</h2></div>

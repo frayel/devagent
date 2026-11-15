@@ -8,7 +8,7 @@ lista vazia é "sem alertas"; o resto é card com alertas.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from app.services import carimbo
@@ -113,4 +113,82 @@ def resumo(
         "outros": outros,
         "mostrar_vazios": mostrar_vazios,
         "secao": bool(sem_alertas or outros),
+    }
+
+
+MINIMO_CONFLUENCIA = 2
+MAX_LINHAS_CONFLUENCIA = 10
+
+
+def _ticker(item: Any) -> str | None:
+    """Ticker normalizado: sem espaços, maiúsculo, sem o sufixo `.SA`."""
+    bruto = _campo(item, "ticker")
+    if not isinstance(bruto, str):
+        return None
+    ticker = bruto.strip().upper()
+    if ticker.endswith(".SA"):
+        ticker = ticker[:-3]
+    return ticker or None
+
+
+def _utc(ts: datetime) -> datetime:
+    return ts if ts.tzinfo is not None else ts.replace(tzinfo=timezone.utc)
+
+
+def _texto_excedentes(resto: list[dict[str, Any]]) -> str:
+    """`+N ações em K radares` para as linhas que passam do limite."""
+    if not resto:
+        return ""
+    contagens = sorted({len(linha["radares"]) for linha in resto})
+    radares = (
+        f"{contagens[0]} radares"
+        if len(contagens) == 1
+        else f"{contagens[0]} a {contagens[-1]} radares"
+    )
+    acoes = "ação" if len(resto) == 1 else "ações"
+    return f"+{len(resto)} {acoes} em {radares}"
+
+
+def confluencia(
+    contexto: dict[str, Any], agora: datetime, is_historical: bool
+) -> dict[str, Any]:
+    """As ações citadas por 2 ou mais radares com coleta em dia (spec 155).
+
+    Conta citações; não pesa radares nem recomenda. Radar desatualizado ou
+    indisponível fica fora da contagem e de `lidos`.
+    """
+    citacoes: dict[str, list[str]] = {}
+    horarios: dict[str, datetime | None] = {}
+    lidos = 0
+    for chave, nome, campo in RADARES:
+        payload = contexto.get(chave)
+        estado, ts = classificar(payload, chave, agora, is_historical)
+        if estado in (COM_ALERTAS, SEM_ALERTAS):
+            lidos += 1
+        if estado != COM_ALERTAS:
+            continue
+        horarios[nome] = ts
+        tickers = {_ticker(item) for item in (_campo(payload, campo) or [])}
+        for ticker in tickers:
+            if ticker:
+                citacoes.setdefault(ticker, []).append(nome)
+
+    linhas = sorted(
+        (
+            {"ticker": ticker, "radares": nomes}
+            for ticker, nomes in citacoes.items()
+            if len(nomes) >= MINIMO_CONFLUENCIA
+        ),
+        key=lambda linha: (-len(linha["radares"]), linha["ticker"]),
+    )
+    citados = {nome for linha in linhas for nome in linha["radares"]}
+    carimbos = [_utc(ts) for nome in citados if (ts := horarios.get(nome))]
+    resto = linhas[MAX_LINHAS_CONFLUENCIA:]
+    return {
+        "acoes": linhas[:MAX_LINHAS_CONFLUENCIA],
+        "excedentes": len(resto),
+        "texto_excedentes": _texto_excedentes(resto),
+        "lidos": lidos,
+        "horario": min(carimbos) if carimbos else None,
+        "horario_texto": carimbo.formatar(min(carimbos)) if carimbos else "",
     }

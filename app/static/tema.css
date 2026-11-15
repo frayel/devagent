@@ -652,6 +652,25 @@ td.barra i { width: var(--barra-w); }
   cursor: pointer;
 }
 .form-vazios button:focus-visible { outline: 2px solid var(--texto); outline-offset: 2px; }
+.confluencia {
+  list-style: none;
+  margin: 0 0 var(--e2) 0;
+  padding: 0;
+}
+.confluencia li {
+  display: grid;
+  grid-template-columns: 6rem 6rem 1fr;
+  gap: var(--e1) var(--e3);
+  padding: var(--e1) 0;
+  border-bottom: 1px solid var(--borda);
+}
+.confluencia-tk { font-weight: 600; }
+.confluencia-n { color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.confluencia-nomes { color: var(--texto-2); overflow-wrap: anywhere; }
+.confluencia li.confluencia-resto { display: block; color: var(--texto-3); font-size: var(--fs-meta); }
+.confluencia-lidos { font-size: var(--fs-meta); color: var(--texto-3); margin-bottom: var(--e2); }
 @media (max-width: 767px) {
   .radares-sem-alerta { grid-template-columns: 1fr; }
+  .confluencia li { grid-template-columns: auto 1fr; }
+  .confluencia-nomes { grid-column: 1 / -1; }
 }
