@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Feat: o rodapé mostra o que mudou no painel e onde conferir (spec 156). Nova página `/novidades` com as mudanças visíveis dos últimos 60 dias, agrupadas por dia, com selo (Novidade, Melhoria, Correção), texto em linguagem de usuário e `Onde ver:` com link que abre a aba certa (`/?aba=alertas`, lido pelo `ui.js`). O rodapé de todas as páginas ganha `Novidades · atualizado em DD/MM/AAAA`. O texto vem de `app/novidades.json`, escrito à mão, com a carga de 13/11 a 15/11/2026. `/api/snapshot` publica `novidades` no topo. Arquivo ausente ou inválido não derruba página. Novo `tests/test_aceite_156.py`, que também cobra a entrada de toda entrega visível a partir da 156.
 - Fix: três defeitos da página `/sistema`.
   - O Yahoo Finance aparecia como *Inativo* quando só não era chamado porque o MetaTrader 5 atendia as cotações primeiro. Agora aparece como OK, "reserva · sem chamada: o MetaTrader 5 respondeu". O detalhe lembra que ele segue em uso como plano B, como segunda fonte das variações extremas e como referência da auditoria.
   - O "(desde 09/11 00:35)" ficava preso nos itens das integrações, mesmo os OK. O monitor montava a página sem os dados desta instância (fontes, banco e coleta vazios), via todas as integrações como inativas e gravava esse "desde". Agora o monitor só reavalia os grupos do GitHub, `estado_do_sistema()` reavalia os locais com os dados reais, e item OK não mostra "desde". Um "desde" errado podia promover uma atenção nova a problema na hora, pela regra das 24 h do `devagent/saude.py`.

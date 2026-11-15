@@ -12,6 +12,12 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Capacidade nova] Spec 156 - O rodapé mostra o que mudou no painel e onde conferir:
+  - `app/novidades.json`: entradas escritas à mão (data, tipo `novidade`/`melhoria`/`correcao`, texto para o usuário, `onde` opcional com aba ou página, `spec` ou `pr`), da mais nova para a mais antiga. Carga inicial de 13/11 a 15/11/2026 (141 a 147, 149 a 151, 155, 156 e #836). **Toda entrega visível acrescenta a sua entrada no mesmo PR**; `tests/test_aceite_156.py` reprova spec `done` a partir da 156, das gavetas capacidade nova ou experiência, sem entrada.
+  - `app/services/novidades.py`: lê o arquivo a cada chamada (`CAMINHO` e `hoje()` substituíveis no teste), janela de 60 dias no fuso `America/Sao_Paulo`; arquivo ausente ou inválido vira "indisponível" e um log por processo.
+  - `app/templates/base.html`: rodapé com `Novidades · atualizado em DD/MM/AAAA` (maior data do arquivo) acima do aviso legal; some sem entradas. Nova página `/novidades` (`app/templates/novidades.html`) com selos por tipo e `Onde ver:`.
+  - `app/static/ui.js`: `/?aba=<data-aba>` abre a aba na página inicial; valor desconhecido mantém a Visão Geral.
+  - `/api/snapshot`: chave de topo `novidades` (fora de `paineis`), igual em qualquer `?data=`.
 - [Capacidade nova] Spec 155 - As ações que vários radares apontam ao mesmo tempo:
   - `app/services/radares.py`: `confluencia(contexto, agora, is_historical)` conta, por ação (ticker sem espaço, maiúsculo, sem `.SA`), quantos radares em `com_alertas` a citam; mínimo de 2, até 10 linhas e `+N ações em K radares`; `lidos` conta os radares frescos; `horario` é a coleta mais antiga entre os radares citados (`ts` sem fuso tratado como UTC).
   - `app/main.py`: a montagem dos 20 payloads de `RADARES` sai de `index()` para `_payloads_radares()`, usada também pelo `/api/snapshot` (`paineis.confluencia_radares`). De quebra, `formatar_data` deixa de existir só quando havia Concentração de Ordens: sem ela, as Exaustões de Alta e de Queda caíam em `NameError` silencioso e apareciam indisponíveis.

@@ -1,7 +1,7 @@
 ---
 id: 156
 titulo: O rodapé mostra o que mudou no painel e onde conferir
-status: ready
+status: done
 esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_156.py

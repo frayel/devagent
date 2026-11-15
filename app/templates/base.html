@@ -77,7 +77,11 @@
     </main>
 
     <footer>
-        Conteúdo informativo gerado automaticamente. Não constitui recomendação de investimento.
+        {%- set novidades_em = novidades_atualizado_em() if novidades_atualizado_em is defined else none %}
+        {%- if novidades_em %}
+        <a href="/novidades" class="rodape-novidades">Novidades · atualizado em {{ novidades_em }}</a>
+        {%- endif %}
+        <p class="aviso-legal">Conteúdo informativo gerado automaticamente. Não constitui recomendação de investimento.</p>
     </footer>
 
 </body>
