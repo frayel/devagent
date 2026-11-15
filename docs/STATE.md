@@ -12,6 +12,9 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Experiência] Spec 151 - A inflexão aparece uma vez só:
+  - `app/templates/index.html`: sai o card "Inflexão de Tendência" (aba Rankings), que lia o mesmo `radar_inflexao` do "Radar de Inflexão". Fica só este, na aba Alertas, com queda acumulada e variação de hoje; o ⓘ publica os cortes (−5% e +2%), a janela de 16 fechamentos (índices −16, −2 e −1) e o teto de cinco nomes. Lista vazia vai para a seção "Sem alertas" da spec 150.
+  - Testes de aceite em `tests/test_aceite_151.py`.
 - [Experiência] Spec 150 - Radar sem sinal não ocupa um card:
   - `app/services/radares.py`: os 20 radares da aba Alertas classificados em com alertas, sem alertas, desatualizado (`carimbo.desatualizado`, TTL padrão de 30 min, só no pregão e fora de data histórica) ou indisponível; dá a classe de cada card e a lista da seção.
   - `app/templates/index.html`: a seção "Sem alertas" lista os nomes, os indisponíveis e os desatualizados, com o botão "Mostrar vazios" (`?vazios=1`). Cards vazios levam `radar-vazio`.
@@ -323,7 +326,7 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
   - Banco de dados SQLite (`radar_inflexao_cache`).
   - Coletor buscando fechamentos dos últimos 15 dias para ações via `yfinance`.
   - Cálculo de ações que caíram >5% nos últimos 15 dias, mas hoje revertem com alta >2%.
-  - Exibição de painel "Inflexão de Tendência" na página inicial e via `/api/snapshot`.
+  - Exibição do painel "Radar de Inflexão" na aba Alertas e via `/api/snapshot` (o card duplicado "Inflexão de Tendência" saiu na spec 151).
 - Spec 039 (Índice de Esforço vs Resultado):
   - Tabela `esforco_resultado_cache` no banco de dados SQLite.
   - Coletor com yfinance (chart v8) buscando volume e cotações (close vs open) diários de 1 mês.
