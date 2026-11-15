@@ -266,3 +266,39 @@ def test_revisao_exige_conferencia_no_corpo(repo: Path) -> None:
     corpo = "Tamanho: 2 arquivos\nJá no código: não"
     falhas = conferir(repo, "base", True, titulo="revisão: 001", corpo=corpo).falhas
     assert not any("Tamanho:" in f for f in falhas)
+
+
+def test_pr_do_agente_pelo_marcador_mesmo_com_login_de_pessoa() -> None:
+    # As sessões abrem PR com o login do dono do repositório: de 13/11 a 15/11
+    # nenhum PR do agente foi reconhecido como tal.
+    marcado = "texto\n<!-- devagent:raia:revisao -->\n"
+    assert raias.pr_do_agente("frayel", marcado)
+    assert raias.pr_do_agente("antigravity[bot]", "")
+    assert not raias.pr_do_agente("frayel", "PR escrito à mão")
+    assert not raias.pr_do_agente("frayel", None)
+
+
+def test_regra_8_vale_para_pr_marcado_do_login_do_dono(
+    repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(conferir_pr, "autor_do_pr", lambda: "frayel")
+    (repo / "docs/specs/001-a.md").write_text("---\nstatus: ready\nrevisada: x\n---\n")
+    marcado = "<!-- devagent:raia:desenvolvimento -->"
+    falhas = conferir(repo, "base", True, titulo="feat: x", corpo=marcado).falhas
+    # O desenvolvimento não edita texto de spec (ADR 023): marcado, reprova.
+    assert any("ADR 023" in f for f in falhas)
+    # Sem marcador, o mesmo PR é de pessoa e fica fora da regra 8 (ADR 024).
+    falhas = conferir(repo, "base", True, titulo="feat: x", corpo="à mão").falhas
+    assert not any("ADR 023" in f for f in falhas)
+
+
+def test_estado_github_conta_o_pr_marcado_como_do_agente() -> None:
+    from devagent import estado_github
+
+    pr = {
+        "title": "feat: x",
+        "user": {"login": "frayel"},
+        "body": "<!-- devagent:raia:desenvolvimento -->",
+    }
+    assert estado_github.eh_do_agente(pr)
+    assert not estado_github.eh_do_agente({**pr, "body": "à mão"})

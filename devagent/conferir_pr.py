@@ -67,9 +67,9 @@ from devagent.raias import (
     PASTA_VERIFICACAO,
     REVISAO,
     VERIFICACAO,
-    do_agente,
     edicao_de_spec_proibida,
     fora_da_raia,
+    pr_do_agente,
     raia_declarada,
     raia_do_titulo,
     spec_nova_fora_do_alvo,
@@ -299,10 +299,13 @@ def conferir(
         )
 
     # Regra 8: cada raia escreve só na sua faixa. PR de pessoa (o dono do
-    # produto) não é de raia nenhuma e fica de fora (ADR 024).
+    # produto) não é de raia nenhuma e fica de fora (ADR 024). PR do agente é
+    # o de login conhecido ou o que declara a raia no corpo: as sessões abrem
+    # PR com o login do dono do repositório (raias.pr_do_agente).
     titulo = titulo_do_pr() if titulo is None else titulo
+    corpo = corpo_do_pr() if corpo is None else corpo
     autor = autor_do_pr()
-    if autor and not do_agente(autor):
+    if autor and not pr_do_agente(autor, corpo):
         titulo = ""
     if titulo and alterados:
         raia = raia_do_titulo(titulo)
@@ -335,7 +338,6 @@ def conferir(
                         "de revisão. O único toque permitido é mudar `status:` "
                         "para `done` ao entregar (ADR 023). Tire a spec do PR."
                     )
-        corpo = corpo_do_pr() if corpo is None else corpo
         conferir_raia_declarada(res, raia, corpo)
         specs_mudadas = sorted(
             a for a in alterados if a.startswith(PASTA_SPECS) and a.endswith(".md")
