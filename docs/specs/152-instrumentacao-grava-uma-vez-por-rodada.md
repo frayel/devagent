@@ -5,6 +5,7 @@ status: ready
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_152.py
+revisada: 2026-11-15
 ---
 
 ## Problema
@@ -20,7 +21,7 @@ Hoje, para cada coletor que roda, `_coletar` (`app/agendador.py`, perto da linha
 
 ## Comportamento esperado
 - `_coletar` acumula em memória, durante a rodada, a duração de cada coletor que terminou (`tempos`) e a lista dos que voltaram vazios (`vazias`), exatamente nos mesmos pontos onde hoje chama `save_coleta_tempo` e `save_coleta_vazia`.
-- No fim do laço, num `finally` (para a rodada interrompida por exceção também registrar o que já mediu), uma nova função `app.database.gravar_instrumentacao_rodada(tempos, vazias, timestamp)` faz **uma** leitura e **uma** gravação do snapshot `instrumentacao` do dia (data em BRT do `timestamp`). Falha ao gravar só gera `logger.exception`, como hoje; a rodada não morre.
+- No fim do laço, num `finally` (para a rodada interrompida por exceção também registrar o que já mediu), uma nova função `app.database.gravar_instrumentacao_rodada(tempos, vazias, timestamp)` faz **uma** leitura e **uma** gravação do snapshot `instrumentacao` do dia (data em BRT do `timestamp`); com `tempos` e `vazias` vazios, não faz nenhuma. Falha ao gravar só gera `logger.exception`, como hoje; a rodada não morre.
 - A fusão no payload é a mesma de hoje, aplicada de uma vez:
   - `tempos[painel] = duração` (substitui a anterior);
   - `rodadas[painel] += 1` para cada painel em `tempos`;
@@ -54,8 +55,9 @@ Idas ao banco para a instrumentação: hoje 3 × 2 + 1 × 2 = **8**; depois, **2
 Se a rodada passa da meia-noite em BRT, tudo vai para o dia do `timestamp` do fim da rodada. Hoje cada coletor iria para o dia em que terminou; a diferença só existe na rodada das 0h, fora do pregão, e é aceitável.
 
 ## Critérios de aceite
-- [ ] `tests/test_aceite_152.py`, com `exigir_spec_done("152")`, roda `_coletar` com três coletores falsos (dois ok, um devolvendo `False`) e `ler_snapshot`/`gravar_snapshot` espionados: **exatamente 1** leitura e **1** gravação do painel `instrumentacao` na rodada inteira.
-- [ ] O mesmo teste, partindo do payload "antes" da seção *Cálculos* e com as durações do exemplo, confere o payload "depois" campo a campo.
+- [ ] `tests/test_aceite_152.py`, com `exigir_spec_done("152")`, roda `_coletar` com três coletores falsos (dois ok, um devolvendo `False`) e `ler_snapshot`/`gravar_snapshot` espionados: **exatamente 1** leitura e **1** gravação do painel `instrumentacao` na rodada inteira. Como a lista de coletores de `_coletar` é fixa no código, o teste isola os três trocando `importlib.import_module` por um falso que devolve os três coletores do exemplo (`ibovespa`, `mare`, `highlights`) e levanta exceção para todos os outros (coletor que levanta não registra nada, como hoje), e fixa `calendario.mercado_aberto` em `True` para a janela `pregao` rodar. Leituras de outros painéis (as de partida a frio) não entram na contagem.
+- [ ] Partindo do payload "antes" da seção *Cálculos* num SQLite temporário, `gravar_instrumentacao_rodada({"ibovespa": 2.0, "mare": 1.5, "highlights": 59.0}, ["mare"], timestamp)` deixa o payload "depois" campo a campo. A chamada é direta, para as durações serem exatas (as de `_coletar` vêm do `perf_counter`).
+- [ ] `gravar_instrumentacao_rodada({}, [], timestamp)` (rodada em que nenhum coletor terminou) não lê nem grava o snapshot.
 - [ ] Um coletor que levanta exceção no meio da rodada não impede a gravação dos tempos dos que já terminaram (1 gravação, sem o painel que falhou em `tempos`).
 - [ ] `gravar_instrumentacao_rodada` com `gravar_snapshot` levantando exceção não propaga a exceção para `_coletar`.
 - [ ] `tests/test_instrumentacao_coleta_tempo.py` passa a ter `assert` de verdade: `save_coleta_tempo("teste_painel", 1.234, agora)` resulta em `tempos["teste_painel"] == 1.234` e `rodadas["teste_painel"] == 1` no snapshot do dia (SQLite temporário). É reforço, nunca afrouxamento.
