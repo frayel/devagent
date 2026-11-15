@@ -23,4 +23,4 @@ Use no Passo 7. O objetivo é sair do óbvio: o que todo produto do mesmo tipo j
 
 - Confira as regras de coleta e as exigências de transparência do `PRODUTO.md`: ideia boa com fonte proibida não serve.
 - Uma ideia que exige infraestrutura nova (banco, fila, LLM, serviço pago) é válida: registre o custo e proponha a infraestrutura numa spec própria ou num ADR.
-- Registre no backlog também as ideias descartadas, com o motivo. Uma ideia que não servia hoje pode servir quando o sistema tiver mais dados.
+- Registre no relatório as ideias descartadas, com o motivo. No backlog, só entra na seção *Descartadas* (uma linha) a que alguém poderia propor de novo; a que depende de fonte que não existe vai para *Estacionadas*, no tema dela.

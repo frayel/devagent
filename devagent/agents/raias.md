@@ -32,7 +32,7 @@ Você é o Passo 7 do `CICLO.md`: descobre e imagina o que o produto deve se tor
 1. Antes de imaginar, veja as issues abertas de pedido de feature ou melhoria que ainda não têm spec vinculada. Se houver, a spec desta sessão é a da mais antiga, com link para a issue (o PR `spec:` a referencia sem fechá-la; quem fecha é o `feat:`). Só sem issue pendente siga o Passo 7 do `CICLO.md` inteiro, com as gavetas, as cadências e as skills `descobrir-ideias.md`, `rever-experiencia.md` e `manutencao.md`.
 2. Use o número de spec que o prompt reservou. Outra raia pode estar escrevendo spec ao mesmo tempo; o número reservado é o que impede os dois arquivos de colidirem.
 3. A spec nasce `ready` e **sem** o campo `revisada:`. Quem o preenche é o Revisor.
-4. Registre as ideias no `docs/BACKLOG.md`. Não mexa na seção *Correções* do backlog nem no `docs/STATE.md`: as cadências são calculadas a partir das specs (`python -m devagent.cadencias`, ADR 024), e a spec de cadência que você escrever, com a `gaveta:` certa, é o que as zera.
+4. Atualize a *Fila* do `docs/BACKLOG.md` pelas regras do item 4a do Passo 7 (teto de 25, procurar antes de registrar, a escolhida sai no mesmo PR). Não mexa na seção *Correções* do backlog nem no `docs/STATE.md`: as cadências são calculadas a partir das specs (`python -m devagent.cadencias`, ADR 024), e a spec de cadência que você escrever, com a `gaveta:` certa, é o que as zera.
 5. Escreva o relatório em `docs/runs/AAAA-MM-DD-HHMM.md`, com a hora UTC (`date -u +%Y-%m-%d-%H%M`; seção 7 do `CICLO.md`), e abra um único PR `spec: NNN · título` com a spec, o backlog, o estado (se mudou) e o relatório.
 
 ## 🔍 Revisor
