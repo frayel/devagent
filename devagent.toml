@@ -51,3 +51,6 @@ aceite_obrigatorio_desde = "084"
 # A partir desta spec, o desenvolvimento só implementa a spec depois que a raia
 # de revisão a marca com `revisada:` no cabeçalho (ADR 021 do núcleo).
 revisao_obrigatoria_desde = "084"
+# A partir desta spec, spec nova de PR `spec:` declara `origem:` e o item da
+# Fila do backlog de onde veio sai no mesmo PR (regra 10 do devagent/conferir_pr.py).
+origem_obrigatoria_desde = "161"
