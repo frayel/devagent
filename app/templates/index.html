@@ -99,7 +99,7 @@
         {% if apetite_risco %}
         <div class="texto-centro">
             {% set apetite_class = 'texto-alta' if apetite_risco.estado == 'Tomando risco' else 'texto-baixa' if apetite_risco.estado == 'Defensivo' else 'texto-neutro' %}
-            {% set apetite_valor = ('<span class="' ~ apetite_class ~ ' texto-medio">' ~ apetite_risco.estado ~ '</span>') | safe %}
+            {% set apetite_valor = ('<span class="' | safe) ~ apetite_class ~ (' texto-medio">' | safe) ~ apetite_risco.estado ~ ('</span>' | safe) %}
             {% set apetite_rotulo = 'Apetite a Risco <span class="sub bloco">(SMLL - IBOV)</span>' | safe %}
             {{ kpi(apetite_valor, apetite_rotulo, gauge(apetite_risco.diferenca, "SMLL − IBOV hoje", -2.0, 2.0, "{:+.2f} p.p.", divergente=True, resumo="Small caps menos Ibovespa hoje", escala=False), True) }}
         </div>
@@ -108,7 +108,7 @@
         {% if rotacao_capital %}
         <div class="texto-centro">
             {% set rotacao_class = 'texto-alta' if rotacao_capital.estado == 'Para Bancos' or rotacao_capital.estado == 'Para Commodities' else 'texto-neutro' %}
-            {% set rotacao_valor = ('<span class="' ~ rotacao_class ~ ' texto-medio">' ~ rotacao_capital.estado ~ '</span>') | safe %}
+            {% set rotacao_valor = ('<span class="' | safe) ~ rotacao_class ~ (' texto-medio">' | safe) ~ rotacao_capital.estado ~ ('</span>' | safe) %}
             {% set rotacao_rotulo = 'Rotação <span class="sub bloco">(Bancos - Cmdts)</span>' | safe %}
             {{ kpi(rotacao_valor, rotacao_rotulo, gauge(rotacao_capital.diferenca, "bancos − commodities", -3.0, 3.0, "{:+.2f} p.p.", divergente=True, resumo="Variação de bancos menos commodities hoje", escala=["Para Commodities", "Para Bancos"]), True) }}
         </div>
@@ -200,7 +200,7 @@
     <div class="duas">
       {% if concentracao_setorial.variacao_media <= 0 %}
         <div class="kpi-container alinha-centro">
-          {{ kpi("Nenhum setor em alta", "", ('<p class="sub">Melhor média: ' ~ concentracao_setorial.setor_destaque ~ ', ' ~ ("%.2f"|format(concentracao_setorial.variacao_media)).replace('.', ',') ~ '%</p>') | safe) }}
+          {{ kpi("Nenhum setor em alta", "", ('<p class="sub">Melhor média: ' | safe) ~ concentracao_setorial.setor_destaque ~ ', ' ~ ("%.2f"|format(concentracao_setorial.variacao_media)).replace('.', ',') ~ ('%</p>' | safe)) }}
         </div>
       {% else %}
         <div class="kpi-container alinha-centro">
@@ -220,7 +220,7 @@
           {% endif %}
       {% endset %}
       <div class="kpi-container alinha-centro">
-        {{ kpi(concentracao_setorial.get('setor_lider_volume', 'N/A') or 'N/A', "Maior volume (R$)", (volume_str | safe)) }}
+        {{ kpi(concentracao_setorial.get('setor_lider_volume', 'N/A') or 'N/A', "Maior volume (R$)", volume_str) }}
       </div>
     </div>
   {% endif %}
@@ -915,11 +915,11 @@
     {% else %}
         {% set linhas = [] %}
         {% for a in armadilha_abertura.alertas %}
-            {% set val = ('<span>R$ ' ~ (('%.2f' | format(a.preco_atual)) | replace('.', ',')) ~ '</span>') %}
+            {% set val = ('<span>R$ ' | safe) ~ (('%.2f' | format(a.preco_atual)) | replace('.', ',')) ~ ('</span>' | safe) %}
             {% set _ = linhas.append([
                 {'tk': True, 'conteudo': a.ticker},
                 {'conteudo': 'Gap Trap'},
-                {'conteudo': val | safe, 'num': True}
+                {'conteudo': val, 'num': True}
             ]) %}
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Padrão'}, {'titulo': 'Preço', 'num': True}], 'armadilha-abertura') }}
