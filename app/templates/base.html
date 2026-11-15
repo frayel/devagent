@@ -31,7 +31,7 @@
             {% if is_historical %}
             <div class="alerta-historico">
                 Você está vendo o fechamento de {{ data_referencia.strftime('%d/%m/%Y') }}
-                <a href="{{ caminho }}">Voltar para hoje</a>
+                <a class="voltar-hoje" href="{{ caminho }}">Voltar para hoje</a>
             </div>
             {% endif %}
             {% if data_invalida %}
@@ -39,7 +39,7 @@
             {% endif %}
             {% if datas_seletor %}
             <form method="get" class="form-inline">
-                <select class="seletor-data" name="data" aria-label="Selecionar pregão" onchange="this.form.submit()" {% if datas_seletor|length == 1 %}disabled{% endif %}>
+                <select class="seletor-data" name="data" aria-label="Selecionar pregão" {% if datas_seletor|length == 1 %}disabled{% endif %}>
                     {% for d_val, d_rotulo in datas_seletor %}
                     <option value="{{ d_val }}" {% if data_referencia and data_referencia.strftime('%Y-%m-%d') == d_val %}selected{% endif %}>
                         {% if datas_seletor|length == 1 %}
@@ -50,6 +50,8 @@
                     </option>
                     {% endfor %}
                 </select>
+                {#- A aba aberta vai junto na troca de data; o ui.js preenche (issue 883). -#}
+                <input type="hidden" name="aba" disabled>
                 <noscript><button type="submit">Ver</button></noscript>
             </form>
             {% endif %}

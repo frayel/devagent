@@ -73,7 +73,8 @@ def test_get_index_seletor(mock_snapshots):
     assert '<select class="seletor-data"' in html
     assert 'name="data"' in html
     assert '<form method="get"' in html
-    assert 'onchange="this.form.submit()"' in html
+    # A troca de data é do ui.js: a CSP bloqueia evento inline (issue 883).
+    assert "onchange=" not in html
     assert "hx-get=" not in html.split('<select class="seletor-data"')[1].split(">")[0]
 
     # 6 options
