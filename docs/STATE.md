@@ -12,6 +12,11 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Poda] Spec 153 - A página /sistema aponta os candidatos à poda:
+  - `app/banco.py`: `ler_snapshots_datas(painel, datas)` lê o payload de várias datas numa só consulta (`IN (...)`), nos dois backends; lista vazia e banco inacessível devolvem `{}`.
+  - `app/services/sistema.py`: `ultimos_pregoes(agora, n=10)` e `verificar_candidatos_poda(historico, pregoes)`, que aplica o critério do `PRODUTO.md` (R ≥ 10 coletas e 2 × V > R) sobre o snapshot `instrumentacao` dos 10 últimos pregões fechados. Novo item "Candidatos à poda" no grupo Coleta, logo depois de "Painéis sem dados": `ok` com histórico curto ou sem candidato, `atencao` (que não envelhece) com a lista `painel (V de R, P%)`.
+  - `app/main.py`: `estado_do_sistema()` lê a janela uma vez e passa `historico_poda` a `montar`.
+  - Testes de aceite em `tests/test_aceite_153.py`.
 - [Saúde técnica] Spec 152 - A instrumentação da coleta grava uma vez por rodada:
   - `app/agendador.py`: `_coletar` acumula em memória a duração de cada coletor (`tempos`) e os que voltaram vazios (`vazias`) e, num `finally`, chama `gravar_instrumentacao_rodada` uma vez; falha ao gravar só vai para o log.
   - `app/database.py`: `gravar_instrumentacao_rodada(tempos, vazias, timestamp)` faz 1 leitura e 1 gravação do snapshot `instrumentacao` do dia (nenhuma, sem medidas). `save_coleta_tempo` e `save_coleta_vazia` viram atalhos de um painel. Rodada de pregão: de cerca de 84 idas ao banco só para instrumentação para 2. Payload e `/api/sistema` não mudam.

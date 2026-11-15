@@ -570,6 +570,51 @@ def listar_datas(painel: str, limite: int = 10) -> list[str]:
         conn.close()
 
 
+def ler_snapshots_datas(painel: str, datas: list[date]) -> dict[date, dict]:
+    """Payload de `painel` em cada uma das `datas`, numa só consulta (spec 153).
+
+    Datas sem snapshot não aparecem. Não filtra por `estado`. Lista vazia ou
+    banco inacessível devolvem `{}`.
+    """
+    if not datas:
+        return {}
+    try:
+        init_db()
+        conn, backend = get_connection()
+    except DBInacessivelError:
+        return {}
+    try:
+        if backend == "postgres":
+            marcas = ", ".join(["%s"] * len(datas))
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    f"SELECT data_referencia, payload FROM snapshots_paineis WHERE painel = %s AND data_referencia IN ({marcas})",
+                    (painel, *datas),
+                )
+                rows = cursor.fetchall()
+        else:
+            marcas = ", ".join(["?"] * len(datas))
+            cursor = conn.cursor()
+            cursor.execute(
+                f"SELECT data_referencia, payload FROM snapshots_paineis WHERE painel = ? AND data_referencia IN ({marcas})",
+                (painel, *[str(d) for d in datas]),
+            )
+            rows = cursor.fetchall()
+    finally:
+        conn.close()
+    resultado: dict[date, dict] = {}
+    for data_ref, payload in rows:
+        if isinstance(data_ref, datetime):
+            data_ref = data_ref.date()
+        elif not isinstance(data_ref, date):
+            data_ref = date.fromisoformat(str(data_ref)[:10])
+        if not isinstance(payload, dict):
+            payload = json.loads(payload)
+        if isinstance(payload, dict):
+            resultado[data_ref] = payload
+    return resultado
+
+
 def gravar_serie(ticker: str, barras: list[dict]):
     if not barras:
         return
