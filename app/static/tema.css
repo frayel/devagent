@@ -627,3 +627,31 @@ td.barra i { width: var(--barra-w); }
 .checagem-causa-acao {
   margin-top: 4px;
 }
+
+/* Seção "Sem alertas" da aba Alertas (spec 150) */
+.radares-sem-alerta {
+  list-style: none;
+  margin: 0 0 var(--e3) 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--e1) var(--e4);
+  font-size: var(--fs-meta);
+  color: var(--texto-2);
+}
+.radares-sem-alerta li { overflow-wrap: anywhere; }
+.form-vazios button {
+  background: var(--superficie-2);
+  color: var(--texto);
+  border: 1px solid var(--borda);
+  border-radius: 4px;
+  padding: var(--e1) var(--e3);
+  font: inherit;
+  font-size: var(--fs-meta);
+  min-height: 32px;
+  cursor: pointer;
+}
+.form-vazios button:focus-visible { outline: 2px solid var(--texto); outline-offset: 2px; }
+@media (max-width: 767px) {
+  .radares-sem-alerta { grid-template-columns: 1fr; }
+}
