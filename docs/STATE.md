@@ -12,6 +12,11 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Experiência] Spec 150 - Radar sem sinal não ocupa um card:
+  - `app/services/radares.py`: os 20 radares da aba Alertas classificados em com alertas, sem alertas, desatualizado (`carimbo.desatualizado`, TTL padrão de 30 min, só no pregão e fora de data histórica) ou indisponível; dá a classe de cada card e a lista da seção.
+  - `app/templates/index.html`: a seção "Sem alertas" lista os nomes, os indisponíveis e os desatualizados, com o botão "Mostrar vazios" (`?vazios=1`). Cards vazios levam `radar-vazio`.
+  - Os payloads dos radares levam o `timestamp` bruto; o `/api/snapshot` remove o campo da anomalia de fechamento para não mudar o JSON.
+  - Testes de aceite em `tests/test_aceite_150.py`.
 - Núcleo sem o legado do Jules (pedido do dono, depois dos ADRs 032 e 033):
   - Removidos `devagent/adaptadores/jules.py`, `.github/workflows/jules.yml` e `.github/workflows/auditoria-llm.yml`; o CI não lê mais `JULES_API_KEY`.
   - A regra 8 do `conferir_pr` confere a raia do título contra o marcador `<!-- devagent:raia:<nome> -->` do corpo, sem consulta externa; saiu o caminho pela sessão do Jules (`raia_da_sessao`, `TAREFA_NO_CORPO`).

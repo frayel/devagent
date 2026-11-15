@@ -18,4 +18,5 @@ def get_armadilha_abertura_view():
         "alertas": alertas,
         "fonte": getattr(data, "fonte", "yfinance"),
         "time": data.timestamp.astimezone(brt).strftime("%d/%m/%Y %H:%M:%S BRT"),
+        "timestamp": data.timestamp,
     }

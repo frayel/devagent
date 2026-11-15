@@ -35,6 +35,7 @@ from app.services.manchete import gerar_manchete
 from app.database import get_latest_highlights_data, get_latest_apetite_risco_data
 from app.services.highlights import get_highlights_view_data
 from app.services.volume_alerts import get_volume_alerts_view_data
+from app.services import radares as radares_servico
 from app.services.dolar_correlation import get_dolar_correlation_view_data
 from app.services.sensibilidade_juros import get_sensibilidade_juros_view_data
 from app.services.forca_relativa import get_forca_relativa_view_data
@@ -1695,7 +1696,10 @@ def snapshot(
 
         anomalia_fechamento = get_radar_anomalia_fechamento_view()
         if anomalia_fechamento and "alertas" in anomalia_fechamento:
-            resp["paineis"]["anomalia_fechamento"] = anomalia_fechamento
+            # O horário bruto só serve à tela (spec 150); o JSON não muda.
+            resp["paineis"]["anomalia_fechamento"] = {
+                k: v for k, v in anomalia_fechamento.items() if k != "timestamp"
+            }
 
         elif is_historical:
             resp["paineis"]["anomalia_fechamento"] = None
@@ -1764,6 +1768,7 @@ def index(
     request: Request,
     data: str | None = Query(default=None, alias="data"),
     data_str: str | None = None,
+    vazios: str | None = Query(default=None),
 ):
     target_data = data or data_str
     agora = datetime.now(timezone.utc)
@@ -1895,6 +1900,7 @@ def index(
                         timezone(timedelta(hours=-3))
                     ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                     "fonte": radar_data.fonte,
+                    "timestamp": radar_data.timestamp,
                     "alertas": alertas,
                 }
             except Exception:
@@ -1921,6 +1927,7 @@ def index(
                         timezone(timedelta(hours=-3))
                     ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                     "fonte": esforco_resultado_data.fonte,
+                    "timestamp": esforco_resultado_data.timestamp,
                     "alertas": alertas,
                 }
             except Exception:
@@ -1941,6 +1948,7 @@ def index(
                 "alertas": alertas,
                 "coletado_em": formatar_data(concentracao_ordens_data.timestamp),
                 "fonte": concentracao_ordens_data.fonte,
+                "timestamp": concentracao_ordens_data.timestamp,
             }
 
         exaustao_queda = None
@@ -1952,6 +1960,7 @@ def index(
                     "alertas": alertas,
                     "coletado_em": formatar_data(exaustao_queda_data.timestamp),
                     "fonte": getattr(exaustao_queda_data, "fonte", "yfinance"),
+                    "timestamp": exaustao_queda_data.timestamp,
                 }
             except Exception:
                 pass
@@ -1965,6 +1974,7 @@ def index(
                     "alertas": alertas,
                     "coletado_em": formatar_data(exaustao_alta_data.timestamp),
                     "fonte": getattr(exaustao_alta_data, "fonte", "yfinance"),
+                    "timestamp": exaustao_alta_data.timestamp,
                 }
             except Exception:
                 pass
@@ -1979,6 +1989,7 @@ def index(
                         timezone(timedelta(hours=-3))
                     ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                     "fonte": exaustao_tendencia_data.fonte,
+                    "timestamp": exaustao_tendencia_data.timestamp,
                     "alertas": alertas,
                 }
             except Exception:
@@ -1994,6 +2005,7 @@ def index(
                         timezone(timedelta(hours=-3))
                     ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                     "fonte": falso_rompimento_data.fonte,
+                    "timestamp": falso_rompimento_data.timestamp,
                     "alertas": alertas,
                 }
             except Exception:
@@ -2014,6 +2026,7 @@ def index(
                         timezone(timedelta(hours=-3))
                     ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                     "fonte": radar_absorcao_cruzada_data.fonte,
+                    "timestamp": radar_absorcao_cruzada_data.timestamp,
                     "alertas": alertas,
                 }
             except Exception:
@@ -2029,6 +2042,7 @@ def index(
                         timezone(timedelta(hours=-3))
                     ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                     "fonte": liquidez_abertura_data.fonte,
+                    "timestamp": liquidez_abertura_data.timestamp,
                     "alertas": alertas,
                 }
             except Exception:
@@ -2044,6 +2058,7 @@ def index(
                         timezone(timedelta(hours=-3))
                     ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                     "fonte": radar_divergencia_volume_data.fonte,
+                    "timestamp": radar_divergencia_volume_data.timestamp,
                     "alertas": alertas,
                 }
             except Exception:
@@ -2073,6 +2088,7 @@ def index(
                         timezone(timedelta(hours=-3))
                     ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                     "fonte": anomalias_spread_data.fonte,
+                    "timestamp": anomalias_spread_data.timestamp,
                 }
             except Exception:
                 pass
@@ -2088,6 +2104,7 @@ def index(
                         timezone(timedelta(hours=-3))
                     ).strftime("%d/%m/%Y %H:%M:%S BRT"),
                     "fonte": anomalias_spread_data.fonte,
+                    "timestamp": anomalias_spread_data.timestamp,
                 }
             except Exception:
                 pass
@@ -2118,69 +2135,69 @@ def index(
             except Exception:
                 pass
 
+        contexto = {
+            "datas_seletor": datas_seletor,
+            "data_invalida": data_invalida,
+            "datas_disponiveis": datas_disponiveis,
+            "is_historical": is_historical,
+            "estado_mercado": estado_mercado,
+            "data_referencia": data_ref,
+            "mercado_aberto": mercado_aberto,
+            "manchete": manchete,
+            "data": data_ibov,
+            "highlights": highlights,
+            "volume_alerts": volume_alerts,
+            "dolar_correlation": dolar_correlation,
+            "sensibilidade_juros": sensibilidade_juros,
+            "forca_relativa": forca_relativa,
+            "escudo_quedas": escudo_quedas,
+            "coesao": coesao,
+            "atrasadas_rally": atrasadas_rally,
+            "concentracao": concentracao,
+            "concentracao_vendedora": concentracao_vendedora,
+            "apetite_risco": apetite_risco,
+            "concentracao_setorial": concentracao_setorial,
+            "variacao_subita": variacao_subita,
+            "radar_anomalia_fechamento": radar_anomalia_fechamento,
+            "rotacao_capital": rotacao_capital,
+            "faca_caindo": faca_caindo,
+            "compradores_fundo": compradores_fundo,
+            "armadilha_abertura": armadilha_abertura,
+            "radar_inflexao": radar_inflexao,
+            "short_squeeze": short_squeeze,
+            "sobrevivencia_semanal": sobrevivencia_semanal,
+            "volatilidade_silenciosa": volatilidade_silenciosa,
+            "scanner_capitulacao": scanner_capitulacao.view_model(),
+            "anomalia_peso": anomalia_peso,
+            "radar_congestionamento": radar_congestionamento_data,
+            "esforco_resultado": esforco_resultado,
+            "radar_divergencia_volume": radar_divergencia_volume,
+            "falso_rompimento": falso_rompimento,
+            "radar_absorcao_cruzada": radar_absorcao_cruzada,
+            "concentracao_ordens": concentracao_ordens,
+            "fator_peso_pesado_data": fator_peso_pesado_data,
+            "liquidez_abertura": liquidez_abertura,
+            "mare": mare,
+            "motores_cards": motores_cards,
+            "motores_sem_carimbo": motores_sem_carimbo,
+            "carimbos": carimbos,
+            "pregoes_mistos": carimbo_servico.pregoes_mistos(list(carimbos.values())),
+            "rotulo_pregao": ""
+            if is_historical
+            else carimbo_servico.rotulo_cabecalho(
+                list(carimbos.values()), agora, mercado_aberto
+            ),
+            "clima_global": clima_global,
+            "correlacao_di": correlacao_di,
+            "relogio": relogio,
+            "anomalias_spread": anomalias_spread,
+            "exaustao_tendencia": exaustao_tendencia,
+            "exaustao_queda": exaustao_queda,
+            "exaustao_alta": exaustao_alta,
+        }
+        contexto["radares"] = radares_servico.resumo(
+            contexto, agora, is_historical, mostrar_vazios=vazios == "1"
+        )
         return templates.TemplateResponse(
-            request=request,
-            name="index.html",
-            context={
-                "datas_seletor": datas_seletor,
-                "data_invalida": data_invalida,
-                "datas_disponiveis": datas_disponiveis,
-                "is_historical": is_historical,
-                "estado_mercado": estado_mercado,
-                "data_referencia": data_ref,
-                "mercado_aberto": mercado_aberto,
-                "manchete": manchete,
-                "data": data_ibov,
-                "highlights": highlights,
-                "volume_alerts": volume_alerts,
-                "dolar_correlation": dolar_correlation,
-                "sensibilidade_juros": sensibilidade_juros,
-                "forca_relativa": forca_relativa,
-                "escudo_quedas": escudo_quedas,
-                "coesao": coesao,
-                "atrasadas_rally": atrasadas_rally,
-                "concentracao": concentracao,
-                "concentracao_vendedora": concentracao_vendedora,
-                "apetite_risco": apetite_risco,
-                "concentracao_setorial": concentracao_setorial,
-                "variacao_subita": variacao_subita,
-                "radar_anomalia_fechamento": radar_anomalia_fechamento,
-                "rotacao_capital": rotacao_capital,
-                "faca_caindo": faca_caindo,
-                "compradores_fundo": compradores_fundo,
-                "armadilha_abertura": armadilha_abertura,
-                "radar_inflexao": radar_inflexao,
-                "short_squeeze": short_squeeze,
-                "sobrevivencia_semanal": sobrevivencia_semanal,
-                "volatilidade_silenciosa": volatilidade_silenciosa,
-                "scanner_capitulacao": scanner_capitulacao.view_model(),
-                "anomalia_peso": anomalia_peso,
-                "radar_congestionamento": radar_congestionamento_data,
-                "esforco_resultado": esforco_resultado,
-                "radar_divergencia_volume": radar_divergencia_volume,
-                "falso_rompimento": falso_rompimento,
-                "radar_absorcao_cruzada": radar_absorcao_cruzada,
-                "concentracao_ordens": concentracao_ordens,
-                "fator_peso_pesado_data": fator_peso_pesado_data,
-                "liquidez_abertura": liquidez_abertura,
-                "mare": mare,
-                "motores_cards": motores_cards,
-                "motores_sem_carimbo": motores_sem_carimbo,
-                "carimbos": carimbos,
-                "pregoes_mistos": carimbo_servico.pregoes_mistos(
-                    list(carimbos.values())
-                ),
-                "rotulo_pregao": ""
-                if is_historical
-                else carimbo_servico.rotulo_cabecalho(
-                    list(carimbos.values()), agora, mercado_aberto
-                ),
-                "clima_global": clima_global,
-                "correlacao_di": correlacao_di,
-                "relogio": relogio,
-                "anomalias_spread": anomalias_spread,
-                "exaustao_tendencia": exaustao_tendencia,
-                "exaustao_queda": exaustao_queda,
-                "exaustao_alta": exaustao_alta,
-            },
+            request=request, name="index.html", context=contexto
         )

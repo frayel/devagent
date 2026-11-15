@@ -21,4 +21,5 @@ def get_variacao_subita_view_data() -> dict | None:
         "time": time_str,
         "fonte": data.fonte,
         "alertas": alertas,
+        "timestamp": data.timestamp,
     }

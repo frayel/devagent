@@ -19,4 +19,5 @@ def get_radar_short_squeeze_view() -> dict | None:
         "coletado_em": dt_brt.strftime("%d/%m/%Y %H:%M:%S BRT"),
         "fonte": data.fonte,
         "alertas": alertas,
+        "timestamp": data.timestamp,
     }

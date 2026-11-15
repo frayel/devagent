@@ -1,4 +1,4 @@
-from datetime import timezone, timedelta
+from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass
 import json
 from app.database import get_latest_compradores_fundo_data
@@ -9,6 +9,7 @@ class CompradoresFundoView:
     fonte: str
     time: str
     alertas: list[dict]
+    timestamp: datetime | None = None
 
 
 def get_compradores_fundo_view() -> CompradoresFundoView | None:
@@ -21,4 +22,5 @@ def get_compradores_fundo_view() -> CompradoresFundoView | None:
             "%d/%m/%Y %H:%M:%S BRT"
         ),
         alertas=json.loads(data.alertas_json),
+        timestamp=data.timestamp,
     )
