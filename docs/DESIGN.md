@@ -138,6 +138,7 @@ Toda revisão de experiência (`devagent/skills/rever-experiencia.md`) procura n
 - Card com um único número e mais de 120px de altura vazia.
 - Largura máxima de conteúdo menor que 1200px em telas largas.
 - Tabela que ocupa a largura inteira da tela para três colunas.
+- HTML montado por concatenação com `| safe` no fim, como `('<div>' ~ valor ~ '</div>') | safe`, ou `| safe` sobre uma variável. Com autoescape, se `valor` já vier escapado o `~` escapa os literais e a tag aparece como texto (Fator Peso Pesado, 15/11/2026); se não vier, `valor` é publicado sem escape. O padrão único é cada literal com marcação levar o próprio `| safe` e o valor ficar de fora, escapado pelo autoescape: `('<span class="' | safe) ~ classe ~ ('">' | safe) ~ valor ~ ('</span>' | safe)`. `| safe` só vale sobre um literal de texto ou a saída de uma macro. `tests/test_templates_safe.py` confere todos os templates pela árvore do Jinja, e `tests/test_html_escapado.py` confere as páginas renderizadas.
 
 ## 8. Checklist visual (vale para todo PR que muda a interface)
 
@@ -152,6 +153,7 @@ Rode `make telas`, **abra as duas imagens geradas em `telas/`** e responda no re
 - [ ] Sobrou algum número solto que tem escala e deveria ser `gauge`, linha ou barra (seção 5.1)?
 - [ ] O painel novo usa as macros de `componentes.html` e uma classe `span-N`?
 - [ ] Com o painel novo, a hierarquia ainda faz sentido? Algum painel deveria subir, descer, encolher ou se fundir com outro?
+- [ ] Algum card mostra marcação como texto (`<div`, `</span>`, `">`)?
 - [ ] Comparada com `docs/design/referencia.html`, a tela parece parte do mesmo sistema?
 
 Se alguma resposta for "não", o PR não está pronto.
