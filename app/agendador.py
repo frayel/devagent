@@ -192,7 +192,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
 
     from app.collectors import mt5
     import time as std_time
-    from app.database import save_coleta_vazia, save_coleta_tempo
+    from app.database import gravar_instrumentacao_rodada
 
     from app import calendario
     import app.banco
@@ -222,124 +222,138 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
         # Fim de semana ou pre abertura: os dados que serão gravados são partida a frio ou de ontem
         estado_base = "final"
 
-    for nome in (
-        "ibovespa",
-        "highlights",
-        "mare",
-        "volume_alerts",
-        "dolar_correlation",
-        "sensibilidade_juros",
-        "forca_relativa",
-        "escudo_quedas",
-        "coesao",
-        "atrasadas_rally",
-        "concentracao",
-        "apetite_risco",
-        "variacao_subita",
-        "concentracao_setorial",
-        "rotacao_capital",
-        "faca_caindo",
-        "compradores_fundo",
-        "armadilha_abertura",
-        "sobrevivencia_semanal",
-        "radar_anomalia_fechamento",
-        "volatilidade_silenciosa",
-        "scanner_capitulacao",
-        "radar_inflexao",
-        "anomalia_peso",
-        "radar_short_squeeze",
-        "radar_congestionamento",
-        "radar_liquidez_abertura",
-        "esforco_resultado",
-        "radar_divergencia_volume",
-        "fator_peso_pesado",
-        "falso_rompimento",
-        "radar_absorcao_cruzada",
-        "motores_indice",
-        "clima_global",
-        "relogio_volatilidade",
-        "radar_anomalias_spread",
-        "concentracao_ordens",
-        "exaustao_tendencia",
-        "exaustao_queda",
-        "radar_exaustao_alta",
-        "divergencia_ibov_dolar",
-        "correlacao_di",
-        "assimetria_risco_retorno",
-        "consultor_historico",
-        "consultor_opinioes",
-        "consultor_fechamento",
-    ):
-        try:
-            janela = janelas.get(nome, "pregao")
-            deve_coletar = False
-            eh_partida_a_frio = False
-            data_ref_coleta = pregao_corr if esta_aberto else ult_fechado
-            estado_coleta = estado_base
+    # Instrumentação acumulada em memória e gravada uma vez no fim da rodada (spec 152).
+    tempos: dict[str, float] = {}
+    vazias: list[str] = []
+    try:
+        for nome in (
+            "ibovespa",
+            "highlights",
+            "mare",
+            "volume_alerts",
+            "dolar_correlation",
+            "sensibilidade_juros",
+            "forca_relativa",
+            "escudo_quedas",
+            "coesao",
+            "atrasadas_rally",
+            "concentracao",
+            "apetite_risco",
+            "variacao_subita",
+            "concentracao_setorial",
+            "rotacao_capital",
+            "faca_caindo",
+            "compradores_fundo",
+            "armadilha_abertura",
+            "sobrevivencia_semanal",
+            "radar_anomalia_fechamento",
+            "volatilidade_silenciosa",
+            "scanner_capitulacao",
+            "radar_inflexao",
+            "anomalia_peso",
+            "radar_short_squeeze",
+            "radar_congestionamento",
+            "radar_liquidez_abertura",
+            "esforco_resultado",
+            "radar_divergencia_volume",
+            "fator_peso_pesado",
+            "falso_rompimento",
+            "radar_absorcao_cruzada",
+            "motores_indice",
+            "clima_global",
+            "relogio_volatilidade",
+            "radar_anomalias_spread",
+            "concentracao_ordens",
+            "exaustao_tendencia",
+            "exaustao_queda",
+            "radar_exaustao_alta",
+            "divergencia_ibov_dolar",
+            "correlacao_di",
+            "assimetria_risco_retorno",
+            "consultor_historico",
+            "consultor_opinioes",
+            "consultor_fechamento",
+        ):
+            try:
+                janela = janelas.get(nome, "pregao")
+                deve_coletar = False
+                eh_partida_a_frio = False
+                data_ref_coleta = pregao_corr if esta_aberto else ult_fechado
+                estado_coleta = estado_base
 
-            if janela == "continua":
-                deve_coletar = True
-            elif janela == "semanal":
-                if agora_brt.weekday() == 5:  # sábado
+                if janela == "continua":
                     deve_coletar = True
-            elif janela == "pre_abertura":
-                if eh_dia_pregao and (
-                    agora_brt.time() >= time(7, 0) and agora_brt.time() <= FIM_PREGAO
-                ):
-                    deve_coletar = True
-            elif janela == "fechamento":
-                if (
-                    eh_dia_pregao
-                    and passou_do_fechamento
-                    and agora_brt.time() <= time(20, 0)
-                ):
-                    deve_coletar = True
-                    estado_coleta = "final"
-            else:  # pregao
-                if esta_aberto:
-                    deve_coletar = True
-                elif (
-                    eh_dia_pregao
-                    and passou_do_fechamento
-                    and agora_brt.time() <= time(20, 0)
-                ):
-                    # Tentativa de fechamento
-                    last_snap = app.banco.ler_snapshot(nome, ult_fechado)
-                    if not last_snap or (
-                        last_snap.get("estado_snapshot") != "final"
-                        and last_snap.get("estado") != "final"
+                elif janela == "semanal":
+                    if agora_brt.weekday() == 5:  # sábado
+                        deve_coletar = True
+                elif janela == "pre_abertura":
+                    if eh_dia_pregao and (
+                        agora_brt.time() >= time(7, 0)
+                        and agora_brt.time() <= FIM_PREGAO
                     ):
                         deve_coletar = True
-                        estado_coleta = "final"
-                elif (
-                    eh_dia_pregao
-                    and passou_do_fechamento
-                    and agora_brt.time() > time(20, 0)
-                ) or (agora_brt.date() > ult_fechado):
-                    last_snap = app.banco.ler_snapshot(nome, ult_fechado)
+                elif janela == "fechamento":
                     if (
-                        last_snap
-                        and last_snap.get("estado_snapshot")
-                        not in ("incompleto", "final")
-                        and last_snap.get("estado") not in ("incompleto", "final")
+                        eh_dia_pregao
+                        and passou_do_fechamento
+                        and agora_brt.time() <= time(20, 0)
                     ):
-                        app.banco.gravar_snapshot(
-                            nome,
-                            ult_fechado,
-                            "incompleto",
-                            last_snap.get("fonte", "banco"),
-                            last_snap,
-                        )
-                        if estado_detalhes_manual is not None:
-                            estado_detalhes_manual.append(f"{nome}: incompleto")
-                    elif not last_snap:
-                        # Partida a frio
                         deve_coletar = True
-                        eh_partida_a_frio = True
                         estado_coleta = "final"
-                        data_ref_coleta = ult_fechado
-                else:
-                    # Partida a frio fallback
+                else:  # pregao
+                    if esta_aberto:
+                        deve_coletar = True
+                    elif (
+                        eh_dia_pregao
+                        and passou_do_fechamento
+                        and agora_brt.time() <= time(20, 0)
+                    ):
+                        # Tentativa de fechamento
+                        last_snap = app.banco.ler_snapshot(nome, ult_fechado)
+                        if not last_snap or (
+                            last_snap.get("estado_snapshot") != "final"
+                            and last_snap.get("estado") != "final"
+                        ):
+                            deve_coletar = True
+                            estado_coleta = "final"
+                    elif (
+                        eh_dia_pregao
+                        and passou_do_fechamento
+                        and agora_brt.time() > time(20, 0)
+                    ) or (agora_brt.date() > ult_fechado):
+                        last_snap = app.banco.ler_snapshot(nome, ult_fechado)
+                        if (
+                            last_snap
+                            and last_snap.get("estado_snapshot")
+                            not in ("incompleto", "final")
+                            and last_snap.get("estado") not in ("incompleto", "final")
+                        ):
+                            app.banco.gravar_snapshot(
+                                nome,
+                                ult_fechado,
+                                "incompleto",
+                                last_snap.get("fonte", "banco"),
+                                last_snap,
+                            )
+                            if estado_detalhes_manual is not None:
+                                estado_detalhes_manual.append(f"{nome}: incompleto")
+                        elif not last_snap:
+                            # Partida a frio
+                            deve_coletar = True
+                            eh_partida_a_frio = True
+                            estado_coleta = "final"
+                            data_ref_coleta = ult_fechado
+                    else:
+                        # Partida a frio fallback
+                        last_snap = app.banco.ler_snapshot(nome, ult_fechado)
+                        if not last_snap:
+                            deve_coletar = True
+                            eh_partida_a_frio = True
+                            estado_coleta = "final"
+                            data_ref_coleta = ult_fechado
+
+                # Fallback de Partida a Frio para QUALQUER janela que não deva coletar normalmente
+                if not deve_coletar:
                     last_snap = app.banco.ler_snapshot(nome, ult_fechado)
                     if not last_snap:
                         deve_coletar = True
@@ -347,89 +361,81 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                         estado_coleta = "final"
                         data_ref_coleta = ult_fechado
 
-            # Fallback de Partida a Frio para QUALQUER janela que não deva coletar normalmente
-            if not deve_coletar:
-                last_snap = app.banco.ler_snapshot(nome, ult_fechado)
-                if not last_snap:
-                    deve_coletar = True
-                    eh_partida_a_frio = True
-                    estado_coleta = "final"
-                    data_ref_coleta = ult_fechado
+                if not deve_coletar:
+                    continue
 
-            if not deve_coletar:
-                continue
-
-            coletor = importlib.import_module(f"app.collectors.{nome}")
-            mt5.reiniciar_rastreio()
-            try:
-                if eh_partida_a_frio:
-                    logging.getLogger("app.collectors").warning(
-                        f"Partida a frio para {nome}"
-                    )
-                    if estado_detalhes_manual is not None:
-                        estado_detalhes_manual.append(f"{nome}: partida_a_frio")
-
-                start_time = std_time.perf_counter()
-
-                token_est = app.banco._estado_snapshot.set(estado_coleta)
-                token_data = app.banco._data_referencia_snapshot.set(data_ref_coleta)
+                coletor = importlib.import_module(f"app.collectors.{nome}")
+                mt5.reiniciar_rastreio()
                 try:
-                    ok = coletor.collect_and_save()
-                finally:
-                    app.banco._estado_snapshot.reset(token_est)
-                    app.banco._data_referencia_snapshot.reset(token_data)
-                if nome == "consultor_historico":
-                    from app.consultor import avaliador_historico
-
-                    global _backtest_rodando
-                    with _backtest_lock:
-                        ja_rodando = _backtest_rodando
-                        if not ja_rodando:
-                            _backtest_rodando = True
-
-                    if ja_rodando:
+                    if eh_partida_a_frio:
+                        logging.getLogger("app.collectors").warning(
+                            f"Partida a frio para {nome}"
+                        )
                         if estado_detalhes_manual is not None:
-                            estado_detalhes_manual.append(
-                                "consultor_historico: backtest anterior ainda em curso"
-                            )
-                    else:
+                            estado_detalhes_manual.append(f"{nome}: partida_a_frio")
 
-                        def _wrapper_backtest():
-                            global _backtest_rodando
-                            try:
-                                avaliador_historico.rodar_backtest()
-                            finally:
-                                with _backtest_lock:
-                                    _backtest_rodando = False
+                    start_time = std_time.perf_counter()
 
-                        t = threading.Thread(target=_wrapper_backtest, daemon=True)
-                        t.start()
-
-                duracao = std_time.perf_counter() - start_time
-                try:
-                    save_coleta_tempo(nome, duracao, datetime.now(timezone.utc))
-                except Exception:
-                    logger.exception("Falha ao salvar tempo de coleta para %s", nome)
-                if not ok:
-                    _registrar_erro(
-                        f"{nome}: nenhuma fonte respondeu", eh_sistemico=False
+                    token_est = app.banco._estado_snapshot.set(estado_coleta)
+                    token_data = app.banco._data_referencia_snapshot.set(
+                        data_ref_coleta
                     )
                     try:
-                        save_coleta_vazia(nome, datetime.now(timezone.utc))
-                    except Exception:
-                        logger.exception("Falha ao salvar coleta vazia para %s", nome)
-            except Exception as e:  # noqa: BLE001 - o laço não pode morrer
-                _avisar_falha("Coleta falhou:", nome, e)
-                msg = _formatar_erro(nome, e)
+                        ok = coletor.collect_and_save()
+                    finally:
+                        app.banco._estado_snapshot.reset(token_est)
+                        app.banco._data_referencia_snapshot.reset(token_data)
+                    if nome == "consultor_historico":
+                        from app.consultor import avaliador_historico
+
+                        global _backtest_rodando
+                        with _backtest_lock:
+                            ja_rodando = _backtest_rodando
+                            if not ja_rodando:
+                                _backtest_rodando = True
+
+                        if ja_rodando:
+                            if estado_detalhes_manual is not None:
+                                estado_detalhes_manual.append(
+                                    "consultor_historico: backtest anterior ainda em curso"
+                                )
+                        else:
+
+                            def _wrapper_backtest():
+                                global _backtest_rodando
+                                try:
+                                    avaliador_historico.rodar_backtest()
+                                finally:
+                                    with _backtest_lock:
+                                        _backtest_rodando = False
+
+                            t = threading.Thread(target=_wrapper_backtest, daemon=True)
+                            t.start()
+
+                    duracao = std_time.perf_counter() - start_time
+                    tempos[nome] = duracao
+                    if not ok:
+                        _registrar_erro(
+                            f"{nome}: nenhuma fonte respondeu", eh_sistemico=False
+                        )
+                        vazias.append(nome)
+                except Exception as e:  # noqa: BLE001 - o laço não pode morrer
+                    _avisar_falha("Coleta falhou:", nome, e)
+                    msg = _formatar_erro(nome, e)
+                    if estado_detalhes_manual is not None:
+                        estado_detalhes_manual.append(_mask_secrets(msg))
+                    _registrar_erro(msg, eh_sistemico=_eh_erro_sistemico(e))
+            except Exception as e:
+                _avisar_falha("Falha ao inicializar ou coletar:", nome, e)
+                msg = _formatar_erro(nome, e, prefixo="erro fatal")
                 if estado_detalhes_manual is not None:
                     estado_detalhes_manual.append(_mask_secrets(msg))
                 _registrar_erro(msg, eh_sistemico=_eh_erro_sistemico(e))
-        except Exception as e:
-            _avisar_falha("Falha ao inicializar ou coletar:", nome, e)
-            msg = _formatar_erro(nome, e, prefixo="erro fatal")
-            if estado_detalhes_manual is not None:
-                estado_detalhes_manual.append(_mask_secrets(msg))
-            _registrar_erro(msg, eh_sistemico=_eh_erro_sistemico(e))
+    finally:
+        try:
+            gravar_instrumentacao_rodada(tempos, vazias, datetime.now(timezone.utc))
+        except Exception:
+            logger.exception("Falha ao gravar a instrumentação da rodada")
 
 
 async def laco_de_coleta() -> None:

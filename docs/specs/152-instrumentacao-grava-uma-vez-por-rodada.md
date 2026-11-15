@@ -1,7 +1,7 @@
 ---
 id: 152
 titulo: A instrumentação da coleta grava uma vez por rodada
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_152.py
