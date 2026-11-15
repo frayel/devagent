@@ -45,7 +45,7 @@ O PR do agente é o que traz o marcador `<!-- devagent:raia:<nome> -->` no corpo
 - Parta da `main` atual e abra um único PR, com o prefixo de título e o marcador `<!-- devagent:raia:desenvolvimento -->` no corpo.
 - Antes de abrir, rode `make verify` e `python -m devagent.conferir_pr --exigir-alteracao`.
 - Se o PR entrega uma spec, rode **por último** `python -m devagent.papel conferir desenvolvedor NNN`. Saída diferente de 0 quer dizer que outra sessão chegou antes: descarte o trabalho e encerre sem PR.
-- O relatório de `docs/runs/AAAA-MM-DD-HHMM.md` vai no mesmo PR, nunca num PR só com ele.
+- O relatório de `docs/runs/AAAA-MM-DD-HHMM.md` (hora UTC: `date -u +%Y-%m-%d-%H%M`) vai no mesmo PR, nunca num PR só com ele.
 
 ## 5. Não deixe PR vermelho para trás
 

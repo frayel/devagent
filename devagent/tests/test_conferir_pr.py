@@ -226,3 +226,26 @@ def test_registro_so_reprova_quando_exigido(repo: Path, monkeypatch) -> None:
     monkeypatch.delenv("GITHUB_EVENT_NAME", raising=False)
     escrever(repo, {"docs/runs/2026-10-18-x.md": "# Relatório\n"})
     assert conferir(repo, "base").falhas == []
+
+
+def test_nome_do_relatorio_e_a_hora_utc_em_que_foi_escrito() -> None:
+    from datetime import datetime, timezone
+
+    from devagent.conferir_pr import hora_do_relatorio_errada
+
+    escrito = datetime(2026, 11, 15, 0, 50, tzinfo=timezone.utc)
+    assert hora_do_relatorio_errada("docs/runs/2026-11-15-0045.md", escrito) == ""
+    # 15/11 00:50 UTC era 14/11 21:50 em Brasília: o nome 15-2129 mistura a
+    # data de um fuso com a hora de outro e fica "no futuro" o dia inteiro.
+    assert "00:50" not in hora_do_relatorio_errada(
+        "docs/runs/2026-11-15-2129.md", escrito
+    )
+    assert "2026-11-15-0050" in hora_do_relatorio_errada(
+        "docs/runs/2026-11-15-2129.md", escrito
+    )
+    # Hora de Brasília (3 h antes do UTC) também reprova.
+    assert hora_do_relatorio_errada("docs/runs/2026-11-14-2150.md", escrito)
+    assert hora_do_relatorio_errada(
+        "docs/verificacao/relatorios/2026-11-14-2150.md", escrito
+    )
+    assert hora_do_relatorio_errada("docs/runs/notas-soltas.md", escrito) == ""
