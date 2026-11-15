@@ -37,6 +37,19 @@
 | Alerta de "Volume Oculto" Intraday | Ações onde o volume de negócios destoa do book aparente | brapi.dev | M | Baixo |
 
 
+## Ideias (Passo 7 - 2026-11-15 5 · revisão de experiência)
+
+Revisão feita sobre `telas/desktop.png` e `telas/celular.png` de `make telas` (15/11/2026, dados de demonstração). Em 1440×900, acima da dobra: manchete, Ibovespa hoje e Maré do mercado; Clima Global e Motores começam na dobra. Nenhuma ação aparece acima da dobra.
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Experiência: apetite aqui e lá fora não usam o mesmo nome (spec 160) | Responde: o mercado está tomando risco ou não? Evidência: a Maré mostra "Apetite a Risco (SMLL - IBOV): Defensivo" e o Clima Global, logo abaixo, abre com "Apetite a Risco" sem cor (a classe `destaque` não tem estilo) e sem ⓘ. Mudança: "Apetite aqui" e "Apetite lá fora", mesmo vocabulário (Tomando risco/Defensivo/Neutro), cores do guia e ⓘ com os cortes. Original: a contradição aparente vira a divergência que o investidor quer ver. | N/A | P | Baixo |
+| Experiência: o card Ibovespa hoje não sobra em altura | Responde: o espaço acima da dobra está com a informação mais útil? Evidência: na captura desktop, abaixo dos gauges MM21 e MM200 sobram ~150 px vazios, porque o card estica até a altura da Maré; os rótulos "−10%" e "+10%" ficam soltos nas bordas, longe dos gauges. Mudança: escala junto de cada gauge e a sobra ocupada pela linha de amplitude (altas × baixas da manchete) ou pelo card reduzido. | N/A | P | Baixo |
+| Experiência: "o que se destaca hoje" acima da dobra | Responde: a segunda pergunta do produto (quais ações se destacam) tem resposta sem trocar de aba? Evidência: na Visão Geral não há nome de ação até o rodapé; maiores altas e radares estão em outras abas. Mudança: uma faixa de três nomes (maior alta, maior baixa e a ação em mais radares da spec 155) logo abaixo da manchete. Original: a confluência da 155 vira a vitrine da home. | snapshots já gravados | M | Baixo |
+| Capacidade nova: divergência de apetite aqui × lá fora | Responde: quando o exterior toma risco e as small caps brasileiras não acompanham, o que o Ibovespa fez nos pregões seguintes? Depois da 160, gravar o par (estado local, estado externo) por pregão e, com 20 pregões, mostrar o retorno médio por combinação e o tamanho da amostra. | snapshots `apetite_risco`, `clima_global` | M | Médio (amostra curta) |
+| Saúde técnica: classes sem estilo nos templates | Responde: quantas classes usadas nos templates não existem no CSS? Medida a fazer: cruzar os `class="..."` de `app/templates/` com os seletores de `app/static/*.css` (a `destaque` do Clima Global é um caso achado nesta revisão). Ganho: um teste que reprova classe sem estilo pega o desvio do guia antes da captura. | N/A | P | Baixo (classes usadas só por JS ou teste precisam de lista de exceção) |
+| Poda: o rótulo "Fechamento de dd/mm" aparece duas vezes no cabeçalho do celular | Responde: o cabeçalho do celular precisa do selo do pregão e da faixa "Fechamento de ... · dados congelados"? Evidência: a captura de 390 px corta o selo ("Fech...") e a faixa vaza (`make telas`). Antes de podar, conferir com a correção da #885. | N/A | P | Baixo |
+
 ## Ideias (Passo 7 - 2026-11-15 4)
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |
