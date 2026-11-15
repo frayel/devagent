@@ -178,7 +178,7 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
 - Spec 082 (Página de sistema):
   - `/sistema` e `/api/sistema`, protegidas pela `CONSULTOR_SENHA`; link "Sistema" no cabeçalho.
   - `app/collectors/registro_fontes.py`: resultado final de cada chamada às fontes externas, por integração.
-  - `app/collectors/sistema.py`: monitor em segundo plano do GitHub, do Jules e do Render (5 min com `GITHUB_TOKEN`, 20 min sem).
+  - `app/collectors/sistema.py`: monitor em segundo plano do GitHub e do Render (5 min com `GITHUB_TOKEN`, 20 min sem).
   - `app/services/sistema.py` e `app/services/cron.py`: níveis de cada verificação e agendamentos perdidos.
 
 - Spec 068b (Consultor Regras de Decisão):
