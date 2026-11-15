@@ -1397,43 +1397,39 @@ def save_relogio_volatilidade_data(data: RelogioVolatilidadeData) -> None:
     gravar_snapshot("relogio_volatilidade", hoje, "ao_vivo", data.fonte, payload)
 
 
-def save_coleta_tempo(painel: str, duracao: float, timestamp: datetime) -> None:
+def gravar_instrumentacao_rodada(
+    tempos: dict[str, float], vazias: list[str], timestamp: datetime
+) -> None:
+    """Funde a instrumentação de uma rodada no snapshot do dia: 1 leitura e 1 gravação.
+
+    Sem nada medido, não toca no banco (spec 152).
+    """
+    if not tempos and not vazias:
+        return
+
     from app.banco import ler_snapshot, gravar_snapshot
 
     hoje = timestamp.astimezone(BRT).date()
+    payload = ler_snapshot("instrumentacao", hoje) or {}
+    payload_tempos = payload.setdefault("tempos", {})
+    payload_vazias = payload.setdefault("vazias", {})
+    payload_rodadas = payload.setdefault("rodadas", {})
 
-    payload = ler_snapshot("instrumentacao", hoje) or {
-        "tempos": {},
-        "vazias": {},
-        "rodadas": {},
-    }
-    if "tempos" not in payload:
-        payload["tempos"] = {}
-    if "rodadas" not in payload:
-        payload["rodadas"] = {}
-
-    payload["tempos"][painel] = duracao
-    payload["rodadas"][painel] = payload["rodadas"].get(painel, 0) + 1
+    for painel, duracao in tempos.items():
+        payload_tempos[painel] = duracao
+        payload_rodadas[painel] = payload_rodadas.get(painel, 0) + 1
+    for painel in vazias:
+        payload_vazias[painel] = payload_vazias.get(painel, 0) + 1
 
     gravar_snapshot("instrumentacao", hoje, "ao_vivo", "sistema", payload)
+
+
+def save_coleta_tempo(painel: str, duracao: float, timestamp: datetime) -> None:
+    gravar_instrumentacao_rodada({painel: duracao}, [], timestamp)
 
 
 def save_coleta_vazia(painel: str, timestamp: datetime) -> None:
-    from app.banco import ler_snapshot, gravar_snapshot
-
-    hoje = timestamp.astimezone(BRT).date()
-
-    payload = ler_snapshot("instrumentacao", hoje) or {
-        "tempos": {},
-        "vazias": {},
-        "rodadas": {},
-    }
-    if "vazias" not in payload:
-        payload["vazias"] = {}
-
-    payload["vazias"][painel] = payload["vazias"].get(painel, 0) + 1
-
-    gravar_snapshot("instrumentacao", hoje, "ao_vivo", "sistema", payload)
+    gravar_instrumentacao_rodada({}, [painel], timestamp)
 
 
 def get_coletas_vazias_count(painel: str) -> int:

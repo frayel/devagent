@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from app.database import get_connection, save_coleta_tempo
+from app.banco import ler_snapshot
+from app.database import BRT, save_coleta_tempo
 from app.agendador import _coletar
 import importlib
 import app.collectors.mt5
@@ -8,16 +9,10 @@ import app.collectors.mt5
 def test_save_coleta_tempo():
     agora = datetime.now(timezone.utc)
     save_coleta_tempo("teste_painel", 1.234, agora)
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT painel, duracao, timestamp FROM instrumentacao_coleta_tempo WHERE painel = 'teste_painel' ORDER BY id DESC LIMIT 1"
-        )
-        cursor.fetchone()
-        pass
-        # assert row[0] == "teste_painel"
-        pass
-        pass
+
+    payload = ler_snapshot("instrumentacao", agora.astimezone(BRT).date())
+    assert payload["tempos"]["teste_painel"] == 1.234
+    assert payload["rodadas"]["teste_painel"] == 1
 
 
 def test_agendador_registra_tempo(monkeypatch):
