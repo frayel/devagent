@@ -145,3 +145,39 @@ def test_ultima_verificacao_nunca_passa_da_janela(tmp_path: Path) -> None:
     desde = papel.desde_a_ultima_verificacao(tmp_path)
     idade = datetime.now(timezone.utc) - desde
     assert idade <= papel.JANELA_DA_VERIFICACAO + timedelta(minutes=1)
+
+
+SPEC_PRONTA = "---\nid: 150\nstatus: ready\n---\n"
+SPEC_REVISADA = "---\nid: 150\nstatus: ready\nrevisada: 2026-11-14\n---\n"
+
+
+def _aberto(titulo: str, raia: str) -> dict:
+    return {"numero": 847, "titulo": titulo, "raia": raia}
+
+
+def test_revisor_que_chega_depois_nao_abre_segunda_revisao() -> None:
+    # 14/11 21:38: o #847 entrou um minuto depois de a tarefa do Revisor
+    # escolher a mesma spec.
+    pr = _aberto("revisão: spec 150 · premissa corrigida", "revisao")
+    assert "#847" in papel.alvo_ocupado(papel.REVISOR, "150", [pr], SPEC_PRONTA)
+    assert "já foi revisada" in papel.alvo_ocupado(
+        papel.REVISOR, "150", [], SPEC_REVISADA
+    )
+    assert papel.alvo_ocupado(papel.REVISOR, "150", [], SPEC_PRONTA) == ""
+
+
+def test_desenvolvedor_confere_a_spec_e_os_prs_da_raia() -> None:
+    assert papel.alvo_ocupado(papel.DESENVOLVEDOR, "150", [], SPEC_REVISADA) == ""
+    pr = _aberto("feat: o radar vazio não ocupa card (spec 150)", "desenvolvimento")
+    assert "#847" in papel.alvo_ocupado(papel.DESENVOLVEDOR, "150", [pr], SPEC_REVISADA)
+    outro = _aberto("fix: algo da 1500 e #150", "desenvolvimento")
+    assert papel.alvo_ocupado(papel.DESENVOLVEDOR, "150", [outro], SPEC_REVISADA) == ""
+    feita = SPEC_REVISADA.replace("ready", "done")
+    assert "`done`" in papel.alvo_ocupado(papel.DESENVOLVEDOR, "150", [], feita)
+
+
+def test_especificador_nao_reusa_numero_ocupado() -> None:
+    assert papel.alvo_ocupado(papel.ESPECIFICADOR, "152", [], None) == ""
+    assert "ocupado" in papel.alvo_ocupado(papel.ESPECIFICADOR, "152", [], "x")
+    pr = _aberto("spec: 152 · nova", "especificacao")
+    assert "#847" in papel.alvo_ocupado(papel.ESPECIFICADOR, "152", [pr], None)

@@ -77,7 +77,7 @@ Você é o agente autônomo do repositório <dono>/<repositório>, numa sessão 
 
 3. Confira os PRs abertos do agente. As sessões agendadas abrem PR com o login do dono do repositório, e por isso o estado_github pode listá-los como "de pessoas". PR aberto cuja branch começa com "claude/" é do agente. Se existir um da sua raia, o trabalho desta sessão é destravá-lo na branch dele (Passo 2 do CICLO.md), e você tem permissão para dar push nessa branch. Não abra um segundo PR. PR de outra origem é de uma pessoa: não toque.
 
-4. Faça uma entrega só. Parta da main atual e abra um único PR, com o prefixo de título e o marcador da raia no corpo. Antes de abrir, rode make verify e python -m devagent.conferir_pr --exigir-alteracao. O relatório de docs/runs/ vai no mesmo PR.
+4. Faça uma entrega só. Parta da main atual e abra um único PR, com o prefixo de título e o marcador da raia no corpo. Antes de abrir, rode make verify e python -m devagent.conferir_pr --exigir-alteracao. Se o PR entrega, revisa ou cria uma spec, rode por último python -m devagent.papel conferir <desenvolvedor | revisor | especificador> NNN: saída diferente de 0 quer dizer que outra sessão chegou antes, então descarte o trabalho e encerre sem PR. O relatório de docs/runs/ vai no mesmo PR.
 
 5. Não deixe PR vermelho para trás. Depois de abrir o PR, acompanhe o CI até ele terminar (leva cerca de dez minutos). Se falhar, corrija a causa na mesma branch e acompanhe de novo. O merge é do workflow de automerge: não faça merge você mesmo.
 
