@@ -433,7 +433,9 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 _registrar_erro(msg, eh_sistemico=_eh_erro_sistemico(e))
     finally:
         try:
-            gravar_instrumentacao_rodada(tempos, vazias, datetime.now(timezone.utc))
+            gravar_instrumentacao_rodada(
+                tempos, vazias, datetime.now(timezone.utc), durante_pregao=esta_aberto
+            )
         except Exception:
             logger.exception("Falha ao gravar a instrumentação da rodada")
 

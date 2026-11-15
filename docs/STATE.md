@@ -12,6 +12,11 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Saúde técnica] Spec 154 - O critério de poda conta só as coletas feitas durante o pregão:
+  - `app/database.py`: `gravar_instrumentacao_rodada(..., durante_pregao=False)`; com `True`, a mesma gravação também soma `rodadas_pregao` e `vazias_pregao` no snapshot `instrumentacao` do dia.
+  - `app/agendador.py`: `_coletar` passa `durante_pregao=esta_aberto`, o `calendario.mercado_aberto` do início da rodada (10h às 18h15 BRT em dia de pregão).
+  - `app/services/sistema.py`: `verificar_candidatos_poda` soma só `rodadas_pregao`/`vazias_pregao`; dia sem `rodadas_pregao` (snapshot anterior a esta spec) conta como ausente, então o item fica em "histórico de N de 10 pregões" até haver 10 pregões com a contagem nova. "Painéis sem dados" segue com o dia inteiro.
+  - Testes de aceite em `tests/test_aceite_154.py`; fixtures de `tests/test_aceite_153.py` ganham as chaves `*_pregao` com os mesmos números, sem mudar asserções.
 - [Poda] Spec 153 - A página /sistema aponta os candidatos à poda:
   - `app/banco.py`: `ler_snapshots_datas(painel, datas)` lê o payload de várias datas numa só consulta (`IN (...)`), nos dois backends; lista vazia e banco inacessível devolvem `{}`.
   - `app/services/sistema.py`: `ultimos_pregoes(agora, n=10)` e `verificar_candidatos_poda(historico, pregoes)`, que aplica o critério do `PRODUTO.md` (R ≥ 10 coletas e 2 × V > R) sobre o snapshot `instrumentacao` dos 10 últimos pregões fechados. Novo item "Candidatos à poda" no grupo Coleta, logo depois de "Painéis sem dados": `ok` com histórico curto ou sem candidato, `atencao` (que não envelhece) com a lista `painel (V de R, P%)`.

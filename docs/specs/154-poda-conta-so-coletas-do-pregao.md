@@ -1,7 +1,7 @@
 ---
 id: 154
 titulo: O critério de poda conta só as coletas feitas durante o pregão
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_154.py
