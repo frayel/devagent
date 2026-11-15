@@ -37,6 +37,17 @@
 | Alerta de "Volume Oculto" Intraday | Ações onde o volume de negócios destoa do book aparente | brapi.dev | M | Baixo |
 
 
+## Ideias (Passo 7 - 2026-11-15 2)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Poda: `/sistema` aponta os candidatos à poda (spec 153) | Responde: quais painéis ficaram sem dados em mais da metade das coletas dos últimos 10 pregões? Medida: o snapshot diário `instrumentacao` já guarda `rodadas` e `vazias` por painel e fica 30 datas, mas os leitores só olham hoje; 6 ideias de poda no backlog sem número. Ganho: o critério do `PRODUTO.md` vira um item de `/sistema`, lido numa consulta só. | N/A | P | Baixo |
+| Poda: rodada de poda com os números da 153 | Responde: o que sai? Depois de 10 pregões com o item "Candidatos à poda" visível, escolher entre remover, fundir num vizinho ou mudar de forma cada painel apontado, citando V de R. Original: a poda deixa de ser opinião e passa a ter fila. | N/A | M | Médio |
+| Saúde técnica: registrar o "escondido" do critério de poda | Responde: quantas vezes o painel coletou mas ficou escondido por lista vazia? Medida: a 153 só conta "nenhuma fonte respondeu"; a classe `.escondido` (lista sem alertas) não deixa rastro. Gravar, na mesma gravação única da 152, as chaves de `/api/snapshot` que saíram vazias. | N/A | P | Baixo |
+| Experiência: painéis que quase nunca acendem viram uma linha | Responde: o usuário rola por cartões vazios? Os radares de alerta que passam o dia sem item ocupam a mesma altura dos que têm. Juntar os vazios num rodapé "sem sinal hoje: A, B, C", ordenado pelo histórico da 153. Original: o histórico de operação decide o layout. | N/A | M | Baixo |
+| Saúde técnica: a janela de poda separa pregão de fechamento | Responde: a contagem de vazios mistura as tentativas das 18h-20h? O snapshot diário não guarda a hora da coleta. Guardar `rodadas_pregao` e `vazias_pregao` à parte. | N/A | P | Baixo |
+| Capacidade nova: "por que este painel está vazio?" | Responde: o vazio é mercado calmo ou fonte caída? O ⓘ do painel vazio mostra a última fonte que falhou (de `registro_fontes`) e quantas vezes ficou vazio nos 10 pregões. Original: o diagnóstico de operação vira explicação para quem lê o painel. | N/A | M | Baixo |
+
 ## Ideias (Passo 7 - 2026-11-15)
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |
