@@ -6,6 +6,7 @@ esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_155.py
 depende_de: 150
+revisada: 2026-11-15
 ---
 
 ## Problema
@@ -59,7 +60,7 @@ O card mostra:
 PETR4   3 radares   Radar de volume · Variação Súbita · Radar de Faca Caindo
 MGLU3   2 radares   Variação Súbita · Exaustão de Queda
 de 18 radares lidos agora
-Fonte os radares desta aba · 16/11/2026 10:20
+Fonte os radares desta aba · 16/11/2026 10:20 BRT
 ```
 
 O rodapé usa 10:20: é a coleta mais antiga entre os quatro radares que entraram em alguma linha (volume 10:30, Variação Súbita 10:30, Faca Caindo 10:20, Exaustão de Queda 10:40).
@@ -76,11 +77,13 @@ Uma função pura nova em `app/services/radares.py`, por exemplo `confluencia(co
 2. Se `estado` for `com_alertas`, monte o **conjunto** de tickers normalizados da lista `campo` daquele payload (um radar conta no máximo uma vez por ação) e acrescente `nome` e `ts` a cada ticker.
 3. `lidos` = quantidade de radares em `com_alertas` ou `sem_alertas`.
 4. Linhas = tickers com 2 ou mais radares, ordenadas por `(-len(radares), ticker)`; as 10 primeiras vão para `acoes`, e o resto vira `excedentes` (quantidade).
-5. `horario` = o menor `ts` entre os radares que aparecem em pelo menos uma linha (todas as linhas, não só as 10 exibidas). `None` se não houver linha.
+5. `horario` = o menor `ts` entre os radares que aparecem em pelo menos uma linha (todas as linhas, não só as 10 exibidas). `ts` sem fuso é tratado como UTC antes de comparar (como `carimbo.desatualizado` faz), para não misturar `datetime` com e sem fuso; radar com `ts` `None` não entra no mínimo. `None` se não houver linha ou se nenhum radar citado tiver `ts`; aí o rodapé mostra só a fonte.
 
 Saída: `{"acoes": [{"ticker": str, "radares": [nome, ...]}], "excedentes": int, "lidos": int, "horario": datetime | None}`.
 
 `index()` passa o resultado ao template como `confluencia`, ao lado de `radares`.
+
+`/api/snapshot` hoje só lê os payloads de parte dos 20 radares (não lê as três exaustões, absorção cruzada, liquidez e outros). Para `paineis.confluencia_radares`, ele lê os 20 payloads pelos mesmos getters que `index()` usa, no mesmo `lendo_pregao` e `req_snapshot_cache_ctx` que já abrem a função, e chama a mesma `confluencia`. A saída no JSON é `{"acoes": [...], "excedentes": int, "lidos": int, "horario": str | null}`, com `horario` em ISO 8601.
 
 ## Critérios de aceite
 - [ ] Com o fixture do exemplo e `agora` congelado em 16/11/2026 10:45 BRT, a página `/` contém o card "Em vários radares" com `PETR4`, `3 radares`, `MGLU3`, `2 radares` e `de 18 radares lidos agora`, e PETR4 vem antes de MGLU3 no HTML.
@@ -107,3 +110,6 @@ Saída: `{"acoes": [{"ticker": str, "radares": [nome, ...]}], "excedentes": int,
 - Link do ticker para o card de cada radar ou para a ficha da ação.
 - Mudar a aba "Só Sinais", a seção "Sem alertas" ou a regra de qualquer radar.
 - Radares fora de `RADARES` (rankings, Inflexão de Tendência em `rankings`, anomalia de peso).
+
+## Revisão
+Revisada em 2026-11-15 contra a `main`. Conferido: `RADARES`, `classificar` e `_campo` existem em `app/services/radares.py` como a spec descreve; os 20 cards de `index.html` leem `.ticker` dos itens e nenhum corta a lista (a invariante "aparece em dois cards visíveis" vale); 16/11/2026 é pregão e 10:45 BRT está dentro do horário, com TTL de 30 min, então Compradores de Fundo às 10:00 fica desatualizado. Nada de confluência no código hoje (`grep -rn confluencia app tests` vazio) e nenhuma outra spec com o tema. Ajustes: o rodapé do exemplo ganhou o ` BRT` que `carimbo.formatar` escreve; o passo 5 dos cálculos agora diz o que fazer com `ts` sem fuso ou `None`; e o `/api/snapshot`, que hoje não lê todos os 20 payloads, passa a ter a origem dos dados e o formato do `horario` escritos.
