@@ -31,6 +31,19 @@ Uma entrada por fonte. Atualize ao criar ou alterar coletor (skill `criar-coleto
 - **Limites**: 1 requisição a cada 2 s por domínio, coleta a cada 30 min, só o conteúdo do próprio feed (a página da matéria não é baixada).
 - **Ritmo**: não é tempo real. Algumas matérias com opinião de casa por dia, dependendo do portal.
 
+## Telegram (canais públicos · consultor)
+
+- **Uso**: mensagens de três canais públicos viram matérias na mesma fila dos feeds RSS (spec 157): Clube Acionista (`clubeacionista`), Repositório de Ações (`RepositorioDeAcoes`) e Universo Antifrágil (`universoantifragil`). A casa da opinião é a que o texto nomeia, nunca o canal; opinião atribuída ao próprio canal é descartada antes de gravar.
+- **Formato verificado em 15/11/2026** (páginas salvas em `tests/fixtures/telegram/`):
+  - Prévia `https://t.me/s/<canal>`: só o Clube Acionista tem. Traz as 20 mensagens mais recentes; cada uma é um bloco com `data-post="<canal>/<id>"`, o texto em `div.tgme_widget_message_text` (com `<br/>`, `<b>`, `<a>` e emoji como `<i class="emoji">`) e `<time datetime="...+00:00">` em UTC. As anteriores vêm com `?before=<id>`.
+  - Post `https://t.me/<canal>/<id>`: o texto, sem tags e com entidades HTML, está em `<meta property="og:description">`; post só com imagem não tem o campo. No Repositório de Ações o texto termina em `@RepositorioDeAcoes`.
+  - Widget `https://t.me/<canal>/<id>?embed=1`: traz `<time datetime>` quando o post existe; ID inexistente responde 200 com "Post not found" e sem `<time>`.
+  - `t.me` responde 200 mesmo para post inexistente; falha de verdade é 5xx ou rede.
+- **Cursor**: `consultor_telegram_cursor` guarda o último ID lido de cada canal (avança com toda mensagem lida, passe ou não no filtro). Primeira rodada: uma página da prévia no Clube Acionista; nos outros, a partir de `TELEGRAM_INICIO`.
+- **Limites**: 2 s entre requisições ao `t.me`, mesmo User-Agent dos feeds. Prévia: até 5 páginas por rodada. Por ID: até 30 IDs por rodada (2 requisições por post publicado, 1 por ID vazio), parando em 3 IDs seguidos sem `<time>`. Uma lacuna de 3 ou mais mensagens apagadas parece o fim do canal: o cursor para antes dela e o log avisa (limite conhecido da spec 157).
+- **robots.txt e termos**: `https://t.me/robots.txt` respondia 404 em 04/11/2026. Canais públicos, sem login.
+- **Ritmo esperado**: o Clube Acionista é a fonte útil (na amostra de 15/11, 7 de 20 mensagens passaram no `filtrar_materia`); o Repositório de Ações repassa títulos de documentos da CVM, que o filtro descarta quase todos; o Universo Antifrágil posta pouco, e a opinião costuma ser do próprio canal (descartada).
+
 ## Gemini (extração de opiniões · consultor)
 
 - **Uso**: só extrair registros estruturados das matérias pré-filtradas (ADR 005). Nunca decide a recomendação.

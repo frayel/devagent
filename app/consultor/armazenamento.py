@@ -248,6 +248,13 @@ def init_db():
                         chamadas INTEGER NOT NULL DEFAULT 0
                     );
                 """)
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS consultor_telegram_cursor (
+                        canal TEXT PRIMARY KEY,
+                        ultimo_id INTEGER NOT NULL,
+                        atualizado_em TEXT NOT NULL
+                    );
+                """)
             conn.commit()
         else:
             cursor = conn.cursor()
@@ -350,12 +357,63 @@ def init_db():
                 )
             except Exception:
                 pass
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS consultor_telegram_cursor (
+                    canal TEXT PRIMARY KEY,
+                    ultimo_id INTEGER NOT NULL,
+                    atualizado_em TEXT NOT NULL
+                );
+            """)
             conn.commit()
 
         migrar_datas_para_iso(conn, backend)
         migrar_consenso_para_json(conn, backend)
     except Exception as e:
         logging.warning(f"Erro ao inicializar banco do consultor: {e}")
+    finally:
+        conn.close()
+
+
+def get_telegram_cursor(canal: str) -> int | None:
+    """Último ID lido de um canal do Telegram (spec 157), ou None se nunca lido."""
+    init_db()
+    conn, backend = get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            sql_para(
+                backend,
+                "SELECT ultimo_id FROM consultor_telegram_cursor WHERE canal = ?",
+            ),
+            (canal,),
+        )
+        row = cur.fetchone()
+        return int(row[0]) if row else None
+    finally:
+        conn.close()
+
+
+def set_telegram_cursor(canal: str, ultimo_id: int) -> None:
+    """Grava o cursor do canal; sem mensagem nova, só regrava `atualizado_em`."""
+    init_db()
+    agora = datetime.now(timezone.utc).isoformat()
+    conn, backend = get_connection()
+    try:
+        cur = conn.cursor()
+        if backend == "postgres":
+            cur.execute(
+                "INSERT INTO consultor_telegram_cursor (canal, ultimo_id, atualizado_em) "
+                "VALUES (%s, %s, %s) ON CONFLICT (canal) DO UPDATE SET "
+                "ultimo_id = EXCLUDED.ultimo_id, atualizado_em = EXCLUDED.atualizado_em",
+                (canal, ultimo_id, agora),
+            )
+        else:
+            cur.execute(
+                "INSERT OR REPLACE INTO consultor_telegram_cursor (canal, ultimo_id, atualizado_em) "
+                "VALUES (?, ?, ?)",
+                (canal, ultimo_id, agora),
+            )
+        conn.commit()
     finally:
         conn.close()
 

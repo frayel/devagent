@@ -1,7 +1,7 @@
 ---
 id: 157
 titulo: O Consultor também lê as opiniões dos canais públicos do Telegram
-status: ready
+status: done
 esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_157.py

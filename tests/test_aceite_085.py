@@ -123,7 +123,7 @@ def test_consultor_html_casos(monkeypatch):
 
     html = get_html()
     assert (
-        "Nenhuma matéria dos feeds citou ativos do Ibovespa com opinião de casa de análise nos últimos 30 dias."
+        "Nenhuma matéria das fontes citou ativos do Ibovespa com opinião de casa de análise nos últimos 30 dias."
         in html
     )
 
