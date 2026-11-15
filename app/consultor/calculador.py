@@ -4,6 +4,7 @@ from app.consultor.universo import CARTEIRA_IBOVESPA
 from app.consultor.sintese import calcular_consenso, obter_decisao_final
 from app.consultor.regras import avaliar_ativo, calcular_mm
 from app.consultor.armazenamento import (
+    data_iso,
     get_opinioes_ativos,
     get_opinioes_recentes,
     get_opinioes_status,
@@ -33,6 +34,8 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
     opinioes_status = get_opinioes_status()
 
     max_criado = versao_series(ativos)
+    # O maior `coletado_em` das séries, para o bloco "Informações de".
+    sinais_coletado_em = data_iso(max_criado)
 
     max_extraida = ""
     for op in opinioes_recentes:
@@ -68,6 +71,8 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
             "opinioes_recentes": [],
             "regras_confianca": {},
             "opinioes_status": get_opinioes_status(),
+            "sinais_pregao": None,
+            "sinais_coletado_em": sinais_coletado_em,
         }
         _consultor_cache = res_dict
         return res_dict
@@ -222,6 +227,9 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
         "regras_confianca": regras_summary,
         "opinioes_recentes": opinioes_recentes,
         "opinioes_status": opinioes_status,
+        # Timestamp da última barra do ^BVSP: o pregão a que os sinais se referem.
+        "sinais_pregao": ibov_ts[-1] if ibov_ts else None,
+        "sinais_coletado_em": sinais_coletado_em,
     }
 
     _consultor_cache = res_dict

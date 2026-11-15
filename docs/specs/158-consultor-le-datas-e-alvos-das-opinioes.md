@@ -1,7 +1,7 @@
 ---
 id: 158
 titulo: O Consultor lê as datas e os alvos que o coletor grava
-status: ready
+status: done
 esforco: P
 gaveta: capacidade nova
 aceite: tests/test_aceite_158.py

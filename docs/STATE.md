@@ -12,6 +12,12 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Capacidade nova] Spec 158 - O Consultor lê as datas e os alvos que o coletor grava (#881):
+  - `app/consultor/armazenamento.py`: `ler_data` (ISO 8601 ou RFC 822, em UTC, `None` se ilegível), `data_iso`, `ler_preco_alvo` (formato brasileiro e com ponto decimal; `None` sem número) e `migrar_datas_para_iso`, chamada em `init_db`, que reescreve só as linhas que não começam por `AAAA-MM-DD` em `consultor_fila_materias.data_publicacao` e `consultor_opinioes.data_materia` (opinião que vira duplicata é apagada). `save_materia` grava a data já em ISO; ilegível vira a hora da coleta, com aviso no log.
+  - `app/services/consultor_opinioes.py`: `save_opiniao` converte `data_materia` para ISO antes da deduplicação por dia e grava `extraida_em` explicitamente (o esquema SQLite de `app/database.py` não tem padrão para a coluna). `preco_alvo` continua gravado como texto, que é o que a tela mostra.
+  - `app/consultor/sintese.py`: `calcular_consenso(opinioes, referencia=None)` usa `ler_data` e `ler_preco_alvo`; consenso `neutro` com 2/3 das casas neutras. `obter_decisao_final` não muda a decisão técnica com `neutro` e escreve "casas neutras".
+  - `app/consultor/calculador.py`: devolve `sinais_pregao` (timestamp da última barra do `^BVSP`) e `sinais_coletado_em` (maior `criado_em` das séries, ISO). `app/consultor/informacoes.py` lê `data_materia` das opiniões recentes.
+  - Testes de aceite em `tests/test_aceite_158.py`.
 - [Capacidade nova] Spec 156 - O rodapé mostra o que mudou no painel e onde conferir:
   - `app/novidades.json`: entradas escritas à mão (data, tipo `novidade`/`melhoria`/`correcao`, texto para o usuário, `onde` opcional com aba ou página, `spec` ou `pr`), da mais nova para a mais antiga. Carga inicial de 13/11 a 15/11/2026 (141 a 147, 149 a 151, 155, 156 e #836). **Toda entrega visível acrescenta a sua entrada no mesmo PR**; `tests/test_aceite_156.py` reprova spec `done` a partir da 156, das gavetas capacidade nova ou experiência, sem entrada.
   - `app/services/novidades.py`: lê o arquivo a cada chamada (`CAMINHO` e `hoje()` substituíveis no teste), janela de 60 dias no fuso `America/Sao_Paulo`; arquivo ausente ou inválido vira "indisponível" e um log por processo.
