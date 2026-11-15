@@ -666,3 +666,86 @@ def test_guardiao_que_roda_a_cada_merge_nao_acusa_agendamento_perdido():
     item = s.verificar_workflows(so_puladas, AGORA)[0]
     assert item.nivel == s.ATENCAO
     assert "agendamentos não rodaram" in item.resumo
+
+
+def test_yahoo_sem_chamada_porque_o_mt5_respondeu_e_reserva_nao_inativo():
+    # 15/11: o MetaTrader 5 atendia tudo e a página dizia "Yahoo Finance ·
+    # Inativo", como se a fonte estivesse desligada.
+    mt5 = _fonte([True, True, True])
+    mt5.nome = "MetaTrader 5"
+    itens = {
+        i.nome: i
+        for i in s.verificar_integracoes(
+            {"MetaTrader 5": mt5}, None, {"MT5_API_URL": "x"}, AGORA
+        )
+    }
+    yahoo = itens["Yahoo Finance"]
+    assert yahoo.nivel == s.OK
+    assert "reserva" in yahoo.resumo and "MetaTrader 5" in yahoo.resumo
+    # Sem MT5 respondendo, Yahoo sem chamada volta a ser inativo.
+    sem_mt5 = {i.nome: i for i in s.verificar_integracoes({}, None, {}, AGORA)}
+    assert sem_mt5["Yahoo Finance"].nivel == s.INATIVO
+
+
+def test_desde_so_aparece_em_item_que_esta_em_alerta():
+    # O monitor montava as integrações sem dados e guardava "desde 09/11"
+    # para todas; a página o mostrava até no MetaTrader 5, que estava OK.
+    remoto = {
+        "github": _github(),
+        "atualizado_em": AGORA.isoformat(),
+        "_alertas_desde": {
+            "Integrações externas/Gemini": "2026-11-09T00:35:00+00:00",
+            "Coleta/Agendador": "2026-11-09T00:35:00+00:00",
+        },
+    }
+    estado = s.montar(
+        agora=AGORA,
+        inicio=AGORA - timedelta(hours=1),
+        remoto=remoto,
+        sha_local=None,
+        banco={
+            "tipo": "SQLite",
+            "database_url": True,
+            "tamanho": "1 MB",
+            "latencia_ms": 1,
+            "tabelas": 3,
+        },
+        coleta_ligada=True,
+        estado_coleta={"ultima_coleta": (AGORA - timedelta(minutes=5)).isoformat()},
+        intervalo_coleta=timedelta(minutes=15),
+        vazios={},
+        horas_vazios=3,
+        tempos={},
+        fontes={},
+        pausa_mt5=None,
+        prontas=[],
+        historico_pregoes=[],
+        ambiente={"GEMINI_API_KEY": "x"},
+    )
+    itens = {i["nome"]: i for g in estado["grupos"] for i in g["itens"]}
+    ok = [i for i in itens.values() if i["nivel"] == s.OK]
+    assert ok and all("(desde " not in i["resumo"] for i in ok)
+    assert all(i.get("desde") is None for i in ok)
+
+
+def test_monitor_so_reavalia_os_grupos_que_enxerga(monkeypatch):
+    monkeypatch.setattr(monitor, "gravar_snapshot", lambda *a, **k: None)
+    monkeypatch.setattr(
+        monitor,
+        "_alertas_desde",
+        {
+            "Integrações externas/Yahoo Finance": "2026-11-09T00:35:00+00:00",
+            "Fluxo de desenvolvimento/PRs abertos": "2026-11-09T00:35:00+00:00",
+        },
+    )
+    grupos = [
+        {"titulo": "Integrações externas", "itens": []},
+        {"titulo": "Fluxo de desenvolvimento", "itens": []},
+    ]
+    monitor.atualizar_alertas(grupos, monitor.GRUPOS_DO_MONITOR)
+    # O grupo do GitHub foi reavaliado (sem alerta); o local ficou intocado.
+    assert monitor._alertas_desde == {
+        "Integrações externas/Yahoo Finance": "2026-11-09T00:35:00+00:00"
+    }
+    monitor.atualizar_alertas(grupos, {"Integrações externas"})
+    assert monitor._alertas_desde == {}

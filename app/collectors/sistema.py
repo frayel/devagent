@@ -299,11 +299,29 @@ def inicializar_alertas():
 inicializar_alertas()
 
 
-def atualizar_alertas(itens: list):
+# Grupos que o monitor enxerga com dados reais (GitHub). Os outros dependem do
+# estado desta instância (banco, coleta, integrações) e são acompanhados por
+# estado_do_sistema(): o monitor os montava com dados vazios, marcava todas as
+# integrações como inativas e o "desde" de 09/11 ficou preso nelas.
+GRUPOS_DO_MONITOR = frozenset({"Fluxo de desenvolvimento", "Workflows do GitHub"})
+
+
+def atualizar_alertas(itens: list, grupos: frozenset[str] | set[str] | None = None):
+    """Atualiza desde quando cada item está em alerta.
+
+    Com `grupos`, só os itens desses grupos são reavaliados; as entradas dos
+    outros grupos ficam como estão.
+    """
     global _alertas_desde
     agora = datetime.now(timezone.utc).isoformat()
-    novos_alertas = {}
+    novos_alertas = {
+        chave: desde
+        for chave, desde in _alertas_desde.items()
+        if grupos is not None and chave.split("/", 1)[0] not in grupos
+    }
     for g in itens:
+        if grupos is not None and g["titulo"] not in grupos:
+            continue
         for i in g.get("itens", []):
             if i.get("nivel") in ("atencao", "problema", "inativo"):
                 chave = f"{g['titulo']}/{i['nome']}"
@@ -360,7 +378,7 @@ def atualizar(client: httpx.Client | None = None) -> None:
                 prontas=[],
                 monitor_ligado=False,
             )
-            atualizar_alertas(res.get("grupos", []))
+            atualizar_alertas(res.get("grupos", []), GRUPOS_DO_MONITOR)
         except Exception as e:
             logger.error(f"Erro ao atualizar alertas_desde no monitor: {e}")
         retrato["_alertas_desde"] = _alertas_desde

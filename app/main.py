@@ -335,7 +335,7 @@ def estado_do_sistema() -> dict:
     except Exception:  # tabelas ainda não criadas: a verificação do banco acusa
         vazios, rodadas, tempos = {}, {}, {}
         historico_poda = {}
-    return sistema_servico.montar(
+    entradas: dict[str, Any] = dict(
         agora=agora,
         inicio=INICIO,
         remoto=dict(monitor_sistema.retrato),
@@ -356,6 +356,19 @@ def estado_do_sistema() -> dict:
         modelo_gemini=gemini_modelo.descricao(),
         historico_poda=historico_poda,
     )
+    estado = sistema_servico.montar(**entradas)
+    # Os grupos desta instância (banco, coleta, integrações) só têm dado real
+    # aqui; o monitor acompanha os do GitHub. Atualiza o "desde" deles e monta
+    # de novo com ele.
+    locais = {g["titulo"] for g in estado["grupos"]} - monitor_sistema.GRUPOS_DO_MONITOR
+    if locais and monitor_sistema.monitor_ligado():
+        monitor_sistema.atualizar_alertas(estado["grupos"], locais)
+        entradas["remoto"] = {
+            **entradas["remoto"],
+            "_alertas_desde": monitor_sistema._alertas_desde,
+        }
+        estado = sistema_servico.montar(**entradas)
+    return estado
 
 
 @app.get("/api/sistema")

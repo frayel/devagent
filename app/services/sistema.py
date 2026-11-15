@@ -200,7 +200,14 @@ def verificar_versao(
     atras = int(producao.get("atras", 0))
     if atras == 0:
         itens.append(
-            Item("Deploy", OK, "em dia com a main", "", main["data"], main.get("url"))
+            Item(
+                "Deploy",
+                OK,
+                "em dia com a main",
+                "",
+                main["data"],
+                link=main.get("url"),
+            )
         )
         return itens
     espera = _idade(main["data"], agora) or timedelta(0)
@@ -215,7 +222,9 @@ def verificar_versao(
     )
     if nivel == OK:
         resumo = f"deploy em andamento ({atras} commit{'s' if atras > 1 else ''})"
-    itens.append(Item("Deploy", nivel, resumo, detalhe, main["data"], main.get("url")))
+    itens.append(
+        Item("Deploy", nivel, resumo, detalhe, main["data"], link=main.get("url"))
+    )
     return itens
 
 
@@ -559,6 +568,19 @@ def verificar_integracoes(
         if not configurada and fonte is None:
             itens.append(Item(nome, INATIVO, f"sem {variavel}", papel))
             continue
+        if nome == "Yahoo Finance" and _reserva_nao_chamada(fonte, fontes):
+            itens.append(
+                Item(
+                    nome,
+                    OK,
+                    "reserva · sem chamada: o MetaTrader 5 respondeu",
+                    f"{papel}. O MetaTrader 5 atende as cotações primeiro e o "
+                    "Yahoo só é chamado se ele falhar. Continua em uso também "
+                    "como segunda fonte das variações extremas e como "
+                    "referência independente da auditoria.",
+                )
+            )
+            continue
         if nome == "MetaTrader 5" and pausa_mt5 is not None:
             restante, motivo = pausa_mt5
             itens.append(
@@ -579,6 +601,14 @@ def verificar_integracoes(
         if nome not in conhecidas:
             itens.append(_item_da_fonte(nome, fonte, "", agora))
     return itens
+
+
+def _reserva_nao_chamada(fonte: Any, fontes: dict[str, Any]) -> bool:
+    """O Yahoo não foi chamado porque o MetaTrader 5 respondeu (reserva ociosa)."""
+    if fonte is not None and fonte.recentes:
+        return False
+    mt5 = fontes.get("MetaTrader 5")
+    return bool(mt5 is not None and mt5.recentes and mt5.recentes[-1])
 
 
 def _item_da_fonte(nome: str, fonte: Any, papel: str, agora: datetime) -> Item:
@@ -745,7 +775,7 @@ def verificar_workflows(github: dict[str, Any], agora: datetime) -> list[Item]:
                 " · ".join(partes),
                 " ".join(detalhe),
                 ultimo["criado_em"] if ultimo else None,
-                ultimo.get("url") if ultimo else None,
+                link=ultimo.get("url") if ultimo else None,
             )
         )
     ci_main = [
@@ -764,7 +794,7 @@ def verificar_workflows(github: dict[str, Any], agora: datetime) -> list[Item]:
                 f"{conclusao(r['conclusao'])} {ha_quanto(r['criado_em'], agora)}",
                 "",
                 r["criado_em"],
-                r.get("url"),
+                link=r.get("url"),
             ),
         )
     return itens
@@ -841,7 +871,7 @@ def verificar_prs(github: dict[str, Any], agora: datetime) -> Item:
         f"{ha_quanto(mais_antigo['criado_em'], agora)}",
         detalhe,
         mais_antigo["criado_em"],
-        mais_antigo["url"],
+        link=mais_antigo["url"],
     )
 
 
@@ -885,7 +915,7 @@ def verificar_atividade(github: dict[str, Any], agora: datetime) -> Item:
         f"{main['sha'][:7]} {ha_quanto(main['data'], agora)}",
         main.get("mensagem", ""),
         main["data"],
-        main.get("url"),
+        link=main.get("url"),
         cura="entrega",
     )
 
@@ -1034,7 +1064,12 @@ def montar(
         for g in grupos:
             for i in g["itens"]:
                 chave = f"{g['titulo']}/{i['nome']}"
-                if remoto["_alertas_desde"] and chave in remoto["_alertas_desde"]:
+                # Item OK não tem "desde": a data é de quando o alerta abriu.
+                if (
+                    i["nivel"] != OK
+                    and remoto["_alertas_desde"]
+                    and chave in remoto["_alertas_desde"]
+                ):
                     i["desde"] = remoto["_alertas_desde"][chave]
                     from datetime import datetime
 
