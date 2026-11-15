@@ -28,6 +28,9 @@ PAYLOAD_DIA = {
     },
     "vazias": {"fator_peso_pesado": 15, "atrasadas_rally": 14, "clima_global": 1},
 }
+# Spec 154: o critério lê a contagem do pregão; aqui ela repete a do dia inteiro.
+PAYLOAD_DIA["rodadas_pregao"] = dict(PAYLOAD_DIA["rodadas"])
+PAYLOAD_DIA["vazias_pregao"] = dict(PAYLOAD_DIA["vazias"])
 
 
 def _historico(datas=PREGOES, payload=PAYLOAD_DIA):
@@ -51,7 +54,12 @@ def test_exemplo_aponta_dois_candidatos():
 
 def test_um_candidato_no_singular():
     exigir_spec_done("153")
-    payload = {"rodadas": {"a": 2}, "vazias": {"a": 2}}
+    payload = {
+        "rodadas": {"a": 2},
+        "vazias": {"a": 2},
+        "rodadas_pregao": {"a": 2},
+        "vazias_pregao": {"a": 2},
+    }
     item = s.verificar_candidatos_poda(_historico(payload=payload), PREGOES)
     assert item.resumo == (
         "1 painel vazio em mais da metade das coletas dos últimos 10 pregões"
@@ -76,7 +84,12 @@ def test_historico_vazio():
 
 def test_ninguem_acima_da_metade():
     exigir_spec_done("153")
-    payload = {"rodadas": {"a": 28, "b": 28}, "vazias": {"a": 14}}
+    payload = {
+        "rodadas": {"a": 28, "b": 28},
+        "vazias": {"a": 14},
+        "rodadas_pregao": {"a": 28, "b": 28},
+        "vazias_pregao": {"a": 14},
+    }
     item = s.verificar_candidatos_poda(_historico(payload=payload), PREGOES)
     assert item.nivel == "ok"
     assert item.resumo == (
@@ -90,6 +103,8 @@ def test_data_fora_dos_pregoes_e_ignorada():
     historico[date(2026, 11, 14)] = {
         "rodadas": {"atrasadas_rally": 1000, "ibovespa": 1000},
         "vazias": {"atrasadas_rally": 1000, "ibovespa": 1000},
+        "rodadas_pregao": {"atrasadas_rally": 1000, "ibovespa": 1000},
+        "vazias_pregao": {"atrasadas_rally": 1000, "ibovespa": 1000},
     }
     base = s.verificar_candidatos_poda(_historico(), PREGOES)
     item = s.verificar_candidatos_poda(historico, PREGOES)

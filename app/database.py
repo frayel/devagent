@@ -1398,11 +1398,16 @@ def save_relogio_volatilidade_data(data: RelogioVolatilidadeData) -> None:
 
 
 def gravar_instrumentacao_rodada(
-    tempos: dict[str, float], vazias: list[str], timestamp: datetime
+    tempos: dict[str, float],
+    vazias: list[str],
+    timestamp: datetime,
+    durante_pregao: bool = False,
 ) -> None:
     """Funde a instrumentação de uma rodada no snapshot do dia: 1 leitura e 1 gravação.
 
-    Sem nada medido, não toca no banco (spec 152).
+    Sem nada medido, não toca no banco (spec 152). Com `durante_pregao`, a rodada
+    também soma em `rodadas_pregao` e `vazias_pregao`, que o critério de poda lê
+    (spec 154).
     """
     if not tempos and not vazias:
         return
@@ -1420,6 +1425,14 @@ def gravar_instrumentacao_rodada(
         payload_rodadas[painel] = payload_rodadas.get(painel, 0) + 1
     for painel in vazias:
         payload_vazias[painel] = payload_vazias.get(painel, 0) + 1
+
+    if durante_pregao:
+        rodadas_pregao = payload.setdefault("rodadas_pregao", {})
+        vazias_pregao = payload.setdefault("vazias_pregao", {})
+        for painel in tempos:
+            rodadas_pregao[painel] = rodadas_pregao.get(painel, 0) + 1
+        for painel in vazias:
+            vazias_pregao[painel] = vazias_pregao.get(painel, 0) + 1
 
     gravar_snapshot("instrumentacao", hoje, "ao_vivo", "sistema", payload)
 

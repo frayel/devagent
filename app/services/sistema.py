@@ -471,12 +471,18 @@ def verificar_candidatos_poda(historico: dict[date, dict], pregoes: list[date]) 
     """Critério de poda do PRODUTO.md sobre a instrumentação diária (spec 153).
 
     Candidato: R ≥ 10 coletas na janela e vazio em estritamente mais da metade
-    delas (2 × V > R). É decisão de produto, não defeito: Atenção que não
-    envelhece.
+    delas (2 × V > R). Conta só as coletas feitas durante o pregão
+    (`rodadas_pregao` e `vazias_pregao`, spec 154); dia sem essa contagem é
+    ausente. É decisão de produto, não defeito: Atenção que não envelhece.
     """
     nome = "Candidatos à poda"
     n = len(pregoes)
-    presentes = [d for d in pregoes if isinstance(historico.get(d), dict)]
+    presentes = [
+        d
+        for d in pregoes
+        if isinstance(historico.get(d), dict)
+        and isinstance(historico[d].get("rodadas_pregao"), dict)
+    ]
     if len(presentes) < n or not n:
         return Item(
             nome,
@@ -488,9 +494,9 @@ def verificar_candidatos_poda(historico: dict[date, dict], pregoes: list[date]) 
     total_v: dict[str, int] = {}
     for d in presentes:
         payload = historico[d]
-        for p, r in (payload.get("rodadas") or {}).items():
+        for p, r in payload["rodadas_pregao"].items():
             total_r[p] = total_r.get(p, 0) + int(r)
-        for p, v in (payload.get("vazias") or {}).items():
+        for p, v in (payload.get("vazias_pregao") or {}).items():
             total_v[p] = total_v.get(p, 0) + int(v)
     candidatos = []
     for p, r in total_r.items():
