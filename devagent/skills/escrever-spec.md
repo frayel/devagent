@@ -24,6 +24,7 @@ titulo: ...
 status: draft | ready | done
 esforco: P | M | G
 aceite: tests/test_aceite_NNN.py
+origem: nome do item da Fila do backlog | nova | issue #N
 revisada: AAAA-MM-DD   # preenchido só pelo Revisor
 ---
 

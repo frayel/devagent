@@ -51,6 +51,15 @@ Regras (mantenha em sincronia com devagent/CICLO.md, Passos 1 e 4):
        hora de Brasília e um com a data do dia seguinte (15-2129, escrito em
        15/11 00:50 UTC) faziam as sessões lerem como recentes relatórios de
        horas antes.
+   10. O backlog é uma fila com teto e a ideia que vira spec sai dela. Todo
+       PR que altera o backlog deixa a seção *Fila* com no máximo
+       `teto_fila` linhas. Spec nova de PR `spec:`, a partir de
+       `origem_obrigatoria_desde` ([disciplina] do devagent.toml), declara
+       `origem:`: `nova`, `issue #N` ou o nome do item da Fila de onde veio.
+       Com nome, o item precisa estar na Fila da base e sair dela no mesmo
+       PR; se ficar com o resto da visão, a linha cita a spec nova
+       (`spec NNN`). Em 15/11 o backlog tinha 318 linhas, boa parte já
+       entregue, porque nada tirava a ideia que virava spec.
 
 Uma regra nunca é afrouxada no mesmo PR que corrige o que ela aponta
 (README do núcleo, separação de poderes).
@@ -71,6 +80,7 @@ from pathlib import Path
 from devagent.config import CONFIG
 from devagent.raias import (
     DESENVOLVIMENTO,
+    ESPECIFICACAO,
     PASTA_SPECS,
     PASTA_VERIFICACAO,
     REVISAO,
@@ -93,6 +103,8 @@ PADRAO_DOCUMENTOS = {
     "changelog": "CHANGELOG.md",
     "estado": "docs/STATE.md",
     "secao_correcoes": "Correções",
+    "secao_fila": "Fila",
+    "teto_fila": 25,
 }
 # Prefixos de caminho que só registram a execução (relatório, diário).
 PADRAO_REGISTROS = ("docs/runs/", ".jules/", ".agents/")
@@ -101,6 +113,8 @@ FECHA_ISSUE = re.compile(r"\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\s+#\d+", re.I
 STATUS = re.compile(r"^status:\s*([\w-]+)\s*$", re.MULTILINE)
 ID = re.compile(r"^id:\s*0*(\d+)\s*$", re.MULTILINE)
 TESTE = re.compile(r"(^test_.*|.*_test)\.py$")
+ORIGEM = re.compile(r"^origem:\s*(.*?)\s*$", re.MULTILINE)
+ORIGEM_LIVRE = re.compile(r"^(nova|issue\s*#?\d+)$", re.I)
 ACEITE = re.compile(r"^aceite:\s*(.*?)\s*$", re.MULTILINE)
 ORDEM = re.compile(r"0*(\d+)([a-z]*)")
 
@@ -212,6 +226,94 @@ def entradas_correcoes(texto: str | None, secao: str) -> list[str]:
         if dentro and linha.startswith("- "):
             itens.append(linha.strip())
     return [i for i in itens if "bloqueado" not in i.lower()]
+
+
+def _normalizar(texto: str) -> str:
+    return re.sub(r"\s+", " ", texto.replace("`", "").replace("*", "")).strip().lower()
+
+
+def itens_da_fila(texto: str | None, secao: str) -> list[tuple[str, str]]:
+    """(nome normalizado, linha inteira) de cada item da tabela da seção Fila.
+
+    O nome é a coluna "Ideia" da tabela; sem essa coluna, a terceira.
+    """
+    if not texto:
+        return []
+    dentro = False
+    coluna: int | None = None
+    itens: list[tuple[str, str]] = []
+    for linha in texto.splitlines():
+        if linha.startswith("## "):
+            dentro = linha[3:].strip().lower().startswith(secao.lower())
+            coluna = None
+            continue
+        if not dentro or not linha.startswith("|"):
+            continue
+        celulas = [c.strip() for c in linha.strip().strip("|").split("|")]
+        if coluna is None:
+            nomes = [_normalizar(c) for c in celulas]
+            coluna = (
+                nomes.index("ideia") if "ideia" in nomes else min(2, len(celulas) - 1)
+            )
+            continue
+        if set("".join(celulas)) <= set("-: "):
+            continue
+        if coluna < len(celulas):
+            itens.append((_normalizar(celulas[coluna]), linha))
+    return itens
+
+
+def conferir_fila(
+    res: Resultado,
+    antes: str | None,
+    depois: str | None,
+    specs_novas: list[tuple[str, str]],
+    secao: str,
+    teto: int,
+) -> None:
+    """Regra 10: teto da Fila e a ideia que vira spec sai dela.
+
+    `specs_novas` traz (caminho, texto) das specs criadas pelo PR que precisam
+    declarar `origem:`; `antes` e `depois` são o backlog na base e no PR (None
+    quando o backlog não mudou e não precisa ser conferido).
+    """
+    fila_depois = itens_da_fila(depois, secao)
+    if depois is not None and len(fila_depois) > teto:
+        res.falha(
+            f"A seção {secao} do backlog tem {len(fila_depois)} itens; o teto é "
+            f"{teto}. Ideia nova desloca a última da fila para a Reserva "
+            "(CICLO.md, Passo 7, item 4a)."
+        )
+    nomes_antes = {n for n, _ in itens_da_fila(antes, secao)}
+    for rel, texto in specs_novas:
+        m = ORIGEM.search(texto)
+        origem = m.group(1).strip() if m else ""
+        if not origem:
+            res.falha(
+                f"{rel} não declara `origem:` no cabeçalho: `nova`, `issue #N` ou "
+                f"o nome do item da {secao} do backlog de onde a spec veio "
+                "(regra 10)."
+            )
+            continue
+        if ORIGEM_LIVRE.match(origem):
+            continue
+        nome = _normalizar(origem)
+        if nome not in nomes_antes:
+            res.falha(
+                f"{rel}: a origem `{origem}` não é o nome de nenhum item da "
+                f"{secao} do backlog na base. Copie o nome da coluna Ideia, ou use "
+                "`nova` se a ideia nasceu nesta rodada (regra 10)."
+            )
+            continue
+        numero = re.match(r"0*(\d+)", Path(rel).name)
+        cita = re.compile(rf"spec\s+0*{numero.group(1) if numero else '-'}(?!\d)", re.I)
+        restante = [linha for n, linha in fila_depois if n == nome]
+        if restante and not any(cita.search(linha) for linha in restante):
+            res.falha(
+                f"{rel} veio do item `{origem}`, que continua na {secao} do "
+                "backlog. Tire o item no mesmo PR ou, se ele guarda o resto da "
+                f"visão, cite a spec nova na linha (regra 10)."
+            )
 
 
 PASTAS_DE_RELATORIO = ("docs/runs/", "docs/verificacao/relatorios/")
@@ -435,6 +537,35 @@ def conferir(
                     f"`{PASTA_ACHADOS}`. Sem achado, sem PR: encerre a sessão "
                     "sem commit (devagent/agents/raias.md, ADR 024)."
                 )
+
+    # Regra 10: a Fila do backlog tem teto e a ideia que vira spec sai dela.
+    backlog_mudou = doc["backlog"] in alterados
+    caminho_backlog = raiz / doc["backlog"]
+    backlog_depois = (
+        caminho_backlog.read_text(encoding="utf-8")
+        if caminho_backlog.exists()
+        else None
+    )
+    specs_com_origem: list[tuple[str, str]] = []
+    desde_origem = str(CONFIG.get("disciplina", {}).get("origem_obrigatoria_desde", ""))
+    if titulo and desde_origem and raia_do_titulo(titulo) == ESPECIFICACAO:
+        for rel, texto in specs_atuais.items():
+            if (
+                rel not in alterados
+                or git("show", f"{mb}:{rel}", raiz=raiz) is not None
+            ):
+                continue
+            if ordem_de(Path(rel).name.split("-")[0]) >= ordem_de(desde_origem):
+                specs_com_origem.append((rel, texto))
+    if backlog_mudou or specs_com_origem:
+        conferir_fila(
+            res,
+            git("show", f"{mb}:{doc['backlog']}", raiz=raiz),
+            backlog_depois,
+            specs_com_origem,
+            doc["secao_fila"],
+            int(doc["teto_fila"]),
+        )
 
     fechadas_novas: list[str] = []
     fechadas: list[tuple[str, str]] = []
