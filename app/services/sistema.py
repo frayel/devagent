@@ -720,7 +720,14 @@ def verificar_workflows(github: dict[str, Any], agora: datetime) -> list[Item]:
                 detalhe.append(f"Falhou no evento {ultimo['evento']}.")
         if wf["crons"]:
             agendado = (github.get("ultimo_agendado") or {}).get(wf["caminho"])
-            perdidos = disparos_perdidos(wf["crons"], agendado, agora)
+            # O agendamento é a reserva do trabalho que o workflow também faz
+            # quando outro workflow o dispara (a cada merge, por exemplo). Conta
+            # como perdido só o horário sem nenhuma execução real depois dele:
+            # o guardião rodava a cada merge e a página dizia que 4
+            # agendamentos não tinham rodado (15/11).
+            perdidos = disparos_perdidos(
+                wf["crons"], _execucao_mais_recente(agendado, runs), agora
+            )
             if agendado:
                 detalhe.append(
                     f"Último agendado: {hora_brt(agendado['criado_em'])} "
@@ -761,6 +768,30 @@ def verificar_workflows(github: dict[str, Any], agora: datetime) -> list[Item]:
             ),
         )
     return itens
+
+
+def _execucao_mais_recente(
+    agendado: dict[str, Any] | None, runs: list[dict[str, Any]]
+) -> dict[str, Any] | None:
+    """A execução mais nova que cobre o agendamento: a agendada ou a disparada
+    por outro workflow (`workflow_run`), como a varredura do guardião depois
+    de cada merge.
+
+    Disparo manual (`workflow_dispatch`) não conta: uma execução avulsa não
+    mostra que o agendamento está de pé. Execução em que todos os jobs foram
+    pulados também não, porque não fez o trabalho.
+    """
+    reais = [
+        r
+        for r in runs
+        if r["evento"] == "workflow_run"
+        and r["conclusao"] not in ("skipped", "cancelled")
+        and r["criado_em"]
+    ]
+    candidatos = [*([agendado] if agendado else []), *reais]
+    if not candidatos:
+        return None
+    return max(candidatos, key=lambda r: r["criado_em"] or "")
 
 
 def disparos_perdidos(
