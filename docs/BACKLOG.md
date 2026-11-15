@@ -37,6 +37,17 @@
 | Alerta de "Volume Oculto" Intraday | Ações onde o volume de negócios destoa do book aparente | brapi.dev | M | Baixo |
 
 
+## Ideias (Passo 7 - 2026-11-15 3)
+
+| Ideia | Detalhes | Fonte | Esforço | Risco |
+|---|---|---|---|---|
+| Saúde técnica: o critério de poda conta só as coletas do pregão (spec 154) | Responde: o número que vai decidir a poda conta só o que o `PRODUTO.md` manda? Medida: o snapshot `instrumentacao` soma o dia inteiro, inclusive as tentativas de fechamento (18h15-20h, a cada 30 min) e as partidas a frio, as coletas com mais chance de voltar vazias; a 153 registrou a aproximação. Ganho: `rodadas_pregao` e `vazias_pregao` gravados na mesma gravação única da 152, e a poda decide pelo pregão. | N/A | P | Baixo |
+| Saúde técnica: `clima_global` coleta uma vez por manhã | Responde: o clima pré-abertura precisa ser coletado a cada 15 minutos? Medida: a janela `pre_abertura` de `_coletar` vale de 7h a 18h15 (`agora_brt.time() <= FIM_PREGAO`), então o painel roda em toda rodada do pregão, cerca de 33 vezes por dia, para um dado que descreve a abertura. Ganho: ~32 idas por dia a menos à fonte, se o painel só precisa do retrato da manhã (conferir com a spec do painel antes). | N/A | P | Médio (pode ser intencional) |
+| Capacidade nova: ações que vários radares apontam ao mesmo tempo | Responde: qual ação aparece em mais de um radar hoje, e em quais? Original: os ~20 radares de alerta são lidos um por um; ninguém cruza os próprios sinais. Um card com as ações citadas por 3 ou mais radares no pregão, com o nome de cada radar no ⓘ. Fonte: os snapshots dos radares já gravados. | N/A | M | Baixo (radares correlacionados contam o mesmo sinal duas vezes: o ⓘ diz isso) |
+| Capacidade nova: o pregão gêmeo | Responde: com que pregão do próprio histórico o dia de hoje mais se parece até agora, e o que veio depois dele? Original: usa o histórico de snapshots do sistema, não só o preço; compara a forma da curva intraday do Ibovespa e da maré até a mesma hora. Mostra o gêmeo, a distância e quantos pregões foram comparados. | `series_diarias`, snapshots | G | Médio (amostra curta; a incerteza tem de aparecer) |
+| Experiência: o radar vazio diz há quanto tempo está vazio | Responde: radar sem alerta hoje é normal para ele ou é novidade? Na lista de vazios da spec 150, cada nome ganha "último alerta há N pregões", lido dos snapshots do próprio radar. Original: o vazio vira informação de contexto. | snapshots | P | Baixo |
+| Poda: rodada de poda depois de 10 pregões com a contagem da 154 | Responde: o que sai? A rodada prevista na 153 espera os 10 pregões com `rodadas_pregao`, para não decidir pela contagem que inclui o fechamento. | N/A | M | Médio |
+
 ## Ideias (Passo 7 - 2026-11-15 2)
 
 | Ideia | Detalhes | Fonte | Esforço | Risco |
