@@ -2,6 +2,13 @@
   {
     "data": "2026-11-15",
     "tipo": "correcao",
+    "texto": "Escolher outro pregão no seletor de data voltou a abrir aquele fechamento. A aba aberta continua aberta ao trocar a data, ao recarregar e no Voltar para hoje.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Seletor de pregão"},
+    "pr": "#883"
+  },
+  {
+    "data": "2026-11-15",
+    "tipo": "correcao",
     "texto": "O consenso das casas passa a contar as opiniões coletadas: antes, todo ativo aparecia como cobertura insuficiente. Com a maioria das casas neutra, o consenso diz neutro.",
     "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Opiniões recentes"},
     "spec": "158"

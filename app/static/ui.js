@@ -15,6 +15,29 @@ document.addEventListener('DOMContentLoaded', () => {
         el.style.setProperty('--ativo-opacidade', el.dataset.opacidade);
     });
 
+    // Seletor de pregão (issue 883): a CSP bloqueia `onchange` inline, então a troca
+    // de data envia o formulário daqui. Vale em toda página que usa o base.html.
+    document.querySelectorAll('select.seletor-data').forEach(sel => {
+        sel.addEventListener('change', () => { if (sel.form) sel.form.submit(); });
+    });
+
+    // A aba aberta fica na URL (?aba=) e segue junto na troca de data e no
+    // "Voltar para hoje", para a recarga não voltar à Visão Geral (issue 883).
+    const lembrarAba = (categoria) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('aba', categoria);
+        try { history.replaceState(history.state, '', url); } catch (e) { /* URL fica como está */ }
+        document.querySelectorAll('form input[type="hidden"][name="aba"]').forEach(campo => {
+            campo.value = categoria;
+            campo.disabled = false;
+        });
+        document.querySelectorAll('a.voltar-hoje').forEach(link => {
+            const destino = new URL(link.getAttribute('href'), window.location.href);
+            destino.searchParams.set('aba', categoria);
+            link.setAttribute('href', destino.pathname + destino.search);
+        });
+    };
+
     // Abas de Navegação Contextual
     const abas = document.querySelectorAll('.aba-btn');
     const todosPaineis = document.querySelectorAll('.painel');
@@ -25,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             abas.forEach(a => a.classList.remove('ativo'));
             aba.classList.add('ativo');
+            if (categoria) lembrarAba(categoria);
 
             document.body.classList.remove('modo-so-sinais');
 
