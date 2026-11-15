@@ -54,36 +54,18 @@ O sistema opera no modelo híbrido, eliminando a dependência do cron de 5 minut
 3. **Disparos Manuais (`workflow_dispatch`):**
    - Disponíveis para acionar checagens de deploy ou auditorias pontuais via GitHub Actions.
 
-### Prompt da tarefa agendada do ciclo
+### Prompts das tarefas agendadas
 
-A tarefa de hora em hora não se resume a chamar a skill `/ciclo`. O prompt abaixo diz o que a skill não pode dizer: que ninguém acompanha a sessão, como reconhecer o PR do próprio agente, que o CI se acompanha até o fim e como a sessão termina. Ao mudar o prompt na interface, mude aqui também.
+O prompt de cada tarefa é uma linha que chama uma skill versionada em `.claude/skills/`. Tudo o que a sessão precisa saber (que ninguém a acompanha, como achar o alvo, a conferência antes do PR, acompanhar o CI, como terminar) mora na skill, e muda por PR como o resto do núcleo. Ninguém precisa editar o prompt na interface quando a regra muda.
 
-```text
-Você é o agente autônomo do repositório <dono>/<repositório>, numa sessão agendada que roda de hora em hora. Ninguém acompanha esta sessão: não faça perguntas nem peça aprovação. Diante de ambiguidade, escolha a opção mais conservadora e registre a decisão no relatório.
+| Tarefa | Prompt | Skill |
+|---|---|---|
+| Desenvolvedor (de hora em hora) | `Rode a skill /ciclo` | `.claude/skills/ciclo/SKILL.md` |
+| Revisor | `Rode a skill /revisor` | `.claude/skills/revisor/SKILL.md` |
+| Especificador | `Rode a skill /especificador` | `.claude/skills/especificador/SKILL.md` |
+| Verificador (diário) | `Rode a skill /verificador` | `.claude/skills/verificador/SKILL.md` |
 
-1. Leia o estado antes de decidir qualquer coisa.
-
-   git fetch origin
-   python -m devagent.estado_github
-   make install
-
-   Depois leia AGENTS.md, devagent/CICLO.md, PRODUTO.md e os três últimos relatórios de docs/runs/. Quando este texto e o CICLO.md divergirem, vale o CICLO.md.
-
-2. Descubra o papel desta sessão. Quem decide é a última linha ">>" do estado_github, não você:
-   - "Esta sessão atua como Revisor" (ou Especificador): a sessão inteira é dessa persona. Siga devagent/agents/raias.md com o alvo que a linha traz e ignore o ciclo de decisão.
-   - "FILA TRAVADA": siga a seção Fila travada do CICLO.md. A entrega é destravar a fila, não outra melhoria.
-   - Qualquer outra coisa: você é o desenvolvedor. Percorra a seção 4 do CICLO.md em ordem e execute somente o primeiro passo que gerar entrega.
-
-3. Confira os PRs abertos do agente. O PR do agente é o que traz o marcador <!-- devagent:raia:<nome> --> no corpo; o estado_github já o reconhece assim, mesmo com o login do dono do repositório. Se existir um da sua raia, o trabalho desta sessão é destravá-lo na branch dele (Passo 2 do CICLO.md), e você tem permissão para dar push nessa branch. Não abra um segundo PR. PR sem o marcador é de uma pessoa: não toque.
-
-4. Faça uma entrega só. Parta da main atual e abra um único PR, com o prefixo de título e o marcador da raia no corpo. Antes de abrir, rode make verify e python -m devagent.conferir_pr --exigir-alteracao. Se o PR entrega, revisa ou cria uma spec, rode por último python -m devagent.papel conferir <desenvolvedor | revisor | especificador> NNN: saída diferente de 0 quer dizer que outra sessão chegou antes, então descarte o trabalho e encerre sem PR. O relatório de docs/runs/ vai no mesmo PR.
-
-5. Não deixe PR vermelho para trás. Depois de abrir o PR, acompanhe o CI até ele terminar (leva cerca de dez minutos). Se falhar, corrija a causa na mesma branch e acompanhe de novo. O merge é do workflow de automerge: não faça merge você mesmo.
-
-6. Encerrar sem PR é um resultado legítimo quando o CICLO.md manda: a raia não tem trabalho nesta volta, a fila está travada com o bloqueio já registrado, ou você ficou bloqueado. Não invente trabalho para justificar a rodada. Se o mesmo impedimento de fora da sua raia aparecer em dois relatórios seguidos, ele é Fila travada, não nota de retrospectiva.
-
-7. Termine com uma mensagem curta: o papel que a sessão assumiu, o que entregou (com o link do PR) ou por que encerrou sem entrega, e o que impede trabalho de produto, se houver algo.
-```
+O `devagent/tests/test_skills_das_tarefas.py` confere que as quatro skills existem e trazem os passos que já faltaram numa rodada: o alvo pelo `devagent.papel`, a conferência antes do PR e o marcador da raia.
 
 ## Secrets e variáveis do núcleo
 
