@@ -12,6 +12,11 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Capacidade nova] Spec 155 - As ações que vários radares apontam ao mesmo tempo:
+  - `app/services/radares.py`: `confluencia(contexto, agora, is_historical)` conta, por ação (ticker sem espaço, maiúsculo, sem `.SA`), quantos radares em `com_alertas` a citam; mínimo de 2, até 10 linhas e `+N ações em K radares`; `lidos` conta os radares frescos; `horario` é a coleta mais antiga entre os radares citados (`ts` sem fuso tratado como UTC).
+  - `app/main.py`: a montagem dos 20 payloads de `RADARES` sai de `index()` para `_payloads_radares()`, usada também pelo `/api/snapshot` (`paineis.confluencia_radares`). De quebra, `formatar_data` deixa de existir só quando havia Concentração de Ordens: sem ela, as Exaustões de Alta e de Queda caíam em `NameError` silencioso e apareciam indisponíveis.
+  - `app/templates/index.html` e `app/static/tema.css`: card "Em vários radares" (`span-12`, aba Alertas) antes da seção "Sem alertas"; não é renderizado sem confluência; em 390 px os nomes dos radares quebram abaixo do ticker.
+  - Testes de aceite em `tests/test_aceite_155.py`.
 - [Saúde técnica] Spec 154 - O critério de poda conta só as coletas feitas durante o pregão:
   - `app/database.py`: `gravar_instrumentacao_rodada(..., durante_pregao=False)`; com `True`, a mesma gravação também soma `rodadas_pregao` e `vazias_pregao` no snapshot `instrumentacao` do dia.
   - `app/agendador.py`: `_coletar` passa `durante_pregao=esta_aberto`, o `calendario.mercado_aberto` do início da rodada (10h às 18h15 BRT em dia de pregão).

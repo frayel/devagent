@@ -1,7 +1,7 @@
 ---
 id: 155
 titulo: As ações que vários radares apontam ao mesmo tempo
-status: ready
+status: done
 esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_155.py

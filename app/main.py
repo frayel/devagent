@@ -1760,6 +1760,18 @@ def snapshot(
             "fonte": "composto",
         }
 
+        confluencia = radares_servico.confluencia(
+            _payloads_radares(), agora, is_historical
+        )
+        resp["paineis"]["confluencia_radares"] = {
+            "acoes": confluencia["acoes"],
+            "excedentes": confluencia["excedentes"],
+            "lidos": confluencia["lidos"],
+            "horario": confluencia["horario"].isoformat()
+            if confluencia["horario"]
+            else None,
+        }
+
         resp["consultor"] = {
             "atualizado_em": datetime.now(timezone(timedelta(hours=-3))).isoformat(),
             "ativos_avaliados": len(CARTEIRA_IBOVESPA),
@@ -1767,6 +1779,229 @@ def snapshot(
         }
 
         return resp
+
+
+def _payloads_radares() -> dict[str, Any]:
+    """Os payloads dos 20 radares de `RADARES`, como `index()` os põe no contexto.
+
+    Compartilhado com o `/api/snapshot` (spec 155): os dois leem os mesmos
+    getters, dentro do `lendo_pregao` e do cache de quem chama.
+    """
+    from app.database import (
+        get_latest_concentracao_ordens_data,
+        get_latest_esforco_resultado_data,
+        get_latest_falso_rompimento_data,
+        get_latest_liquidez_abertura_data,
+        get_latest_radar_absorcao_cruzada_data,
+        get_latest_radar_congestionamento_data,
+        get_latest_radar_divergencia_volume_data,
+        get_latest_radar_inflexao_data,
+    )
+
+    def formatar_data(t):
+        return t.strftime("%d/%m/%Y %H:%M:%S BRT")
+
+    volume_alerts = get_volume_alerts_view_data()
+    variacao_subita = get_variacao_subita_view_data()
+    radar_anomalia_fechamento = get_radar_anomalia_fechamento_view()
+    faca_caindo = get_faca_caindo_view()
+    compradores_fundo = get_compradores_fundo_view()
+    armadilha_abertura = get_armadilha_abertura_view()
+    radar_data = get_latest_radar_inflexao_data()
+    radar_inflexao = None
+    if radar_data:
+        try:
+            alertas = json.loads(radar_data.alertas_json)
+            radar_inflexao = {
+                "coletado_em": radar_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": radar_data.fonte,
+                "timestamp": radar_data.timestamp,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+    from app.services.radar_short_squeeze import get_radar_short_squeeze_view
+
+    short_squeeze = get_radar_short_squeeze_view()
+    radar_congestionamento_data = get_latest_radar_congestionamento_data()
+    esforco_resultado_data = get_latest_esforco_resultado_data()
+    esforco_resultado = None
+    if esforco_resultado_data:
+        try:
+            alertas = json.loads(esforco_resultado_data.alertas_json)
+            esforco_resultado = {
+                "coletado_em": esforco_resultado_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": esforco_resultado_data.fonte,
+                "timestamp": esforco_resultado_data.timestamp,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+
+    concentracao_ordens_data = get_latest_concentracao_ordens_data()
+    concentracao_ordens = None
+    if concentracao_ordens_data:
+        try:
+            alertas = json.loads(concentracao_ordens_data.alertas_json)
+        except Exception:
+            alertas = []
+
+        concentracao_ordens = {
+            "alertas": alertas,
+            "coletado_em": formatar_data(concentracao_ordens_data.timestamp),
+            "fonte": concentracao_ordens_data.fonte,
+            "timestamp": concentracao_ordens_data.timestamp,
+        }
+
+    exaustao_queda = None
+    exaustao_queda_data = get_latest_exaustao_queda_data()
+    if exaustao_queda_data:
+        try:
+            alertas = json.loads(exaustao_queda_data.alertas_json)
+            exaustao_queda = {
+                "alertas": alertas,
+                "coletado_em": formatar_data(exaustao_queda_data.timestamp),
+                "fonte": getattr(exaustao_queda_data, "fonte", "yfinance"),
+                "timestamp": exaustao_queda_data.timestamp,
+            }
+        except Exception:
+            pass
+
+    exaustao_alta_data = get_latest_exaustao_alta_data()
+    exaustao_alta = None
+    if exaustao_alta_data:
+        try:
+            alertas = json.loads(exaustao_alta_data.alertas_json)
+            exaustao_alta = {
+                "alertas": alertas,
+                "coletado_em": formatar_data(exaustao_alta_data.timestamp),
+                "fonte": getattr(exaustao_alta_data, "fonte", "yfinance"),
+                "timestamp": exaustao_alta_data.timestamp,
+            }
+        except Exception:
+            pass
+
+    exaustao_tendencia_data = get_latest_exaustao_tendencia_data()
+    exaustao_tendencia = None
+    if exaustao_tendencia_data:
+        try:
+            alertas = json.loads(exaustao_tendencia_data.alertas_json)
+            exaustao_tendencia = {
+                "coletado_em": exaustao_tendencia_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": exaustao_tendencia_data.fonte,
+                "timestamp": exaustao_tendencia_data.timestamp,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+
+    falso_rompimento_data = get_latest_falso_rompimento_data()
+    falso_rompimento = None
+    if falso_rompimento_data:
+        try:
+            alertas = json.loads(falso_rompimento_data.alertas_json)
+            falso_rompimento = {
+                "coletado_em": falso_rompimento_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": falso_rompimento_data.fonte,
+                "timestamp": falso_rompimento_data.timestamp,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+
+    radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
+    radar_absorcao_cruzada = None
+    if radar_absorcao_cruzada_data:
+        try:
+            alertas = json.loads(radar_absorcao_cruzada_data.alertas_json)
+            radar_absorcao_cruzada = {
+                "coletado_em": radar_absorcao_cruzada_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": radar_absorcao_cruzada_data.fonte,
+                "timestamp": radar_absorcao_cruzada_data.timestamp,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+
+    liquidez_abertura_data = get_latest_liquidez_abertura_data()
+    liquidez_abertura = None
+    if liquidez_abertura_data:
+        try:
+            alertas = json.loads(liquidez_abertura_data.alertas_json)
+            liquidez_abertura = {
+                "coletado_em": liquidez_abertura_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": liquidez_abertura_data.fonte,
+                "timestamp": liquidez_abertura_data.timestamp,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+
+    radar_divergencia_volume_data = get_latest_radar_divergencia_volume_data()
+    radar_divergencia_volume = None
+    if radar_divergencia_volume_data:
+        try:
+            alertas = json.loads(radar_divergencia_volume_data.alertas_json)
+            radar_divergencia_volume = {
+                "coletado_em": radar_divergencia_volume_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": radar_divergencia_volume_data.fonte,
+                "timestamp": radar_divergencia_volume_data.timestamp,
+                "alertas": alertas,
+            }
+        except Exception:
+            pass
+    anomalias_spread_data = get_latest_radar_anomalias_spread_data()
+    anomalias_spread = None
+    if anomalias_spread_data:
+        try:
+            alertas = json.loads(anomalias_spread_data.alertas_json)
+            anomalias_spread = {
+                "alertas": alertas,
+                "coletado_em": anomalias_spread_data.timestamp.astimezone(
+                    timezone(timedelta(hours=-3))
+                ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                "fonte": anomalias_spread_data.fonte,
+                "timestamp": anomalias_spread_data.timestamp,
+            }
+        except Exception:
+            pass
+
+    return {
+        "volume_alerts": volume_alerts,
+        "variacao_subita": variacao_subita,
+        "concentracao_ordens": concentracao_ordens,
+        "exaustao_alta": exaustao_alta,
+        "exaustao_queda": exaustao_queda,
+        "exaustao_tendencia": exaustao_tendencia,
+        "radar_absorcao_cruzada": radar_absorcao_cruzada,
+        "liquidez_abertura": liquidez_abertura,
+        "radar_congestionamento": radar_congestionamento_data,
+        "faca_caindo": faca_caindo,
+        "anomalias_spread": anomalias_spread,
+        "short_squeeze": short_squeeze,
+        "falso_rompimento": falso_rompimento,
+        "radar_divergencia_volume": radar_divergencia_volume,
+        "esforco_resultado": esforco_resultado,
+        "scanner_capitulacao": scanner_capitulacao.view_model(),
+        "armadilha_abertura": armadilha_abertura,
+        "compradores_fundo": compradores_fundo,
+        "radar_anomalia_fechamento": radar_anomalia_fechamento,
+        "radar_inflexao": radar_inflexao,
+    }
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -1833,7 +2068,6 @@ def index(
             risco_dict["estado"] = apetite_risco.get("estado")
 
         data_ibov = ibovespa_data
-        volume_alerts = get_volume_alerts_view_data()
         dolar_correlation = get_dolar_correlation_view_data()
         sensibilidade_juros = get_sensibilidade_juros_view_data()
         forca_relativa = get_forca_relativa_view_data()
@@ -1877,198 +2111,24 @@ def index(
                 "volume_lider": concentracao_setorial_data.volume_lider,
             }
 
-        variacao_subita = get_variacao_subita_view_data()
-        radar_anomalia_fechamento = get_radar_anomalia_fechamento_view()
         rotacao_capital = get_rotacao_capital_view()
-        faca_caindo = get_faca_caindo_view()
-        compradores_fundo = get_compradores_fundo_view()
-        armadilha_abertura = get_armadilha_abertura_view()
         from app.database import (
-            get_latest_radar_inflexao_data,
             get_latest_anomalia_peso_data,
-            get_latest_radar_congestionamento_data,
-            get_latest_esforco_resultado_data,
-            get_latest_radar_divergencia_volume_data,
-            get_latest_radar_absorcao_cruzada_data,
             get_latest_fator_peso_pesado_data,
-            get_latest_liquidez_abertura_data,
-            get_latest_falso_rompimento_data,
-            get_latest_concentracao_ordens_data,
         )
-
-        radar_data = get_latest_radar_inflexao_data()
-        radar_inflexao = None
-        if radar_data:
-            try:
-                alertas = json.loads(radar_data.alertas_json)
-                radar_inflexao = {
-                    "coletado_em": radar_data.timestamp.astimezone(
-                        timezone(timedelta(hours=-3))
-                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                    "fonte": radar_data.fonte,
-                    "timestamp": radar_data.timestamp,
-                    "alertas": alertas,
-                }
-            except Exception:
-                pass
 
         sobrevivencia_semanal = get_sobrevivencia_semanal_view()
         volatilidade_silenciosa = get_volatilidade_silenciosa_view()
 
         mare = mare_servico.get_mare_view()
 
-        from app.services.radar_short_squeeze import get_radar_short_squeeze_view
-
-        short_squeeze = get_radar_short_squeeze_view()
         anomalia_data = get_latest_anomalia_peso_data()
-        radar_congestionamento_data = get_latest_radar_congestionamento_data()
 
-        esforco_resultado_data = get_latest_esforco_resultado_data()
-        esforco_resultado = None
-        if esforco_resultado_data:
-            try:
-                alertas = json.loads(esforco_resultado_data.alertas_json)
-                esforco_resultado = {
-                    "coletado_em": esforco_resultado_data.timestamp.astimezone(
-                        timezone(timedelta(hours=-3))
-                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                    "fonte": esforco_resultado_data.fonte,
-                    "timestamp": esforco_resultado_data.timestamp,
-                    "alertas": alertas,
-                }
-            except Exception:
-                pass
-
-        concentracao_ordens_data = get_latest_concentracao_ordens_data()
-        concentracao_ordens = None
-        if concentracao_ordens_data:
-            try:
-                alertas = json.loads(concentracao_ordens_data.alertas_json)
-            except Exception:
-                alertas = []
-
-            def formatar_data(t):
-                return t.strftime("%d/%m/%Y %H:%M:%S BRT")
-
-            concentracao_ordens = {
-                "alertas": alertas,
-                "coletado_em": formatar_data(concentracao_ordens_data.timestamp),
-                "fonte": concentracao_ordens_data.fonte,
-                "timestamp": concentracao_ordens_data.timestamp,
-            }
-
-        exaustao_queda = None
-        exaustao_queda_data = get_latest_exaustao_queda_data()
-        if exaustao_queda_data:
-            try:
-                alertas = json.loads(exaustao_queda_data.alertas_json)
-                exaustao_queda = {
-                    "alertas": alertas,
-                    "coletado_em": formatar_data(exaustao_queda_data.timestamp),
-                    "fonte": getattr(exaustao_queda_data, "fonte", "yfinance"),
-                    "timestamp": exaustao_queda_data.timestamp,
-                }
-            except Exception:
-                pass
-
-        exaustao_alta_data = get_latest_exaustao_alta_data()
-        exaustao_alta = None
-        if exaustao_alta_data:
-            try:
-                alertas = json.loads(exaustao_alta_data.alertas_json)
-                exaustao_alta = {
-                    "alertas": alertas,
-                    "coletado_em": formatar_data(exaustao_alta_data.timestamp),
-                    "fonte": getattr(exaustao_alta_data, "fonte", "yfinance"),
-                    "timestamp": exaustao_alta_data.timestamp,
-                }
-            except Exception:
-                pass
-
-        exaustao_tendencia_data = get_latest_exaustao_tendencia_data()
-        exaustao_tendencia = None
-        if exaustao_tendencia_data:
-            try:
-                alertas = json.loads(exaustao_tendencia_data.alertas_json)
-                exaustao_tendencia = {
-                    "coletado_em": exaustao_tendencia_data.timestamp.astimezone(
-                        timezone(timedelta(hours=-3))
-                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                    "fonte": exaustao_tendencia_data.fonte,
-                    "timestamp": exaustao_tendencia_data.timestamp,
-                    "alertas": alertas,
-                }
-            except Exception:
-                pass
-
-        falso_rompimento_data = get_latest_falso_rompimento_data()
-        falso_rompimento = None
-        if falso_rompimento_data:
-            try:
-                alertas = json.loads(falso_rompimento_data.alertas_json)
-                falso_rompimento = {
-                    "coletado_em": falso_rompimento_data.timestamp.astimezone(
-                        timezone(timedelta(hours=-3))
-                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                    "fonte": falso_rompimento_data.fonte,
-                    "timestamp": falso_rompimento_data.timestamp,
-                    "alertas": alertas,
-                }
-            except Exception:
-                pass
-
-        radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
         fator_peso_pesado_data_raw = get_latest_fator_peso_pesado_data()
         from app.services.fator_peso_pesado import apresentar as _fpp
 
         fator_peso_pesado_data = _fpp(fator_peso_pesado_data_raw)
 
-        radar_absorcao_cruzada = None
-        if radar_absorcao_cruzada_data:
-            try:
-                alertas = json.loads(radar_absorcao_cruzada_data.alertas_json)
-                radar_absorcao_cruzada = {
-                    "coletado_em": radar_absorcao_cruzada_data.timestamp.astimezone(
-                        timezone(timedelta(hours=-3))
-                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                    "fonte": radar_absorcao_cruzada_data.fonte,
-                    "timestamp": radar_absorcao_cruzada_data.timestamp,
-                    "alertas": alertas,
-                }
-            except Exception:
-                pass
-
-        liquidez_abertura_data = get_latest_liquidez_abertura_data()
-        liquidez_abertura = None
-        if liquidez_abertura_data:
-            try:
-                alertas = json.loads(liquidez_abertura_data.alertas_json)
-                liquidez_abertura = {
-                    "coletado_em": liquidez_abertura_data.timestamp.astimezone(
-                        timezone(timedelta(hours=-3))
-                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                    "fonte": liquidez_abertura_data.fonte,
-                    "timestamp": liquidez_abertura_data.timestamp,
-                    "alertas": alertas,
-                }
-            except Exception:
-                pass
-
-        radar_divergencia_volume_data = get_latest_radar_divergencia_volume_data()
-        radar_divergencia_volume = None
-        if radar_divergencia_volume_data:
-            try:
-                alertas = json.loads(radar_divergencia_volume_data.alertas_json)
-                radar_divergencia_volume = {
-                    "coletado_em": radar_divergencia_volume_data.timestamp.astimezone(
-                        timezone(timedelta(hours=-3))
-                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                    "fonte": radar_divergencia_volume_data.fonte,
-                    "timestamp": radar_divergencia_volume_data.timestamp,
-                    "alertas": alertas,
-                }
-            except Exception:
-                pass
         anomalia_peso = None
         if anomalia_data:
             try:
@@ -2083,37 +2143,6 @@ def index(
             except Exception:
                 pass
 
-        anomalias_spread_data = get_latest_radar_anomalias_spread_data()
-        anomalias_spread = None
-        if anomalias_spread_data:
-            try:
-                alertas = json.loads(anomalias_spread_data.alertas_json)
-                anomalias_spread = {
-                    "alertas": alertas,
-                    "coletado_em": anomalias_spread_data.timestamp.astimezone(
-                        timezone(timedelta(hours=-3))
-                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                    "fonte": anomalias_spread_data.fonte,
-                    "timestamp": anomalias_spread_data.timestamp,
-                }
-            except Exception:
-                pass
-
-        anomalias_spread_data = get_latest_radar_anomalias_spread_data()
-        anomalias_spread = None
-        if anomalias_spread_data:
-            try:
-                alertas = json.loads(anomalias_spread_data.alertas_json)
-                anomalias_spread = {
-                    "alertas": alertas,
-                    "coletado_em": anomalias_spread_data.timestamp.astimezone(
-                        timezone(timedelta(hours=-3))
-                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
-                    "fonte": anomalias_spread_data.fonte,
-                    "timestamp": anomalias_spread_data.timestamp,
-                }
-            except Exception:
-                pass
         relogio_data = get_latest_relogio_volatilidade_data()
         relogio = None
         if relogio_data:
@@ -2142,6 +2171,7 @@ def index(
                 pass
 
         contexto = {
+            **_payloads_radares(),
             "datas_seletor": datas_seletor,
             "data_invalida": data_invalida,
             "datas_disponiveis": datas_disponiveis,
@@ -2152,7 +2182,6 @@ def index(
             "manchete": manchete,
             "data": data_ibov,
             "highlights": highlights,
-            "volume_alerts": volume_alerts,
             "dolar_correlation": dolar_correlation,
             "sensibilidade_juros": sensibilidade_juros,
             "forca_relativa": forca_relativa,
@@ -2163,26 +2192,11 @@ def index(
             "concentracao_vendedora": concentracao_vendedora,
             "apetite_risco": apetite_risco,
             "concentracao_setorial": concentracao_setorial,
-            "variacao_subita": variacao_subita,
-            "radar_anomalia_fechamento": radar_anomalia_fechamento,
             "rotacao_capital": rotacao_capital,
-            "faca_caindo": faca_caindo,
-            "compradores_fundo": compradores_fundo,
-            "armadilha_abertura": armadilha_abertura,
-            "radar_inflexao": radar_inflexao,
-            "short_squeeze": short_squeeze,
             "sobrevivencia_semanal": sobrevivencia_semanal,
             "volatilidade_silenciosa": volatilidade_silenciosa,
-            "scanner_capitulacao": scanner_capitulacao.view_model(),
             "anomalia_peso": anomalia_peso,
-            "radar_congestionamento": radar_congestionamento_data,
-            "esforco_resultado": esforco_resultado,
-            "radar_divergencia_volume": radar_divergencia_volume,
-            "falso_rompimento": falso_rompimento,
-            "radar_absorcao_cruzada": radar_absorcao_cruzada,
-            "concentracao_ordens": concentracao_ordens,
             "fator_peso_pesado_data": fator_peso_pesado_data,
-            "liquidez_abertura": liquidez_abertura,
             "mare": mare,
             "motores_cards": motores_cards,
             "motores_sem_carimbo": motores_sem_carimbo,
@@ -2196,13 +2210,12 @@ def index(
             "clima_global": clima_global,
             "correlacao_di": correlacao_di,
             "relogio": relogio,
-            "anomalias_spread": anomalias_spread,
-            "exaustao_tendencia": exaustao_tendencia,
-            "exaustao_queda": exaustao_queda,
-            "exaustao_alta": exaustao_alta,
         }
         contexto["radares"] = radares_servico.resumo(
             contexto, agora, is_historical, mostrar_vazios=vazios == "1"
+        )
+        contexto["confluencia"] = radares_servico.confluencia(
+            contexto, agora, is_historical
         )
         return templates.TemplateResponse(
             request=request, name="index.html", context=contexto
