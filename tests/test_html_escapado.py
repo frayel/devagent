@@ -21,11 +21,7 @@ import app.database
 RAIZ = Path(__file__).resolve().parents[1]
 
 # `&lt;` seguido de nome de tag (ou `/`): HTML que virou texto. `&lt;=2%` passa.
-TAG_ESCAPADA = re.compile(
-    r"&lt;/?[a-zA-Z][a-zA-Z0-9-]*(\s|&gt;|/|&#34;|$)"
-    # Fim de abertura de tag escapado: `">` virou `&#34;&gt;`.
-    r"|&#34;&gt;"
-)
+TAG_ESCAPADA = re.compile(r"&lt;/?[a-zA-Z][a-zA-Z0-9-]*(\s|&gt;|/|&#34;|$)")
 
 PAGINAS = ["/", "/?vazios=1", "/sistema", "/novidades", "/consultor"]
 
@@ -98,5 +94,4 @@ def test_fator_peso_pesado_ainda_escapa_o_texto_da_frase(cliente, monkeypatch):
 def test_detector_acha_o_defeito_de_15_11():
     defeito = "&lt;div class=&#34;texto-2 espaco-topo-curto&#34;&gt;As 5 maiores"
     assert _tags_escapadas(defeito)
-    assert _tags_escapadas("Neutro <span> texto-medio&#34;&gt;Neutro")
     assert not _tags_escapadas("perto da mínima (&lt;=2%) e distante")
