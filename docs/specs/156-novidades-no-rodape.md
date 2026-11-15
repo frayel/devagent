@@ -5,6 +5,7 @@ status: ready
 esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_156.py
+revisada: 2026-11-15
 ---
 
 ## Problema
@@ -17,10 +18,10 @@ Pedido do dono do produto em 15/11/2026. Em 14 e 15/11 o painel recebeu oito mud
 2. **Página `/novidades`.** Lista as entradas dos últimos 60 dias, da mais nova para a mais antiga, agrupadas por data (`DD/MM/AAAA`). Cada entrada tem:
    - um selo com o tipo: **Novidade** (algo que não existia), **Melhoria** (algo que existia e ficou melhor) ou **Correção** (algo que mostrava errado e foi consertado);
    - o texto da entrada, em linguagem de usuário: sem nome de arquivo, função ou número de spec;
-   - quando a mudança é visível, uma linha `Onde ver: <aba> › <painel>` com link `/?aba=<data-aba>` que abre a aba indicada na página inicial. Entrada sem `onde` (uma correção de cálculo sem mudança de tela, por exemplo) não tem essa linha.
+   - quando a mudança é visível, uma linha `Onde ver: <aba_nome> › <painel>` com link `/?aba=<aba>` que abre a aba indicada na página inicial. Para uma entrada com `onde.pagina`, a linha é `Onde ver: <pagina_nome> › <painel>` (ou só `Onde ver: <pagina_nome>`, sem `painel`) com link para `onde.pagina`. Entrada sem `onde` (uma correção de cálculo sem mudança de tela, por exemplo) não tem essa linha.
    Sem entradas no período, a página diz `Nenhuma novidade nos últimos 60 dias.` A página estende `base.html` e usa o tema existente: sem CSS ou JS novo além do necessário para os selos.
 3. **Página inicial com `?aba=`.** `app/static/ui.js` lê o parâmetro `aba` no carregamento e ativa o botão `.aba-btn[data-aba="<valor>"]`, como se o usuário tivesse clicado nele. Valor ausente ou que não corresponde a nenhuma aba mantém a Visão Geral, sem erro no console.
-4. **`/api/snapshot`** ganha a chave `novidades` com as entradas dos últimos 60 dias, no mesmo formato do arquivo, para o auditor conferir as invariantes.
+4. **`/api/snapshot`** ganha a chave de topo `novidades` (ao lado de `consultor`, fora de `paineis`, por isso sem `fonte` e `coletado_em`) com as entradas dos últimos 60 dias, no mesmo formato do arquivo, para o auditor conferir as invariantes. A lista não depende do `?data=`.
 
 ## Fontes de dados
 O arquivo versionado `app/novidades.json`, escrito à mão pela raia de desenvolvimento no mesmo PR da mudança. Ninguém coleta nada de fora. Formato: uma lista de objetos, do mais novo para o mais antigo.
@@ -40,10 +41,12 @@ O arquivo versionado `app/novidades.json`, escrito à mão pela raia de desenvol
 - `data`: `AAAA-MM-DD`, o dia do merge.
 - `tipo`: `novidade`, `melhoria` ou `correcao`.
 - `texto`: até 200 caracteres.
-- `onde`: opcional. `aba` é um `data-aba` que existe em `app/templates/index.html` (`visao-geral`, `sentimento-risco`, `rankings`, `alertas`, `sinais`), `aba_nome` é o rótulo do botão e `painel` é o título do painel como aparece na tela. Para uma página que não é a inicial, `{"pagina": "/sistema", "painel": "..."}`.
+- `onde`: opcional. `aba` é um `data-aba` que existe em `app/templates/index.html` (`visao-geral`, `sentimento-risco`, `rankings`, `alertas`, `sinais`), `aba_nome` é o rótulo do botão e `painel` é o título do painel como aparece na tela. Para uma página que não é a inicial, `{"pagina": "/sistema", "pagina_nome": "Sistema", "painel": "..."}`, com `painel` opcional.
 - `spec` ou `pr`: a origem (`"151"` ou `"#836"`). Não aparece na página.
 
-Plano B: um arquivo ausente ou inválido não derruba nenhuma página. O rodapé some, `/novidades` diz `Novidades indisponíveis.`, e o erro vai para o log uma vez por processo.
+Plano B: um arquivo ausente ou inválido não derruba nenhuma página. O rodapé some, `/novidades` diz `Novidades indisponíveis.`, `/api/snapshot` traz `novidades: []`, e o erro vai para o log uma vez por processo.
+
+Para o teste conseguir trocar o arquivo e o dia, a leitura fica num módulo próprio (`app/services/novidades.py`, por exemplo) com o caminho do arquivo numa constante de módulo e o dia de hoje numa função (`hoje()`, no fuso do projeto), as duas substituíveis por `monkeypatch`. O arquivo é lido a cada requisição (tem poucas dezenas de linhas), sem cache entre requisições, para o teste que troca o arquivo não herdar o anterior.
 
 ## Cálculos
 - **Janela:** a entrada aparece se `hoje − data ≤ 60 dias`, com `hoje` no fuso de `[projeto].fuso` do `devagent.toml` (`America/Sao_Paulo`).
@@ -59,7 +62,7 @@ Arquivo com três entradas: `2026-11-15` (melhoria, `onde` na aba `alertas`), `2
 - Abrir `/?aba=alertas` mostra a página inicial com o botão "Alertas Intraday" ativo. `/?aba=xyz` mostra a Visão Geral.
 
 ## Carga inicial
-O PR desta spec cria o arquivo com as mudanças visíveis de 13/11 a 15/11/2026: specs 141, 142, 143, 144, 145, 146, 147, 149, 150 e 151 e o #836. Cada uma vira uma entrada com tipo, texto em linguagem de usuário e `onde` conferido no template atual. A 148 voltou a `draft` e não entra. A própria 156 entra como `novidade`, com `onde` `{"pagina": "/novidades"}`. Entradas `Agente:`, `Refactor:`, `Poda:` e `Saúde técnica` não entram, a menos que mudem algo na tela.
+O PR desta spec cria o arquivo com as mudanças visíveis de 13/11 a 15/11/2026: specs 141, 142, 143, 144, 145, 146, 147, 149, 150 e 151 e o #836. Cada uma vira uma entrada com tipo, texto em linguagem de usuário e `onde` conferido no template atual. A 148 voltou a `draft` e não entra. A 155 (card "Em vários radares", entregue em 15/11) também entra, como `novidade`, com `onde` na aba `alertas`. A própria 156 entra como `novidade`, com `onde` `{"pagina": "/novidades", "pagina_nome": "Novidades"}`. Entradas `Agente:`, `Refactor:`, `Poda:` e `Saúde técnica` não entram, a menos que mudem algo na tela.
 
 ## Critérios de aceite
 - [ ] Com um `app/novidades.json` de teste igual ao do exemplo e `hoje` fixado em 2026-11-15, `/` e `/sistema` contêm `Novidades · atualizado em 15/11/2026` com link para `/novidades`.
@@ -69,8 +72,9 @@ O PR desta spec cria o arquivo com as mudanças visíveis de 13/11 a 15/11/2026:
 - [ ] O `app/novidades.json` real é uma lista válida, e em cada entrada:
   - `tipo` é um dos três valores;
   - `data` é uma data válida;
-  - `texto` tem até 200 caracteres e não contém `.py`, `app/` nem `spec`;
-  - `onde.aba`, quando existe, é um `data-aba` presente em `app/templates/index.html`.
+  - `texto` tem até 200 caracteres e não contém `.py`, `app/` nem a palavra `spec`/`specs` isolada (regex `\bspecs?\b`, sem diferenciar maiúsculas; "especial" e "inspeção" passam);
+  - `onde.aba`, quando existe, é um `data-aba` presente em `app/templates/index.html`, e `onde.aba_nome` é o rótulo desse botão;
+  - `onde.pagina`, quando existe, responde 200 no `TestClient`.
 - [ ] Toda spec com número a partir de 156, `status: done` e gaveta `capacidade nova` ou `experiência` tem uma entrada no `app/novidades.json` com `"spec"` igual ao seu número. Assim as próximas entregas visíveis não esquecem a novidade.
 - [ ] No Chromium, `/?aba=alertas` deixa o botão `[data-aba="alertas"]` com a classe `ativo`, e `/?aba=xyz` não registra erro no console. Use o mesmo navegador de `tests/test_aceite_146.py`, com `CHROMIUM_PATH` quando existir.
 - [ ] `tests/test_aceite_156.py` usa `exigir_spec_done("156")` e não abre rede.
