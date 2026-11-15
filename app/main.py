@@ -31,6 +31,7 @@ from datetime import datetime, timezone, timedelta
 from datetime import timezone as dt_timezone
 from app.services.ibovespa import get_ibovespa_view_data
 from app.services import carimbo as carimbo_servico
+from app.services import novidades as novidades_servico
 from app.services.manchete import gerar_manchete
 from app.database import get_latest_highlights_data, get_latest_apetite_risco_data
 from app.services.highlights import get_highlights_view_data
@@ -131,6 +132,8 @@ templates = Jinja2Templates(directory="app/templates")
 # Cálculo dos gauges (spec 026): a macro só posiciona o que sai de app/gauge.py.
 templates.env.globals["gauge_dados"] = gauge.dados
 templates.env.filters["gauge_pct"] = gauge.gauge_pct
+# Rodapé de todas as páginas (spec 156): lido a cada renderização, sem cache.
+templates.env.globals["novidades_atualizado_em"] = novidades_servico.data_mais_recente
 templates.env.globals["render_no_db"] = (
     os.environ.get("RENDER") and get_backend_type() != "postgres"
 )
@@ -375,6 +378,28 @@ def estado_do_sistema() -> dict:
 def api_sistema(request: Request):
     exigir_senha(request)
     return estado_do_sistema()
+
+
+@app.get("/novidades", response_class=HTMLResponse)
+def pagina_novidades(request: Request):
+    """O que mudou no painel nos últimos 60 dias e onde ver (spec 156)."""
+    agora = datetime.now(timezone.utc)
+    ctx = _get_seletor_context(
+        None, agora, calendario.mercado_aberto(agora), calendario.pregao_corrente(agora)
+    )
+    return templates.TemplateResponse(
+        request=request,
+        name="novidades.html",
+        context={
+            "data": None,
+            "datas_seletor": ctx["datas_seletor"],
+            "data_referencia": ctx["data_referencia"],
+            "is_historical": ctx["is_historical"],
+            "data_invalida": ctx["data_invalida"],
+            "grupos": novidades_servico.grupos(),
+            "janela_dias": novidades_servico.JANELA_DIAS,
+        },
+    )
 
 
 @app.get("/sistema", response_class=HTMLResponse)
@@ -1789,6 +1814,9 @@ def snapshot(
             "coletado_em": agora.isoformat(),
             "fonte": "composto",
         }
+
+        # Spec 156: fora de `paineis` (sem fonte/coletado_em) e independente do ?data=.
+        resp["novidades"] = novidades_servico.recentes()
 
         resp["consultor"] = {
             "atualizado_em": datetime.now(timezone(timedelta(hours=-3))).isoformat(),

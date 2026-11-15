@@ -200,6 +200,19 @@ svg.medidor { display: block; width: 100%; }
 .vazio { padding: var(--e5); text-align: center; color: var(--texto-2); font-size: var(--fs-meta); }
 
 footer { margin-top: 40px; text-align: center; font-size: var(--fs-meta); color: var(--texto-3); padding-bottom: 20px; }
+footer p { margin: var(--e2) 0 0; }
+.rodape-novidades { color: var(--texto-2); }
+
+/* Novidades (spec 156): um selo por tipo, agrupadas por dia. */
+.novidades-dia { font-size: var(--fs-meta); color: var(--texto-2); margin: var(--e4) 0 var(--e2); font-weight: 600; }
+.novidades-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--e3); }
+.novidade { display: grid; grid-template-columns: 6.5rem 1fr; gap: var(--e3); align-items: start; }
+.novidade .selo { text-align: center; }
+.novidade-corpo p { margin: 0; }
+.novidade-onde { font-size: var(--fs-meta); }
+.selo.novidade-novidade { color: var(--alta); background: var(--alta-fundo); }
+.selo.novidade-melhoria { color: var(--alerta); background: var(--alerta-fundo); }
+.selo.novidade-correcao { color: var(--texto-2); background: var(--superficie-2); }
 
 @media (max-width: 767px) {
   .duas { grid-template-columns: 1fr; }

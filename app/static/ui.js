@@ -51,6 +51,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Spec 156: /?aba=<data-aba> abre essa aba, como um clique no botão. Valor
+    // ausente ou que não corresponde a nenhuma aba mantém a Visão Geral.
+    const abaPedida = new URLSearchParams(window.location.search).get('aba');
+    if (abaPedida) {
+        const botao = [...abas].find(a => a.getAttribute('data-aba') === abaPedida);
+        if (botao) botao.click();
+    }
+
     // Densidade Dinamica
     const btnDensidade = document.getElementById('btn-densidade');
     if (btnDensidade) {

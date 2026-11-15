@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "componentes.html" import painel %}
+
+{#- Página de novidades (spec 156): o que mudou no painel e onde conferir. O texto
+    vem de app/novidades.json, escrito à mão em linguagem de usuário. -#}
+
+{% block content %}
+{% call painel("Novidades", 12, "Mudanças visíveis no painel nos últimos " ~ janela_dias ~ " dias, da mais nova para a mais antiga. Novidade: algo que não existia. Melhoria: algo que existia e ficou melhor. Correção: algo que mostrava errado e foi consertado.", "", "", "novidades") %}
+  {% if grupos is none %}
+  <p class="vazio">Novidades indisponíveis.</p>
+  {% elif not grupos %}
+  <p class="vazio">Nenhuma novidade nos últimos {{ janela_dias }} dias.</p>
+  {% else %}
+  {% for grupo in grupos %}
+  <h3 class="novidades-dia num">{{ grupo.data }}</h3>
+  <ul class="novidades-lista">
+    {% for item in grupo.itens %}
+    <li class="novidade">
+      <span class="selo novidade-{{ item.tipo }}">{{ item.selo }}</span>
+      <div class="novidade-corpo">
+        <p>{{ item.texto }}</p>
+        {% if item.onde %}
+        <a class="novidade-onde" href="{{ item.onde.href }}">Onde ver: {{ item.onde.rotulo }}</a>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endfor %}
+  {% endif %}
+{% endcall %}
+{% endblock %}

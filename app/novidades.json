@@ -1,0 +1,93 @@
+[
+  {
+    "data": "2026-11-15",
+    "tipo": "novidade",
+    "texto": "Esta página: o que mudou no painel nos últimos 60 dias e onde ver cada mudança. O rodapé de todas as páginas diz quando houve a última novidade.",
+    "onde": {"pagina": "/novidades", "pagina_nome": "Novidades"},
+    "spec": "156"
+  },
+  {
+    "data": "2026-11-15",
+    "tipo": "novidade",
+    "texto": "Novo card com as ações que aparecem em dois ou mais radares ao mesmo tempo, e em quais. Só contam radares com coleta em dia.",
+    "onde": {"aba": "alertas", "aba_nome": "Alertas Intraday", "painel": "Em vários radares"},
+    "spec": "155"
+  },
+  {
+    "data": "2026-11-15",
+    "tipo": "melhoria",
+    "texto": "O sinal de inflexão aparece num só lugar, com a queda acumulada e a alta de hoje lado a lado.",
+    "onde": {"aba": "alertas", "aba_nome": "Alertas Intraday", "painel": "Radar de Inflexão"},
+    "spec": "151"
+  },
+  {
+    "data": "2026-11-14",
+    "tipo": "melhoria",
+    "texto": "Radares sem sinal deixam de ocupar um card cada: a seção Sem alertas, no fim da aba, lista quais são, e o botão Mostrar vazios traz os cards de volta.",
+    "onde": {"aba": "alertas", "aba_nome": "Alertas Intraday", "painel": "Sem alertas"},
+    "spec": "150"
+  },
+  {
+    "data": "2026-11-14",
+    "tipo": "melhoria",
+    "texto": "Fator Peso Pesado e Concentração Setorial dividem a mesma linha, sem deixar um espaço vazio na grade da Visão Geral.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Concentração Setorial"},
+    "spec": "149"
+  },
+  {
+    "data": "2026-11-14",
+    "tipo": "melhoria",
+    "texto": "Os quadradinhos das ações na Maré do mercado ganharam contraste: o código da ação fica legível mesmo nas cores mais claras.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Maré do mercado"},
+    "spec": "147"
+  },
+  {
+    "data": "2026-11-14",
+    "tipo": "correcao",
+    "texto": "Com os cookies bloqueados no navegador, o botão Compacto parava de funcionar. Agora funciona, e um card principal sem dado diz \"Dado indisponível agora.\"",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Ibovespa hoje"},
+    "spec": "146"
+  },
+  {
+    "data": "2026-11-14",
+    "tipo": "melhoria",
+    "texto": "O gráfico do Ibovespa deixa de parecer a variação do dia: a cor segue o sentido dos últimos 30 pregões, uma legenda diz as datas e o último ponto mostra o fechamento anterior.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Ibovespa hoje"},
+    "spec": "145"
+  },
+  {
+    "data": "2026-11-14",
+    "tipo": "melhoria",
+    "texto": "Quando falta um componente, a Maré do mercado avisa que é parcial e mostra os pesos usados e quanto do índice foi coberto.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Maré do mercado"},
+    "spec": "144"
+  },
+  {
+    "data": "2026-11-14",
+    "tipo": "correcao",
+    "texto": "A frase do Fator Peso Pesado mostrava o tamanho do movimento com o sinal trocado. Agora o sentido fica nas palavras e o número aparece sem sinal.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Fator Peso Pesado"},
+    "pr": "#836"
+  },
+  {
+    "data": "2026-11-13",
+    "tipo": "melhoria",
+    "texto": "O Fator Peso Pesado diz se as cinco maiores ações andaram no mesmo sentido do Ibovespa ou no sentido oposto, e avisa quando o valor foi limitado.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Fator Peso Pesado"},
+    "spec": "143"
+  },
+  {
+    "data": "2026-11-13",
+    "tipo": "correcao",
+    "texto": "Concentração de Ganhos lista só as ações que somaram pontos, e Pressão Vendedora só as que tiraram. As duas não repetem mais as mesmas ações.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Concentração de Ganhos"},
+    "spec": "142"
+  },
+  {
+    "data": "2026-11-13",
+    "tipo": "melhoria",
+    "texto": "Cada card principal diz de qual pregão é o número, e o topo da página avisa quando os cards mostram pregões diferentes.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Ibovespa hoje"},
+    "spec": "141"
+  }
+]
