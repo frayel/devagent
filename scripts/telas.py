@@ -155,6 +155,30 @@ def _semear(db_path: str) -> None:
         )
     )
 
+    # Pregões fechados no histórico, para o cabeçalho mostrar o seletor de
+    # data como em produção (issue 885: no celular ele saía da tela).
+    from app.banco import gravar_snapshot
+
+    # O pregão de hoje fica com o snapshot ao vivo gravado acima.
+    for i in range(len(dias) - 6, len(dias) - 1):
+        gravar_snapshot(
+            "ibovespa",
+            dias[i],
+            "final",
+            "demonstracao",
+            {
+                "timestamp": agora.isoformat(),
+                "current_price": fechamentos[i],
+                "previous_close": fechamentos[i - 1],
+                "history_json": json.dumps(
+                    {"dates": datas[: i + 1], "closes": fechamentos[: i + 1]}
+                ),
+                "fonte": "demonstracao",
+                "mm21": sum(fechamentos[i - 20 : i + 1]) / 21,
+                "mm200": fechamentos[0] * 0.97,
+            },
+        )
+
     def ativo(t: str, p: float, c: float) -> dict[str, object]:
         return {"ticker": t, "price": p, "change_percent": c}
 

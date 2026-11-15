@@ -2,6 +2,13 @@
   {
     "data": "2026-11-15",
     "tipo": "correcao",
+    "texto": "No celular, o Consultor não rola mais para o lado: os blocos ficam em coluna e a tabela de opiniões rola dentro dela. O seletor de data e o pregão do topo cabem na tela em todas as páginas.",
+    "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Consultor no celular"},
+    "pr": "#885"
+  },
+  {
+    "data": "2026-11-15",
+    "tipo": "correcao",
     "texto": "Escolher outro pregão no seletor de data voltou a abrir aquele fechamento. A aba aberta continua aberta ao trocar a data, ao recarregar e no Voltar para hoje.",
     "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Seletor de pregão"},
     "pr": "#883"
