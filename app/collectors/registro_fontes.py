@@ -23,6 +23,7 @@ FONTES: tuple[tuple[str, str], ...] = (
     ("generativelanguage.googleapis.com", "Gemini"),
     ("moneytimes.com.br", "Money Times"),
     ("infomoney.com.br", "InfoMoney"),
+    ("t.me", "Telegram"),
 )
 MT5 = "MetaTrader 5"
 

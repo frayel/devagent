@@ -90,6 +90,7 @@ from app.database import (
 )
 from app import agendador
 from app.collectors.ibovespa import LIMIAR_PCT_REVISAO, LIMIAR_PONTOS_REVISAO
+from app.collectors import consultor_opinioes as coletor_opinioes
 from app.services import sistema as sistema_servico
 
 logging.basicConfig(
@@ -132,6 +133,7 @@ templates = Jinja2Templates(directory="app/templates")
 # Cálculo dos gauges (spec 026): a macro só posiciona o que sai de app/gauge.py.
 templates.env.globals["gauge_dados"] = gauge.dados
 templates.env.filters["gauge_pct"] = gauge.gauge_pct
+templates.env.filters["origem_opiniao"] = coletor_opinioes.origem_do_link
 # Rodapé de todas as páginas (spec 156): lido a cada renderização, sem cache.
 templates.env.globals["novidades_atualizado_em"] = novidades_servico.data_mais_recente
 templates.env.globals["render_no_db"] = (
@@ -915,18 +917,7 @@ def api_consultor(
         fontes_opiniao = {
             "llm": opinioes_status_data,
             "diagnostico": opinioes_diagnostico,
-            "feeds": [
-                {
-                    "url": "https://www.moneytimes.com.br/feed/",
-                    "status": "ok",
-                    "ultima_coleta": "",
-                },
-                {
-                    "url": "https://www.infomoney.com.br/feed/",
-                    "status": "ok",
-                    "ultima_coleta": "",
-                },
-            ],
+            "feeds": coletor_opinioes.status_fontes(),
             "fila": fila_n,
         }
 

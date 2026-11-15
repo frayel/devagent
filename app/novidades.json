@@ -1,6 +1,13 @@
 [
   {
     "data": "2026-11-15",
+    "tipo": "novidade",
+    "texto": "O Consultor também lê três canais públicos do Telegram (Clube Acionista, Repositório de Ações e Universo Antifrágil). A nova coluna Via diz de onde veio cada opinião.",
+    "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Opiniões recentes"},
+    "spec": "157"
+  },
+  {
+    "data": "2026-11-15",
     "tipo": "correcao",
     "texto": "No celular, o Consultor não rola mais para o lado: os blocos ficam em coluna e a tabela de opiniões rola dentro dela. O seletor de data e o pregão do topo cabem na tela em todas as páginas.",
     "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Consultor no celular"},

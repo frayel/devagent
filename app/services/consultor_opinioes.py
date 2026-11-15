@@ -323,6 +323,7 @@ def extrair_opinioes():
 
     prompt = f"""
     Extraia as opiniões e recomendações de casas de análise sobre os tickers informados nas seguintes matérias.
+    A casa é a instituição que o texto nomeia como autora da opinião (por exemplo, "Ativa Investimentos recomenda COMPRA" → casa "Ativa Investimentos"). Nunca use como casa o canal do Telegram ou o portal que publicou a mensagem; se o texto não nomeia uma casa, não extraia a opinião.
     Só extraia opiniões para os tickers da lista: {", ".join(CARTEIRA_IBOVESPA)}. Não invente dados ou campos.
     Responda apenas com a lista JSON seguindo o esquema.
 
@@ -362,6 +363,10 @@ def extrair_opinioes():
         },
     }
 
+    from app.collectors.consultor_opinioes import TELEGRAM_CANAIS
+
+    nomes_de_canais = {normalizar(n).strip() for n in TELEGRAM_CANAIS.values()}
+
     try:
         resp = _gerar(api_key, payload)
 
@@ -394,6 +399,9 @@ def extrair_opinioes():
 
             casa = op.get("casa", "").strip()
             if not casa:
+                continue
+            # A casa é quem o texto nomeia, nunca o canal que repassou (spec 157).
+            if normalizar(casa) in nomes_de_canais:
                 continue
 
             recomendacao = normalizar_recomendacao(op.get("recomendacao", ""))
