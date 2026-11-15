@@ -142,10 +142,11 @@ Toda revisão de experiência (`devagent/skills/rever-experiencia.md`) procura n
 
 ## 8. Checklist visual (vale para todo PR que muda a interface)
 
-Rode `make telas`, **abra as duas imagens geradas em `telas/`** e responda no relatório da execução e no corpo do PR:
+Rode `make telas`, **abra as imagens de celular e de desktop geradas em `telas/`** (todas as páginas que o PR toca) e responda no relatório da execução e no corpo do PR:
 
 - [ ] Em 1440px, o Ibovespa, a tendência e a dispersão aparecem sem rolar?
-- [ ] Em 390px, não há rolagem horizontal e a ordem dos painéis faz sentido (Ibovespa primeiro)?
+- [ ] Em 360px e 390px, a página não rola para o lado, nenhum controle (seletor, aba, botão) fica fora da tela e nenhum texto vaza da caixa? O `make telas` imprime `PROBLEMA:` para cada caso; nenhum pode ser novo deste PR.
+- [ ] Em 390px, a ordem dos painéis faz sentido (Ibovespa primeiro)?
 - [ ] Algum card tem área vazia maior que o próprio conteúdo?
 - [ ] Toda alta e baixa tem seta além da cor?
 - [ ] Todo número está alinhado e com algarismos tabulares?

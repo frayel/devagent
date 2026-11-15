@@ -104,7 +104,8 @@ Soma-se ao checklist de `devagent/CICLO.md`:
 - O painel novo aparece no `/api/snapshot` conforme o contrato em `auditoria/README.md`?
 - Qualquer biblioteca usada em produção está em `requirements.txt`, e não só em `requirements-dev.txt`?
 - Se o PR acrescenta painel, seção ou tela: reavaliou a distribuição da grade (seção 3 do `docs/DESIGN.md`) em vez de só empilhar o painel no fim? (A cadência de experiência não é editada à mão: sai da `gaveta:` das specs, ADR 024 do núcleo.)
-- Se o PR muda a interface: rodou `make telas`, **abriu as duas imagens de `telas/`** e respondeu o checklist visual da seção 8 do `docs/DESIGN.md` no corpo do PR e no relatório? Algum "não" significa que o PR não está pronto.
+- **Toda página é legível em qualquer largura, de 360 px (celular) a 1440 px.** A página nunca rola para o lado; nenhum controle (seletor, aba, botão) fica fora da tela; nenhum texto vaza da caixa ou é cortado. Tabela larga rola dentro do próprio contêiner (`overflow-x: auto`), nunca a página. O `make telas` confere isso em `/`, `/consultor` e `/sistema` nas larguras 360, 390, 768 e 1440 e sai com erro a cada `PROBLEMA:`; um PR que muda a interface não sai com `PROBLEMA:` novo.
+- Se o PR muda a interface: rodou `make telas`, **abriu as imagens de celular e de desktop em `telas/`** e respondeu o checklist visual da seção 8 do `docs/DESIGN.md` no corpo do PR e no relatório? Algum "não" significa que o PR não está pronto.
 
 ## 7. Convenções
 
