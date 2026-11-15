@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import subprocess
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
 import pytest
 
 from devagent import conferir_pr, fila_specs, guardiao_prs, raias
-from devagent.adaptadores import jules
 from devagent.auditoria import achados_para_issues
 from devagent.conferir_pr import conferir
 
@@ -165,114 +163,6 @@ def test_proximo_numero_conta_subpastas_e_reservas(tmp_path: Path) -> None:
     assert fila_specs.proximo_numero(tmp_path, {91, 92}) == "093"
 
 
-def test_numeros_reservados_vem_do_prompt_das_sessoes_recentes() -> None:
-    sessoes = [
-        {"createTime": "2026-10-23T15:00:00Z", "prompt": "... use o número 091: ..."},
-        {"createTime": "2026-10-22T01:00:00Z", "prompt": "... use o número 088: ..."},
-        {"createTime": "2026-10-23T15:30:00Z", "prompt": "sem reserva"},
-    ]
-    assert jules.numeros_reservados(sessoes, AGORA) == {91}
-
-
-# --- quem a rodada abre ----------------------------------------------------------
-
-
-def _sessao(
-    persona: str, criada: datetime, estado: str = "COMPLETED"
-) -> dict[str, Any]:
-    return {
-        "name": f"sessions/{persona}",
-        "title": jules.PERSONAS[persona]["titulo"],
-        "createTime": criada.isoformat().replace("+00:00", "Z"),
-        "updateTime": criada.isoformat().replace("+00:00", "Z"),
-        "state": estado,
-    }
-
-
-def _decidir(
-    sessoes: list[dict[str, Any]] | None = None,
-    prontas: int = 2,
-    em_revisao: int = 0,
-    com_pr: set[str] | None = None,
-    merges: int = 0,
-) -> list[str]:
-    caminhos = [Path(f"docs/specs/{n:03d}-x.md") for n in range(prontas)]
-    return jules.raias_a_iniciar(
-        sessoes or [],
-        AGORA,
-        caminhos,
-        caminhos[:em_revisao],
-        com_pr or set(),
-        merges,
-    )
-
-
-def test_especificador_mantem_estoque_de_duas() -> None:
-    # ADR 029: com 1, o desenvolvimento esperava a escrita e a revisão da próxima.
-    assert "especificador" not in _decidir(prontas=3)
-    assert "especificador" in _decidir(prontas=2)
-    assert "especificador" in _decidir(prontas=1)
-    assert "especificador" in _decidir(prontas=0)
-
-
-def test_revisor_so_com_spec_esperando() -> None:
-    assert "revisor" not in _decidir(em_revisao=0)
-    assert "revisor" in _decidir(em_revisao=1)
-
-
-def test_verificador_precisa_de_merge_e_de_intervalo() -> None:
-    assert "verificador" not in _decidir(merges=0)
-    assert "verificador" in _decidir(merges=2)
-    recente = _sessao("verificador", AGORA - timedelta(minutes=30))
-    assert "verificador" not in _decidir([recente], merges=2)
-    antiga = _sessao("verificador", AGORA - timedelta(hours=2))
-    assert "verificador" in _decidir([antiga], merges=2)
-
-
-def test_verificador_abre_com_merge_de_pessoa() -> None:
-    # Spec 139: merges_novos conta merges de pessoas (qualquer autor com título de dev)
-    assert "verificador" in _decidir(merges=1)
-
-
-def test_raia_com_sessao_ativa_ou_pr_aberto_espera(monkeypatch) -> None:
-    monkeypatch.setattr(jules, "estado_do_pr", lambda url: None)
-    ativa = _sessao("revisor", AGORA - timedelta(minutes=10), "IN_PROGRESS")
-    assert "revisor" not in _decidir([ativa], em_revisao=1)
-    assert "revisor" not in _decidir(em_revisao=1, com_pr={raias.REVISAO})
-    # O PR aberto de uma raia não trava as outras.
-    assert _decidir(prontas=1, em_revisao=1, com_pr={raias.VERIFICACAO}, merges=1) == [
-        "especificador",
-        "revisor",
-    ]
-
-
-def test_sessao_do_desenvolvedor_nao_trava_as_raias() -> None:
-    dev = _sessao("desenvolvedor", AGORA - timedelta(minutes=5), "IN_PROGRESS")
-    assert _decidir([dev], prontas=1, em_revisao=1, merges=1) == [
-        "especificador",
-        "revisor",
-        "verificador",
-    ]
-
-
-def test_rodada_das_raias_inicia_as_escolhidas(monkeypatch) -> None:
-    iniciadas: list[str] = []
-    monkeypatch.setattr(jules, "specs_prontas", lambda: [Path("docs/specs/084-x.md")])
-    monkeypatch.setattr(jules, "fila_da_revisao", lambda prontas: prontas)
-    monkeypatch.setattr(jules, "raias_com_pr_aberto", set)
-    monkeypatch.setattr(jules, "spec_para_dividir", lambda prontas, issues: None)
-    monkeypatch.setattr(jules, "issues_de_tentativa", list)
-    monkeypatch.setattr(jules, "merges_do_desenvolvimento", lambda desde: [])
-    monkeypatch.setattr(jules, "iniciar", lambda p, dry_run: iniciadas.append(p) or 0)
-    jules.rodada_das_raias([], AGORA)
-    assert iniciadas == ["especificador", "revisor"]
-
-
-def test_revisor_abre_para_dividir_mesmo_sem_spec_a_revisar() -> None:
-    escolhidas = jules.raias_a_iniciar([], AGORA, [], [], {"especificacao"}, 0, True)
-    assert escolhidas == ["revisor"]
-
-
 # --- ADR 023: o desenvolvimento não cria nem edita specs ------------------------
 
 SPEC = "---\nid: 084\nstatus: ready\nrevisada: 2026-10-27\n---\n\n# Título\n"
@@ -291,28 +181,6 @@ def test_desenvolvimento_nao_cria_divide_nem_edita_spec() -> None:
     assert raias.edicao_de_spec_proibida(SPEC, editada) == "texto da spec alterado"
     rascunho = SPEC.replace("status: ready", "status: draft")
     assert "draft" in raias.edicao_de_spec_proibida(SPEC, rascunho)
-
-
-def test_prompt_do_revisor_aponta_a_spec(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(fila_specs, "revisao_desde", lambda: "084")
-    _spec(tmp_path / "docs/specs", "084-crua.md", "ready")
-    prompt = jules.prompt_de("revisor")
-    assert prompt.startswith(jules.PERSONAS["revisor"]["prompt"])
-    assert "docs/specs/084-crua.md" in prompt
-
-
-def test_prompt_do_especificador_reserva_numero(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.delenv("JULES_API_KEY", raising=False)
-    _spec(tmp_path / "docs/specs", "083-a.md", "done")
-    prompt = jules.prompt_de("especificador")
-    assert "use o número 084" in prompt
-    assert jules.NUMERO_RESERVADO.search(prompt)
 
 
 # --- achados do verificador e guardião ------------------------------------------
@@ -344,44 +212,9 @@ def test_guardiao_fecha_pr_de_raia_sem_tentativa(monkeypatch) -> None:
     assert not any("issue" in c for c in comandos)
 
 
-def test_raia_respeita_teto_diario() -> None:
-    sessoes = [
-        {
-            "title": jules.PERSONAS["revisor"]["titulo"],
-            "state": "COMPLETED",
-            "createTime": "2026-10-23T15:00:00Z",
-        }
-    ] * jules.TETO_DIARIO_DA_RAIA["revisor"]
-    escolhidas = jules.raias_a_iniciar(
-        sessoes, AGORA, [], [Path("x")], {"especificacao"}, 0
-    )
-    assert "revisor" not in escolhidas
-
-
-def test_revisao_so_cria_partes_da_spec_alterada() -> None:
-    assert raias.spec_nova_fora_do_alvo(
-        ["docs/specs/093a-x.md", "docs/specs/122-y.md"], ["docs/specs/093-x.md"]
-    ) == ["docs/specs/122-y.md"]
-    assert (
-        raias.spec_nova_fora_do_alvo(
-            ["docs/specs/092aa-x.md"], ["docs/specs/092a-x.md"]
-        )
-        == []
-    )
-
-
-def test_raia_da_sessao_vence_o_titulo() -> None:
-    res = conferir_pr.Resultado()
-    conferir_pr.conferir_raia_da_sessao(res, "especificacao", "Desenvolvedor · ciclo")
-    assert res.falhas and "Desenvolvedor" in res.falhas[0]
-    res = conferir_pr.Resultado()
-    conferir_pr.conferir_raia_da_sessao(res, "especificacao", "Especificador · spec")
-    assert res.falhas == []
-
-
 def test_autor_do_agente() -> None:
-    assert raias.do_agente("google-labs-jules[bot]")
-    assert raias.do_agente("app/google-labs-jules")
+    assert raias.do_agente("antigravity[bot]")
+    assert raias.do_agente("app/antigravity")
     assert raias.do_agente("antigravity")
     assert raias.do_agente("antigravity-bot")
     assert not raias.do_agente("frayel")
@@ -399,38 +232,73 @@ def test_raia_declarada_no_corpo() -> None:
     assert raias.raia_declarada("corpo sem marcador") is None
 
 
-def test_conferir_raia_declarada_no_corpo(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_conferir_raia_declarada_no_corpo() -> None:
     res = conferir_pr.Resultado()
-    monkeypatch.setattr(
-        conferir_pr,
-        "corpo_do_pr",
-        lambda: "<!-- devagent:raia:especificacao -->\ncorpo",
-    )
-    conferir_pr.conferir_raia_da_sessao(res, "desenvolvimento", sessao=None)
+    corpo = "<!-- devagent:raia:especificacao -->\ncorpo"
+    conferir_pr.conferir_raia_declarada(res, "desenvolvimento", corpo)
     assert res.falhas and "declara a raia `especificacao`" in res.falhas[0]
 
     res_ok = conferir_pr.Resultado()
-    conferir_pr.conferir_raia_da_sessao(res_ok, "especificacao", sessao=None)
+    conferir_pr.conferir_raia_declarada(res_ok, "especificacao", corpo)
     assert res_ok.falhas == []
+
+
+def test_marcador_do_corpo_vale_na_regra_8(repo: Path) -> None:
+    (repo / "docs/specs/001-a.md").write_text("---\nstatus: ready\nrevisada: x\n---\n")
+    corpo = "<!-- devagent:raia:desenvolvimento -->\nTamanho: 1\nJá no código: não"
+    falhas = conferir(repo, "base", True, titulo="revisão: 001", corpo=corpo).falhas
+    assert any("declara a raia `desenvolvimento`" in f for f in falhas)
 
 
 def test_verificacao_sem_achado_reprova(repo: Path) -> None:
     (repo / "docs/verificacao/relatorios").mkdir(parents=True)
     (repo / "docs/verificacao/relatorios/r.md").write_text("ok\n")
     falhas = conferir(
-        repo, "base", True, titulo="verificação: 0 achados", sessao="", corpo=""
+        repo, "base", True, titulo="verificação: 0 achados", corpo=""
     ).falhas
     assert any("sem achado" in f for f in falhas)
 
 
 def test_revisao_exige_conferencia_no_corpo(repo: Path) -> None:
     (repo / "docs/specs/001-a.md").write_text("---\nstatus: ready\nrevisada: x\n---\n")
-    falhas = conferir(
-        repo, "base", True, titulo="revisão: 001", sessao="", corpo="ok"
-    ).falhas
+    falhas = conferir(repo, "base", True, titulo="revisão: 001", corpo="ok").falhas
     assert any("Tamanho:" in f for f in falhas)
     corpo = "Tamanho: 2 arquivos\nJá no código: não"
-    falhas = conferir(
-        repo, "base", True, titulo="revisão: 001", sessao="", corpo=corpo
-    ).falhas
+    falhas = conferir(repo, "base", True, titulo="revisão: 001", corpo=corpo).falhas
     assert not any("Tamanho:" in f for f in falhas)
+
+
+def test_pr_do_agente_pelo_marcador_mesmo_com_login_de_pessoa() -> None:
+    # As sessões abrem PR com o login do dono do repositório: de 13/11 a 15/11
+    # nenhum PR do agente foi reconhecido como tal.
+    marcado = "texto\n<!-- devagent:raia:revisao -->\n"
+    assert raias.pr_do_agente("frayel", marcado)
+    assert raias.pr_do_agente("antigravity[bot]", "")
+    assert not raias.pr_do_agente("frayel", "PR escrito à mão")
+    assert not raias.pr_do_agente("frayel", None)
+
+
+def test_regra_8_vale_para_pr_marcado_do_login_do_dono(
+    repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(conferir_pr, "autor_do_pr", lambda: "frayel")
+    (repo / "docs/specs/001-a.md").write_text("---\nstatus: ready\nrevisada: x\n---\n")
+    marcado = "<!-- devagent:raia:desenvolvimento -->"
+    falhas = conferir(repo, "base", True, titulo="feat: x", corpo=marcado).falhas
+    # O desenvolvimento não edita texto de spec (ADR 023): marcado, reprova.
+    assert any("ADR 023" in f for f in falhas)
+    # Sem marcador, o mesmo PR é de pessoa e fica fora da regra 8 (ADR 024).
+    falhas = conferir(repo, "base", True, titulo="feat: x", corpo="à mão").falhas
+    assert not any("ADR 023" in f for f in falhas)
+
+
+def test_estado_github_conta_o_pr_marcado_como_do_agente() -> None:
+    from devagent import estado_github
+
+    pr = {
+        "title": "feat: x",
+        "user": {"login": "frayel"},
+        "body": "<!-- devagent:raia:desenvolvimento -->",
+    }
+    assert estado_github.eh_do_agente(pr)
+    assert not estado_github.eh_do_agente({**pr, "body": "à mão"})

@@ -89,7 +89,7 @@ def test_issue_nova_registra_a_spec(monkeypatch: pytest.MonkeyPatch) -> None:
     pr = {
         "number": 415,
         "title": "implement(spec): lote 3 parte b",
-        "headRefName": "jules-x",
+        "headRefName": "agente-x",
         "body": "",
         "url": "u",
     }

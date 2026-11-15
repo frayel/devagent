@@ -34,7 +34,6 @@ Todos ficam em `.github/workflows/` porque o GitHub exige. São do núcleo; o pr
 | `auditoria-producao.yml` | horários do projeto, após deploy | `make audit` contra produção; abre ou fecha issues `producao-incorreta`. Job `saude`: lê a página de saúde do produto (`python -m devagent.saude`, ADR 016) e abre, atualiza ou fecha a issue `sistema-com-problema` |
 | `pr-guardiao.yml` | CI falho em PR, após auto-merge, de hora em hora | `devagent/guardiao_prs.py`: cobra `@antigravity` (até 3x), fecha PR sem reação em 3 h (o de raia paralela fecha sem `tentativa-falhou`; a raia recomeça na rodada seguinte), com conflito grande (> 3 arquivos ou > 40 linhas, sem contar trechos só de acréscimo, ADR 017) ou substituído (`Substitui #N`); abre issue `tentativa-falhou` com a spec do PR, salvo se o conteúdo do PR já está na `main` (ADR 014) ou se é especialista sem achado (ADRs 019 e 020); fecha na hora PR de verificação sem achado novo em `docs/verificacao/achados/`, sem issue (ADR 025); fecha `tentativa-falhou` órfã, cuja spec já está `done` na `main` ou que não cita spec (ADR 020); fecha issues citadas com `Closes #N` em PRs mergeados nos últimos 7 dias; aplica `prioridade` a issue `bug` aberta há mais de 24 h (ADR 030); apaga branches órfãs com mais de 24 h |
 | `auditoria-achados.yml` | de hora em hora e após merge de PR `auditoria:` ou `verificação:` | `devagent/auditoria/achados_para_issues.py`: abre issues para os achados do auditor LLM em `docs/auditoria/achados/` e do Verificador em `docs/verificacao/achados/` (label `verificacao`; `alta` e `media` com `prioridade`) |
-| `jules.yml` e `auditoria-llm.yml` | só manual (`workflow_dispatch`) | legado do executor anterior (`devagent/adaptadores/jules.py`): iniciam sessões pela API do Jules. Sem agendamento desde o ADR 032; precisam de `JULES_API_KEY` |
 
 O `automerge.yml` não tem caminhos protegidos: todo PR com CI verde entra (ADR 007).
 
@@ -75,7 +74,7 @@ Você é o agente autônomo do repositório <dono>/<repositório>, numa sessão 
    - "FILA TRAVADA": siga a seção Fila travada do CICLO.md. A entrega é destravar a fila, não outra melhoria.
    - Qualquer outra coisa: você é o desenvolvedor. Percorra a seção 4 do CICLO.md em ordem e execute somente o primeiro passo que gerar entrega.
 
-3. Confira os PRs abertos do agente. As sessões agendadas abrem PR com o login do dono do repositório, e por isso o estado_github pode listá-los como "de pessoas". PR aberto cuja branch começa com "claude/" é do agente. Se existir um da sua raia, o trabalho desta sessão é destravá-lo na branch dele (Passo 2 do CICLO.md), e você tem permissão para dar push nessa branch. Não abra um segundo PR. PR de outra origem é de uma pessoa: não toque.
+3. Confira os PRs abertos do agente. O PR do agente é o que traz o marcador <!-- devagent:raia:<nome> --> no corpo; o estado_github já o reconhece assim, mesmo com o login do dono do repositório. Se existir um da sua raia, o trabalho desta sessão é destravá-lo na branch dele (Passo 2 do CICLO.md), e você tem permissão para dar push nessa branch. Não abra um segundo PR. PR sem o marcador é de uma pessoa: não toque.
 
 4. Faça uma entrega só. Parta da main atual e abra um único PR, com o prefixo de título e o marcador da raia no corpo. Antes de abrir, rode make verify e python -m devagent.conferir_pr --exigir-alteracao. Se o PR entrega, revisa ou cria uma spec, rode por último python -m devagent.papel conferir <desenvolvedor | revisor | especificador> NNN: saída diferente de 0 quer dizer que outra sessão chegou antes, então descarte o trabalho e encerre sem PR. O relatório de docs/runs/ vai no mesmo PR.
 
@@ -98,7 +97,6 @@ Você é o agente autônomo do repositório <dono>/<repositório>, numa sessão 
 | `SAUDE_SENHA` | secret do GitHub e ambiente do agente, se a página de saúde pede senha | senha do HTTP Basic da página de saúde; o usuário fica em `[saude] usuario` no `devagent.toml` |
 | `GITHUB_TOKEN` ou `GH_TOKEN` | Actions (automático) e ambiente do agente, opcional | token da API do GitHub para `estado_github`, guardião e auditoria; sem ele, a API pública, com limite menor |
 | `CHROMIUM_PATH` | ambiente, opcional | executável do Chromium para a checagem de navegador da auditoria (`devagent/auditoria/nucleo.py`); sem ele, o navegador instalado pelo Playwright |
-| `JULES_API_KEY`, `JULES_SOURCE`, `JULES_LIMITE_DIARIO`, `JULES_INTERVALO_MINUTOS` | secret do GitHub, opcional, legado | executor anterior (`devagent/adaptadores/jules.py`, só manual desde o ADR 032): chave da API, fonte (padrão `sources/github/<repositorio>`), cota diária e intervalo mínimo entre sessões |
 
 As variáveis `GITHUB_*` que o Actions define sozinho (`GITHUB_REPOSITORY`, `GITHUB_EVENT_NAME`, `GITHUB_EVENT_PATH`, `GITHUB_BASE_REF`) não precisam de configuração. O `devagent/tests/test_variaveis_documentadas.py` reprova variável lida pelo núcleo que não esteja nesta seção.
 

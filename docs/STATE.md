@@ -12,11 +12,19 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+<<<<<<< HEAD
 - [Experiência] Spec 150 - Radar sem sinal não ocupa um card:
   - `app/services/radares.py`: os 20 radares da aba Alertas classificados em com alertas, sem alertas, desatualizado (`carimbo.desatualizado`, TTL padrão de 30 min, só no pregão e fora de data histórica) ou indisponível; dá a classe de cada card e a lista da seção.
   - `app/templates/index.html`: a seção "Sem alertas" lista os nomes, os indisponíveis e os desatualizados, com o botão "Mostrar vazios" (`?vazios=1`). Cards vazios levam `radar-vazio`.
   - Os payloads dos radares levam o `timestamp` bruto; o `/api/snapshot` remove o campo da anomalia de fechamento para não mudar o JSON.
   - Testes de aceite em `tests/test_aceite_150.py`.
+=======
+- Núcleo sem o legado do Jules (pedido do dono, depois dos ADRs 032 e 033):
+  - Removidos `devagent/adaptadores/jules.py`, `.github/workflows/jules.yml` e `.github/workflows/auditoria-llm.yml`; o CI não lê mais `JULES_API_KEY`.
+  - A regra 8 do `conferir_pr` confere a raia do título contra o marcador `<!-- devagent:raia:<nome> -->` do corpo, sem consulta externa; saiu o caminho pela sessão do Jules (`raia_da_sessao`, `TAREFA_NO_CORPO`).
+  - O alvo do Verificador (`python -m devagent.papel verificador`) lista os PRs da raia de desenvolvimento pela API do GitHub, com as regras da spec 139 (`merges_do_desenvolvimento`, `sensor_do_pr`, `lista_do_verificador` em `devagent/papel.py`).
+  - O guardião cobra `@antigravity` e descreve os PRs como do agente; `google-labs-jules` saiu de `AUTORES_CONHECIDOS`. A pasta `.jules/` continua aceita como registro (diários antigos ainda estão no repositório).
+>>>>>>> origin/main
 - [Experiência] Spec 149 - A grade não deixa célula vazia entre os painéis macro:
   - `app/templates/index.html`: Fator Peso Pesado e Concentração Setorial em `span-6` cada (fecham em 12 e em 6 colunas); sem a Concentração, o Fator ocupa a linha (`fator_span`, como o `motores_span`). Removido o `<div class="span-4">` que envolvia a Anomalias de Spread: era filho direto da grade, ficava vazio na visão geral e deixava 8 colunas sobrando no fim.
   - Testes de aceite em `tests/test_aceite_149.py` (empacotador de 12 e 6 colunas sobre o HTML renderizado, com e sem a Concentração Setorial).
@@ -74,9 +82,9 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
   - Endpoint `/api/snapshot` passa a publicar `paineis.manchete` com `humor`, `texto`, `coletado_em` e `fonte`.
   - Testes de aceite completos em `tests/test_aceite_140.py`.
 - [Saúde Técnica] Spec 139 - O Verificador vê todo merge na main e examina todo PR que mexe num limite:
-  - `merges_do_desenvolvimento` em `devagent/adaptadores/jules.py` deixa de filtrar por `do_agente`, incluindo PRs da raia de desenvolvimento abertos por humanos.
+  - `merges_do_desenvolvimento` (hoje em `devagent/papel.py`; nasceu em `devagent/adaptadores/jules.py`, removido) deixa de filtrar por `do_agente`, incluindo PRs da raia de desenvolvimento abertos por humanos.
   - Implementada paginação na busca de PRs fechados até encontrar uma página anterior a `desde`, com limite de 5 páginas.
-  - Priorização de sensores via `checar_sensor_pr` e `PADRAO_SENSOR`: PRs que alteram `auditoria/` ou modificam limites (`MAXIMO/A`, `LIMITE`, `TOLERANCIA`, `TETO`) no `patch` são marcados `[sensor]` e ordenados no início do prompt.
+  - Priorização de sensores via `PADRAO_SENSOR` (hoje `papel.sensor_do_pr`): PRs que alteram `auditoria/` ou modificam limites (`MAXIMO/A`, `LIMITE`, `TOLERANCIA`, `TETO`) no `patch` são marcados `[sensor]` e ordenados no início do prompt.
   - Fallback gracioso para falha na listagem de arquivos (`/files`): o PR entra sem marca e com indicação `arquivos não consultados`.
   - O prompt lista os 15 PRs mais recentes mais todos os `[sensor]`, indicando `+N PRs omitidos; liste com git log --merges` quando restarem PRs de fora.
   - Checklist em `devagent/agents/raias.md` atualizado com itens *Verdade do número* e *Sensores*.

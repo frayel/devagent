@@ -34,7 +34,7 @@ from devagent.fila_specs import (
     producao_pendente,
     specs_prontas,
 )
-from devagent.raias import AUDITORIA, DESENVOLVIMENTO, do_agente, raia_do_titulo
+from devagent.raias import AUDITORIA, DESENVOLVIMENTO, pr_do_agente, raia_do_titulo
 
 API = "https://api.github.com"
 
@@ -96,8 +96,11 @@ def eh_do_agente(pr: dict[str, Any]) -> bool:
     de outro autor, como o dono do produto, também não: o agente não mexe
     nele (ADR 024).
     """
-    autor = (pr.get("user") or {}).get("login")
-    return do_agente(autor) and raia_do_titulo(pr["title"]) == DESENVOLVIMENTO
+    return _do_agente(pr) and raia_do_titulo(pr["title"]) == DESENVOLVIMENTO
+
+
+def _do_agente(pr: dict[str, Any]) -> bool:
+    return pr_do_agente((pr.get("user") or {}).get("login"), pr.get("body"))
 
 
 def status_ci(repo: str, sha: str) -> str:
@@ -124,7 +127,7 @@ def coletar() -> dict[str, Any]:
                 "titulo": pr["title"],
                 "branch": pr["head"]["ref"],
                 "do_agente": eh_do_agente(pr),
-                "humano": not do_agente((pr.get("user") or {}).get("login")),
+                "humano": not _do_agente(pr),
                 "raia": raia_do_titulo(pr["title"]),
                 "labels": [lbl["name"] for lbl in pr["labels"]],
                 "idade_horas": _horas(pr["created_at"]),

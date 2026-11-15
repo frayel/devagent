@@ -214,14 +214,132 @@ def desde_a_ultima_verificacao(raiz: Path | None = None) -> datetime:
     return max([piso, *datas])
 
 
-def alvo_do_verificador(merges: list[str], prs: list[dict[str, Any]]) -> str:
-    """`merges`: títulos do que a raia de desenvolvimento levou à main no período."""
+# Linha de patch que mexe numa constante de limite (spec 139).
+PADRAO_SENSOR = re.compile(
+    r"^[+-].*\b\w*(MAXIM[AO]|LIMITE|TOLERANCIA|TETO)\w*\s*=", re.MULTILINE
+)
+# Quantos merges recentes o alvo do Verificador lista, além dos `[sensor]`.
+MAXIMO_DE_MERGES_NO_ALVO = 15
+# Teto de páginas (de 50 PRs) na busca dos merges do período.
+MAXIMO_DE_PAGINAS = 5
+
+
+def github_get(caminho: str) -> Any:
+    """GET na API do GitHub (o mesmo `_get` do estado_github, importado tarde)."""
+    from devagent import estado_github
+
+    return estado_github._get(caminho)
+
+
+def _repositorio() -> str:
+    from devagent.config import PROJETO
+
+    return str(PROJETO["repositorio"])
+
+
+def _quando(texto: str) -> datetime:
+    return datetime.fromisoformat(texto.replace("Z", "+00:00"))
+
+
+def merges_do_desenvolvimento(desde: datetime) -> list[dict[str, Any]]:
+    """PRs da raia de desenvolvimento mesclados depois de `desde`, mais novos antes.
+
+    Vale qualquer autor, inclusive pessoas: o título é que diz a raia (spec
+    139). A busca percorre `state=closed` por atualização até a primeira
+    página cujo PR mais antigo é anterior a `desde`, com teto de páginas.
+    """
+    if desde.tzinfo is None:
+        desde = desde.replace(tzinfo=timezone.utc)
+    repo = _repositorio()
+    merges: list[dict[str, Any]] = []
+    vistos: set[int] = set()
+    for pagina in range(1, MAXIMO_DE_PAGINAS + 1):
+        try:
+            prs = github_get(
+                f"/repos/{repo}/pulls?state=closed&sort=updated&direction=desc"
+                f"&per_page=50&page={pagina}"
+            )
+        except (OSError, ValueError):
+            break
+        if not prs or not isinstance(prs, list):
+            break
+        for pr in prs:
+            numero = pr.get("number")
+            if numero in vistos or not pr.get("merged_at"):
+                continue
+            if (
+                _quando(pr["merged_at"]) > desde
+                and raia_do_titulo(pr.get("title") or "") == DESENVOLVIMENTO
+            ):
+                merges.append(pr)
+                if numero is not None:
+                    vistos.add(numero)
+        atualizados = [_quando(pr["updated_at"]) for pr in prs if pr.get("updated_at")]
+        if atualizados and min(atualizados) < desde:
+            break
+    merges.sort(key=lambda pr: _quando(pr["merged_at"]), reverse=True)
+    return merges
+
+
+def sensor_do_pr(numero: int) -> tuple[bool, bool]:
+    """(é sensor, falhou ao ler os arquivos) de um PR.
+
+    É sensor o PR que altera arquivo em `auditoria/` ou cujo patch adiciona ou
+    remove linha casando PADRAO_SENSOR (spec 139). Falha na consulta não
+    derruba nada: o PR entra sem marca.
+    """
+    try:
+        arquivos = github_get(f"/repos/{_repositorio()}/pulls/{numero}/files")
+    except Exception:  # noqa: BLE001 - qualquer falha vira "não consultados"
+        return False, True
+    if not isinstance(arquivos, list):
+        return False, True
+    for arq in arquivos:
+        nome = arq.get("filename") or ""
+        if nome.startswith("auditoria/") or "/auditoria/" in nome:
+            return True, False
+        if PADRAO_SENSOR.search(arq.get("patch") or ""):
+            return True, False
+    return False, False
+
+
+def lista_do_verificador(merges: list[dict[str, Any]]) -> str:
+    """O que o Verificador examina: sensores primeiro, sem corte silencioso.
+
+    Traz os MAXIMO_DE_MERGES_NO_ALVO mais recentes mais todo `[sensor]`; o que
+    sobra é contado na frase final (spec 139).
+    """
+    if not merges:
+        return ""
+    info = [(pr, *sensor_do_pr(pr["number"])) for pr in merges]
+    escolhidos = {pr["number"] for pr in merges[:MAXIMO_DE_MERGES_NO_ALVO]} | {
+        pr["number"] for pr, sensor, _ in info[MAXIMO_DE_MERGES_NO_ALVO:] if sensor
+    }
+    omitidos = len(merges) - len(escolhidos)
+    na_lista = [i for i in info if i[0]["number"] in escolhidos]
+    ordenados = [i for i in na_lista if i[1]] + [i for i in na_lista if not i[1]]
+    itens = []
+    for pr, sensor, erro in ordenados:
+        if sensor:
+            itens.append(f"#{pr['number']} [sensor] ({pr['title']})")
+        elif erro:
+            itens.append(f"#{pr['number']} ({pr['title']}) (arquivos não consultados)")
+        else:
+            itens.append(f"#{pr['number']} ({pr['title']})")
+    texto = "Verifique o que estes PRs levaram à main: " + ", ".join(itens) + "."
+    if omitidos > 0:
+        texto += f" +{omitidos} PRs omitidos; liste com git log --merges."
+    return texto
+
+
+def alvo_do_verificador(merges: list[dict[str, Any]], prs: list[dict[str, Any]]) -> str:
+    """`merges`: PRs que a raia de desenvolvimento levou à main no período."""
     travado = pr_travado(VERIFICACAO, prs)
     if travado:
         return _destravar(travado)
     if _com_pr(VERIFICACAO, prs) or not merges:
         return ""
-    return "Verifique o que estes merges levaram à main: " + "; ".join(merges) + "."
+    return lista_do_verificador(merges)
 
 
 def entregas_sem_spec(titulos: list[str]) -> int:
@@ -293,7 +411,7 @@ def para_persona(
     prontas: list[Path],
     issues: list[dict[str, Any]],
     prs: list[dict[str, Any]],
-    merges: list[str] | None = None,
+    merges: list[dict[str, Any]] | None = None,
     raiz: Path | None = None,
 ) -> Papel:
     """O alvo da persona que a tarefa nomeou; alvo vazio = encerrar sem PR."""
@@ -318,10 +436,6 @@ def titulos_da_main(desde: datetime | None = None, limite: int = 40) -> list[str
     except (OSError, subprocess.SubprocessError):
         return []
     return [t for t in saida.stdout.splitlines() if t.strip()]
-
-
-def merges_do_desenvolvimento(desde: datetime) -> list[str]:
-    return [t for t in titulos_da_main(desde) if raia_do_titulo(t) == DESENVOLVIMENTO]
 
 
 # ---------------------------------------------------------------------------
