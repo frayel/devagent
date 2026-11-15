@@ -14,4 +14,5 @@ def view_model() -> dict | None:
             "%d/%m/%Y %H:%M:%S BRT"
         ),
         "fonte": data.fonte,
+        "timestamp": data.timestamp,
     }

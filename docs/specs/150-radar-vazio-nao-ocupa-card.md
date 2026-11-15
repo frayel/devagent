@@ -1,7 +1,7 @@
 ---
 id: 150
 titulo: Radar sem sinal não ocupa um card
-status: ready
+status: done
 esforco: M
 gaveta: experiência
 aceite: tests/test_aceite_150.py

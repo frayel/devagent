@@ -16,5 +16,6 @@ def get_radar_anomalia_fechamento_view() -> dict:
             ).strftime("%d/%m/%Y %H:%M:%S BRT"),
             "fonte": data.fonte,
             "alertas": alertas,
+            "timestamp": data.timestamp,
         }
     return {}

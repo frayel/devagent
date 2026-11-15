@@ -49,4 +49,5 @@ def get_volume_alerts_view_data() -> dict[str, Any] | None:
         "alerts": alerts_formatted,
         "time": time_formatted,
         "fonte": getattr(data, "fonte", "yfinance"),
+        "timestamp": data.timestamp,
     }

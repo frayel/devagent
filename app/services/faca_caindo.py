@@ -1,4 +1,4 @@
-from datetime import timezone, timedelta
+from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass
 import json
 import logging
@@ -22,6 +22,7 @@ class FacaCaindoView:
     fonte: str
     time: str
     alertas: list[AlertaFacaCaindo]
+    timestamp: datetime | None = None
 
 
 def _alertas(alertas_json: str) -> list[AlertaFacaCaindo]:
@@ -51,4 +52,5 @@ def get_faca_caindo_view() -> FacaCaindoView | None:
             "%d/%m/%Y %H:%M:%S BRT"
         ),
         alertas=_alertas(data.alertas_json),
+        timestamp=data.timestamp,
     )
