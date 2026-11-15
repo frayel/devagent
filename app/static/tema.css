@@ -60,8 +60,7 @@ header .marca { color: var(--texto); text-decoration: none; font-weight: 600; fo
 header .marca span { color: var(--texto-3); font-weight: 400; }
 
 .pregao {
-    overflow: hidden;
-    text-overflow: ellipsis;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -109,9 +108,21 @@ header .hora { margin-left: auto; font-size: var(--fs-meta); color: var(--texto-
 }
 
 @media (max-width: 767px) {
-  .grade { grid-template-columns: 1fr; padding: var(--e3); }
-  .span-3, .span-4, .span-6, .span-8, .span-12 { grid-column: auto; }
+  .grade { grid-template-columns: minmax(0, 1fr); padding: var(--e3); }
+  .span-3, .span-4, .span-6, .span-8, .span-12 { grid-column: auto; min-width: 0; }
   header .hora { display: none; }
+  /* Issue 885: no celular o cabeçalho quebra em linhas; o rótulo do pregão
+     e o seletor de data ficam inteiros na tela. */
+  header { flex-wrap: wrap; gap: var(--e2) var(--e3); padding: var(--e2) var(--e3); }
+  header .espacador-flex { display: none; }
+  header .menu { margin-left: auto; }
+  .pregao { flex-wrap: wrap; flex-basis: 100%; min-width: 0; max-width: 100%; }
+  .pregao .form-inline { min-width: 0; max-width: 100%; }
+  .pregao-leitura { white-space: normal; overflow-wrap: anywhere; }
+  .seletor-data { max-width: 100%; }
+  .alerta-historico { margin-right: 0; }
+  .gauges-pequenos > * { min-width: 0; }
+  .gauges-pequenos .hero .valor { font-size: var(--fs-kpi); overflow-wrap: anywhere; }
 }
 
 .painel {
@@ -511,6 +522,9 @@ tbody td .spark svg { width: 100%; height: 100%; }
     font-size: var(--fs-meta);
     color: var(--texto-2);
 }
+@media (max-width: 767px) {
+    .padding-2rem { padding: 0; }
+}
 @media (max-width: 768px) {
     .cabecalho-consultor {
         flex-direction: column !important;
@@ -603,6 +617,7 @@ tbody td .spark svg { width: 100%; height: 100%; }
 }
 .painel-informacoes > div {
     flex: 1 1 250px;
+    min-width: 0;
 }
 .painel-informacoes h4 {
     margin-top: 0;
