@@ -19,6 +19,7 @@ nunca foram capturadas, e o teste não as inventa.
 from __future__ import annotations
 
 import logging
+import os
 import re
 import sys
 from pathlib import Path
@@ -124,7 +125,11 @@ def _executar_no_navegador(pagina: str) -> list[str]:
 
     erros: list[str] = []
     with sync_playwright() as p:
-        navegador = p.chromium.launch()
+        # CHROMIUM_PATH: navegador já instalado na máquina (o Makefile o acha),
+        # para o teste não depender de baixar o da versão do Playwright.
+        navegador = p.chromium.launch(
+            executable_path=os.environ.get("CHROMIUM_PATH") or None
+        )
         try:
             aba = navegador.new_page()
             aba.route("**/*", lambda rota: rota.abort())

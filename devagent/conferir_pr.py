@@ -44,6 +44,13 @@ Regras (mantenha em sincronia com devagent/CICLO.md, Passos 1 e 4):
        PR `revisão:` só cria partes (NNNa) da spec que altera e traz as linhas
        de conferência; PR `verificação:` traz achado novo. PR de pessoa fica
        fora da regra (ADR 024).
+    9. Relatório novo (`docs/runs/` ou `docs/verificacao/relatorios/`) se
+       chama AAAA-MM-DD-HHMM.md com a hora UTC em que foi escrito: no máximo
+       10 min depois e 2 h antes do commit que o cria. O agente lê "os três
+       últimos relatórios" pela ordem dos nomes; em 15/11, relatórios com a
+       hora de Brasília e um com a data do dia seguinte (15-2129, escrito em
+       15/11 00:50 UTC) faziam as sessões lerem como recentes relatórios de
+       horas antes.
 
 Uma regra nunca é afrouxada no mesmo PR que corrige o que ela aponta
 (README do núcleo, separação de poderes).
@@ -57,6 +64,7 @@ import os
 import re
 import subprocess
 import sys
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -206,6 +214,36 @@ def entradas_correcoes(texto: str | None, secao: str) -> list[str]:
     return [i for i in itens if "bloqueado" not in i.lower()]
 
 
+PASTAS_DE_RELATORIO = ("docs/runs/", "docs/verificacao/relatorios/")
+NOME_DE_RELATORIO = re.compile(r"(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})\.md$")
+FOLGA_DEPOIS = timedelta(minutes=10)
+FOLGA_ANTES = timedelta(hours=2)
+
+
+def hora_do_relatorio_errada(rel: str, quando: datetime) -> str:
+    """Por que o nome do relatório não é a hora UTC de `quando`; vazio se é.
+
+    `quando` é a hora do commit que cria o relatório (ou agora, antes do
+    commit). Nome fora do padrão AAAA-MM-DD-HHMM.md não entra na regra.
+    """
+    m = NOME_DE_RELATORIO.search(rel)
+    if not m:
+        return ""
+    try:
+        nome = datetime(*map(int, m.groups()), tzinfo=timezone.utc)
+    except ValueError:
+        return f"{rel}: o nome não é uma data e hora válidas."
+    quando = quando.astimezone(timezone.utc)
+    if quando - FOLGA_ANTES <= nome <= quando + FOLGA_DEPOIS:
+        return ""
+    certo = quando.strftime("%Y-%m-%d-%H%M")
+    return (
+        f"{rel}: o nome do relatório é a hora UTC em que ele foi escrito "
+        f"(`date -u +%Y-%m-%d-%H%M`), por volta de {certo}. As sessões leem "
+        "os três últimos relatórios pela ordem dos nomes (regra 9)."
+    )
+
+
 def arquivos_versionados(raiz: Path) -> list[str]:
     saida = git("ls-files", "--cached", "--others", "--exclude-standard", raiz=raiz)
     return [linha for linha in (saida or "").splitlines() if linha]
@@ -281,6 +319,25 @@ def conferir(
             "Se a sessão perdeu as mudanças, devolva a spec para `ready` e "
             "registre o motivo no relatório."
         )
+
+    # Regra 9: relatório novo com a hora UTC em que foi escrito.
+    adicionados = set(
+        (git("diff", "--name-only", "--diff-filter=A", mb, raiz=raiz) or "").split()
+    ) | set(novos.split())
+    for rel in sorted(adicionados):
+        if not rel.startswith(PASTAS_DE_RELATORIO):
+            continue
+        commit = git(
+            "log", "--diff-filter=A", "--format=%cI", "-1", "--", rel, raiz=raiz
+        )
+        quando = (
+            datetime.fromisoformat(commit.strip())
+            if commit and commit.strip()
+            else datetime.now(timezone.utc)
+        )
+        motivo = hora_do_relatorio_errada(rel, quando)
+        if motivo:
+            res.falha(motivo)
 
     # Regra 6: PR só de registro.
     prefixos = registros()

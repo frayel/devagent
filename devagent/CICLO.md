@@ -267,7 +267,7 @@ Vale para todo PR. O `PRODUTO.md` acrescenta o checklist do produto.
 
 ## 7. Relatório de execução
 
-Toda execução termina criando `docs/runs/AAAA-MM-DD-HHMM.md`:
+Toda execução termina criando `docs/runs/AAAA-MM-DD-HHMM.md`, com a hora **UTC** em que ele é escrito (`date -u +%Y-%m-%d-%H%M`). As sessões leem os três últimos relatórios pela ordem dos nomes, e a regra 9 do `conferir_pr` reprova nome com outro fuso:
 
 ```markdown
 ## Passo executado

@@ -337,7 +337,9 @@ def _capturar(url: str, saida: Path) -> int:
     saida.mkdir(parents=True, exist_ok=True)
     problemas = 0
     with sync_playwright() as pw:
-        nav = pw.chromium.launch()
+        nav = pw.chromium.launch(
+            executable_path=os.environ.get("CHROMIUM_PATH") or None
+        )
         for nome, (w, h) in TAMANHOS.items():
             pagina = nav.new_page(
                 viewport={"width": w, "height": h}, color_scheme="dark"

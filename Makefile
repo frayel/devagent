@@ -3,6 +3,11 @@
 # (veja [verificacao] em devagent.toml). O que cada um faz é do projeto.
 
 PY ?= python
+# Chromium já instalado na máquina, quando há um: os testes de navegador e o
+# `make telas` o usam em vez de baixar o da versão do Playwright, que muda a
+# cada `make install` (requirements-dev.txt não fixa a versão). Vazio no CI.
+CHROMIUM_PATH ?= $(firstword $(wildcard /opt/pw-browsers/chromium))
+export CHROMIUM_PATH
 
 .PHONY: install install-prod verify smoke audit telas
 
@@ -47,5 +52,5 @@ audit:
 ## Capturas da interface (1440 e 390 px) em telas/, com dados de demonstração.
 ## Obrigatório em PR que muda a interface (docs/DESIGN.md, seção 8).
 telas:
-	$(PY) -m playwright install chromium
+	[ -n "$(CHROMIUM_PATH)" ] || $(PY) -m playwright install chromium
 	$(PY) scripts/telas.py --saida telas

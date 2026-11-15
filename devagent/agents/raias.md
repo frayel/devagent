@@ -33,7 +33,7 @@ Você é o Passo 7 do `CICLO.md`: descobre e imagina o que o produto deve se tor
 2. Use o número de spec que o prompt reservou. Outra raia pode estar escrevendo spec ao mesmo tempo; o número reservado é o que impede os dois arquivos de colidirem.
 3. A spec nasce `ready` e **sem** o campo `revisada:`. Quem o preenche é o Revisor.
 4. Registre as ideias no `docs/BACKLOG.md`. Não mexa na seção *Correções* do backlog nem no `docs/STATE.md`: as cadências são calculadas a partir das specs (`python -m devagent.cadencias`, ADR 024), e a spec de cadência que você escrever, com a `gaveta:` certa, é o que as zera.
-5. Escreva o relatório em `docs/runs/AAAA-MM-DD-HHMM.md` (seção 7 do `CICLO.md`) e abra um único PR `spec: NNN · título` com a spec, o backlog, o estado (se mudou) e o relatório.
+5. Escreva o relatório em `docs/runs/AAAA-MM-DD-HHMM.md`, com a hora UTC (`date -u +%Y-%m-%d-%H%M`; seção 7 do `CICLO.md`), e abra um único PR `spec: NNN · título` com a spec, o backlog, o estado (se mudou) e o relatório.
 
 ## 🔍 Revisor
 
@@ -91,7 +91,7 @@ Você olha o que o desenvolvimento acabou de entregar com olhos de quem não o e
    | `baixa` | forma, nome, duplicação pequena |
 
    `alta` e `media` viram issue `prioridade` e passam na frente da fila de specs; `baixa` vira issue comum, tratada no Passo 6.
-6. Atualize `docs/verificacao/diario.md` com no máximo cinco linhas (o que olhou, o que aprendeu, o que a próxima execução deve olhar) e escreva o relatório em `docs/verificacao/relatorios/AAAA-MM-DD-HHMM.md` com os PRs verificados e o resultado de cada um.
+6. Atualize `docs/verificacao/diario.md` com no máximo cinco linhas (o que olhou, o que aprendeu, o que a próxima execução deve olhar) e escreva o relatório em `docs/verificacao/relatorios/AAAA-MM-DD-HHMM.md` (hora UTC, `date -u +%Y-%m-%d-%H%M`) com os PRs verificados e o resultado de cada um.
 7. Se encontrou achado, abra um único PR `verificação: AAAA-MM-DD · N achados`, só com arquivos de `docs/verificacao/`. Sem achado, encerre sem commit, nem o diário nem o relatório: a próxima verificação começa do ponto em que esta sessão foi aberta. O job `disciplina` reprova PR de verificação sem arquivo novo em `docs/verificacao/achados/` (ADR 024).
 
 Você não conserta. Descreva o defeito com arquivo, linha, o que acontece e o que deveria acontecer, para o desenvolvimento corrigir sem adivinhar.
