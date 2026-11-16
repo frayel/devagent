@@ -12,6 +12,10 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Saúde técnica] Spec 164 - A leitura das opiniões corre num laço próprio e não segura a rodada de mercado:
+  - `app/agendador.py`: `consultor_opinioes` sai de `_coletar` (e a janela `continua`, sem outro usuário); novas `rodar_opinioes()` (não toca em `estado`, `tempos` nem na instrumentação) e `laco_das_opinioes()`, no mesmo ritmo de `laco_de_coleta` (`intervalo` e `proxima_espera`).
+  - `app/main.py`: o `lifespan` sobe o laço das opiniões ao lado do de mercado, só com `coleta_ligada()`.
+  - Testes de aceite em `tests/test_aceite_164.py`.
 - [Saúde técnica] Spec 163 - A coleta do pregão começa de 15 em 15 minutos, não 15 minutos depois de terminar:
   - `app/agendador.py`: `PAUSA_MINIMA` (60 s), `proxima_espera(intervalo, duração)` e `_relogio()` (`time.monotonic`); `laco_de_coleta` desconta a duração da rodada da espera. `intervalo()` e `coletar_tudo` não mudam.
   - Testes de aceite em `tests/test_aceite_163.py`.

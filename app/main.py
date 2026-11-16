@@ -113,6 +113,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     tarefas = []
     if agendador.coleta_ligada():
         tarefas.append(asyncio.create_task(agendador.laco_de_coleta()))
+        tarefas.append(asyncio.create_task(agendador.laco_das_opinioes()))
     from app.collectors import sistema as monitor_sistema
 
     if monitor_sistema.monitor_ligado():
