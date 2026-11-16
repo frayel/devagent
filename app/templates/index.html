@@ -100,7 +100,7 @@
         <div class="texto-centro">
             {% set apetite_class = 'texto-alta' if apetite_risco.estado == 'Tomando risco' else 'texto-baixa' if apetite_risco.estado == 'Defensivo' else 'texto-neutro' %}
             {% set apetite_valor = ('<span class="' | safe) ~ apetite_class ~ (' texto-medio">' | safe) ~ apetite_risco.estado ~ ('</span>' | safe) %}
-            {% set apetite_rotulo = 'Apetite a Risco <span class="sub bloco">(SMLL - IBOV)</span>' | safe %}
+            {% set apetite_rotulo = 'Apetite aqui <span class="sub bloco">(SMLL − IBOV)</span>' | safe %}
             {{ kpi(apetite_valor, apetite_rotulo, gauge(apetite_risco.diferenca, "SMLL − IBOV hoje", -2.0, 2.0, "{:+.2f} p.p.", divergente=True, resumo="Small caps menos Ibovespa hoje", escala=False), True) }}
         </div>
         {% endif %}
@@ -118,16 +118,19 @@
 
 {% endcall %}
 
-{% call painel("Clima Global", 6, "", clima_global.fonte if clima_global else "", clima_global.timestamp.strftime('%d/%m/%Y %H:%M:%S BRT') if clima_global else "", "painel-clima-global visao-geral escondido" if not clima_global else "painel-clima-global visao-geral") %}
+{% set clima_metodo = "S&P 500 futuro (ES=F) e VIX (^VIX), variação do último fechamento sobre o anterior. Tomando risco quando o VIX cai mais de 2% e o S&P sobe mais de 0,5%; Defensivo quando o VIX sobe mais de 3% e o S&P cai mais de 0,5%; Neutro no resto. O apetite lá fora e o apetite aqui (card Maré do mercado) são medidas diferentes e podem divergir." %}
+{% call painel("Clima Global", 6, clima_metodo, clima_global.fonte if clima_global else "", clima_global.timestamp.strftime('%d/%m/%Y %H:%M:%S BRT') if clima_global else "", "painel-clima-global visao-geral escondido" if not clima_global else "painel-clima-global visao-geral") %}
     {% if clima_global %}
         <div class="conteudo-centralizado">
-            {% set color_class = 'neutra' %}
             {% if clima_global.status == 'Apetite a Risco' %}
-                {% set color_class = 'alta' %}
+                {% set clima_estado, clima_class = 'Tomando risco', 'texto-alta' %}
             {% elif clima_global.status == 'Aversão a Risco' %}
-                {% set color_class = 'baixa' %}
+                {% set clima_estado, clima_class = 'Defensivo', 'texto-baixa' %}
+            {% else %}
+                {% set clima_estado, clima_class = 'Neutro', 'texto-neutro' %}
             {% endif %}
-            <div class="destaque {{ color_class }}">{{ clima_global.status }}</div>
+            {% set clima_valor = ('<span class="' | safe) ~ clima_class ~ (' texto-medio">' | safe) ~ clima_estado ~ ('</span>' | safe) %}
+            {{ kpi(clima_valor, "Apetite lá fora", "") }}
             <div class="kpi-group">
                 {{ kpi("", "S&P 500 Fut", (variacao(("{:+.2f}%".format(clima_global.sp500_pct).replace('.', ',')) | e, clima_global.sp500_pct)) | safe) }}
                 {{ kpi("", "VIX", (variacao(("{:+.2f}%".format(clima_global.vix_pct).replace('.', ',')) | e, clima_global.vix_pct)) | safe) }}

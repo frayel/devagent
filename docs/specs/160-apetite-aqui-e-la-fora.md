@@ -1,7 +1,7 @@
 ---
 id: 160
 titulo: Apetite a risco aqui e lá fora não usam o mesmo nome
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_160.py
