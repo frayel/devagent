@@ -1,7 +1,7 @@
 ---
 id: 166
 titulo: O critério de poda também conta o radar escondido por lista vazia
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_166.py

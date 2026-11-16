@@ -8,6 +8,7 @@ lista vazia é "sem alertas"; o resto é card com alertas.
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from typing import Any
 
@@ -36,6 +37,32 @@ RADARES: tuple[tuple[str, str, str], ...] = (
     ("radar_anomalia_fechamento", "Radar de Anomalia de Fechamento", "alertas"),
     ("radar_inflexao", "Radar de Inflexão", "alertas"),
 )
+
+# Chaves de RADARES cujo snapshot tem outro nome (spec 166); as outras usam a própria chave.
+SNAPSHOT_DO_RADAR: dict[str, str] = {"short_squeeze": "radar_short_squeeze"}
+
+
+def escondidos(payloads: dict[str, Any]) -> list[str]:
+    """Chaves de RADARES que a aba Alertas esconderia, na ordem declarada (spec 166).
+
+    Recebe os payloads crus de `ler_snapshot`, indexados pela chave de RADARES.
+    Escondido: payload ausente ou falso, `<campo>_json` ausente, que não é texto
+    ou não é JSON válido, ou JSON falso (lista vazia, `null`). Não olha horário.
+    """
+    resultado: list[str] = []
+    for chave, _nome, campo in RADARES:
+        payload = payloads.get(chave)
+        bruto = payload.get(f"{campo}_json") if isinstance(payload, dict) else None
+        lista: Any = None
+        if payload and isinstance(bruto, str):
+            try:
+                lista = json.loads(bruto)
+            except ValueError:
+                lista = None
+        if not lista:
+            resultado.append(chave)
+    return resultado
+
 
 COM_ALERTAS = "com_alertas"
 SEM_ALERTAS = "sem_alertas"

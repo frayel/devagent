@@ -18,6 +18,12 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Saúde técnica] Spec 166 - O critério de poda também conta o radar escondido por lista vazia:
+  - `app/services/radares.py`: `SNAPSHOT_DO_RADAR` (`short_squeeze` → `radar_short_squeeze`) e `escondidos(payloads)`, que devolve, na ordem de `RADARES`, as chaves sem snapshot ou com `<campo>_json` ausente, inválido ou vazio.
+  - `app/agendador.py`: `_radares_escondidos(pregao)` lê os 20 snapshots numa consulta (`req_snapshot_cache_ctx`); `_coletar` a chama no `finally` só com `esta_aberto` e passa o resultado (ou `None`, se a leitura falhar) a `gravar_instrumentacao_rodada`.
+  - `app/database.py`: `gravar_instrumentacao_rodada(..., radares_escondidos=None)` soma `radares_pregao` e `escondidos_pregao[chave]` durante o pregão, na mesma gravação.
+  - `app/services/sistema.py`: `verificar_radares_escondidos` e o item "Radares escondidos" no grupo Coleta, logo depois de "Candidatos à poda", com a mesma regra (R ≥ 10, 2 × V > R) e Atenção que não envelhece.
+  - Testes de aceite em `tests/test_aceite_166.py`.
 - [Experiência] Spec 165 - Opiniões Recentes com uma linha por ativo, e as opiniões dele recolhidas na linha:
   - `app/consultor/sintese.py`: novas `ultima_por_casa` (a regra da janela de 30 dias e da opinião mais recente por casa, agora usada por `calcular_consenso`) e `agrupar_por_ativo` (uma linha por ticker com `contagem`, `opinioes_texto`, `cobertura_insuficiente`, alvos, mais recente e as opiniões da janela).
   - `app/consultor/calculador.py`: `opinioes_por_ativo` no resultado, com o mesmo `agora` dos consensos; `[]` no ramo sem `^BVSP`.

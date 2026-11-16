@@ -519,6 +519,62 @@ def verificar_candidatos_poda(historico: dict[date, dict], pregoes: list[date]) 
     )
 
 
+def verificar_radares_escondidos(
+    historico: dict[date, dict], pregoes: list[date]
+) -> Item:
+    """Metade "escondido" do critério de poda, por chave de RADARES (spec 166).
+
+    Lê `radares_pregao` e `escondidos_pregao` do mesmo histórico de
+    `verificar_candidatos_poda`; dia sem `radares_pregao` inteiro é ausente.
+    Decisão de produto, não defeito: Atenção que não envelhece.
+    """
+    nome = "Radares escondidos"
+    n = len(pregoes)
+    presentes = [
+        d
+        for d in pregoes
+        if isinstance(historico.get(d), dict)
+        and isinstance(historico[d].get("radares_pregao"), int)
+        and not isinstance(historico[d].get("radares_pregao"), bool)
+    ]
+    if len(presentes) < n or not n:
+        return Item(
+            nome,
+            OK,
+            f"histórico de {len(presentes)} de {n} pregões; o critério precisa de {n}",
+            envelhece=False,
+        )
+    total_r = 0
+    total_v: dict[str, int] = {}
+    for d in presentes:
+        payload = historico[d]
+        total_r += int(payload["radares_pregao"])
+        for c, v in (payload.get("escondidos_pregao") or {}).items():
+            total_v[c] = total_v.get(c, 0) + int(v)
+    candidatos = []
+    if total_r >= MIN_RODADAS_PODA:
+        for c, v in total_v.items():
+            if 2 * v > total_r:
+                candidatos.append((c, v, total_r, round(100 * v / total_r)))
+    if not candidatos:
+        return Item(
+            nome,
+            OK,
+            f"nenhum radar escondido em mais da metade das coletas dos últimos {n} pregões",
+            envelhece=False,
+        )
+    candidatos.sort(key=lambda c: (-c[3], c[0]))
+    plural = len(candidatos) > 1
+    return Item(
+        nome,
+        ATENCAO,
+        f"{len(candidatos)} {'radares escondidos' if plural else 'radar escondido'} "
+        f"em mais da metade das coletas dos últimos {n} pregões",
+        ", ".join(f"{c} ({v} de {r}, {pct}%)" for c, v, r, pct in candidatos),
+        envelhece=False,
+    )
+
+
 BLOQUEIO_PODA_YAHOO = timedelta(days=7)
 
 
@@ -1082,7 +1138,9 @@ def montar(
     )
     coleta.append(verificar_paineis_vazios(vazios, horas_vazios, rodadas))
     if historico_poda is not None:
-        coleta.append(verificar_candidatos_poda(historico_poda, ultimos_pregoes(agora)))
+        janela_poda = ultimos_pregoes(agora)
+        coleta.append(verificar_candidatos_poda(historico_poda, janela_poda))
+        coleta.append(verificar_radares_escondidos(historico_poda, janela_poda))
     if rodada is not None:
         coleta.append(
             verificar_tempo_coleta(
