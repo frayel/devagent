@@ -44,6 +44,14 @@ Uma entrada por fonte. Atualize ao criar ou alterar coletor (skill `criar-coleto
 - **robots.txt e termos**: `https://t.me/robots.txt` respondia 404 em 04/11/2026. Canais públicos, sem login.
 - **Ritmo esperado**: o Clube Acionista é a fonte útil (na amostra de 15/11, 7 de 20 mensagens passaram no `filtrar_materia`); o Repositório de Ações repassa títulos de documentos da CVM, que o filtro descarta quase todos; o Universo Antifrágil posta pouco, e a opinião costuma ser do próprio canal (descartada).
 
+## Yahoo Finance (quoteSummary · consenso de analistas · consultor)
+
+- Coletor `app/collectors/consultor_yahoo.py` (spec 159), uma rodada por dia na janela de fechamento.
+- Sessão: `GET https://fc.yahoo.com` (só o cookie importa; o status costuma ser 404), depois `GET https://query2.finance.yahoo.com/v1/test/getcrumb` (texto puro com o crumb).
+- Por ativo: `GET https://query2.finance.yahoo.com/v10/finance/quoteSummary/<TICKER>.SA?modules=financialData&crumb=<crumb>`. Lidos de `quoteSummary.result[0].financialData`: `recommendationMean.raw` (1 = compra forte a 5 = venda forte), `numberOfAnalystOpinions.raw`, `targetMeanPrice.raw`, `targetLowPrice.raw`, `targetHighPrice.raw` (reais por ação). Os `fmt` são ignorados. Ativo sem cobertura vem com esses campos vazios (`{}`).
+- Em 04/11/2026, chamado do contêiner de desenvolvimento: 429 sem crumb e 401 `Invalid Crumb`. Não se sabe ainda se o IP do Render recebe o mesmo tratamento; o `/sistema` mostra "Yahoo · consenso" como bloqueado se for o caso. As fixtures de `tests/fixtures/yahoo/` seguem o formato documentado do endpoint; a primeira resposta real vista em produção deve ser conferida contra elas e registrada aqui.
+- Não passa pelo `fetch_with_retry`: o `registro_fontes` atribui todo `finance.yahoo.com` à integração "Yahoo Finance" (o `chart`), e um bloqueio aqui não pode marcá-la como fora do ar.
+
 ## Gemini (extração de opiniões · consultor)
 
 - **Uso**: só extrair registros estruturados das matérias pré-filtradas (ADR 005). Nunca decide a recomendação.

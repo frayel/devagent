@@ -315,6 +315,16 @@ def _carimbos_criticos(agora: datetime) -> dict[str, dict[str, Any] | None]:
 HORAS_VAZIOS = 3
 
 
+def _resumo_consenso_yahoo() -> dict | None:
+    """Status da fonte "Yahoo · consenso" (spec 159); None se o banco falhar."""
+    from app.consultor.armazenamento import resumo_consenso_yahoo
+
+    try:
+        return resumo_consenso_yahoo()
+    except Exception:  # noqa: BLE001 - a verificação do banco já acusa
+        return None
+
+
 def estado_do_sistema() -> dict:
     """Verificações da página /sistema (spec 082). Só lê: não chama fonte externa."""
     from app import database
@@ -360,6 +370,7 @@ def estado_do_sistema() -> dict:
         monitor_ligado=monitor_sistema.monitor_ligado(),
         modelo_gemini=gemini_modelo.descricao(),
         historico_poda=historico_poda,
+        consenso_yahoo=_resumo_consenso_yahoo(),
     )
     estado = sistema_servico.montar(**entradas)
     # Os grupos desta instância (banco, coleta, integrações) só têm dado real
@@ -590,6 +601,11 @@ def pagina_consultor(
         else:
             dados = calcular_consultor()
         consultor_indisponivel = False
+        resultados_yahoo = dados.get("resultados") if isinstance(dados, dict) else None
+        if isinstance(resultados_yahoo, dict):
+            from app.consultor import consenso_yahoo
+
+            consenso_yahoo.anexar(resultados_yahoo, data_ref)
         import app.consultor.regras as regras_module
 
         if "regras_limiares" in dados:
@@ -839,6 +855,10 @@ def api_consultor(
                 if _cache_ts_before is not None
                 else False
             )
+        if isinstance(dados, dict) and isinstance(dados.get("resultados"), dict):
+            from app.consultor import consenso_yahoo
+
+            consenso_yahoo.anexar(dados["resultados"], ctx["data_referencia"])
     except Exception:
         _usou_cache = False
         dados = {

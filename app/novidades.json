@@ -1,5 +1,12 @@
 [
   {
+    "data": "2026-11-16",
+    "tipo": "novidade",
+    "texto": "Na coluna Casas do Consultor, cada ação com cobertura mostra a média dos analistas do Yahoo Finance, quantos são e o preço-alvo médio. É só informação: não muda a decisão.",
+    "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Coluna Casas"},
+    "spec": "159"
+  },
+  {
     "data": "2026-11-15",
     "tipo": "novidade",
     "texto": "O Consultor também lê três canais públicos do Telegram (Clube Acionista, Repositório de Ações e Universo Antifrágil). A nova coluna Via diz de onde veio cada opinião.",

@@ -1,7 +1,7 @@
 ---
 id: 159
 titulo: O Consultor mostra o consenso de analistas do Yahoo Finance, quando o Yahoo responder
-status: ready
+status: done
 esforco: P
 gaveta: capacidade nova
 aceite: tests/test_aceite_159.py

@@ -413,6 +413,10 @@ def init_db() -> None:
             chamadas INTEGER NOT NULL
         );
     """)
+    # Consenso de analistas do Yahoo Finance (spec 159): mesmo SQL do Postgres.
+    from app.consultor.armazenamento import criar_tabelas_consenso_yahoo
+
+    criar_tabelas_consenso_yahoo(conn)
 
     conn.commit()
     conn.close()
