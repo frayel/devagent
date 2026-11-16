@@ -5,7 +5,7 @@ status: ready
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_161.py
-origem: Fila do backlog, "/sistema respeita a janela que anuncia"
+origem: `/sistema` respeita a janela que anuncia
 ---
 
 ## Problema
