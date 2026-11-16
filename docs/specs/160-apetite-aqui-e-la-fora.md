@@ -5,6 +5,7 @@ status: ready
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_160.py
+revisada: 2026-11-16
 ---
 
 ## Problema
@@ -41,6 +42,8 @@ As atuais, sem coleta nova. Plano B herdado: sem snapshot de `clima_global` o ca
 Nenhum novo. O mapeamento da tabela acima é só de texto. O `/api/snapshot` continua publicando `paineis.clima_global.status` com o valor gravado ("Apetite a Risco", "Aversão a Risco" ou "Neutro") e `paineis.apetite_risco.estado` como hoje: o contrato de `auditoria/README.md` e as checagens `checar_clima_global` e `checar_apetite_risco` não mudam.
 
 ### Exemplo de ponta a ponta
+Do dado bruto: o chart do Yahoo entrega fechamentos em pontos. `ES=F` com penúltimo fechamento 5000,00 e último 5050,00 dá (5050 − 5000) / 5000 × 100 = **+1,00** (percentual, gravado como `sp500_pct = 1.0`); `^VIX` com 20,00 e 19,40 dá (19,40 − 20,00) / 20,00 × 100 = **−3,00** (`vix_pct = -3.0`). Como −3,00 < −2 e +1,00 > +0,5, o coletor grava `status = "Apetite a Risco"`, que a tabela acima exibe como "Tomando risco".
+
 Snapshot de `clima_global` com `sp500_pct = 1.0`, `vix_pct = -3.0`, `status = "Apetite a Risco"`; snapshot de `apetite_risco` com `diferenca = -0.80`, `estado = "Defensivo"`. A Visão Geral mostra:
 
 - na Maré: "Apetite aqui (SMLL − IBOV)", **Defensivo** em vermelho, gauge −0,80 p.p.;
@@ -56,7 +59,7 @@ Contraexemplo: `sp500_pct = 0.3`, `vix_pct = -3.0` gravado como `Neutro` mostra 
 - [ ] `GET /api/snapshot` com o mesmo banco devolve `paineis.clima_global.status == "Apetite a Risco"` e `paineis.apetite_risco.estado == "Defensivo"` (contrato inalterado).
 - [ ] Sem snapshot de `clima_global`: o card segue com `escondido` e o estado de indisponível; a Maré continua com "Apetite aqui".
 - [ ] `tests/test_aceite_160.py` usa `exigir_spec_done("160")` e não abre rede. `tests/test_clima_global.py` continua verde sem alteração.
-- [ ] `make telas` não gera `PROBLEMA:` novo em `/` (os já listados na issue #885 não contam), e o PR mostra as capturas de desktop e celular da Visão Geral.
+- [ ] `make telas` não gera em `/` nenhum `PROBLEMA:` que a `main` antes do PR não gerasse (a issue #885, de largura em celular, já está fechada), e o PR mostra as capturas de desktop e celular da Visão Geral.
 
 ## Invariantes de produção
 - A Visão Geral publicada não tem dois rótulos com o texto "Apetite a Risco".
@@ -67,5 +70,5 @@ Contraexemplo: `sp500_pct = 0.3`, `vix_pct = -3.0` gravado como `Neutro` mostra 
 - Mudar os cortes de qualquer um dos dois indicadores ou a janela do Clima Global (a ideia "`clima_global` coleta uma vez por manhã" segue no backlog).
 - Fundir os dois cards ou criar um indicador combinado "aqui × lá fora" (fica no backlog como *Capacidade nova: divergência de apetite aqui × lá fora*).
 - Renomear chaves ou valores do `/api/snapshot`.
-- Os problemas de largura em celular de `/` e `/consultor` (issue #885, raia de desenvolvimento).
+- Problemas de largura em celular de `/` e `/consultor` (issue #885, já fechada; regressão nova vai para issue própria).
 - O espaço vazio no card Ibovespa hoje abaixo das médias móveis (ideia própria no backlog, rodada de 15/11/2026 5).
