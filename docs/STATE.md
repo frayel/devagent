@@ -11,6 +11,12 @@
 
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
+## Bloqueios
+
+Problemas da página de saúde cuja causa está fora do repositório. Cada um traz o ajuste exato que uma pessoa precisa fazer; a issue fecha sozinha quando a página deixa de acusar.
+
+- **Banco de dados: abrir conexão com o Postgres leva cerca de 1,2 s** (issue #913, Atenção desde 15/11 15:49, promovida a Problema depois de 24 h). O código já faz o que lhe cabe: o pool (spec 129, `app/banco.py`) abre as conexões uma vez e as reaproveita, e o `/sistema` mede o custo pela média das conexões que o pool abriu. O que sobra é a distância até o banco: o Postgres é externo (ADR 009) e o `DATABASE_URL` aponta para um endereço público. Ajuste, no painel: (1) se o provedor do Postgres oferecer endereço interno ou privado alcançável pelo Render, use-o no `DATABASE_URL` do serviço `b3-dashboard` (Render → serviço → Environment); (2) senão, mova o banco, ou o serviço web, para a mesma região do outro (o Render mostra a região do serviço em Settings → Region); (3) se nenhum dos dois for possível e o custo for aceito, diga isso na issue: aí o item pode virar `envelhece=False` em `verificar_banco` (`app/services/sistema.py`), ficando como Atenção de manutenção, decisão que é do dono do produto e não do agente.
+
 ## Implementado
 - [Saúde técnica] Spec 164 - A leitura das opiniões corre num laço próprio e não segura a rodada de mercado:
   - `app/agendador.py`: `consultor_opinioes` sai de `_coletar` (e a janela `continua`, sem outro usuário); novas `rodar_opinioes()` (não toca em `estado`, `tempos` nem na instrumentação) e `laco_das_opinioes()`, no mesmo ritmo de `laco_de_coleta` (`intervalo` e `proxima_espera`).
