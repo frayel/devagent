@@ -5,6 +5,7 @@ status: ready
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_162.py
+revisada: 2026-11-16
 origem: Duração de parede da rodada
 ---
 
@@ -28,12 +29,13 @@ Esta spec grava, na mesma gravação única da 152, a rodada inteira (início, f
   ```
   Rodada sem nenhuma medida continua sem tocar no banco. Rodada só com `vazias` e sem `tempos` (impossível hoje: todo painel vazio também tem tempo) não troca `ultima_rodada`. Chamadas sem os dois argumentos novos (`save_coleta_tempo`, `save_coleta_vazia`, testes antigos) não tocam em `ultima_rodada`.
 - `get_tempos_coleta_desde` sai. No lugar, `get_ultima_rodada(agora: datetime | None = None) -> dict | None` (`app/database.py`) lê numa só consulta (`banco.ler_snapshots_datas`, spec 153) os snapshots `instrumentacao` da data BRT de `agora` e da véspera, e devolve o `ultima_rodada` de maior `fim`, ou `None` se nenhuma das duas datas tem a chave. `agora` padrão: `datetime.now(timezone.utc)`.
-- `estado_do_sistema()` (`app/main.py`) chama `get_ultima_rodada(agora=agora)` e passa ao `montar` a rodada no lugar de `tempos`. Na falha de leitura, o `try` que já existe cai em `None`, como hoje cai em `{}`.
+- `montar` (`app/services/sistema.py`) **mantém** o parâmetro `tempos` e ganha `rodada: dict | None = None`. O `montar` é chamado com `tempos=` em `app/collectors/sistema.py:374`, `tests/test_sistema.py` (linhas 366, 563 e 718) e `tests/test_aceite_153.py:203`; trocar o parâmetro quebraria essas chamadas, e nenhuma delas muda.
+- `estado_do_sistema()` (`app/main.py`) chama `get_ultima_rodada(agora=agora)` e passa ao `montar` `rodada=<o retorno>` e `tempos={}`. Na falha de leitura, o `try` que já existe cai em `rodada = None`, como hoje cai em `tempos = {}`.
 - `verificar_tempo_coleta(tempos, duracao_parede=None, inicio=None, fim=None)` (`app/services/sistema.py`):
   - com `duracao_parede`, o total é ele (não a soma); o resumo vira `"rodada das HHhMM em X,X min"`, com `HHhMM` = `inicio` em BRT; `quando` = `fim` (ISO 8601);
   - sem `duracao_parede`, comportamento de hoje, sem mudança (soma e `"rodada completa em X,X min"`);
   - em ambos: detalhe "Mais lentos: ..." dos três maiores de `tempos` (os da rodada), `atencao` se o total passa de 600 s, `ok` senão, `envelhece=False`; `tempos` vazio → `inativo`, "sem medições".
-- `montar` passa `rodada["tempos"]`, `rodada["duracao_parede"]`, `rodada["inicio"]` e `rodada["fim"]` (convertidos de ISO) a `verificar_tempo_coleta`; com `rodada` `None`, chama `verificar_tempo_coleta({})` (→ "sem medições").
+- Com `rodada` preenchida, `montar` passa `rodada["tempos"]`, `rodada["duracao_parede"]`, `rodada["inicio"]` e `rodada["fim"]` (convertidos de ISO) a `verificar_tempo_coleta`; com `rodada` `None`, chama `verificar_tempo_coleta(tempos)`, como hoje. Vindo de `estado_do_sistema()` sem rodada gravada, `tempos` é `{}` e o item diz "sem medições".
 
 ## Fontes de dados
 Nenhuma externa. Só o snapshot `instrumentacao` em `snapshots_paineis`, já gravado uma vez por rodada (spec 152). Plano B: leitura falhou → o item mostra "sem medições" (`inativo`) e o resto da página segue, como hoje; gravação falhou → o `try` do `finally` de `_coletar` registra no log e a rodada segue.
@@ -88,8 +90,9 @@ Lentidão real. Rodada de pregão com `Σ tempos` = 590,0 s e 25,0 s fora dos co
   - `gravar_instrumentacao_rodada` sem `inicio`/`duracao_parede` não cria nem altera `ultima_rodada`; com eles e `tempos` vazio, não toca no banco;
   - `agendador._coletar()` com coletores falsos (como em `tests/test_aceite_152.py`) grava `ultima_rodada` com `duracao_parede ≥ Σ tempos`, `inicio ≤ fim` e continua com 1 leitura e 1 gravação do `instrumentacao`.
 - [ ] O teste não depende da hora real: `get_ultima_rodada` recebe `agora` explícito.
-- [ ] `tests/test_aceite_152.py`, `tests/test_aceite_153.py`, `tests/test_aceite_161.py`, `tests/test_sistema.py`, `tests/test_sistema_envelhece.py` e `tests/test_instrumentacao_coleta_tempo.py` continuam verdes sem mudar expectativa. Em `tests/test_aceite_154.py`, o espião de `gravar_instrumentacao_rodada` (linha 123) passa a aceitar os dois argumentos nomeados novos (`**_`); a asserção (`durante_pregao`) não muda.
-- Tamanho, medido com `grep -rl "get_tempos_coleta_desde\|verificar_tempo_coleta\|gravar_instrumentacao_rodada" app tests`: 4 de código (`app/agendador.py`, `app/database.py`, `app/main.py`, `app/services/sistema.py`) e 5 de teste (`test_aceite_152`, `test_aceite_154`, `test_aceite_161`, `test_sistema`, `test_sistema_envelhece`), dos quais só o `test_aceite_154` muda (a assinatura do espião), mais o novo `tests/test_aceite_162.py`.
+- [ ] `tests/test_aceite_152.py`, `tests/test_aceite_153.py` (chama `montar(tempos={})`), `tests/test_aceite_161.py`, `tests/test_sistema.py` (chama `montar(tempos=...)` três vezes), `tests/test_sistema_envelhece.py` e `tests/test_instrumentacao_coleta_tempo.py` continuam verdes sem mudar expectativa. Em `tests/test_aceite_154.py`, o espião de `gravar_instrumentacao_rodada` (linha 123) passa a aceitar os dois argumentos nomeados novos (`**_`); a asserção (`durante_pregao`) não muda.
+- Tamanho, medido com `grep -rl "get_tempos_coleta_desde\|verificar_tempo_coleta\|gravar_instrumentacao_rodada" app tests`: 4 de código (`app/agendador.py`, `app/database.py`, `app/main.py`, `app/services/sistema.py`) e 5 de teste (`test_aceite_152`, `test_aceite_154`, `test_aceite_161`, `test_sistema`, `test_sistema_envelhece`), dos quais só o `test_aceite_154` muda (a assinatura do espião), mais o novo `tests/test_aceite_162.py`. Com `montar(tempos=...)` mantido, `app/collectors/sistema.py` e `tests/test_aceite_153.py`, que chamam `montar`, não mudam.
+- [ ] `montar(..., tempos={"mare": 12.0})` sem `rodada` continua dando "rodada completa em 0,2 min" (12,0 / 60 = 0,2), como hoje.
 
 ## Invariantes de produção
 - `GET /api/sistema` (com a senha) continua com o item "Duração da coleta" no grupo "Coleta".
