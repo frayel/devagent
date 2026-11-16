@@ -1,7 +1,7 @@
 ---
 id: 163
 titulo: A coleta do pregão começa de 15 em 15 minutos, não 15 minutos depois de terminar
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_163.py

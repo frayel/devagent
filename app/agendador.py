@@ -5,7 +5,7 @@ Por que aqui e não num Cron Job do Render: no plano gratuito o disco é
 efêmero e não é compartilhado entre serviços, então um cron job gravaria num
 banco que o site não enxerga (ADR 004). O web service coleta ao subir e
 depois em intervalos: a cada 15 minutos durante o pregão, a cada 2 horas fora
-dele. Quando o Render hiberna o serviço, a coleta para; ao acordar, ela roda
+dele, contados do começo de uma rodada ao da próxima (spec 163). Quando o Render hiberna o serviço, a coleta para; ao acordar, ela roda
 de novo antes de qualquer outra coisa.
 
 Desligue com COLETA_AUTOMATICA=0 (os testes fazem isso).
@@ -18,6 +18,7 @@ import logging
 import threading
 import os
 import re
+import time as std_time
 from datetime import datetime, time, timedelta, timezone
 import importlib
 
@@ -29,6 +30,9 @@ INICIO_PREGAO = time(9, 55)
 FIM_PREGAO = time(18, 15)
 NO_PREGAO = timedelta(minutes=15)
 FORA_DO_PREGAO = timedelta(hours=2)
+# Pausa entre o fim de uma rodada e o começo da próxima, mesmo quando a rodada
+# passa do intervalo: as rodadas nunca se sobrepõem nem começam coladas (spec 163).
+PAUSA_MINIMA = timedelta(seconds=60)
 
 # Estado da última rodada, exposto em /api/coleta para diagnóstico.
 
@@ -452,9 +456,23 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
             logger.exception("Falha ao gravar a instrumentação da rodada")
 
 
+def proxima_espera(intervalo_atual: timedelta, duracao: timedelta) -> timedelta:
+    """Espera depois da rodada para que a próxima comece um intervalo depois
+    do começo desta, nunca menos que PAUSA_MINIMA (spec 163)."""
+    return max(intervalo_atual - duracao, PAUSA_MINIMA)
+
+
+def _relogio() -> float:
+    """Relógio monotônico da duração da rodada; existe para o teste trocá-lo."""
+    return std_time.monotonic()
+
+
 async def laco_de_coleta() -> None:
     while True:
+        t0 = _relogio()
         await asyncio.to_thread(coletar_tudo)
-        espera = intervalo(datetime.now(timezone.utc))
-        logger.info("Próxima coleta em %s", espera)
+        duracao = timedelta(seconds=_relogio() - t0)
+        # O intervalo é o do fim da rodada: depois das 18h15 já vale o de 30 min.
+        espera = proxima_espera(intervalo(datetime.now(timezone.utc)), duracao)
+        logger.info("Rodada levou %s; próxima coleta em %s", duracao, espera)
         await asyncio.sleep(espera.total_seconds())
