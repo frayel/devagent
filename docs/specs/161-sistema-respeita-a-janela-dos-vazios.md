@@ -1,7 +1,7 @@
 ---
 id: 161
 titulo: O item "Painéis sem dados" de /sistema conta só as últimas 3 horas
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_161.py
