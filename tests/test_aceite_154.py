@@ -121,7 +121,7 @@ def test_coletar_passa_o_relogio_do_inicio_da_rodada(monkeypatch, instante, espe
 
     chamadas: list[dict] = []
 
-    def espiar(tempos, vazias, timestamp, durante_pregao=False):
+    def espiar(tempos, vazias, timestamp, durante_pregao=False, **_):
         chamadas.append({"durante_pregao": durante_pregao})
 
     monkeypatch.setattr(importlib, "import_module", importar)

@@ -579,20 +579,35 @@ def verificar_consenso_yahoo(info: dict[str, Any], agora: datetime) -> Item:
     )
 
 
-def verificar_tempo_coleta(tempos: dict[str, float]) -> Item:
+def verificar_tempo_coleta(
+    tempos: dict[str, float],
+    duracao_parede: float | None = None,
+    inicio: datetime | None = None,
+    fim: datetime | None = None,
+) -> Item:
     if not tempos:
         return Item("Duração da coleta", INATIVO, "sem medições")
-    total = sum(tempos.values())
     lentos = sorted(tempos.items(), key=lambda kv: -kv[1])[:3]
     detalhe = "Mais lentos: " + ", ".join(
         f"{p} {s:.0f} s".replace(".", ",") for p, s in lentos
     )
+    if duracao_parede is not None:
+        # Rodada inteira medida no relógio (spec 162).
+        total = duracao_parede
+        hora = inicio.astimezone(BRT).strftime("%Hh%M") if inicio else "?"
+        resumo = f"rodada das {hora} em {total / 60:.1f} min".replace(".", ",")
+        quando = fim.isoformat() if fim else None
+    else:
+        total = sum(tempos.values())
+        resumo = f"rodada completa em {total / 60:.1f} min".replace(".", ",")
+        quando = None
     nivel = ATENCAO if total > 600 else OK
     return Item(
         "Duração da coleta",
         nivel,
-        f"rodada completa em {total / 60:.1f} min".replace(".", ","),
+        resumo,
         detalhe,
+        quando=quando,
         # Lentidão é medida da rodada de manutenção, não defeito a corrigir já.
         envelhece=False,
     )
@@ -1054,6 +1069,7 @@ def montar(
     horas_vazios: int,
     rodadas: dict[str, int] | None = None,
     tempos: dict[str, float],
+    rodada: dict[str, Any] | None = None,
     historico_pregoes: list[str],
     fontes: dict[str, Any],
     pausa_mt5: tuple[float, str] | None,
@@ -1079,7 +1095,17 @@ def montar(
     coleta.append(verificar_paineis_vazios(vazios, horas_vazios, rodadas))
     if historico_poda is not None:
         coleta.append(verificar_candidatos_poda(historico_poda, ultimos_pregoes(agora)))
-    coleta.append(verificar_tempo_coleta(tempos))
+    if rodada is not None:
+        coleta.append(
+            verificar_tempo_coleta(
+                rodada.get("tempos") or {},
+                float(rodada["duracao_parede"]),
+                datetime.fromisoformat(rodada["inicio"]),
+                datetime.fromisoformat(rodada["fim"]),
+            )
+        )
+    else:
+        coleta.append(verificar_tempo_coleta(tempos))
     if consenso_yahoo is not None:
         coleta.append(verificar_consenso_yahoo(consenso_yahoo, agora))
 
@@ -1122,8 +1148,6 @@ def montar(
                     and chave in remoto["_alertas_desde"]
                 ):
                     i["desde"] = remoto["_alertas_desde"][chave]
-                    from datetime import datetime
-
                     dt = datetime.fromisoformat(i["desde"])
                     i["resumo"] = f"(desde {dt.strftime('%d/%m %H:%M')}) " + i["resumo"]
 

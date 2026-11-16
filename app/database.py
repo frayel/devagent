@@ -1406,12 +1406,15 @@ def gravar_instrumentacao_rodada(
     vazias: list[str],
     timestamp: datetime,
     durante_pregao: bool = False,
+    inicio: datetime | None = None,
+    duracao_parede: float | None = None,
 ) -> None:
     """Funde a instrumentação de uma rodada no snapshot do dia: 1 leitura e 1 gravação.
 
     Sem nada medido, não toca no banco (spec 152). Com `durante_pregao`, a rodada
     também soma em `rodadas_pregao` e `vazias_pregao`, que o critério de poda lê
-    (spec 154).
+    (spec 154). Com `inicio` e `duracao_parede` e algum tempo medido, substitui
+    `ultima_rodada` pela rodada inteira, medida no relógio (spec 162).
     """
     if not tempos and not vazias:
         return
@@ -1447,6 +1450,14 @@ def gravar_instrumentacao_rodada(
             rodadas_pregao[painel] = rodadas_pregao.get(painel, 0) + 1
         for painel in vazias:
             vazias_pregao[painel] = vazias_pregao.get(painel, 0) + 1
+
+    if inicio is not None and duracao_parede is not None and tempos:
+        payload["ultima_rodada"] = {
+            "inicio": inicio.astimezone(timezone.utc).isoformat(),
+            "fim": timestamp.astimezone(timezone.utc).isoformat(),
+            "duracao_parede": float(duracao_parede),
+            "tempos": dict(tempos),
+        }
 
     gravar_snapshot("instrumentacao", hoje, "ao_vivo", "sistema", payload)
 
@@ -1512,16 +1523,28 @@ def get_coletas_vazias_desde(
     return _somar_por_hora("vazias", desde, agora)
 
 
-def get_tempos_coleta_desde(desde: datetime) -> dict[str, float]:
-    """Painel → duração da coleta mais recente desde `desde`, em segundos (spec 082)."""
-    from app.banco import ler_snapshot
-    from datetime import datetime as dt
+def get_ultima_rodada(agora: datetime | None = None) -> dict | None:
+    """A última rodada de coleta gravada, medida no relógio (spec 162).
 
-    hoje = dt.now(timezone.utc).astimezone(BRT).date()
-    payload = ler_snapshot("instrumentacao", hoje)
-    if payload and "tempos" in payload:
-        return payload["tempos"]
-    return {}
+    Lê numa só consulta os snapshots `instrumentacao` da data BRT de `agora` e da
+    véspera e devolve o `ultima_rodada` de maior `fim`; `None` se nenhum tem.
+    """
+    from datetime import timedelta
+
+    from app.banco import ler_snapshots_datas
+
+    if agora is None:
+        agora = datetime.now(timezone.utc)
+    hoje = agora.astimezone(BRT).date()
+    snapshots = ler_snapshots_datas("instrumentacao", [hoje - timedelta(days=1), hoje])
+    rodadas: list[dict] = []
+    for payload in snapshots.values():
+        rodada = (payload or {}).get("ultima_rodada")
+        if isinstance(rodada, dict) and rodada.get("fim"):
+            rodadas.append(rodada)
+    if not rodadas:
+        return None
+    return max(rodadas, key=lambda r: datetime.fromisoformat(r["fim"]))
 
 
 def get_rodadas_coleta_desde(
