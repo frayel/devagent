@@ -19,7 +19,7 @@ import threading
 import os
 import re
 import time as std_time
-from datetime import datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 import importlib
 
 
@@ -190,6 +190,27 @@ def coletar_tudo() -> None:
         app.banco.remover_snapshots_antigos(30)
     except Exception:
         pass
+
+
+def _radares_escondidos(pregao: date | None) -> list[str] | None:
+    """Radares que a aba Alertas esconde no pregão, numa consulta só (spec 166).
+
+    Falha na leitura vira `None`: a rodada não conta para os radares e o resto
+    da instrumentação é gravado como sempre.
+    """
+    import app.banco
+    from app.services.radares import RADARES, SNAPSHOT_DO_RADAR, escondidos
+
+    try:
+        with app.banco.req_snapshot_cache_ctx():
+            payloads = {
+                c: app.banco.ler_snapshot(SNAPSHOT_DO_RADAR.get(c, c), pregao)
+                for c, _n, _f in RADARES
+            }
+        return escondidos(payloads)
+    except Exception:
+        logger.exception("Falha ao ler os radares escondidos da rodada")
+        return None
 
 
 def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
@@ -438,6 +459,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                     estado_detalhes_manual.append(_mask_secrets(msg))
                 _registrar_erro(msg, eh_sistemico=_eh_erro_sistemico(e))
     finally:
+        radares_escondidos = _radares_escondidos(pregao_corr) if esta_aberto else None
         try:
             duracao_parede = std_time.perf_counter() - t0_rodada
             gravar_instrumentacao_rodada(
@@ -447,6 +469,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 durante_pregao=esta_aberto,
                 inicio=inicio_rodada,
                 duracao_parede=duracao_parede,
+                radares_escondidos=radares_escondidos,
             )
         except Exception:
             logger.exception("Falha ao gravar a instrumentação da rodada")

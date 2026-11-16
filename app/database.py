@@ -1408,13 +1408,16 @@ def gravar_instrumentacao_rodada(
     durante_pregao: bool = False,
     inicio: datetime | None = None,
     duracao_parede: float | None = None,
+    radares_escondidos: list[str] | None = None,
 ) -> None:
     """Funde a instrumentação de uma rodada no snapshot do dia: 1 leitura e 1 gravação.
 
     Sem nada medido, não toca no banco (spec 152). Com `durante_pregao`, a rodada
     também soma em `rodadas_pregao` e `vazias_pregao`, que o critério de poda lê
     (spec 154). Com `inicio` e `duracao_parede` e algum tempo medido, substitui
-    `ultima_rodada` pela rodada inteira, medida no relógio (spec 162).
+    `ultima_rodada` pela rodada inteira, medida no relógio (spec 162). Durante o
+    pregão e com `radares_escondidos` lido, soma `radares_pregao` e
+    `escondidos_pregao` por chave de RADARES (spec 166).
     """
     if not tempos and not vazias:
         return
@@ -1450,6 +1453,11 @@ def gravar_instrumentacao_rodada(
             rodadas_pregao[painel] = rodadas_pregao.get(painel, 0) + 1
         for painel in vazias:
             vazias_pregao[painel] = vazias_pregao.get(painel, 0) + 1
+        if radares_escondidos is not None:
+            payload["radares_pregao"] = int(payload.get("radares_pregao") or 0) + 1
+            escondidos_pregao = payload.setdefault("escondidos_pregao", {})
+            for chave in radares_escondidos:
+                escondidos_pregao[chave] = escondidos_pregao.get(chave, 0) + 1
 
     if inicio is not None and duracao_parede is not None and tempos:
         payload["ultima_rodada"] = {
