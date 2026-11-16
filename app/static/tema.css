@@ -105,6 +105,9 @@ header .hora { margin-left: auto; font-size: var(--fs-meta); color: var(--texto-
   .grade { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .span-3, .span-4 { grid-column: span 3; }
   .span-6, .span-8, .span-12 { grid-column: span 6; }
+  /* No tablet o rótulo do pregão quebra em linhas em vez de ser cortado:
+     "Ao vivo · pregão de DD/MM/AAAA · atualizado às HH:MM" não cabe em 768 px. */
+  .pregao-leitura { white-space: normal; }
 }
 
 @media (max-width: 767px) {

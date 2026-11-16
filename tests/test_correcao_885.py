@@ -88,3 +88,28 @@ def test_pagina_legivel_na_largura(navegador, caminho, largura):
         assert telas._vazamentos(aba) == []
     finally:
         aba.close()
+
+
+@pytest.mark.parametrize("largura", sorted(w for w, _ in telas.TAMANHOS.values()))
+def test_rotulo_ao_vivo_cabe_em_qualquer_hora(navegador, monkeypatch, largura):
+    """Regressão: o rótulo do pregão ao vivo, o mais longo, era cortado com
+    reticências em 768 px e só reprovava quando o teste rodava no pregão."""
+    from app.services import carimbo
+
+    monkeypatch.setattr(
+        carimbo,
+        "rotulo_cabecalho",
+        lambda *a, **k: "Ao vivo · pregão de 16/11/2026 · atualizado às 10:40 BRT",
+    )
+    nav, rota = navegador
+    altura = {w: h for w, h in telas.TAMANHOS.values()}[largura]
+    aba = nav.new_page(viewport={"width": largura, "height": altura})
+    try:
+        aba.route("**/*", rota)
+        aba.goto(BASE + "/")
+        aba.wait_for_load_state("domcontentloaded")
+        aba.wait_for_timeout(200)
+        assert "Ao vivo" in aba.locator("span.pregao-leitura").inner_text()
+        assert telas._vazamentos(aba) == []
+    finally:
+        aba.close()
