@@ -190,6 +190,10 @@ class Referencia:
     fonte: str
     valor: float | None
     fechamentos: dict[str, float]  # data ISO -> fechamento
+    # Data ISO (BRT) da última cotação que a fonte publicou. Antes do primeiro
+    # negócio que ela registra no pregão, a fonte ainda repete o fechamento
+    # anterior como cotação do dia (issue #910).
+    ultima_cotacao: str | None = None
 
 
 def ref_yahoo() -> Referencia:
@@ -205,8 +209,14 @@ def ref_yahoo() -> Referencia:
         if c is not None:
             dia = datetime.fromtimestamp(ts, tz=calendario.BRT).date().isoformat()
             fech[dia] = float(c)
+    ts_cotacao = r["meta"].get("regularMarketTime")
+    ultima = (
+        datetime.fromtimestamp(ts_cotacao, tz=calendario.BRT).date().isoformat()
+        if ts_cotacao
+        else None
+    )
     return Referencia(
-        "Yahoo Finance (^BVSP)", r["meta"].get("regularMarketPrice"), fech
+        "Yahoo Finance (^BVSP)", r["meta"].get("regularMarketPrice"), fech, ultima
     )
 
 
@@ -734,6 +744,16 @@ def checar_referencia(
                     INCONCLUSIVO,
                     f"Variação do dia confere com {ref.fonte}",
                     f"{prefixo_pontas}; não há fechamento anterior a {d} na referência",
+                )
+            )
+        elif ref.ultima_cotacao and ref.ultima_cotacao < d:
+            r.append(
+                Resultado(
+                    "ibov.variacao_confere_com_fonte",
+                    INCONCLUSIVO,
+                    f"Variação do dia confere com {ref.fonte}",
+                    f"{prefixo_pontas}; referência ainda sem cotação do pregão de {d} "
+                    f"(última em {ref.ultima_cotacao})",
                 )
             )
         else:
