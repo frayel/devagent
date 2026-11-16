@@ -12,6 +12,12 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Capacidade nova] Spec 159 - O Consultor mostra o consenso de analistas do Yahoo Finance:
+  - `app/collectors/consultor_yahoo.py` (janela `"fechamento"` do `app/agendador.py`): cookie, crumb e `quoteSummary` (`financialData`) por ativo de `CARTEIRA_IBOVESPA`; `ler_financial_data`, `em_pausa`. Uma rodada por dia; bloqueio (401, 429, 3 falhas seguidas) pausa 24 h.
+  - `app/consultor/armazenamento.py`: tabelas `consultor_consenso_yahoo` e `consultor_consenso_yahoo_status` (mesmo SQL nos dois backends, também criadas no `init_db` do `app/database.py`); `save_consenso_yahoo`, `get_consenso_yahoo`, `tem_consenso_yahoo`, `resumo_consenso_yahoo`, `get/set_consenso_yahoo_status`, `max_coletado_em_consenso_yahoo`.
+  - `app/consultor/consenso_yahoo.py`: `rotulo`, `frase`, `anexar` (chamado em `/consultor` e `/api/consultor`). Não toca a decisão.
+  - `app/services/sistema.py`: `verificar_consenso_yahoo`, item "Yahoo · consenso" no grupo Coleta.
+  - Pendente: registrar em `docs/context/fontes-de-dados.md` a primeira resposta real do `quoteSummary` vista em produção (o contêiner de desenvolvimento recebe 401/429).
 - [Capacidade nova] Spec 157 - O Consultor também lê as opiniões dos canais públicos do Telegram:
   - `app/collectors/consultor_opinioes.py`: `TELEGRAM_CANAIS`, `TELEGRAM_INICIO`; `parse_previa_telegram` (prévia `t.me/s/`), `texto_do_post` (`og:description`) e `data_do_widget` (`?embed=1`); `coletar_canal` lê a prévia (até 5 páginas com `before`) ou post a post (até 30 IDs, para em 3 vazios), guarda as matérias que passam no `filtrar_materia` e avança o cursor. `fetch_with_retry` anota sucesso e falha no `registro_fontes` (Money Times, InfoMoney e o novo Telegram). `status_fontes()` devolve o resultado real da última tentativa de cada fonte (memória do processo; `"sem coleta"` depois de reiniciar), lido por `fontes_opiniao.feeds` em `/api/consultor`. `origem_do_link` dá a coluna **Via** do `/consultor`.
   - `app/consultor/armazenamento.py`: tabela `consultor_telegram_cursor` (SQLite e Postgres), `get_telegram_cursor` e `set_telegram_cursor`.

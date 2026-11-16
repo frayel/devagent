@@ -202,6 +202,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
         "consultor_opinioes": "continua",
         "consultor_historico": "semanal",
         "consultor_fechamento": "fechamento",
+        "consultor_yahoo": "fechamento",
     }
     agora_brt = datetime.now(timezone.utc).astimezone(BRT)
     esta_aberto = calendario.mercado_aberto(datetime.now(timezone.utc))
@@ -273,6 +274,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
             "consultor_historico",
             "consultor_opinioes",
             "consultor_fechamento",
+            "consultor_yahoo",
         ):
             try:
                 janela = janelas.get(nome, "pregao")
