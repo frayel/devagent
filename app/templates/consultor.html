@@ -101,54 +101,65 @@
 
         <div class="grupo-consultor">
             <h3 class="status-neutro">Opiniões Recentes</h3>
-            <div class="tabela-responsiva">
-                <table class="tabela-consultor">
-                    <thead>
-                        <tr>
-                            <th>Ticker</th>
-                            <th>Casa</th>
-                            <th>Recomendação</th>
-                            <th>Preço-Alvo</th>
-                            <th>Resumo</th>
-                            <th>Data</th>
-                            <th>Via</th>
-                            <th>Link</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for op in dados.opinioes_recentes %}
-                        <tr>
-                            <td><strong>{{ op.ticker }}</strong></td>
-                            <td>{{ op.casa }}</td>
-                            <td>{{ op.recomendacao }}</td>
-                            <td>{{ op.preco_alvo if op.preco_alvo else '-' }}</td>
-                            <td>{{ op.resumo }}</td>
-                            <td>{{ op.data_materia[:10] }}</td>
-                            <td>{{ op.link | origem_opiniao }}</td>
-                            <td><a href="{{ op.link }}" target="_blank">Ler</a></td>
-                        </tr>
-                        {% endfor %}
-                        {% if not dados.opinioes_recentes %}
-                            {% if opinioes_diagnostico.codigo == "sem_chave" %}
-                            <tr><td colspan="8">Extração desligada: falta a chave do Gemini.</td></tr>
-                            {% elif opinioes_diagnostico.codigo == "cota" %}
-                            <tr><td colspan="8">Cota diária do Gemini esgotada ({{ opinioes_diagnostico.materias_processadas }} chamadas). Volta amanhã.</td></tr>
-                            {% elif opinioes_diagnostico.codigo == "erro" %}
-                            <tr><td colspan="8">A última extração falhou às {{ opinioes_diagnostico.desde[11:16] }} ({{ opinioes_diagnostico.motivo }}).</td></tr>
-                            {% elif opinioes_diagnostico.codigo == "aguardando" %}
-                            <tr><td colspan="8">Aguardando a primeira extração. Há {{ opinioes_diagnostico.fila_pendentes }} matérias na fila.</td></tr>
-                            {% elif opinioes_diagnostico.codigo == "fila" %}
-                            <tr><td colspan="8">{{ opinioes_diagnostico.fila_pendentes }} matérias na fila, a próxima extração é na próxima rodada.</td></tr>
-                            {% elif opinioes_diagnostico.codigo == "sem_materias" %}
-                            <tr><td colspan="8">Nenhuma matéria das fontes citou ativos do Ibovespa com opinião de casa de análise nos últimos 30 dias.</td></tr>
-                            {% elif opinioes_diagnostico.codigo == "descartadas" %}
-                            <tr><td colspan="8">{{ opinioes_diagnostico.descartadas }} opiniões extraídas foram descartadas porque o trecho citado não está na matéria.</td></tr>
-                            {% else %}
-                            <tr><td colspan="8">Nenhuma opinião nos últimos 30 dias.</td></tr>
-                            {% endif %}
-                        {% endif %}
-                    </tbody>
-                </table>
+            <div class="lista-opinioes">
+                {% set opinioes_por_ativo = dados.get("opinioes_por_ativo") or [] if dados is mapping else [] %}
+                {% for linha in opinioes_por_ativo %}
+                <details class="opiniao-ativo">
+                    <summary>
+                        <span class="opiniao-campo"><strong>{{ linha.ticker }}</strong></span>
+                        <span class="opiniao-campo"><span class="opiniao-rotulo">Opiniões</span> {{ linha.opinioes_texto }}{% if linha.cobertura_insuficiente %} · cobertura insuficiente{% endif %}</span>
+                        <span class="opiniao-campo"><span class="opiniao-rotulo">Preço-alvo</span> {% if linha.alvo_min is none %}-{% elif linha.alvo_min == linha.alvo_max %}R$ {{ "%.2f"|format(linha.alvo_min) }}{% else %}R$ {{ "%.2f"|format(linha.alvo_min) }} a R$ {{ "%.2f"|format(linha.alvo_max) }}{% endif %}</span>
+                        <span class="opiniao-campo"><span class="opiniao-rotulo">Mais recente</span> {{ linha.mais_recente_data | dia_brasilia }} · {{ linha.mais_recente_casa }}</span>
+                    </summary>
+                    <div class="tabela-responsiva">
+                        <table class="tabela-consultor">
+                            <thead>
+                                <tr>
+                                    <th>Casa</th>
+                                    <th>Recomendação</th>
+                                    <th>Preço-Alvo</th>
+                                    <th>Resumo</th>
+                                    <th>Data</th>
+                                    <th>Via</th>
+                                    <th>Link</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for op in linha.opinioes %}
+                                <tr>
+                                    <td>{{ op.casa }}</td>
+                                    <td>{{ op.recomendacao }}</td>
+                                    <td>{{ op.preco_alvo if op.preco_alvo else '-' }}</td>
+                                    <td>{{ op.resumo }}</td>
+                                    <td>{{ (op.data_materia | string)[:10] }}</td>
+                                    <td>{{ op.link | origem_opiniao }}</td>
+                                    <td><a href="{{ op.link }}" target="_blank">Ler</a></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+                {% endfor %}
+                {% if not opinioes_por_ativo %}
+                    {% if opinioes_diagnostico.codigo == "sem_chave" %}
+                    <p>Extração desligada: falta a chave do Gemini.</p>
+                    {% elif opinioes_diagnostico.codigo == "cota" %}
+                    <p>Cota diária do Gemini esgotada ({{ opinioes_diagnostico.materias_processadas }} chamadas). Volta amanhã.</p>
+                    {% elif opinioes_diagnostico.codigo == "erro" %}
+                    <p>A última extração falhou às {{ opinioes_diagnostico.desde[11:16] }} ({{ opinioes_diagnostico.motivo }}).</p>
+                    {% elif opinioes_diagnostico.codigo == "aguardando" %}
+                    <p>Aguardando a primeira extração. Há {{ opinioes_diagnostico.fila_pendentes }} matérias na fila.</p>
+                    {% elif opinioes_diagnostico.codigo == "fila" %}
+                    <p>{{ opinioes_diagnostico.fila_pendentes }} matérias na fila, a próxima extração é na próxima rodada.</p>
+                    {% elif opinioes_diagnostico.codigo == "sem_materias" %}
+                    <p>Nenhuma matéria das fontes citou ativos do Ibovespa com opinião de casa de análise nos últimos 30 dias.</p>
+                    {% elif opinioes_diagnostico.codigo == "descartadas" %}
+                    <p>{{ opinioes_diagnostico.descartadas }} opiniões extraídas foram descartadas porque o trecho citado não está na matéria.</p>
+                    {% else %}
+                    <p>Nenhuma opinião nos últimos 30 dias.</p>
+                    {% endif %}
+                {% endif %}
                 <div class="rodape-painel">
                     <small>Última extração: {{ opinioes_diagnostico.ultima_extracao_em or "nunca" }} · matérias processadas em 24 h: {{ opinioes_diagnostico.materias_processadas }} · opiniões gravadas em 7 dias: {{ opinioes_diagnostico.opinioes_gravadas }} · descartadas: {{ opinioes_diagnostico.descartadas }}</small>
                 </div>

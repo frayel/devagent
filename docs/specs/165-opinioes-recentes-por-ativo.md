@@ -1,7 +1,7 @@
 ---
 id: 165
 titulo: Opiniões Recentes com uma linha por ativo, e as opiniões dele recolhidas na linha
-status: ready
+status: done
 esforco: M
 gaveta: experiência
 aceite: tests/test_aceite_165.py

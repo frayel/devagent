@@ -2,6 +2,13 @@
   {
     "data": "2026-11-16",
     "tipo": "melhoria",
+    "texto": "As Opiniões Recentes do Consultor têm uma linha por ação: quantas casas dizem comprar, manter ou vender, a faixa de preço-alvo e a mais recente. Clique para ver cada opinião.",
+    "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Opiniões recentes"},
+    "spec": "165"
+  },
+  {
+    "data": "2026-11-16",
+    "tipo": "melhoria",
     "texto": "Os dois termômetros de risco têm nomes distintos: \"Apetite aqui\" (small caps) e \"Apetite lá fora\" (S&P 500 e VIX). Podem divergir. O ⓘ do Clima Global mostra os cortes.",
     "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Clima Global"},
     "spec": "160"

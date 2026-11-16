@@ -1,7 +1,11 @@
 from datetime import timezone, timedelta
 from app.database import get_historico_diario
 from app.consultor.universo import CARTEIRA_IBOVESPA
-from app.consultor.sintese import calcular_consenso, obter_decisao_final
+from app.consultor.sintese import (
+    agrupar_por_ativo,
+    calcular_consenso,
+    obter_decisao_final,
+)
 from app.consultor.regras import avaliar_ativo, calcular_mm
 from app.consultor.armazenamento import (
     data_iso,
@@ -75,6 +79,7 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
         res_dict: dict = {
             "ibovespa": None,
             "opinioes_recentes": [],
+            "opinioes_por_ativo": [],
             "regras_confianca": {},
             "opinioes_status": get_opinioes_status(),
             "sinais_pregao": None,
@@ -141,6 +146,8 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
         }
 
     opinioes_ativos = get_opinioes_ativos()
+    # Um só instante de referência para a lista e os cards (spec 165).
+    agora = datetime.now(timezone.utc)
     opinioes_recentes = get_opinioes_recentes()
     opinioes_status = get_opinioes_status()
 
@@ -179,7 +186,7 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
         confianca_dados = obter_confianca(avaliacao["regra"])
 
         opinioes_ticker = opinioes_ativos.get(ticker, [])
-        consenso_dados = calcular_consenso(opinioes_ticker)
+        consenso_dados = calcular_consenso(opinioes_ticker, agora)
 
         if consenso_dados["preco_alvo_mediano"] and closes[-1] > 0:
             consenso_dados["potencial"] = (
@@ -232,6 +239,9 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
         "ativos_avaliados": len(CARTEIRA_IBOVESPA),
         "regras_confianca": regras_summary,
         "opinioes_recentes": opinioes_recentes,
+        "opinioes_por_ativo": agrupar_por_ativo(
+            [op for ops in opinioes_ativos.values() for op in ops], referencia=agora
+        ),
         "opinioes_status": opinioes_status,
         # Timestamp da última barra do ^BVSP: o pregão a que os sinais se referem.
         "sinais_pregao": ibov_ts[-1] if ibov_ts else None,

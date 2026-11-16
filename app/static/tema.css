@@ -508,6 +508,30 @@ tbody td .spark svg { width: 100%; height: 100%; }
 .tabela-responsiva {
     overflow-x: auto;
 }
+/* Opiniões Recentes: uma linha por ativo, detalhe recolhido (spec 165). */
+.opiniao-ativo {
+    border-bottom: 1px solid var(--borda);
+    padding: 0.5rem 0;
+}
+.opiniao-ativo summary {
+    cursor: pointer;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    align-items: baseline;
+}
+.opiniao-campo {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.opiniao-rotulo {
+    font-size: var(--fs-meta);
+    color: var(--texto-2);
+    margin-right: 0.25rem;
+}
+.opiniao-ativo .tabela-responsiva {
+    margin-top: 0.5rem;
+}
 .tabela-consultor {
     width: 100%;
     border-collapse: collapse;

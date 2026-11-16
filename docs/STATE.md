@@ -18,6 +18,13 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 165 - Opiniões Recentes com uma linha por ativo, e as opiniões dele recolhidas na linha:
+  - `app/consultor/sintese.py`: novas `ultima_por_casa` (a regra da janela de 30 dias e da opinião mais recente por casa, agora usada por `calcular_consenso`) e `agrupar_por_ativo` (uma linha por ticker com `contagem`, `opinioes_texto`, `cobertura_insuficiente`, alvos, mais recente e as opiniões da janela).
+  - `app/consultor/calculador.py`: `opinioes_por_ativo` no resultado, com o mesmo `agora` dos consensos; `[]` no ramo sem `^BVSP`.
+  - `app/main.py`: `opinioes_por_ativo` nos ramos históricos de `/consultor` e `/api/consultor`; filtro `dia_brasilia` para o "Mais recente".
+  - `app/templates/consultor.html` e `app/static/tema.css`: lista de `<details class="opiniao-ativo">` no lugar da tabela de 8 colunas; diagnósticos num `<p>`.
+  - `scripts/telas.py`: `_semear` grava a série do `^BVSP` e quatro opiniões de demonstração.
+  - Testes de aceite em `tests/test_aceite_165.py`.
 - [Saúde técnica] Spec 164 - A leitura das opiniões corre num laço próprio e não segura a rodada de mercado:
   - `app/agendador.py`: `consultor_opinioes` sai de `_coletar` (e a janela `continua`, sem outro usuário); novas `rodar_opinioes()` (não toca em `estado`, `tempos` nem na instrumentação) e `laco_das_opinioes()`, no mesmo ritmo de `laco_de_coleta` (`intervalo` e `proxima_espera`).
   - `app/main.py`: o `lifespan` sobe o laço das opiniões ao lado do de mercado, só com `coleta_ligada()`.

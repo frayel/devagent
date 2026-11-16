@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 
 from fastapi.responses import JSONResponse
 from app.consultor.calculador import calcular_consultor
+from app.consultor.sintese import agrupar_por_ativo
 from app.consultor.universo import (
     composicao_esta_desatualizada,
     FONTE_URL,
@@ -135,6 +136,31 @@ templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["gauge_dados"] = gauge.dados
 templates.env.filters["gauge_pct"] = gauge.gauge_pct
 templates.env.filters["origem_opiniao"] = coletor_opinioes.origem_do_link
+
+
+def _dia_brasilia(momento) -> str:
+    """`dd/mm` no fuso de Brasília, para a lista Opiniões Recentes (spec 165)."""
+    if not isinstance(momento, datetime):
+        return "-"
+    if momento.tzinfo is None:
+        momento = momento.replace(tzinfo=timezone.utc)
+    from app.services.carimbo import FUSO
+
+    return momento.astimezone(FUSO).strftime("%d/%m")
+
+
+templates.env.filters["dia_brasilia"] = _dia_brasilia
+
+
+def _referencia_do_dia(target_data: str | None) -> datetime | None:
+    """O dia pedido às 23:59:59 UTC: a referência da lista histórica (spec 165)."""
+    try:
+        dia = datetime.strptime(target_data or "", "%Y-%m-%d")
+    except ValueError:
+        return None
+    return dia.replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+
+
 # Rodapé de todas as páginas (spec 156): lido a cada renderização, sem cache.
 templates.env.globals["novidades_atualizado_em"] = novidades_servico.data_mais_recente
 templates.env.globals["render_no_db"] = (
@@ -598,6 +624,9 @@ def pagina_consultor(
                 "ativos_avaliados": len(hist),
                 "regras_confianca": {},
                 "opinioes_recentes": opinioes_historicas,
+                "opinioes_por_ativo": agrupar_por_ativo(
+                    opinioes_historicas, referencia=_referencia_do_dia(target_data)
+                ),
                 "opinioes_status": {},
             }
         else:
@@ -845,6 +874,9 @@ def api_consultor(
                 "ativos_avaliados": len(hist),
                 "regras_confianca": {},
                 "opinioes_recentes": opinioes_historicas_api,
+                "opinioes_por_ativo": agrupar_por_ativo(
+                    opinioes_historicas_api, referencia=_referencia_do_dia(target_data)
+                ),
                 "opinioes_status": {},
             }
             _usou_cache = False
