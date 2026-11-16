@@ -1430,6 +1430,16 @@ def gravar_instrumentacao_rodada(
     for painel in vazias:
         payload_vazias[painel] = payload_vazias.get(painel, 0) + 1
 
+    hora = payload.setdefault("por_hora", {}).setdefault(
+        f"{timestamp.astimezone(BRT).hour:02d}", {"rodadas": {}, "vazias": {}}
+    )
+    hora_rodadas = hora.setdefault("rodadas", {})
+    hora_vazias = hora.setdefault("vazias", {})
+    for painel in tempos:
+        hora_rodadas[painel] = hora_rodadas.get(painel, 0) + 1
+    for painel in vazias:
+        hora_vazias[painel] = hora_vazias.get(painel, 0) + 1
+
     if durante_pregao:
         rodadas_pregao = payload.setdefault("rodadas_pregao", {})
         vazias_pregao = payload.setdefault("vazias_pregao", {})
@@ -1460,16 +1470,46 @@ def get_coletas_vazias_count(painel: str) -> int:
     return 0
 
 
-def get_coletas_vazias_desde(desde: datetime) -> dict[str, int]:
-    """Painel → quantas coletas vazias desde `desde` (página /sistema, spec 082)."""
-    from app.banco import ler_snapshot
-    from datetime import datetime as dt
+def _somar_por_hora(
+    chave: str, desde: datetime, agora: datetime | None
+) -> dict[str, int]:
+    """Soma `por_hora[HH][chave]` das horas cheias BRT que começam em `desde` ou depois (spec 161).
 
-    hoje = dt.now(timezone.utc).astimezone(BRT).date()
-    payload = ler_snapshot("instrumentacao", hoje)
-    if payload and "vazias" in payload:
-        return payload["vazias"]
-    return {}
+    A menor unidade guardada é a hora, então a janela começa em `desde` arredondado
+    para cima até a hora cheia: nunca conta coleta mais antiga que `desde`. Lê os
+    snapshots `instrumentacao` de todas as datas BRT entre `desde` e `agora` numa
+    só consulta; data sem `por_hora` não contribui.
+    """
+    from datetime import timedelta
+
+    from app.banco import ler_snapshots_datas
+
+    if agora is None:
+        agora = datetime.now(timezone.utc)
+    inicio = desde.astimezone(BRT)
+    if (inicio.minute, inicio.second, inicio.microsecond) != (0, 0, 0):
+        inicio = inicio.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    primeira = inicio.date()
+    ultima = agora.astimezone(BRT).date()
+    datas = [primeira + timedelta(days=i) for i in range((ultima - primeira).days + 1)]
+    snapshots = ler_snapshots_datas("instrumentacao", datas)
+
+    total: dict[str, int] = {}
+    for data, payload in snapshots.items():
+        por_hora = (payload or {}).get("por_hora") or {}
+        for hh, contagens in por_hora.items():
+            if data == primeira and int(hh) < inicio.hour:
+                continue
+            for painel, n in ((contagens or {}).get(chave) or {}).items():
+                total[painel] = total.get(painel, 0) + n
+    return {painel: n for painel, n in total.items() if n > 0}
+
+
+def get_coletas_vazias_desde(
+    desde: datetime, agora: datetime | None = None
+) -> dict[str, int]:
+    """Painel → quantas coletas vazias desde `desde` (página /sistema, specs 082 e 161)."""
+    return _somar_por_hora("vazias", desde, agora)
 
 
 def get_tempos_coleta_desde(desde: datetime) -> dict[str, float]:
@@ -1484,16 +1524,11 @@ def get_tempos_coleta_desde(desde: datetime) -> dict[str, float]:
     return {}
 
 
-def get_rodadas_coleta_desde(desde: datetime) -> dict[str, int]:
-    """Painel → quantas coletas rodaram desde `desde` (spec 082)."""
-    from app.banco import ler_snapshot
-    from datetime import datetime as dt
-
-    hoje = dt.now(timezone.utc).astimezone(BRT).date()
-    payload = ler_snapshot("instrumentacao", hoje)
-    if payload and "rodadas" in payload:
-        return payload["rodadas"]
-    return {}
+def get_rodadas_coleta_desde(
+    desde: datetime, agora: datetime | None = None
+) -> dict[str, int]:
+    """Painel → quantas coletas rodaram desde `desde` (specs 082 e 161)."""
+    return _somar_por_hora("rodadas", desde, agora)
 
 
 @dataclass

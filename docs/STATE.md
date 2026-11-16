@@ -12,6 +12,10 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Saúde técnica] Spec 161 - O item "Painéis sem dados" de /sistema conta só as últimas 3 horas:
+  - `app/database.py`: `gravar_instrumentacao_rodada` soma também `por_hora[HH]` (`rodadas` e `vazias`, hora BRT) no snapshot `instrumentacao`; `_somar_por_hora` soma as horas cheias a partir de `teto_hora(desde)` lendo as datas BRT da janela com `ler_snapshots_datas`; `get_coletas_vazias_desde` e `get_rodadas_coleta_desde` usam-na e aceitam `agora`. `app/main.py` passa o `agora` que já calcula.
+  - `get_tempos_coleta_desde` continua lendo o dia BRT (backlog, item 16).
+  - Testes de aceite em `tests/test_aceite_161.py`.
 - [Experiência] Spec 160 - Apetite a risco aqui e lá fora não usam o mesmo nome:
   - `app/templates/index.html`: rótulo do gauge da Maré "Apetite aqui (SMLL − IBOV)"; Clima Global com `kpi` "Apetite lá fora" (Tomando risco / Defensivo / Neutro a partir de `clima_global.status`) e ⓘ com os cortes. Sem mudança em coletores nem no `/api/snapshot`.
   - Testes de aceite em `tests/test_aceite_160.py`.

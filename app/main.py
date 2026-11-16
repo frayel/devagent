@@ -337,10 +337,10 @@ def estado_do_sistema() -> dict:
     agora = datetime.now(timezone.utc)
     try:
         vazios = database.get_coletas_vazias_desde(
-            agora - timedelta(hours=HORAS_VAZIOS)
+            agora - timedelta(hours=HORAS_VAZIOS), agora=agora
         )
         rodadas = database.get_rodadas_coleta_desde(
-            agora - timedelta(hours=HORAS_VAZIOS)
+            agora - timedelta(hours=HORAS_VAZIOS), agora=agora
         )
         tempos = database.get_tempos_coleta_desde(agora - timedelta(hours=24))
         # Critério de poda: uma consulta para a janela de 10 pregões (spec 153).
