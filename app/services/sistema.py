@@ -322,9 +322,6 @@ def verificar_historico_pregoes(datas: list[str], agora: datetime) -> Item:
     return Item("Histórico de pregões", OK, resumo, detalhe)
 
 
-CONEXAO_LENTA_MS = 500
-
-
 def verificar_banco(info: dict[str, Any]) -> Item:
     if info.get("disjuntor_desde"):
         return Item(
@@ -351,17 +348,8 @@ def verificar_banco(info: dict[str, Any]) -> Item:
     detalhe = f"{info.get('tabelas', 0)} tabelas · tamanho em disco: {info.get('tamanho', '?')}"
     if info.get("conexao_ms") is not None:
         detalhe += f" · abrir conexão: {info['conexao_ms']} ms"
-    # Sem pool aberto ainda, a latência medida inclui abrir a conexão.
-    abrir = info.get("conexao_ms", info.get("latencia_ms", 0))
-    if info["tipo"] == "Postgres" and abrir >= CONEXAO_LENTA_MS:
-        return Item(
-            "Banco de dados",
-            ATENCAO,
-            resumo,
-            f"{detalhe}. Abrir conexão com o Postgres leva {abrir} ms, e cada página "
-            "faz várias leituras. Confira se o DATABASE_URL usa o endereço interno do "
-            "provedor e se o banco está na mesma região do serviço web.",
-        )
+    # O tempo de abrir conexão é só informativo: o dono do produto aceitou a
+    # distância até o Postgres externo (issue #913) e não quer alerta por ele.
     return Item("Banco de dados", OK, resumo, detalhe)
 
 

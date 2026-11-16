@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import banco
-from app.services.sistema import ATENCAO, OK, verificar_banco
+from app.services.sistema import OK, verificar_banco
 
 
 class PoolFalso:
@@ -142,7 +142,8 @@ def test_diagnostico_traz_o_custo_de_abrir_conexao(pool):
     assert info["conexao_ms"] == 40
 
 
-def test_conexao_lenta_vira_atencao_com_a_acao():
+def test_conexao_lenta_fica_ok_sem_alerta():
+    """Regressão da #913: a demora aceita não vira Atenção nem Problema."""
     item = verificar_banco(
         {
             "tipo": "Postgres",
@@ -152,10 +153,9 @@ def test_conexao_lenta_vira_atencao_com_a_acao():
             "tabelas": 9,
         }
     )
-    assert item.nivel == ATENCAO
+    assert item.nivel == OK
     assert item.resumo == "Postgres 17.6 · 7,8 MB · 1634 ms"
-    assert "endereço interno" in item.detalhe
-    assert "endereço interno" in item.acao
+    assert "endereço interno" not in item.detalhe
 
 
 def test_conexao_rapida_pelo_pool_fica_ok():
