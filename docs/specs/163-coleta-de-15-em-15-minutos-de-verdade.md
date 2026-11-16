@@ -6,6 +6,7 @@ esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_163.py
 origem: nova
+revisada: 2026-11-16
 ---
 
 ## Problema
@@ -28,7 +29,7 @@ Esta spec faz o laço descontar a duração da rodada da espera, com uma pausa m
 - `app/agendador.py` ganha:
   - `PAUSA_MINIMA = timedelta(seconds=60)`;
   - `proxima_espera(intervalo_atual: timedelta, duracao: timedelta) -> timedelta`, que devolve `max(intervalo_atual − duracao, PAUSA_MINIMA)`;
-  - `_relogio() -> float`, que devolve `time.monotonic()` do módulo padrão `time` (no módulo, `time` é o `datetime.time`; importe como `import time as std_time` no topo, ao lado dos outros imports). Existe para o teste trocar o relógio.
+  - `_relogio() -> float`, que devolve `time.monotonic()` do módulo padrão `time` (no módulo, `time` é o `datetime.time`; importe como `import time as std_time` no topo, ao lado dos outros imports; o `import time as std_time` local que `_coletar` já faz continua e não conflita). Existe para o teste trocar o relógio.
 - `laco_de_coleta` mede a rodada e desconta:
   ```python
   while True:
@@ -68,7 +69,7 @@ Rodadas por pregão (9h55 a 18h15 = 500 min), com rodadas de 10,3 min: hoje uma 
 
 ## Invariantes de produção
 - Durante o pregão, com a "Duração da coleta" de `/sistema` abaixo de 14 min, duas leituras de "rodada das HHhMM" feitas com 15 min de diferença mostram horários de início que diferem de 15 min (tolerância de 1 min). Hoje diferem de 15 min mais a duração da rodada.
-- Durante o pregão, com rodadas de até 10 min, a `ultima_coleta` de `/api/coleta` nunca tem mais de 25 min de idade (15 − duração da anterior + duração da atual ≤ 15 + 10). Hoje pode chegar a 35 min (15 + 10 + 10).
+- Durante o pregão, com rodadas de duração parecida (uma não passa a anterior em mais de 2 min), a `ultima_coleta` de `/api/coleta` (gravada no **fim** da rodada, `app/agendador.py:181`) nunca tem mais de 17 min de idade: espera + duração da atual = (15 − duração da anterior) + duração da atual ≤ 15 + 2. Hoje chega a 15 min + a duração da rodada (≈ 25 min com rodadas de 10 min).
 - Nenhuma rodada começa menos de 60 s depois do fim da anterior.
 
 ## Fora do escopo
