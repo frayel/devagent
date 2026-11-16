@@ -264,17 +264,23 @@ def test_exemplo_de_ponta_a_ponta_na_tela(monkeypatch):
     monkeypatch.setenv("CONSULTOR_SENHA", "123")
     import app.main
     from app.consultor import regras
-    from app.consultor.armazenamento import get_opinioes_recentes
+    from app.consultor.armazenamento import get_opinioes_recentes, ler_data
+    from app.consultor.sintese import agrupar_por_ativo
 
     # Sem séries de mercado no banco de teste: o cálculo técnico vem pronto,
     # e as opiniões são as gravadas de verdade pela extração acima.
+    # A lista da tela é por ativo (spec 165); a referência é a opinião mais
+    # nova, para o teste não depender do dia em que roda.
     def calculo(ignorar_cache: bool = False) -> dict:
+        opinioes = get_opinioes_recentes()
+        referencia = max(ler_data(op["data_materia"]) for op in opinioes)
         return {
             "resultados": {
                 g: []
                 for g in ("Comprar", "Vender", "Aguardar", "No radar", "Sem sinal")
             },
-            "opinioes_recentes": get_opinioes_recentes(),
+            "opinioes_recentes": opinioes,
+            "opinioes_por_ativo": agrupar_por_ativo(opinioes, referencia=referencia),
             "opinioes_status": {"status": "ok", "motivo": "", "desde": ""},
             "ativos_avaliados": 0,
             "regras_limiares": {

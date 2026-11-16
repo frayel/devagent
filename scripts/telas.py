@@ -385,6 +385,38 @@ def _semear(db_path: str) -> None:
         )
     )
 
+    # Opiniões de demonstração para a lista Opiniões Recentes (spec 165): o
+    # teste da issue 885 mede a página com a lista preenchida.
+    from app.consultor.armazenamento import init_db as init_consultor
+    from app.services.consultor_opinioes import save_opiniao
+
+    init_consultor()
+    # A lista só sai do ramo que tem a série do ^BVSP (sem ela o Consultor
+    # devolve a página vazia); 30 pregões bastam, os ativos ficam sem sinal.
+    from app.banco import gravar_serie
+
+    gravar_serie(
+        "^BVSP",
+        [{"data": d, "close": c} for d, c in zip(datas, fechamentos)],
+    )
+    for guid, ticker, casa, rec, alvo, dias_atras in (
+        ("demo-165-1", "PETR4", "Casa Demonstração A", "compra", 45.0, 1),
+        ("demo-165-2", "PETR4", "Casa Demonstração B", "neutro", None, 2),
+        ("demo-165-3", "PETR4", "Casa Demonstração A", "compra", None, 3),
+        ("demo-165-4", "VALE3", "Casa Demonstração C", "venda", None, 2),
+    ):
+        save_opiniao(
+            guid,
+            ticker,
+            casa,
+            rec,
+            alvo,
+            f"Opinião de demonstração sobre {ticker}, com resumo longo o bastante para quebrar linha no celular.",
+            "trecho de demonstração",
+            (agora - timedelta(days=dias_atras)).isoformat(),
+            f"https://exemplo.invalid/materia/{guid}",
+        )
+
 
 def _esperar(url: str, segundos: float = 30) -> None:
     fim = time.time() + segundos
