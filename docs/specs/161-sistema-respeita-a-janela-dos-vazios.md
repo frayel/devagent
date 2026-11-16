@@ -5,6 +5,7 @@ status: ready
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_161.py
+revisada: 2026-11-16
 origem: `/sistema` respeita a janela que anuncia
 ---
 
@@ -53,7 +54,7 @@ e `rodadas = {"mare": 29, "ibovespa": 29}`, `vazias = {"mare": 4}`, como hoje.
 
 Mesmo dia, `/sistema` às 11h05 BRT (rodadas das 10h00 às 11h00: 5): `desde` = 8h05, `teto_hora` = 9h. Contam as horas 9 (sem chave), 10 e 11: `R = {"mare": 5, "ibovespa": 5}`, `V = {"mare": 4}`. Item: `atencao`, "1 painel vazio nas últimas 3 h", detalhe "mare (4× em 5 rodadas)", igual a hoje.
 
-Coletor quebrado. Se a partir das 14h00 `mare` voltar vazio em toda rodada, às 17h05 contam as horas 15 a 17: `R = {"mare": 9, ...}`, `V = {"mare": 9}`, `9 ≥ 9` e `9 ≥ 3` → `problema`, "1 sempre vazio: mare". Hoje, com o dia inteiro (`V = 16` de `R = 29`), fica em `atencao`.
+Coletor quebrado. Se a partir das 14h00 `mare` voltar vazio em toda rodada, às 17h05 contam as horas 15 a 17: `R = {"mare": 9, ...}`, `V = {"mare": 9}`, `9 ≥ 9` e `9 ≥ 3` → `problema`, "1 sempre vazio: mare". Hoje, com o dia inteiro (`V = 4 + 13 = 17` de `R = 29`: as 4 rodadas das 10h mais as 13 das 14h00 às 17h00), fica em `atencao`.
 
 Virada do dia. 17/11/2026 às 1h10 BRT, com rodadas (a cada 2 h) às 23h de 16/11 e à 1h de 17/11, as duas com `mare` vazio: `desde` = 22h10 de 16/11, `teto_hora` = 23h de 16/11. Contam 23h de 16/11 e 0h e 1h de 17/11: `R = {"mare": 2, ...}`, `V = {"mare": 2}`. Item `atencao` (2 rodadas, abaixo do mínimo de 3 para "sempre vazio").
 
@@ -73,7 +74,7 @@ Virada do dia. 17/11/2026 às 1h10 BRT, com rodadas (a cada 2 h) às 23h de 16/1
 ## Invariantes de produção
 - `GET /api/sistema` (com a senha) continua com o item "Painéis sem dados" no grupo "Coleta".
 - Depois da primeira rodada pós-deploy, o snapshot `instrumentacao` do dia tem `por_hora`, e para todo painel `p` a soma de `por_hora[h]["rodadas"][p]` sobre as horas do dia é no máximo `rodadas[p]` (igual, nos dias inteiros depois do deploy); o mesmo para `vazias`.
-- O número de rodadas que o detalhe do item mostra ("N× em M rodadas") nunca passa de 12, o máximo de rodadas a cada 15 min em 3 horas cheias.
+- O número de rodadas que o detalhe do item mostra ("N× em M rodadas") nunca passa de 13. A janela efetiva vai de `teto_hora(desde)` até agora, no máximo 3 h com as duas pontas incluídas, e o agendador espera 15 min depois do fim de cada rodada: 3 h ÷ 15 min + 1 = 13 (caso de `/sistema` aberto exatamente na hora cheia, com rodadas em :00, :15, :30, :45). Fora desse caso, até 12.
 
 ## Fora do escopo
 - `get_tempos_coleta_desde` (rótulo "24 h", lê o último valor do dia BRT). Fica no backlog como item próprio, junto da "duração de parede da rodada".
@@ -81,3 +82,7 @@ Virada do dia. 17/11/2026 às 1h10 BRT, com rodadas (a cada 2 h) às 23h de 16/1
 - Reconstruir a contagem por hora dos snapshots antigos: eles não têm a hora.
 - Registrar o painel "escondido" por lista vazia (item próprio do backlog, pré-requisito da rodada de poda).
 - Remover `rodadas` e `vazias` do dia: o critério de poda e `get_coletas_vazias_count` ainda os leem.
+
+## Revisão
+Revisada em 16/11/2026. Conferido: `get_coletas_vazias_desde` e `get_rodadas_coleta_desde` (`app/database.py:1463`, `:1487`) ignoram o `desde` e leem o dia BRT; nenhum código ou spec guarda `por_hora`; `ler_snapshots_datas` existe (`app/banco.py:573`); `tests/test_aceite_152.py` e `tests/test_aceite_154.py` comparam chaves do payload uma a uma, então a chave nova não os quebra; nenhum teste substitui as duas funções, então o novo parâmetro `agora` não quebra mock. Corrigido: no cenário do coletor quebrado, a contagem do dia inteiro é `V = 17`, não 16; a invariante de rodadas na janela é 13, não 12 (a janela inclui a hora cheia de início e o instante atual). As rodadas do agendador não caem em minutos redondos (o intervalo conta do fim da rodada anterior); os timestamps em :00/:15/:30/:45 do exemplo são só do teste.
+
