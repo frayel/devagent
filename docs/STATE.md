@@ -12,6 +12,9 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Saúde técnica] Spec 163 - A coleta do pregão começa de 15 em 15 minutos, não 15 minutos depois de terminar:
+  - `app/agendador.py`: `PAUSA_MINIMA` (60 s), `proxima_espera(intervalo, duração)` e `_relogio()` (`time.monotonic`); `laco_de_coleta` desconta a duração da rodada da espera. `intervalo()` e `coletar_tudo` não mudam.
+  - Testes de aceite em `tests/test_aceite_163.py`.
 - [Saúde técnica] Spec 162 - A "Duração da coleta" de /sistema é a da última rodada, medida no relógio:
   - `app/agendador.py`: `_coletar` marca `inicio` e `perf_counter` na primeira linha e passa `inicio` e `duracao_parede` a `gravar_instrumentacao_rodada`.
   - `app/database.py`: `gravar_instrumentacao_rodada` substitui `ultima_rodada` (`inicio`, `fim`, `duracao_parede`, `tempos` da rodada) na mesma gravação; `get_tempos_coleta_desde` sai e `get_ultima_rodada(agora)` lê o dia BRT e a véspera numa consulta e devolve a de maior `fim`.
