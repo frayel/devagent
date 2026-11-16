@@ -207,7 +207,6 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
 
     janelas = {
         "clima_global": "pre_abertura",
-        "consultor_opinioes": "continua",
         "consultor_historico": "semanal",
         "consultor_fechamento": "fechamento",
         "consultor_yahoo": "fechamento",
@@ -280,7 +279,6 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
             "correlacao_di",
             "assimetria_risco_retorno",
             "consultor_historico",
-            "consultor_opinioes",
             "consultor_fechamento",
             "consultor_yahoo",
         ):
@@ -291,9 +289,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 data_ref_coleta = pregao_corr if esta_aberto else ult_fechado
                 estado_coleta = estado_base
 
-                if janela == "continua":
-                    deve_coletar = True
-                elif janela == "semanal":
+                if janela == "semanal":
                     if agora_brt.weekday() == 5:  # sábado
                         deve_coletar = True
                 elif janela == "pre_abertura":
@@ -475,4 +471,29 @@ async def laco_de_coleta() -> None:
         # O intervalo é o do fim da rodada: depois das 18h15 já vale o de 30 min.
         espera = proxima_espera(intervalo(datetime.now(timezone.utc)), duracao)
         logger.info("Rodada levou %s; próxima coleta em %s", duracao, espera)
+        await asyncio.sleep(espera.total_seconds())
+
+
+def rodar_opinioes() -> None:
+    """Uma volta do laço das opiniões (spec 164), fora da rodada de mercado.
+
+    Não toca em `estado`, `tempos` nem na instrumentação: esses são da rodada
+    de mercado. As falhas de cada fonte seguem pelo `registro_fontes`."""
+    from app.collectors import consultor_opinioes
+
+    try:
+        if not consultor_opinioes.collect_and_save():
+            logger.warning("consultor_opinioes: nenhuma fonte respondeu")
+    except Exception as e:  # noqa: BLE001 - o laço não pode morrer
+        _avisar_falha("Coleta falhou:", "consultor_opinioes", e)
+
+
+async def laco_das_opinioes() -> None:
+    """Lê as opiniões no mesmo ritmo da rodada de mercado, ao lado dela (spec 164)."""
+    while True:
+        t0 = _relogio()
+        await asyncio.to_thread(rodar_opinioes)
+        duracao = timedelta(seconds=_relogio() - t0)
+        espera = proxima_espera(intervalo(datetime.now(timezone.utc)), duracao)
+        logger.info("Opiniões levaram %s; próxima leitura em %s", duracao, espera)
         await asyncio.sleep(espera.total_seconds())

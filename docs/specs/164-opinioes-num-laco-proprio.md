@@ -1,7 +1,7 @@
 ---
 id: 164
 titulo: A leitura das opiniões corre num laço próprio e não segura a rodada de mercado
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_164.py
