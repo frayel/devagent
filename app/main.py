@@ -342,13 +342,13 @@ def estado_do_sistema() -> dict:
         rodadas = database.get_rodadas_coleta_desde(
             agora - timedelta(hours=HORAS_VAZIOS), agora=agora
         )
-        tempos = database.get_tempos_coleta_desde(agora - timedelta(hours=24))
+        rodada = database.get_ultima_rodada(agora=agora)
         # Critério de poda: uma consulta para a janela de 10 pregões (spec 153).
         historico_poda = banco_module.ler_snapshots_datas(
             "instrumentacao", sistema_servico.ultimos_pregoes(agora)
         )
     except Exception:  # tabelas ainda não criadas: a verificação do banco acusa
-        vazios, rodadas, tempos = {}, {}, {}
+        vazios, rodadas, rodada = {}, {}, None
         historico_poda = {}
     entradas: dict[str, Any] = dict(
         agora=agora,
@@ -362,7 +362,8 @@ def estado_do_sistema() -> dict:
         vazios=vazios,
         horas_vazios=HORAS_VAZIOS,
         rodadas=rodadas,
-        tempos=tempos,
+        tempos={},
+        rodada=rodada,
         historico_pregoes=banco_module.listar_datas("ibovespa", 30),
         fontes=registro_fontes.fontes(),
         pausa_mt5=mt5_coletor.pausa(),

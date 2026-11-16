@@ -189,9 +189,13 @@ def coletar_tudo() -> None:
 
 
 def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
+    import time as std_time
+
+    # Relógio da rodada inteira (spec 162): começa antes das leituras do calendário.
+    inicio_rodada = datetime.now(timezone.utc)
+    t0_rodada = std_time.perf_counter()
 
     from app.collectors import mt5
-    import time as std_time
     from app.database import gravar_instrumentacao_rodada
 
     from app import calendario
@@ -435,8 +439,14 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 _registrar_erro(msg, eh_sistemico=_eh_erro_sistemico(e))
     finally:
         try:
+            duracao_parede = std_time.perf_counter() - t0_rodada
             gravar_instrumentacao_rodada(
-                tempos, vazias, datetime.now(timezone.utc), durante_pregao=esta_aberto
+                tempos,
+                vazias,
+                datetime.now(timezone.utc),
+                durante_pregao=esta_aberto,
+                inicio=inicio_rodada,
+                duracao_parede=duracao_parede,
             )
         except Exception:
             logger.exception("Falha ao gravar a instrumentação da rodada")

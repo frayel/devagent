@@ -1,7 +1,7 @@
 ---
 id: 162
 titulo: A "Duração da coleta" de /sistema é a da última rodada, medida no relógio
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_162.py
