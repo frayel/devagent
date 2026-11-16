@@ -1,6 +1,13 @@
 [
   {
     "data": "2026-11-16",
+    "tipo": "melhoria",
+    "texto": "Os dois termômetros de risco têm nomes distintos: \"Apetite aqui\" (small caps) e \"Apetite lá fora\" (S&P 500 e VIX). Podem divergir. O ⓘ do Clima Global mostra os cortes.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Clima Global"},
+    "spec": "160"
+  },
+  {
+    "data": "2026-11-16",
     "tipo": "novidade",
     "texto": "Na coluna Casas do Consultor, cada ação com cobertura mostra a média dos analistas do Yahoo Finance, quantos são e o preço-alvo médio. É só informação: não muda a decisão.",
     "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Coluna Casas"},

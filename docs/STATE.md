@@ -12,6 +12,9 @@
 Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a partir das specs com `python -m devagent.cadencias` (ADR 024 do núcleo). Última revisão de experiência registrada à mão: 2026-10-19. Última rodada de manutenção registrada à mão: 2026-10-17, spec 063. Linha de base de manutenção: ainda não medida.
 
 ## Implementado
+- [Experiência] Spec 160 - Apetite a risco aqui e lá fora não usam o mesmo nome:
+  - `app/templates/index.html`: rótulo do gauge da Maré "Apetite aqui (SMLL − IBOV)"; Clima Global com `kpi` "Apetite lá fora" (Tomando risco / Defensivo / Neutro a partir de `clima_global.status`) e ⓘ com os cortes. Sem mudança em coletores nem no `/api/snapshot`.
+  - Testes de aceite em `tests/test_aceite_160.py`.
 - [Capacidade nova] Spec 159 - O Consultor mostra o consenso de analistas do Yahoo Finance:
   - `app/collectors/consultor_yahoo.py` (janela `"fechamento"` do `app/agendador.py`): cookie, crumb e `quoteSummary` (`financialData`) por ativo de `CARTEIRA_IBOVESPA`; `ler_financial_data`, `em_pausa`. Uma rodada por dia; bloqueio (401, 429, 3 falhas seguidas) pausa 24 h.
   - `app/consultor/armazenamento.py`: tabelas `consultor_consenso_yahoo` e `consultor_consenso_yahoo_status` (mesmo SQL nos dois backends, também criadas no `init_db` do `app/database.py`); `save_consenso_yahoo`, `get_consenso_yahoo`, `tem_consenso_yahoo`, `resumo_consenso_yahoo`, `get/set_consenso_yahoo_status`, `max_coletado_em_consenso_yahoo`.

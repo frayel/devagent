@@ -283,7 +283,9 @@ def test_pregao_ja_lido_nao_faz_requisicao():
 
 def test_uma_rodada_por_dia_mesmo_sem_cobertura():
     """Rodada sem nenhuma linha não repete na mesma janela de fechamento."""
-    agora = _agora()
+    # Meio-dia BRT: com o relógio real, entre 23:30 e 00:00 BRT o "+30 min"
+    # caía no dia seguinte e o teste falhava sem defeito no coletor.
+    agora = _agora().replace(hour=15, minute=0, second=0, microsecond=0)
     with respx.mock(assert_all_called=False) as mock:
         _rotas_yahoo(mock, {})
         coletor.collect_and_save(agora)
