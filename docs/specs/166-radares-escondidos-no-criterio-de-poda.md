@@ -5,6 +5,7 @@ status: ready
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_166.py
+revisada: 2026-11-16
 origem: Registrar o painel escondido por lista vazia
 ---
 
@@ -30,7 +31,7 @@ A contagem nova é por **chave de `RADARES`**, a mesma que a página usa, e não
    ```
 
    e passa `radares_escondidos=radares.escondidos(payloads)`. Se essa leitura levantar exceção, registra no log (`logger.exception`) e passa `radares_escondidos=None`; a gravação da rodada segue. Fora do pregão não lê nada e passa `None`.
-3. **`gravar_instrumentacao_rodada(..., radares_escondidos: list[str] | None = None)`** (`app/database.py`). Com `durante_pregao=True` **e** `radares_escondidos` diferente de `None`, na mesma leitura e na mesma gravação de hoje: `radares_pregao += 1` (inteiro na raiz do payload, criado com 0) e `escondidos_pregao[chave] += 1` para cada chave da lista (dict criado vazio, mesmo com a lista vazia). Em qualquer outro caso, as duas chaves ficam como estão e não são criadas. Nada mais muda: `tempos`, `rodadas`, `vazias`, `por_hora`, `rodadas_pregao`, `vazias_pregao`, `ultima_rodada` e o retorno antecipado sem medidas.
+3. **`gravar_instrumentacao_rodada(..., radares_escondidos: list[str] | None = None)`** (`app/database.py`). Com `durante_pregao=True` **e** `radares_escondidos` diferente de `None`, na mesma leitura e na mesma gravação de hoje: `radares_pregao += 1` (inteiro na raiz do payload, criado com 0) e `escondidos_pregao[chave] += 1` para cada chave da lista (dict criado vazio, mesmo com a lista vazia). Em qualquer outro caso, as duas chaves ficam como estão e não são criadas. O retorno antecipado de hoje vem antes de tudo: rodada sem `tempos` e sem `vazias` não toca no banco e, portanto, também não conta em `radares_pregao`. Nada mais muda: `tempos`, `rodadas`, `vazias`, `por_hora`, `rodadas_pregao`, `vazias_pregao`, `ultima_rodada` e o retorno antecipado sem medidas.
 4. **`verificar_radares_escondidos(historico, pregoes) -> Item`** (novo, `app/services/sistema.py`), item **"Radares escondidos"** no grupo Coleta, logo depois de "Candidatos à poda" e na mesma condição (`historico_poda is not None`), lendo o mesmo `historico_poda` (nenhuma consulta nova). Sempre `envelhece=False`, nunca `problema`:
    - uma data de `pregoes` só conta se o payload tem `radares_pregao` inteiro; com menos de `n` presentes (ou `n = 0`): `ok`, `histórico de K de n pregões; o critério precisa de n`;
    - com os `n` presentes: `R = Σ radares_pregao` e, por chave, `V(c) = Σ escondidos_pregao[c]` (ausente conta 0). Candidato se `R ≥ MIN_RODADAS_PODA` e `2 × V(c) > R`, com `P(c) = round(100 × V(c) / R)`;
@@ -50,7 +51,7 @@ Exemplo da gravação. Payload de 17/11/2026 antes: `{"tempos": {"mare": 1.0}, "
 3. Rodada às 10h45, `True`, `radares_escondidos = None` (leitura falhou) → `radares_pregao = 4`, `escondidos_pregao` igual; `rodadas_pregao = {"mare": 5}`.
 4. Rodada às 18h45, `durante_pregao=False`, `radares_escondidos = ["faca_caindo"]` → `radares_pregao` e `escondidos_pregao` iguais ao passo 3.
 
-Sobre um payload sem as chaves, `durante_pregao=True` e `radares_escondidos = []` criam `radares_pregao = 1` e `escondidos_pregao = {}`.
+Sobre um payload sem as chaves, `tempos = {"mare": 1.5}`, `vazias = []`, `durante_pregao=True` e `radares_escondidos = []` criam `radares_pregao = 1` e `escondidos_pregao = {}`. Com `tempos = {}` e `vazias = []` (e qualquer `radares_escondidos`), nada é gravado: o payload continua sem as chaves.
 
 Exemplo de `escondidos`. Os 20 radares com um alerta cada (`{"alerts_json": "[{\"ticker\": \"PETR4\"}]"}` para `volume_alerts`, `{"alertas_json": "[{\"ticker\": \"PETR4\"}]"}` para os outros), menos `faca_caindo` com `{"alertas_json": "[]"}`, `falso_rompimento` com `{"alertas_json": "não é json"}` e `radar_inflexao` ausente do dict → `["faca_caindo", "falso_rompimento", "radar_inflexao"]`, nessa ordem (a de `RADARES`).
 
@@ -60,16 +61,16 @@ Exemplo do critério. Os 10 pregões da spec 153 (13/11 a 30/10, sem 2/11), todo
 - [ ] `tests/test_aceite_166.py`, com `exigir_spec_done("166")`:
   - para toda chave `c` de `RADARES`, com `<nome> = SNAPSHOT_DO_RADAR.get(c, c)` e `<campo>` o terceiro elemento da tupla, o código-fonte de `app/database.py` casa com a regex `gravar_snapshot\(\s*"<nome>"` (o nome pode vir na linha seguinte) e contém `<campo>_json` (teste de contrato lido do fonte: um radar novo com outro nome de snapshot ou outro campo reprova até a spec ser ajustada);
   - `radares.escondidos` com o exemplo acima devolve `["faca_caindo", "falso_rompimento", "radar_inflexao"]`, e com `{}` devolve as 20 chaves de `RADARES` em ordem;
-  - num SQLite temporário, os quatro passos do exemplo da gravação deixam o payload exatamente como descrito, campo a campo, e o caso do payload sem as chaves cria `radares_pregao = 1` e `escondidos_pregao = {}`;
+  - num SQLite temporário, os quatro passos do exemplo da gravação deixam o payload exatamente como descrito, campo a campo, o caso do payload sem as chaves cria `radares_pregao = 1` e `escondidos_pregao = {}`, e o caso sem `tempos` nem `vazias` não grava nada;
   - `_coletar()` com o relógio em 17/11/2026 10h15 BRT (mesma técnica da `tests/test_aceite_154.py`: `agendador.datetime` trocado, coletores espionados), com os snapshots dos radares semeados como no exemplo de `escondidos` (o de `short_squeeze` gravado como `radar_short_squeeze`), chama `gravar_instrumentacao_rodada` com `radares_escondidos=["faca_caindo", "falso_rompimento", "radar_inflexao"]`; às 18h45 BRT, com `radares_escondidos=None`; e com `app.banco.ler_snapshot` levantando exceção só para chaves de `RADARES`, às 10h15, com `None` e sem a exceção escapar;
   - `verificar_radares_escondidos` com os três cenários do exemplo do critério devolve nível, resumo e detalhe exatos, e com nenhum candidato devolve `ok` e `nenhum radar escondido em mais da metade das coletas dos últimos 10 pregões`;
   - `montar(...)` com `historico_poda` traz "Radares escondidos" logo depois de "Candidatos à poda" no grupo Coleta; com `historico_poda=None`, nenhum dos dois.
-- [ ] `tests/test_aceite_152.py`, `tests/test_aceite_153.py`, `tests/test_aceite_154.py`, `tests/test_instrumentacao.py` e `tests/test_sistema.py` continuam verdes sem mudar expectativa.
-- Arquivos tocados: `app/services/radares.py`, `app/agendador.py`, `app/database.py`, `app/services/sistema.py` e o novo `tests/test_aceite_166.py`. Medido com `grep -rl "gravar_instrumentacao_rodada\|verificar_candidatos_poda" app tests`: 3 de código e 3 de teste (`test_aceite_152.py`, `153` e `154`), nenhum precisa mudar porque o parâmetro novo tem padrão `None`.
+- [ ] `tests/test_aceite_152.py`, `tests/test_aceite_153.py`, `tests/test_aceite_154.py`, `tests/test_aceite_161.py`, `tests/test_aceite_162.py`, `tests/test_aceite_164.py`, `tests/test_instrumentacao.py` e `tests/test_sistema.py` continuam verdes sem mudar expectativa.
+- Arquivos tocados: `app/services/radares.py`, `app/agendador.py`, `app/database.py`, `app/services/sistema.py` e o novo `tests/test_aceite_166.py`. Medido com `grep -rl "gravar_instrumentacao_rodada\|verificar_candidatos_poda" app tests`: 3 de código e 6 de teste (`test_aceite_152.py`, `153`, `154`, `161`, `162` e `164`; conferido na revisão de 16/11), nenhum precisa mudar porque o parâmetro novo tem padrão `None`.
 
 ## Invariantes de produção
 - `GET /api/sistema` (com a senha) tem o item `Radares escondidos` no grupo "Coleta", `ok` ou `atencao`, nunca `problema`.
-- No primeiro pregão depois do deploy, o snapshot `instrumentacao` do dia tem `radares_pregao ≥ 1`, `radares_pregao ≤ max(rodadas_pregao.values())`, e para toda chave `escondidos_pregao[c] ≤ radares_pregao`; toda chave de `escondidos_pregao` está em `RADARES`.
+- No primeiro pregão depois do deploy, o snapshot `instrumentacao` do dia tem `radares_pregao ≥ 1` e, para toda chave, `escondidos_pregao[c] ≤ radares_pregao`; toda chave de `escondidos_pregao` está em `RADARES`.
 - Até haver 10 pregões com a contagem nova, o resumo é `histórico de K de 10 pregões` com K < 10, e nenhum radar é listado.
 - Se o item lista `c (V de R, P%)`, então `R ≥ 10`, `2 × V > R` e `P = round(100 × V / R)`.
 
