@@ -6,6 +6,7 @@ esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_164.py
 origem: A leitura do Telegram não segura a rodada
+revisada: 2026-11-16
 ---
 
 ## Problema
@@ -50,10 +51,11 @@ Esta spec tira o `consultor_opinioes` da rodada de mercado e o põe num laço pr
     Reusa `_relogio`, `proxima_espera` e `intervalo`, sem mudá-los. Voltas do laço novo nunca se sobrepõem entre si; elas podem correr ao mesmo tempo que uma rodada de mercado.
 - `app/main.py`, `lifespan`: dentro do mesmo `if agendador.coleta_ligada():`, logo depois da tarefa do `laco_de_coleta`, cria a tarefa do `laco_das_opinioes()`. Com `COLETA_AUTOMATICA=0` (ou em teste) nenhum dos dois laços sobe, como hoje. O cancelamento no desligamento já percorre `tarefas`.
 - `app/collectors/consultor_opinioes.py` não muda: mesmas fontes, pausas, tetos de 5 páginas e 30 IDs, cursores e extração.
+- O `_Memoria` de `coletar_tudo` (avisos do logger `app.collectors` guardados em `estado["detalhes"]`) não muda. Ele escuta o logger de qualquer fio, então um aviso das opiniões emitido durante uma rodada de mercado ainda pode aparecer em `detalhes`, como hoje, em que as opiniões rodam dentro da rodada. Separar os avisos por fio fica fora desta spec.
 - `/consultor`, `/api/consultor` e o item "Agendador da coleta" de `/sistema` não mudam. Em "Duração da coleta" de `/sistema`, o `consultor_opinioes` deixa de aparecer em "Mais lentos", porque sai de `tempos`.
 
 ## Fontes de dados
-Nenhuma nova, e o volume de pedidos não muda: o laço novo usa o mesmo `intervalo()` da rodada de mercado (15 min no pregão, 30 min das 18h15 à virada, 2 h fora do pregão), então a leitura das opiniões acontece no mesmo ritmo de hoje. As pausas de 2 s por pedido ao `t.me` e aos feeds continuam dentro de `collect_and_save`. O teto diário de chamadas ao Gemini (`GEMINI_MAX_CHAMADAS = 200`, `app/services/consultor_opinioes.py`) continua valendo e é contado no banco, como hoje.
+Nenhuma nova, e o volume de pedidos não muda: o laço novo usa o mesmo `intervalo()` da rodada de mercado (em dia de pregão, 15 min das 9h55 às 18h15 e 30 min das 18h15 às 20h; 2 h no resto, como `intervalo()` em `app/agendador.py`), então a leitura das opiniões acontece no mesmo ritmo de hoje. As pausas de 2 s por pedido ao `t.me` e aos feeds continuam dentro de `collect_and_save`. O teto diário de chamadas ao Gemini (`GEMINI_MAX_CHAMADAS = 200`, `app/services/consultor_opinioes.py`) continua valendo e é contado no banco, como hoje.
 
 Plano B: se uma fonte das opiniões cai, só o laço das opiniões sente; a rodada de mercado não espera mais por ela. Se o laço novo levantar exceção dentro de `rodar_opinioes`, ela é registrada no log e a próxima volta acontece no ritmo normal.
 
