@@ -2,6 +2,13 @@
   {
     "data": "2026-11-17",
     "tipo": "novidade",
+    "texto": "O card da Maré do mercado ganhou três opções: Marolas (o humor de hoje), Ondas (a média do último mês) e Maré (a do último ano), cada uma com o valor, os componentes e o mapa de calor da janela.",
+    "onde": {"pagina": "/mare", "pagina_nome": "Maré do mercado"},
+    "spec": "174b"
+  },
+  {
+    "data": "2026-11-17",
+    "tipo": "novidade",
     "texto": "A Maré do mercado passa a guardar, depois de cada fechamento, o humor médio do último mês e do último ano. O seletor para vê-los no card chega na próxima entrega.",
     "spec": "174a"
   },

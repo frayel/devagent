@@ -444,23 +444,82 @@ def pagina_novidades(request: Request):
     )
 
 
+def _card_mare_nivel(
+    request: Request, nivel: str | None, data_passada: bool
+) -> tuple[dict | None, list[dict]]:
+    """View do card da Maré no nível escolhido e o seletor (spec 174b).
+
+    Chamada dentro do contexto de leitura da página: numa data passada,
+    `ler_snapshot` já lê o `mare_historico` daquele pregão.
+    """
+    import app.banco
+
+    escolhido = mare_servico.nivel_valido(nivel)
+    historico = (
+        None
+        if escolhido == mare_servico.NIVEL_PADRAO
+        else app.banco.ler_snapshot("mare_historico")
+    )
+    card = mare_servico.view_nivel(
+        mare_servico.get_mare_view(), historico, escolhido, data_passada
+    )
+    return card, mare_servico.seletor(dict(request.query_params), escolhido)
+
+
 @app.get("/mare", response_class=HTMLResponse)
-def pagina_mare(request: Request):
+def pagina_mare(request: Request, nivel: str | None = Query(default=None)):
     """A Maré numa tela só dela, para deixar aberta (spec 173).
 
     Mesmas chamadas do painel geral: a view da Maré e o carimbo da spec 141.
     Mostra sempre a leitura mais recente; sem leitura, o card fica indisponível.
+    `?nivel=ondas|mare` troca a janela do card (spec 174b).
     """
     import app.banco
 
     agora = datetime.now(timezone.utc)
     with app.banco.req_snapshot_cache_ctx():
-        mare = mare_servico.get_mare_view()
+        mare, seletor = _card_mare_nivel(request, nivel, False)
         carimbo = _carimbos_criticos(agora).get("mare")
     return templates.TemplateResponse(
         request=request,
         name="mare.html",
-        context={"mare": mare, "carimbo": carimbo},
+        context={"mare": mare, "carimbo": carimbo, "seletor": seletor},
+    )
+
+
+@app.get("/mare/card", response_class=HTMLResponse)
+def fragmento_mare(
+    request: Request,
+    nivel: str | None = Query(default=None),
+    data: str | None = Query(default=None),
+):
+    """Só o card da Maré no nível pedido, sem página em volta (spec 174b).
+
+    O `ui.js` troca o conteúdo do card por este fragmento ao clicar no seletor.
+    Com `data`, lê o pregão pedido como o painel geral.
+    """
+    import app.banco
+
+    agora = datetime.now(timezone.utc)
+    ctx = _get_seletor_context(
+        data, agora, calendario.mercado_aberto(agora), calendario.pregao_corrente(agora)
+    )
+    historico = bool(ctx["is_historical"])
+    with (
+        app.banco.req_snapshot_cache_ctx(),
+        app.banco.lendo_pregao(ctx["data_referencia"] if historico else None),
+    ):
+        mare, seletor = _card_mare_nivel(request, nivel, historico)
+        carimbo = _carimbos_criticos(agora).get("mare")
+    return templates.TemplateResponse(
+        request=request,
+        name="mare_card.html",
+        context={
+            "mare": mare,
+            "carimbo": carimbo,
+            "seletor": seletor,
+            "historico": historico,
+        },
     )
 
 
@@ -2126,6 +2185,7 @@ def index(
     data: str | None = Query(default=None, alias="data"),
     data_str: str | None = None,
     vazios: str | None = Query(default=None),
+    nivel: str | None = Query(default=None),
 ):
     target_data = data or data_str
     agora = datetime.now(timezone.utc)
@@ -2237,6 +2297,7 @@ def index(
         volatilidade_silenciosa = get_volatilidade_silenciosa_view()
 
         mare = mare_servico.get_mare_view()
+        mare_card, mare_seletor = _card_mare_nivel(request, nivel, is_historical)
 
         anomalia_data = get_latest_anomalia_peso_data()
 
@@ -2314,6 +2375,8 @@ def index(
             "anomalia_peso": anomalia_peso,
             "fator_peso_pesado_data": fator_peso_pesado_data,
             "mare": mare,
+            "mare_card": mare_card,
+            "mare_seletor": mare_seletor,
             "motores_cards": motores_cards,
             "motores_sem_carimbo": motores_sem_carimbo,
             "carimbos": carimbos,

@@ -18,6 +18,12 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Capacidade nova] Spec 174b - O seletor Marolas, Ondas e Maré no card da Maré:
+  - `app/services/mare.py`: `nivel_valido`, `view_nivel(base, historico, nivel, data_passada)` (Ondas e Maré pelos `niveis` da 174a, estados `formacao` e `sem_registro`) e `seletor(params, nivel)` (links só de query, preservando `data` e `aba`).
+  - `app/main.py`: `/` e `/mare` aceitam `?nivel=marolas|ondas|mare`; nova rota `GET /mare/card` devolve só o card (`app/templates/mare_card.html`), com `data` opcional.
+  - `app/templates/componentes.html`: `card_mare(mare, carimbo, historico, seletor)` com o `<nav class="mare-nivel">` e o conteúdo dentro de `.mare-corpo`, o alvo da troca; linha de contexto e legenda por nível; método com os níveis.
+  - `app/static/ui.js`: clique no seletor busca `/mare/card`, troca o `.mare-corpo` e atualiza a URL; o treemap redesenha o heatmap novo.
+  - Aceite em `tests/test_aceite_174b.py`.
 - [Capacidade nova] Spec 174a - O humor médio do último mês e do último ano, gravado uma vez por pregão:
   - `app/collectors/mare_historico.py`: novo coletor; baixa a cesta com `range=2y` (`buscar_cesta(client, URL_CESTA_2Y)`) e o Ibovespa, calcula a leitura de cada um dos até 252 pregões completos pela `_Calculadora` da Maré e grava o snapshot `mare_historico` (`leituras`, `heatmap_ondas`, `heatmap_mare`, `ate`, `fonte`, `coletado_em`). Yahoo fora: devolve `False` sem gravar.
   - `app/services/mare.py`: `nivel(leituras, n, minimo, heatmap)`, `niveis(historico)` e `heatmap_janela(acoes, janela, anterior)`; janelas 21 (Ondas) e 252 (Maré), mínimos 15 e 189, componente ausente abaixo de 75% dos dias.

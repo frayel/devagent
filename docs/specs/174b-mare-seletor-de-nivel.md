@@ -1,7 +1,7 @@
 ---
 id: 174b
 titulo: O seletor Marolas, Ondas e Maré no card da Maré
-status: ready
+status: done
 esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_174b.py
