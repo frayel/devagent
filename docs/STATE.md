@@ -18,6 +18,10 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Poda] Spec 171 - A página baixa só o Plotly que desenha linhas:
+  - `app/templates/base.html`: o Plotly passa a vir de `https://cdn.plot.ly/plotly-basic-2.27.0.min.js` (traços `scatter`, `bar` e `pie`), com o `integrity` remedido em 17/11, igual ao da spec. Menos 2.919.951 bytes de JavaScript por visita sem cache.
+  - `app/main.py`: o `script-src` do CSP libera o pacote básico no lugar do `strict`.
+  - Aceite em `tests/test_aceite_171.py` (pacote e integridade, CSP casando, só traços do pacote em `app/static` e `app/templates`). Gráfico novo com outro tipo de traço precisa trocar o pacote.
 - [Saúde técnica] Spec 170 - O navegador recusa htmx e Plotly alterados na CDN:
   - `app/templates/base.html`: o htmx passa a vir de `https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js` (o destino do redirecionamento de antes) e as duas tags externas ganham `integrity="sha384-..."` e `crossorigin="anonymous"`. Hashes remedidos em 17/11, iguais aos da spec.
   - `app/main.py`: o `script-src` do CSP libera só os dois arquivos (`'self'` e os dois endereços completos), não mais `https://unpkg.com` e `https://cdn.plot.ly` inteiros.
