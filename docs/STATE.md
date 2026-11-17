@@ -18,6 +18,10 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 169 - Os tiles do heatmap mostram o nome do ativo inteiro:
+  - `app/static/tema.css`: `.heatmap-ativo` passa a `flex: calc(var(--ativo-peso, 1) * 1000) 1 0`, `min-width: 10ch`, `box-sizing: border-box` e `text-overflow: ellipsis` (sai o `width: max(30px, peso * 100%)`). O peso vai multiplicado por 1000 porque, com a soma dos `flex-grow` de uma linha abaixo de 1, o navegador reparte só essa fração da sobra e a linha não se preenche; a escala não muda a proporção. Sem o `ui.js`, tiles iguais.
+  - Medido no Chromium: em 390 px, duas linhas de cinco, menor tile 70,6 px; em 1280 px, uma linha, de 252,8 px (`PETR4`) a 70,6 px.
+  - Aceite em `tests/test_aceite_169.py` (360, 390, 768 e 1280 px, sem JavaScript, tickers largos e ticker de 9 caracteres).
 - [Poda] Spec 168 - O banco local só cria as tabelas que o app usa:
   - `app/database.py`: `init_db` deixa de criar `historico_diario_cache`, `instrumentacao_coleta_vazia`, `instrumentacao_coleta_tempo`, `ibovespa_cache` e `highlights_cache`, seus quatro índices e as quatro sondas de migração. Sem `DROP TABLE`: um `data.db` antigo fica como está. Um SQLite novo tem 10 tabelas (antes 15).
   - Testes: `tests/test_avaliador_historico.py` e `tests/test_instrumentacao_coleta_tempo.py` deixam de citar as tabelas; aceite em `tests/test_aceite_168.py` (toda tabela criada é lida ou gravada em `app/`).
