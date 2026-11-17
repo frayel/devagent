@@ -24,6 +24,7 @@ A ordem de uma spec é sempre esta: o Especificador a escreve, o Revisor a revis
 4. Não altere código da aplicação, testes, workflows, `devagent/`, `AGENTS.md`, `PRODUTO.md` nem arquivos fora da tabela acima. Não toque em PRs de outras raias.
 5. Sem achado, sem PR. Se a sua tarefa não gerar mudança que valha um PR, encerre sem commit. Não abra PR só com relatório ou diário.
 6. Não peça aprovação e não faça perguntas. Diante de ambiguidade, escolha a opção mais conservadora e registre a decisão no PR.
+7. **Correção que a sua raia acha e não pode fazer vira issue com o label `bug`:** `gh issue create --label bug`. O código é do desenvolvimento, e sem o label a issue cai no Passo 6, que quase nunca roda com a fila de specs abastecida. Com `bug`, a varredura do guardião a promove a `prioridade` depois de 24 h (ADR 030). Em 16/11 a #902 nasceu sem label e ficou atrás das specs. Achado do Verificador segue o caminho próprio (`docs/verificacao/achados/`), não este.
 
 ## ✍️ Especificador
 

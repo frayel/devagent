@@ -712,18 +712,24 @@ LABEL_PRIORIDADE = "prioridade"
 
 
 def bugs_para_priorizar(issues: list[dict[str, Any]], momento: datetime) -> list[int]:
-    """Issues `bug` abertas há mais de BUG_ENVELHECE_HORAS, ainda sem prioridade.
+    """Issues `bug` ou sem label, abertas há mais de BUG_ENVELHECE_HORAS.
 
     Bug sem `prioridade` cai no Passo 6, que só roda com a fila de specs vazia:
     em 28/10 a #557 e a #570 (achados de severidade baixa do Verificador)
     esperavam atrás de 12 specs, sem previsão (ADR 030). As `bloqueado`
     esperam uma pessoa e ficam de fora.
+
+    Issue sem label nenhum também conta: em 16/11 a raia de especificação
+    abriu a #902 (correção) sem o label `bug`, e a varredura nunca a viu. Quem
+    pede feature põe `enhancement`; o que chega sem label é tratado como bug.
     """
     limite = timedelta(hours=BUG_ENVELHECE_HORAS)
     numeros = []
     for i in issues:
         labels = {lbl["name"] for lbl in i.get("labels", [])}
-        if LABEL_BUG not in labels or labels & {LABEL_PRIORIDADE, "bloqueado"}:
+        if labels and LABEL_BUG not in labels:
+            continue
+        if labels & {LABEL_PRIORIDADE, "bloqueado"}:
             continue
         if momento - data(i["createdAt"]) > limite:
             numeros.append(i["number"])
@@ -736,8 +742,6 @@ def priorizar_bugs_antigos() -> None:
         "list",
         "--state",
         "open",
-        "--label",
-        LABEL_BUG,
         "--json",
         "number,createdAt,labels",
         "--limit",
@@ -759,7 +763,8 @@ def priorizar_bugs_antigos() -> None:
             "comment",
             str(numero),
             "--body",
-            f"Aberta há mais de {BUG_ENVELHECE_HORAS} h: ganhou o label "
+            f"Aberta há mais de {BUG_ENVELHECE_HORAS} h como `{LABEL_BUG}` ou sem "
+            f"label: ganhou o label "
             f"`{LABEL_PRIORIDADE}` e entra no Passo 1.6, antes da fila de specs "
             "(ADR 030).",
             check=False,
