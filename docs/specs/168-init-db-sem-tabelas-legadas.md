@@ -5,6 +5,7 @@ status: ready
 esforco: P
 gaveta: poda
 aceite: tests/test_aceite_168.py
+revisada: 2026-11-17
 origem: Tabela `instrumentacao_coleta_tempo`
 ---
 
