@@ -408,6 +408,25 @@ a.destaque-item:hover { border-color: var(--destaque); }
 .painel-mare { padding-bottom: var(--e6, 32px); padding-top: var(--e5, 24px); gap: var(--e5, 24px); }
 .painel-mare .selo { align-self: flex-start; }
 .painel-mare .mare-componentes .comp > span:first-child { opacity: 0.6; }
+
+/* Tela solo da Maré (spec 173): o card no centro da janela, o aviso legal no pé. */
+body:has(> main.tela-solo) {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.tela-solo {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--e4);
+}
+.tela-solo > .painel {
+  width: 100%;
+  max-width: 480px;
+}
+body:has(> main.tela-solo) > footer { margin-top: 0; }
 .mare-componentes { display: grid; gap: var(--e2); }
 .comp { display: grid; grid-template-columns: 112px 1fr 28px; align-items: center; gap: var(--e2); font-size: var(--fs-meta); color: var(--texto-2); }
 .comp-peso { color: var(--texto-3); }

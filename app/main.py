@@ -444,6 +444,26 @@ def pagina_novidades(request: Request):
     )
 
 
+@app.get("/mare", response_class=HTMLResponse)
+def pagina_mare(request: Request):
+    """A Maré numa tela só dela, para deixar aberta (spec 173).
+
+    Mesmas chamadas do painel geral: a view da Maré e o carimbo da spec 141.
+    Mostra sempre a leitura mais recente; sem leitura, o card fica indisponível.
+    """
+    import app.banco
+
+    agora = datetime.now(timezone.utc)
+    with app.banco.req_snapshot_cache_ctx():
+        mare = mare_servico.get_mare_view()
+        carimbo = _carimbos_criticos(agora).get("mare")
+    return templates.TemplateResponse(
+        request=request,
+        name="mare.html",
+        context={"mare": mare, "carimbo": carimbo},
+    )
+
+
 @app.get("/sistema", response_class=HTMLResponse)
 def pagina_sistema(request: Request):
     exigir_senha(request)

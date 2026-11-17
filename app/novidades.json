@@ -1,6 +1,13 @@
 [
   {
     "data": "2026-11-17",
+    "tipo": "novidade",
+    "texto": "A Maré do mercado ganhou uma tela só dela, no centro, sem menu: boa para deixar aberta num monitor ou no celular. Ela se atualiza sozinha a cada 15 minutos.",
+    "onde": {"pagina": "/mare", "pagina_nome": "Maré do mercado"},
+    "spec": "173"
+  },
+  {
+    "data": "2026-11-17",
     "tipo": "correcao",
     "texto": "No mapa de calor da Maré do mercado, todo quadrado mostra o nome da ação inteiro, também no celular. Na tela estreita, os quadrados quebram em mais de uma linha.",
     "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Maré do mercado"},

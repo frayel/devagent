@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "componentes.html" import card_mare %}
+{#- Tela solo da Maré (spec 173): só o card, no centro da janela, e o aviso legal.
+    Sem cabeçalho, sem menu e sem Plotly; recarrega no ritmo da coleta (spec 163). -#}
+{% block titulo %}Maré do mercado · Painel B3{% endblock %}
+{% block meta_pagina %}
+    <meta http-equiv="refresh" content="900">
+{%- endblock %}
+{% block cabecalho %}{% endblock %}
+{% block classe_main %}tela-solo{% endblock %}
+{% block content %}
+{{ card_mare(mare, carimbo) }}
+{%- endblock %}
+{% block rodape_extra %}{% endblock %}

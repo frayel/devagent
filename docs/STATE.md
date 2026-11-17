@@ -18,6 +18,13 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Capacidade nova] Spec 173 - A Maré numa tela só dela, em `/mare`:
+  - `app/main.py`: rota `GET /mare` (`pagina_mare`), com `mare_servico.get_mare_view()` e `_carimbos_criticos(agora).get("mare")`, as mesmas chamadas do painel geral; sempre a leitura mais recente.
+  - `app/templates/componentes.html`: macro `card_mare(mare, carimbo=None, historico=False)`, a única fonte do card da Maré; bloco opcional por `call` dentro do card.
+  - `app/templates/index.html`: chama `card_mare(mare, c_mare, is_historical)` com os gauges de Apetite e Rotação no `call`.
+  - `app/templates/base.html`: blocos `titulo`, `meta_pagina`, `cabecalho`, `classe_main` e `rodape_extra`. `app/templates/mare.html` esvazia cabeçalho e rodapé extra, usa `<main class="tela-solo">` e recarrega a cada 900 s.
+  - `app/static/tema.css`: `.tela-solo` centraliza o card (máx. 480 px) com o rodapé no pé (`min-height: 100dvh`).
+  - Aceite em `tests/test_aceite_173.py`.
 - [Poda] Spec 172 - Cada página baixa só o script que usa:
   - `app/templates/base.html`: sai a tag do htmx (nenhum template usava `hx-`); entra o bloco vazio `scripts_pagina` antes de `graficos.js`, e `graficos.js` e `ui.js` ganham `defer`.
   - `app/templates/index.html`: preenche `scripts_pagina` com a tag do Plotly básico (mesmo `src`, `integrity` e `crossorigin`), com `defer`. `/consultor`, `/sistema` e `/novidades` não baixam nenhum script externo (1.046.383 bytes a menos por visita sem cache); `/` baixa 47.755 a menos.

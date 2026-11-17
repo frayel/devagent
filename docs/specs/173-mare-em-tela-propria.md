@@ -1,7 +1,7 @@
 ---
 id: 173
 titulo: A Maré numa tela só dela, em /mare
-status: ready
+status: done
 esforco: P
 gaveta: capacidade nova
 aceite: tests/test_aceite_173.py
