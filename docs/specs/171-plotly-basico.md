@@ -6,6 +6,7 @@ esforco: P
 gaveta: poda
 aceite: tests/test_aceite_171.py
 origem: Plotly de 3,9 MB para desenhar linhas
+revisada: 2026-11-17
 ---
 
 ## Problema
@@ -31,7 +32,7 @@ Os tipos foram contados com `Object.keys(Plotly.PlotSchema.get().traces)` em cad
 Quem implementar mede o hash de novo antes do PR (`curl -sSL https://cdn.plot.ly/plotly-basic-2.27.0.min.js | openssl dgst -sha384 -binary | openssl base64 -A`). Se diferir do valor acima, para e registra no relatório em vez de copiar o novo (arquivo de versão fixa que mudou é o que a spec 170 quer pegar). O hash do `plotly-strict` medido na mesma sessão bateu com o da spec 170, o que confirma o método.
 
 ## Fontes de dados
-Nenhuma nova. A CDN do Plotly já é carregada pelo navegador do usuário; o servidor não a acessa. Plano B: o mesmo de hoje quando a CDN cai ou o `integrity` recusa o arquivo (página sem o gráfico do Ibovespa, resto da página normal; o aviso no lugar do gráfico é o item 25 da *Fila*).
+Nenhuma nova. A CDN do Plotly já é carregada pelo navegador do usuário; o servidor não a acessa. Plano B: o mesmo de hoje quando a CDN cai ou o `integrity` recusa o arquivo (página sem o gráfico do Ibovespa, resto da página normal; o aviso no lugar do gráfico é o item 24 da *Fila*).
 
 ## Cálculos
 Economia por visita sem cache, com os números da tabela:
@@ -56,7 +57,7 @@ O `integrity` segue a regra da spec 170: `sha384-` + Base64 do SHA-384 dos bytes
 - O cabeçalho `Content-Security-Policy` de `/` não cita `plotly-strict`.
 
 ## Fora do escopo
-- Tirar o Plotly das três páginas sem gráfico (`/consultor`, `/sistema`, `/novidades`) ou carregá-lo com `defer`: muda a ordem de carga de `graficos.js` e `ui.js` e pede teste de navegador próprio. Vai para a *Fila* junto com o htmx, que nenhum template usa.
+- Tirar o Plotly das três páginas sem gráfico (`/consultor`, `/sistema`, `/novidades`) ou carregá-lo com `defer`: muda a ordem de carga de `graficos.js` e `ui.js` e pede teste de navegador próprio. Já está na *Fila* (item 25), junto com o htmx, que nenhum template usa.
 - Atualizar o Plotly (2.27.0 → 2.35 ou 3.x) ou trocar de biblioteca: muda comportamento e pede spec própria.
 - Servir o Plotly de `app/static` ou fallback local (mesma razão da spec 170).
-- O aviso "gráfico indisponível" quando a CDN falha (item 25 da *Fila*).
+- O aviso "gráfico indisponível" quando a CDN falha (item 24 da *Fila*).
