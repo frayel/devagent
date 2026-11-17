@@ -1194,7 +1194,8 @@ def montar(
                     and chave in remoto["_alertas_desde"]
                 ):
                     i["desde"] = remoto["_alertas_desde"][chave]
-                    dt = datetime.fromisoformat(i["desde"])
+                    # O "desde" é gravado em UTC; a tela fala a hora de Brasília.
+                    dt = datetime.fromisoformat(i["desde"]).astimezone(BRT)
                     i["resumo"] = f"(desde {dt.strftime('%d/%m %H:%M')}) " + i["resumo"]
 
     return {
