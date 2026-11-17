@@ -306,7 +306,25 @@ def _semear(db_path: str) -> None:
             fluxo=74.0,
             calma=61.0,
             volume=67.0,
-            ativos_json="[]",
+            # Heatmap da Maré: dez ativos, com pesos de 18% a 2%, para a
+            # captura mostrar o treemap e o rótulo do menor tile.
+            ativos_json=json.dumps(
+                [
+                    {"ticker": t, "variacao": v, "financeiro": p * 2e9, "peso": p}
+                    for t, p, v in [
+                        ("PETR4", 0.18, 1.0),
+                        ("VALE3", 0.16, -0.6),
+                        ("ITUB4", 0.14, 0.5),
+                        ("BBAS3", 0.12, -1.8),
+                        ("B3SA3", 0.10, 1.6),
+                        ("WEGE3", 0.08, 3.1),
+                        ("BPAC11", 0.08, -0.4),
+                        ("SUZB3", 0.06, 0.0),
+                        ("BBDC4", 0.05, 1.8),
+                        ("PRIO3", 0.03, -4.2),
+                    ]
+                ]
+            ),
             historico_json=json.dumps(historico),
             fonte="demonstracao",
         )
