@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado, gauge, sparkline %}
+{% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado, gauge, sparkline, card_mare %}
 
 {#- Só a home desenha gráfico: as outras páginas não baixam o Plotly (spec 172). -#}
 {% block scripts_pagina %}
@@ -74,48 +74,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Maré do mercado", 4, "Índice de 0 a 100. Fluxo (40%): parcela do volume financeiro da cesta de 30 ações que foi para ações em alta, uma aproximação do fluxo de ordens, que não tem fonte gratuita. Calma (35%): 100 menos o percentil da volatilidade de queda de 10 pregões do Ibovespa nos 252 anteriores; só os dias de queda contam, então uma alta forte não reduz a calma. Volume (25%): ritmo do volume contra a média de 21 pregões, ajustado pela hora do pregão, no sentido da maioria. A Maré descreve o humor do momento. Não é recomendação de compra ou venda.", mare.fonte if mare else "", c_mare.get('rodape') or (mare.time if mare else ""), "visao-macro painel-mare visao-geral", c_mare.get('desatualizado', False)) %}
-    {% if mare %}
-        {% if mare.parcial %}<span class="selo alerta">parcial · sem {{ mare.ausentes }} · {{ mare.cobertura }}</span>{% endif %}
-        {{ gauge(mare.valor, "", 0, 100, "{:.0f}", faixas=mare.faixas, resumo="Maré do mercado, de 0 a 100", grande=False, escala=["0", "100"]) }}
-        <div class="mare-componentes">
-            {% for c in mare.componentes %}
-            <div class="comp">
-                <span>{{ c.nome }}{% if c.peso is not none %} <span class="comp-peso num">peso {{ c.peso }}%</span>{% endif %}</span>
-                {% if c.valor is none %}
-                <span class="comp-ausente">ausente</span><span></span>
-                {% else %}
-                <svg class="comp-barra" viewBox="0 0 100 6" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="comp-trilho" width="100" height="6"/><rect class="comp-valor" width="{{ [c.valor, 1]|max }}" height="6"/></svg>
-                <span class="num comp-num">{{ c.valor }}</span>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        {# Heatmap component uses dataset variables via JS (no inline styles) to comply with CSP #}
-        {% if mare.heatmap %}
-        <div class="heatmap">{# CSP fix for issue 625 fully verified #}
-            {% for ativo in mare.heatmap %}
-            {% set cor = 'var(--alta)' if ativo.variacao > 0 else 'var(--baixa)' if ativo.variacao < 0 else 'var(--borda)' %}
-            <div title="{{ ativo.ticker }}: {{ '%.2f' | format(ativo.variacao) | replace('.', ',') }}%"
-                 class="heatmap-ativo"
-                 data-peso="{{ ativo.peso }}"
-                 data-cor="{{ cor }}"
-                 data-opacidade="{{ 0.3 + 0.7 * ([ativo.variacao|abs / 5, 1]|min) }}">
-                {% if ativo.variacao > 0 %}▲{% elif ativo.variacao < 0 %}▼{% else %}■{% endif %} {{ ativo.ticker }}
-            </div>
-            {% endfor %}
-        </div>
-        <p class="heatmap-legenda">Área: volume financeiro do dia, entre os 10 maiores da cesta de 30 ações · cor: variação do preço</p>
-        {% endif %}
-        {% if mare.sparkline %}
-        <div class="spark">
-            <svg viewBox="0 0 200 48" preserveAspectRatio="none" role="img" aria-label="{{ mare.resumo_serie }}"><polyline class="spark-linha" points="{{ mare.sparkline.pontos }}"/></svg>
-            {% if mare.comparacao %}<span class="num">{{ mare.comparacao }}</span>{% endif %}
-        </div>
-        {% endif %}
-    {% else %}
-        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
-    {% endif %}
+{% call card_mare(mare, c_mare, is_historical) %}
     {% if apetite_risco or rotacao_capital %}
     <div class="gauges-pequenos espaco-topo">
         {% if apetite_risco %}

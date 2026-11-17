@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel B3</title>
+    <title>{% block titulo %}Painel B3{% endblock %}</title>
+    {%- block meta_pagina %}{% endblock %}
     <link rel="stylesheet" href="/static/tema.css">
     {%- block scripts_pagina %}{% endblock %}
     <script src="/static/graficos.js" defer></script>
@@ -11,6 +12,7 @@
 </head>
 <body>
 
+    {%- block cabecalho %}
     {%- if render_no_db %}
     <div class="aviso-banco-efemero">
         Banco persistente não configurado: dados se perdem ao reiniciar
@@ -72,16 +74,19 @@
         </div>
 
     </header>
+    {%- endblock %}
 
-    <main class="grade">
+    <main class="{% block classe_main %}grade{% endblock %}">
         {% block content %}{% endblock %}
     </main>
 
     <footer>
+        {%- block rodape_extra %}
         {%- set novidades_em = novidades_atualizado_em() if novidades_atualizado_em is defined else none %}
         {%- if novidades_em %}
         <a href="/novidades" class="rodape-novidades">Novidades · atualizado em {{ novidades_em }}</a>
         {%- endif %}
+        {%- endblock %}
         <p class="aviso-legal">Conteúdo informativo gerado automaticamente. Não constitui recomendação de investimento.</p>
     </footer>
 
