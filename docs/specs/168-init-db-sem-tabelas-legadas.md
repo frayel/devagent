@@ -1,7 +1,7 @@
 ---
 id: 168
 titulo: O banco local só cria as tabelas que o app usa
-status: ready
+status: done
 esforco: P
 gaveta: poda
 aceite: tests/test_aceite_168.py

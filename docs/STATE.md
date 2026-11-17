@@ -18,6 +18,9 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Poda] Spec 168 - O banco local só cria as tabelas que o app usa:
+  - `app/database.py`: `init_db` deixa de criar `historico_diario_cache`, `instrumentacao_coleta_vazia`, `instrumentacao_coleta_tempo`, `ibovespa_cache` e `highlights_cache`, seus quatro índices e as quatro sondas de migração. Sem `DROP TABLE`: um `data.db` antigo fica como está. Um SQLite novo tem 10 tabelas (antes 15).
+  - Testes: `tests/test_avaliador_historico.py` e `tests/test_instrumentacao_coleta_tempo.py` deixam de citar as tabelas; aceite em `tests/test_aceite_168.py` (toda tabela criada é lida ou gravada em `app/`).
 - [Experiência] Spec 167 - Os destaques do dia logo abaixo da manchete:
   - `app/services/destaques.py`: `faixa(highlights, confluencia, carimbo_altas_baixas, data_historica)`, função pura com até três itens (maior alta, maior baixa, em mais radares).
   - `app/main.py`: a rota `/` põe `destaques` no contexto, depois da `confluencia`.
@@ -305,7 +308,7 @@ Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres 
   - Adicionado ao contrato `/api/snapshot`.
 
 - Spec 062 (Instrumentação de Tempo de Coleta):
-  - Banco de dados SQLite (`instrumentacao_coleta_tempo`).
+  - Hoje no snapshot `instrumentacao` (a tabela `instrumentacao_coleta_tempo` saiu do `init_db` na spec 168).
   - `app/agendador.py` registra e salva o tempo de execução de cada painel para basear futuras podas.
 - Spec 061 (Experiência Ordem do Topo):
   - Reorganizado `app/templates/index.html` para mover os painéis 'Clima Global' e 'Motores do Índice' para baixo do 'Ibovespa' e 'Maré', garantindo a hierarquia visual acima da dobra.
@@ -335,7 +338,7 @@ Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres 
   - Exibição de painel em Alertas Intraday e `/api/snapshot`.
 
 - Spec 056 (Instrumentação de Coleta Vazia):
-  - Banco de dados SQLite (`instrumentacao_coleta_vazia`).
+  - Hoje no snapshot `instrumentacao` (a tabela `instrumentacao_coleta_vazia` saiu do `init_db` na spec 168).
   - Registra a hora e o painel quando uma coleta falha ou retorna vazia.
 
 - Spec 055 (Experiência: Fusão de Globais):
@@ -575,24 +578,24 @@ Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres 
 - Núcleo do agente separado do produto (ADR 005 em `devagent/decisoes/`): processo em `devagent/`, produto em `PRODUTO.md`, contrato no `Makefile` e no `devagent.toml`.
 - Configuração inicial do projeto (FastAPI, Ruff, Mypy, Pytest).
 - Spec 001 (Ibovespa Hoje):
-  - Banco de dados SQLite (`ibovespa_cache`).
+  - Hoje no snapshot `ibovespa` e na série `series_diarias` (a tabela `ibovespa_cache` saiu do `init_db` na spec 168).
   - Coletor com duas fontes: brapi.dev e fallback para Yahoo Finance.
   - Exibição de pontuação, variação diária e horário de coleta.
   - Gráfico de linha dos últimos 30 pregões usando Plotly.js.
   - Tratamento de falhas nas fontes de dados.
 - Spec 002 (Maiores Altas e Baixas do Dia):
-  - Banco de dados SQLite (`highlights_cache`).
+  - Hoje no snapshot `highlights` (a tabela `highlights_cache` saiu do `init_db` na spec 168).
   - Coletor com fonte de dados brapi.dev e fallback yfinance, rastreando lista de 30 tickers de alta liquidez.
   - Exibição de duas tabelas com top 5 altas e baixas (variação percentual).
   - Tratamento de falhas e UI para dados não disponíveis.
 - Spec 003 (Médias Móveis de 21 e 200 dias para o Ibovespa):
-  - Inclusão dos campos `mm21` e `mm200` no cache `ibovespa_cache`.
+  - Inclusão dos campos `mm21` e `mm200` no snapshot `ibovespa`.
   - Cálculo de médias móveis baseado em histórico estendido (`1y`).
   - Card "Tendência (Ibovespa)" com sinais de alta, baixa ou neutra.
   - Atualização automática em cada coleta com fallback para dados insuficientes.
 - Spec 004 (Sentimento de Mercado Baseado na Dispersão):
   - Termômetro de dispersão na página inicial com contagem de altas/baixas e proporção.
-  - Banco de dados SQLite (`highlights_cache`) armazena as contagens.
+  - O snapshot `highlights` armazena as contagens.
   - Exposição no JSON `/api/snapshot`.
 - Spec 005 (Alertas de Volume Anormal):
   - Banco de dados SQLite (`volume_alert_cache`).
