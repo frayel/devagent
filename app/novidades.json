@@ -1,6 +1,13 @@
 [
   {
     "data": "2026-11-17",
+    "tipo": "correcao",
+    "texto": "No mapa de calor da Maré do mercado, todo quadrado mostra o nome da ação inteiro, também no celular. Na tela estreita, os quadrados quebram em mais de uma linha.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Maré do mercado"},
+    "spec": "169"
+  },
+  {
+    "data": "2026-11-17",
     "tipo": "novidade",
     "texto": "Logo abaixo da manchete, uma faixa mostra a maior alta, a maior baixa e a ação apontada por mais radares, com a hora. Clique para abrir a aba de onde veio cada uma.",
     "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Destaques agora"},

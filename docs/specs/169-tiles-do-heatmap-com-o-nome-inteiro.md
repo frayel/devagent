@@ -1,7 +1,7 @@
 ---
 id: 169
 titulo: Os tiles do heatmap mostram o nome do ativo inteiro
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_169.py
