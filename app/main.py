@@ -32,6 +32,7 @@ from datetime import datetime, timezone, timedelta
 from datetime import timezone as dt_timezone
 from app.services.ibovespa import get_ibovespa_view_data
 from app.services import carimbo as carimbo_servico
+from app.services import destaques as destaques_servico
 from app.services import novidades as novidades_servico
 from app.services.manchete import gerar_manchete
 from app.database import get_latest_highlights_data, get_latest_apetite_risco_data
@@ -2307,6 +2308,12 @@ def index(
         )
         contexto["confluencia"] = radares_servico.confluencia(
             contexto, agora, is_historical
+        )
+        contexto["destaques"] = destaques_servico.faixa(
+            highlights,
+            contexto["confluencia"],
+            carimbos.get("altas_baixas"),
+            data_ref.isoformat() if is_historical and data_ref else None,
         )
         return templates.TemplateResponse(
             request=request, name="index.html", context=contexto

@@ -1,5 +1,12 @@
 [
   {
+    "data": "2026-11-17",
+    "tipo": "novidade",
+    "texto": "Logo abaixo da manchete, uma faixa mostra a maior alta, a maior baixa e a ação apontada por mais radares, com a hora. Clique para abrir a aba de onde veio cada uma.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Destaques agora"},
+    "spec": "167"
+  },
+  {
     "data": "2026-11-16",
     "tipo": "melhoria",
     "texto": "As Opiniões Recentes do Consultor têm uma linha por ação: quantas casas dizem comprar, manter ou vender, a faixa de preço-alvo e a mais recente. Clique para ver cada opinião.",
