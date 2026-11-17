@@ -1,11 +1,12 @@
 ---
 id: 174
 titulo: A Maré em três níveis, marolas, ondas e maré
-status: ready
+status: draft
 esforco: G
 gaveta: capacidade nova
 aceite: tests/test_aceite_174.py
 origem: nova
+revisada: 2026-11-17
 ---
 
 ## Problema
@@ -80,3 +81,11 @@ Roda na primeira rodada do agendador em que não existe `mare_historico` para o 
 - Lembrar o nível escolhido entre visitas (cookie ou `localStorage`).
 - Calibrar as janelas (21 e 252) ou os mínimos com evidência: spec nova, como manda o cabeçalho de `app/services/mare.py`.
 - Se o Revisor julgar grande demais, a divisão natural é **174a** (histórico longo gravado e visível em `/api/snapshot`) e **174b** (seletor, níveis no card e fragmento).
+
+## Revisão
+Dividida em 17/11/2026 pelo Revisor, por tamanho (esforço G: coletor novo, agendador, serviço, rotas, macro, `ui.js`, `/api/snapshot`, método e teste de navegador numa sessão só):
+- **174a** (`174a-mare-historico-longo.md`): histórico longo gravado uma vez por pregão, cálculo dos níveis e `paineis.mare.niveis` em `/api/snapshot`.
+- **174b** (`174b-mare-seletor-de-nivel.md`): seletor no card, fragmento `/mare/card`, legenda do heatmap, linha de contexto, estado em formação e método. Depende da 174a.
+
+O que mudou na divisão: o histórico longo virou um coletor próprio (`mare_historico`) com a janela `"diario"` no `_coletar`, porque o agendador força `_data_referencia_snapshot` para o pregão corrente durante o pregão e a checagem "não existe snapshot do último pregão completo" pela função dentro do coletor `mare` rodaria a cada 15 min (o mesmo tipo de defeito da issue #919); os testes usam `tests/yahoo_falso.py` (já atende `range=2y`) em vez de fixtures novas de 30 ações; toda fórmula ganhou exemplo numérico de ponta a ponta, com as unidades do Yahoo. As referências da spec 175 a "spec 174" valem para as duas partes: `mare_historico.leituras` é da 174a, `/mare/card` da 174b.
+
