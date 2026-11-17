@@ -13,6 +13,22 @@
     <p class="manchete-texto texto-centro">{{ manchete }}</p>
 </div>
 
+{#- Destaques agora (spec 167): maior alta, maior baixa e a ação em mais radares. -#}
+{%- set _destaques = destaques if destaques is defined and destaques else [] %}
+{% if _destaques %}
+<nav class="span-12 destaques-agora" aria-label="Destaques agora">
+  {%- for d in _destaques %}
+  {%- if d.tipo == 'vazio' %}
+  <span class="destaque-item destaque-vazio">{{ d.rotulo }}: {{ d.texto }}</span>
+  {%- elif d.tipo == 'ativo' %}
+  <a class="destaque-item" href="{{ d.href }}" title="{{ d.title }}"><span class="destaque-rotulo">{{ d.rotulo }}</span> <strong>{{ d.ticker }}</strong> {{ variacao(d.variacao, d.sinal) }}{% if d.hora %} <span class="destaque-hora">às {{ d.hora }}</span>{% endif %}{% if d.desatualizado %} <span class="selo alerta selo-desatualizado">desatualizado</span>{% endif %}</a>
+  {%- else %}
+  <a class="destaque-item" href="{{ d.href }}" title="{{ d.title }}"><span class="destaque-rotulo">{{ d.rotulo }}</span> <strong>{{ d.ticker }}{{ d.empate }}</strong> · {{ d.radares }}{% if d.hora %} <span class="destaque-hora">às {{ d.hora }}</span>{% endif %}</a>
+  {%- endif %}
+  {%- endfor %}
+</nav>
+{% endif %}
+
 <div class="span-12" id="abas-navegacao">
     <button class="aba-btn ativo" data-aba="visao-geral">Visão Geral</button>
     <button class="aba-btn" data-aba="sentimento-risco">Sentimento & Risco</button>
