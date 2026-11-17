@@ -27,8 +27,7 @@ def test_agendador_registra_tempo(monkeypatch):
             return True
 
     def fake_execute(query, params):
-        if "instrumentacao_coleta_tempo" in query:
-            salvos.append(params)
+        salvos.append((query, params))
 
     class FakeCursor:
         def execute(self, query, params=None):

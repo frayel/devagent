@@ -7,7 +7,6 @@ from app.database import get_connection
 def setup_mock_data():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM historico_diario_cache")
     cursor.execute("DELETE FROM snapshots_paineis WHERE painel = 'consultor_confianca'")
     conn.commit()
     conn.close()
