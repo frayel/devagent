@@ -2,6 +2,12 @@
   {
     "data": "2026-11-17",
     "tipo": "novidade",
+    "texto": "A Maré do mercado passa a guardar, depois de cada fechamento, o humor médio do último mês e do último ano. O seletor para vê-los no card chega na próxima entrega.",
+    "spec": "174a"
+  },
+  {
+    "data": "2026-11-17",
+    "tipo": "novidade",
     "texto": "A Maré do mercado ganhou uma tela só dela, no centro, sem menu: boa para deixar aberta num monitor ou no celular. Ela se atualiza sozinha a cada 15 minutos.",
     "onde": {"pagina": "/mare", "pagina_nome": "Maré do mercado"},
     "spec": "173"

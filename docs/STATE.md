@@ -18,6 +18,12 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Capacidade nova] Spec 174a - O humor médio do último mês e do último ano, gravado uma vez por pregão:
+  - `app/collectors/mare_historico.py`: novo coletor; baixa a cesta com `range=2y` (`buscar_cesta(client, URL_CESTA_2Y)`) e o Ibovespa, calcula a leitura de cada um dos até 252 pregões completos pela `_Calculadora` da Maré e grava o snapshot `mare_historico` (`leituras`, `heatmap_ondas`, `heatmap_mare`, `ate`, `fonte`, `coletado_em`). Yahoo fora: devolve `False` sem gravar.
+  - `app/services/mare.py`: `nivel(leituras, n, minimo, heatmap)`, `niveis(historico)` e `heatmap_janela(acoes, janela, anterior)`; janelas 21 (Ondas) e 252 (Maré), mínimos 15 e 189, componente ausente abaixo de 75% dos dias.
+  - `app/agendador.py`: janela `"diario"` para `mare_historico`; coleta só com o mercado fechado e sem snapshot do último pregão completo, gravando nessa data (o fallback de partida a frio cobre o primeiro deploy durante o pregão, uma vez).
+  - `app/main.py`: `/api/snapshot` ganha `paineis.mare.niveis.{ondas,mare}` (ou `null`); o resto de `paineis.mare` e a tela não mudam (seletor na 174b).
+  - Aceite em `tests/test_aceite_174a.py`.
 - [Capacidade nova] Spec 173 - A Maré numa tela só dela, em `/mare`:
   - `app/main.py`: rota `GET /mare` (`pagina_mare`), com `mare_servico.get_mare_view()` e `_carimbos_criticos(agora).get("mare")`, as mesmas chamadas do painel geral; sempre a leitura mais recente.
   - `app/templates/componentes.html`: macro `card_mare(mare, carimbo=None, historico=False)`, a única fonte do card da Maré; bloco opcional por `call` dentro do card.

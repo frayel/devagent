@@ -1431,6 +1431,10 @@ def snapshot(
             if mare_data
             else {"fonte": "nd", "coletado_em": agora.isoformat()}
         )
+        # Ondas e Maré (spec 174a): do histórico gravado uma vez por pregão.
+        resp["paineis"]["mare"]["niveis"] = mare_servico.niveis(
+            app.banco.ler_snapshot("mare_historico")
+        )
 
         apetite_risco_data = get_latest_apetite_risco_data()
         if apetite_risco_data:
