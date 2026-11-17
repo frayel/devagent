@@ -1,7 +1,7 @@
 ---
 id: 175
 titulo: O gráfico da Maré anda no tempo do nível
-status: ready
+status: done
 esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_175.py

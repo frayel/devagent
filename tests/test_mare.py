@@ -460,6 +460,20 @@ def test_snapshot_sem_coleta_tem_chave_vazia():
 
 def test_painel_mostra_gauge_componentes_e_historico():
     _gravar()
+    # Curva do dia (spec 175), para o card ter o gráfico de Marolas.
+    import app.banco
+
+    hoje = mare.hoje_brt()
+    app.banco.gravar_snapshot(
+        "mare_intradia",
+        hoje,
+        "ao_vivo",
+        "yfinance",
+        {
+            "data": hoje.isoformat(),
+            "pontos": [{"hora": "10:15", "valor": 60}, {"hora": "14:30", "valor": 68}],
+        },
+    )
     html = _cliente().get("/").text
     assert "Maré do mercado" in html
     assert "Não é recomendação de compra ou venda" in html
@@ -471,7 +485,9 @@ def test_painel_mostra_gauge_componentes_e_historico():
         assert nome in trecho
     assert re.search(r'class="comp-valor" width="74"', trecho)
     assert 'class="spark-linha"' in trecho
-    assert "há 5 pregões: 56 · Neutro" in trecho
+    # Spec 175: a frase de 5 pregões saiu; no lugar, o gráfico de Marolas.
+    assert "há 5 pregões" not in trecho
+    assert 'class="spark mare-grafico"' in trecho
     assert "style=" not in html
 
 

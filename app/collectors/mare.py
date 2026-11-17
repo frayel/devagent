@@ -125,12 +125,47 @@ def coletar(agora: datetime | None = None) -> MareData | None:
     )
 
 
+def gravar_ponto_intradia(dado: MareData) -> bool:
+    """Acrescenta a leitura à curva do dia em `mare_intradia` (spec 175).
+
+    Só coletas de 10:00 a 18:15 BRT num dia de pregão entram; o dia é o BRT
+    do `timestamp` (a leitura `mare` usa o dia UTC). Devolve se gravou.
+    """
+    import app.banco
+
+    momento = mare.hora_intradia(dado.timestamp)
+    if momento is None:
+        return False
+    dia, hora = momento
+    atual = app.banco.ler_snapshot("mare_intradia", dia) or {}
+    pontos = mare.acrescentar_ponto(list(atual.get("pontos") or []), hora, dado.valor)
+    # O dia é o da coleta: a data de referência que o agendador fixa para a
+    # rodada (partida a frio) não vale para a curva do dia.
+    token = app.banco._data_referencia_snapshot.set(None)
+    try:
+        app.banco.gravar_snapshot(
+            "mare_intradia",
+            dia,
+            "ao_vivo",
+            dado.fonte,
+            {"data": dia.isoformat(), "pontos": pontos},
+        )
+    finally:
+        app.banco._data_referencia_snapshot.reset(token)
+    return True
+
+
 def collect_and_save() -> bool:
     dado = coletar()
     if dado is None:
         return False
     save_mare_data(dado)
     logger.info("Maré gravada: %s (%s)", dado.valor, mare.faixa(dado.valor))
+    # A curva do dia nunca derruba a leitura, que já foi gravada.
+    try:
+        gravar_ponto_intradia(dado)
+    except Exception as e:  # noqa: BLE001
+        logger.error("Maré: ponto intradiário não gravado: %s", e)
     return True
 
 

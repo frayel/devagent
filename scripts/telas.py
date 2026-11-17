@@ -329,6 +329,24 @@ def _semear(db_path: str) -> None:
             fonte="demonstracao",
         )
     )
+    # Curva do dia da Maré (spec 175), para a captura mostrar o gráfico de
+    # Marolas no dia BRT de hoje.
+    from app.banco import gravar_snapshot
+    from app.services.mare import hoje_brt
+
+    gravar_snapshot(
+        "mare_intradia",
+        hoje_brt(),
+        "ao_vivo",
+        "demonstracao",
+        {
+            "data": hoje_brt().isoformat(),
+            "pontos": [
+                {"hora": f"{10 + i // 4:02d}:{(i % 4) * 15:02d}", "valor": v}
+                for i, v in enumerate([58, 60, 57, 61, 63, 62, 64, 66, 65, 67, 68])
+            ],
+        },
+    )
     # Painéis com gauge (spec 026): coesão, apetite a risco e rotação.
     db.save_coesao_data(
         db.CoesaoData(timestamp=agora, concordantes=7, total=10, fonte="demonstracao")

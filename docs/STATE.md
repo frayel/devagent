@@ -18,6 +18,13 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Capacidade nova] Spec 175 - O gráfico da Maré anda no tempo do nível:
+  - `app/collectors/mare.py`: `gravar_ponto_intradia(dado)`, chamado por `collect_and_save` depois da leitura e dentro de try/except; acrescenta `{hora, valor}` ao snapshot `mare_intradia` do dia BRT, só de 10:00 a 18:15 num pregão, no máximo 40 pontos, mesma `HH:MM` substitui. Ignora a data de referência fixada pelo agendador na partida a frio.
+  - `app/services/mare.py`: `janela_nivel` (as leituras que dão o nível e os pontos do gráfico), `acrescentar_ponto`, `hora_intradia`, `buscar_intradia(hoje, data_passada)` (hoje e até 5 pregões anteriores, por `ler_snapshot`), `serie_mensal` (média de cada mês civil, mês com menos de 5 leituras sai), `grafico`, `grafico_marolas`, `grafico_nivel`; `view_nivel` ganha `intradia` e `hoje` e devolve `grafico` (ou `sem_grafico`). A chave `comparacao` (`há 5 pregões`), `sparkline` e `resumo_serie` saem de `view`.
+  - `app/services/sparkline.py`: `build_sparkline(valores, referencia=None)`; com `referencia`, o valor entra na escala e volta `referencia_y`. Sem ela, a saída não muda.
+  - `app/templates/componentes.html` e `app/static/tema.css`: o gráfico do card (`.mare-grafico`), com linha tracejada da média (`.mare-media`) em Ondas e Maré, rótulos de tempo em HTML abaixo do SVG e a frase da variação com a macro `variacao`.
+  - `app/main.py`: `_card_mare_nivel` lê a curva de Marolas (de hoje, ou da data passada); `/api/snapshot` ganha `paineis.mare.intradia` (`{data, pontos}` ou `null`) quando há leitura da Maré.
+  - Aceite em `tests/test_aceite_175.py`.
 - [Correção] #919 - Partida a frio dos coletores de janela própria:
   - `app/agendador.py`: `_execucoes_recentes(hoje)` lê os `tempos` do snapshot `instrumentacao` dos últimos 8 dias numa consulta (`ler_snapshots_datas`); `_rodou_desde(nome, desde, execucoes)`. No fallback de partida a frio, as janelas de `JANELAS_PROPRIAS` (`semanal`, `pre_abertura`, `fechamento`) só coletam se o coletor não rodou desde 6 dias antes (semanal) ou desde o último pregão fechado. A janela `pregao` segue olhando só o snapshot com o nome do módulo; os radares que gravam com outra chave (`radar_exaustao_alta`, `radar_liquidez_abertura`, `radar_anomalias_spread`) ainda fazem partida a frio fora do pregão.
   - Regressão em `tests/test_agendador_partida_a_frio.py`.

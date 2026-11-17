@@ -375,6 +375,12 @@ def heatmap_janela(
     return topo
 
 
+def janela_nivel(leituras: list[dict[str, Any]], n: int) -> list[dict[str, Any]]:
+    """As `n` leituras mais recentes com valor: as que dão o nível e os pontos
+    do gráfico de Ondas e Maré (spec 175), para os dois nunca divergirem."""
+    return [x for x in leituras if x.get("valor") is not None][-n:]
+
+
 def nivel(
     leituras: list[dict[str, Any]],
     n: int,
@@ -388,7 +394,7 @@ def nivel(
     ausente se existe em menos de 75% dos dias. Com menos de `minimo`
     leituras, o nível está em formação e a função devolve None.
     """
-    janela = [x for x in leituras if x.get("valor") is not None][-n:]
+    janela = janela_nivel(leituras, n)
     if len(janela) < minimo:
         return None
     valor = int(
@@ -485,12 +491,6 @@ def view(dado: Any) -> dict[str, Any] | None:
     _, pesos_usados, _ = indice(
         {"fluxo": dado.fluxo, "calma": dado.calma, "volume": dado.volume}
     )
-    historico = [p["valor"] for p in snap["historico"]]
-    serie = historico + [dado.valor]
-    comparacao = None
-    if len(historico) >= 5:
-        antes = historico[-5]
-        comparacao = f"há 5 pregões: {antes} · {faixa(antes)}"
     return {
         "valor": dado.valor,
         "faixa": snap["faixa"],
@@ -509,13 +509,6 @@ def view(dado: Any) -> dict[str, Any] | None:
         "cobertura": f"{len(PESOS) - len(snap['ausentes'])} de {len(PESOS)} componentes",
         "heatmap": snap.get("heatmap", []),
         "ausentes": ", ".join(NOMES[k] for k in snap["ausentes"]),
-        "sparkline": build_sparkline(serie),
-        "resumo_serie": (
-            f"Maré nos últimos {len(serie)} pregões, de {min(serie)} a {max(serie)}"
-            if len(serie) >= 2
-            else ""
-        ),
-        "comparacao": comparacao,
         "fonte": dado.fonte,
         "time": dado.timestamp.astimezone(BRT).strftime("%d/%m/%Y %H:%M:%S BRT"),
     }
@@ -563,24 +556,207 @@ def _dd_mm(iso: str) -> str:
     return f"{d.day:02d}/{d.month:02d}"
 
 
+# --------------------------------------------------------------------------
+# O gráfico no tempo do nível (spec 175)
+# --------------------------------------------------------------------------
+
+# Pontos intradiários: um por coleta do pregão, das 10:00 ao leilão de
+# fechamento (18:15, o FIM_PREGAO do agendador), no máximo 40 por dia.
+INICIO_INTRADIA = "10:00"
+FIM_INTRADIA = "18:15"
+MAXIMO_PONTOS_INTRADIA = 40
+# Marolas antes da segunda coleta: procura o pregão mais recente com curva.
+PREGOES_PROCURADOS = 5
+MINIMO_LEITURAS_MES = 5
+MESES = [
+    "jan",
+    "fev",
+    "mar",
+    "abr",
+    "mai",
+    "jun",
+    "jul",
+    "ago",
+    "set",
+    "out",
+    "nov",
+    "dez",
+]
+SEM_CURVA = "A curva do dia começa na segunda coleta do pregão"
+
+
+def acrescentar_ponto(
+    pontos: list[dict[str, Any]], hora: str, valor: int
+) -> list[dict[str, Any]]:
+    """Os pontos do dia com `{hora, valor}`, em ordem crescente de hora.
+
+    A mesma `hora` substitui o ponto anterior; um ponto novo além do 40º não
+    entra.
+    """
+    outros = [p for p in pontos if p.get("hora") != hora]
+    if len(outros) == len(pontos) and len(pontos) >= MAXIMO_PONTOS_INTRADIA:
+        return sorted(pontos, key=lambda p: p["hora"])
+    return sorted(outros + [{"hora": hora, "valor": valor}], key=lambda p: p["hora"])
+
+
+def hora_intradia(timestamp: datetime) -> tuple[date, str] | None:
+    """(dia BRT, "HH:MM") de uma coleta dentro do pregão; fora dele, None."""
+    from app import calendario
+
+    local = timestamp.astimezone(BRT)
+    hora = local.strftime("%H:%M")
+    if not calendario.e_pregao(local.date()):
+        return None
+    if not INICIO_INTRADIA <= hora <= FIM_INTRADIA:
+        return None
+    return local.date(), hora
+
+
+def hoje_brt() -> date:
+    return datetime.now(timezone.utc).astimezone(BRT).date()
+
+
+def _com_curva(payload: dict[str, Any] | None) -> bool:
+    return bool(payload) and len(payload.get("pontos") or []) >= 2  # type: ignore[union-attr]
+
+
+def buscar_intradia(hoje: date, data_passada: bool = False) -> dict[str, Any] | None:
+    """O `mare_intradia` que o Marolas desenha: `{data, pontos}` ou None.
+
+    Numa data passada, só o daquela data. Hoje, o de hoje ou o do pregão mais
+    recente com dois pontos entre os 5 anteriores, lidos por data numa consulta
+    (`listar_datas` ignoraria os snapshots `ao_vivo`).
+    """
+    from app import banco, calendario
+
+    dias = [hoje]
+    if not data_passada:
+        d = hoje
+        for _ in range(PREGOES_PROCURADOS):
+            d = calendario.pregao_anterior(d)
+            dias.append(d)
+    # Uma consulta para todas as datas (spec 153).
+    lidos = banco.ler_snapshots_datas("mare_intradia", dias)
+    for d in dias:
+        payload = lidos.get(d)
+        if _com_curva(payload):
+            return {"data": d.isoformat(), "pontos": list(payload["pontos"])}  # type: ignore[index]
+    return None
+
+
+def _mes(chave: tuple[int, int]) -> str:
+    return f"{MESES[chave[1] - 1]}/{chave[0] % 100:02d}"
+
+
+def serie_mensal(janela: list[dict[str, Any]]) -> list[tuple[str, int]]:
+    """(rótulo `nov/25`, média do mês) de cada mês civil da janela, em ordem.
+
+    Mês com menos de 5 leituras sai (só acontece nas bordas).
+    """
+    meses: dict[tuple[int, int], list[int]] = {}
+    for x in janela:
+        d = date.fromisoformat(str(x["data"])[:10])
+        meses.setdefault((d.year, d.month), []).append(x["valor"])
+    return [
+        (_mes(k), _arredondar(sum(v) / len(v)))
+        for k, v in sorted(meses.items())
+        if len(v) >= MINIMO_LEITURAS_MES
+    ]
+
+
+def _variacao(delta: int) -> tuple[str, int]:
+    if delta == 0:
+        return "estável", 0
+    sinal = "+" if delta > 0 else "\u2212"
+    return f"{sinal}{abs(delta)} pontos", (1 if delta > 0 else -1)
+
+
+def grafico(
+    pontos: list[tuple[str, int]], titulo: str, referencia: float | None = None
+) -> dict[str, Any] | None:
+    """O gráfico de um nível a partir de (rótulo, valor) em ordem do tempo.
+
+    `titulo` abre a frase (`Hoje`, `21 pregões`, `13 meses`); `referencia` é
+    o valor do gauge, desenhado como linha tracejada em Ondas e Maré.
+    """
+    valores = [v for _, v in pontos]
+    desenho = build_sparkline([float(v) for v in valores], referencia)
+    if desenho is None:
+        return None
+    (inicio, primeiro), (fim, ultimo) = pontos[0], pontos[-1]
+    variacao, sinal = _variacao(ultimo - primeiro)
+    prefixo = f"{titulo}: de {primeiro} ({inicio}) para {ultimo} ({fim}), "
+    return {
+        "pontos": desenho["pontos"],
+        "referencia_y": desenho.get("referencia_y"),
+        "inicio": inicio,
+        "fim": fim,
+        "prefixo": prefixo,
+        "variacao": variacao,
+        "sinal": sinal,
+        "resumo": prefixo + variacao,
+        "faixa": f"mín {min(valores)} · máx {max(valores)}",
+    }
+
+
+def grafico_marolas(
+    intradia: dict[str, Any] | None, hoje: date | None
+) -> dict[str, Any] | None:
+    if not _com_curva(intradia):
+        return None
+    assert intradia is not None
+    dia = date.fromisoformat(intradia["data"])
+    titulo = "Hoje" if dia == hoje else f"Pregão de {dia.day:02d}/{dia.month:02d}"
+    pontos = [(p["hora"], int(p["valor"])) for p in intradia["pontos"]]
+    return grafico(pontos, titulo)
+
+
+def grafico_nivel(
+    historico: dict[str, Any] | None, escolhido: str, valor: int
+) -> dict[str, Any] | None:
+    janela = janela_nivel(
+        (historico or {}).get("leituras") or [], JANELAS_NIVEL[escolhido]
+    )
+    if escolhido == "ondas":
+        pontos = [(_dd_mm(x["data"]), int(x["valor"])) for x in janela]
+        titulo = f"{len(pontos)} pregões"
+    else:
+        pontos = serie_mensal(janela)
+        titulo = f"{len(pontos)} meses"
+    if len(pontos) < 2:
+        return None
+    return grafico(pontos, titulo, valor)
+
+
 def view_nivel(
     base: dict[str, Any] | None,
     historico: dict[str, Any] | None,
     nivel_escolhido: str | None,
     data_passada: bool = False,
+    intradia: dict[str, Any] | None = None,
+    hoje: date | None = None,
 ) -> dict[str, Any] | None:
     """O card da Maré no nível escolhido.
 
-    `base` é o `view` de hoje (Marolas), que volta sem mudança no nível padrão. Ondas e Maré trocam valor, faixa,
-    componentes e heatmap pelos de `niveis` (os mesmos do /api/snapshot) e
-    mantêm a sparkline de hoje. Nível em formação vira `estado="formacao"`;
-    numa data passada sem `mare_historico`, `estado="sem_registro"`.
+    `base` é o `view` de hoje (Marolas). Ondas e Maré trocam valor, faixa,
+    componentes e heatmap pelos de `niveis` (os mesmos do /api/snapshot).
+    Cada nível traz o seu gráfico (spec 175): Marolas, a curva de
+    `intradia`; Ondas e Maré, as leituras da janela do gauge. Nível em
+    formação vira `estado="formacao"`; numa data passada sem
+    `mare_historico`, `estado="sem_registro"`.
     """
     escolhido = nivel_valido(nivel_escolhido)
     if escolhido == NIVEL_PADRAO:
         if base is None:
             return None
-        return {**base, "nivel": escolhido, "legenda": legenda_heatmap(escolhido)}
+        curva = grafico_marolas(intradia, None if data_passada else hoje)
+        return {
+            **base,
+            "nivel": escolhido,
+            "legenda": legenda_heatmap(escolhido),
+            "grafico": curva,
+            "sem_grafico": SEM_CURVA if curva is None and not data_passada else None,
+        }
 
     comum: dict[str, Any] = {
         "fonte": "",
@@ -591,6 +767,8 @@ def view_nivel(
         "legenda": legenda_heatmap(escolhido),
         "contexto": None,
         "estado": None,
+        "grafico": None,
+        "sem_grafico": None,
     }
     if historico is None and data_passada:
         return {**comum, "estado": "sem_registro"}
@@ -622,6 +800,7 @@ def view_nivel(
         "ausentes": ", ".join(NOMES[k] for k in n["ausentes"]),
         "cobertura": f"{len(PESOS) - len(n['ausentes'])} de {len(PESOS)} componentes",
         "heatmap": n["heatmap"],
+        "grafico": grafico_nivel(historico, escolhido, n["valor"]),
         "contexto": (
             f"média de {n['pregoes']} pregões completos, "
             f"de {_dd_mm(n['de'])} a {_dd_mm(n['ate'])}"

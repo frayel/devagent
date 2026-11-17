@@ -453,6 +453,12 @@ body:has(> main.tela-solo) > footer { margin-top: 0; }
 .spark { display: flex; align-items: center; gap: var(--e3); font-size: var(--fs-meta); color: var(--texto-3); }
 .spark svg { flex: 1; min-width: 0; height: 48px; }
 .spark-linha { fill: none; stroke: var(--destaque); stroke-width: 1.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+/* Gráfico da Maré no tempo do nível (spec 175): rótulos em HTML abaixo do SVG. */
+.mare-grafico { flex-direction: column; align-items: stretch; gap: var(--e1); }
+.mare-grafico svg { flex: none; width: 100%; }
+.mare-media { stroke: var(--texto-3); stroke-width: 1; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+.mare-tempo { display: flex; justify-content: space-between; }
+.mare-variacao { margin: 0; color: var(--texto-2); overflow-wrap: anywhere; }
 
 /* Gráfico do Ibovespa: altura fixa (DESIGN.md, seção 5), sem salto de layout. */
 .painel-ibovespa .grafico { width: 100%; height: 200px; }
