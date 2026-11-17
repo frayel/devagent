@@ -213,6 +213,38 @@ def _radares_escondidos(pregao: date | None) -> list[str] | None:
         return None
 
 
+# Janelas próprias cujo coletor não grava snapshot com o próprio nome: a partida
+# a frio olha a instrumentação das rodadas, não `ler_snapshot(nome)` (#919).
+JANELAS_PROPRIAS = ("semanal", "pre_abertura", "fechamento")
+DIAS_EXECUCOES = 8
+
+
+def _execucoes_recentes(hoje: date) -> dict[date, set[str]]:
+    """Coletores que a instrumentação registra em cada um dos últimos dias (#919).
+
+    Lê `tempos` do snapshot `instrumentacao`, gravado ao fim de cada rodada com
+    a data BRT dela, numa consulta só. Falha na leitura vira `{}`: a partida a
+    frio volta a valer como antes, sem esconder um coletor que nunca rodou.
+    """
+    import app.banco
+
+    datas = [hoje - timedelta(days=i) for i in range(DIAS_EXECUCOES)]
+    try:
+        payloads = app.banco.ler_snapshots_datas("instrumentacao", datas)
+    except Exception:
+        logger.exception("Falha ao ler as execuções recentes dos coletores")
+        return {}
+    return {
+        d: set((p.get("tempos") or {}).keys())
+        for d, p in payloads.items()
+        if isinstance(p, dict)
+    }
+
+
+def _rodou_desde(nome: str, desde: date, execucoes: dict[date, set[str]]) -> bool:
+    return any(d >= desde and nome in nomes for d, nomes in execucoes.items())
+
+
 def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
     import time as std_time
 
@@ -240,6 +272,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
     ult_fechado = calendario.ultimo_pregao_fechado(datetime.now(timezone.utc))
     eh_dia_pregao = calendario.e_pregao(agora_brt.date())
     passou_do_fechamento = agora_brt.time() > FIM_PREGAO
+    execucoes = _execucoes_recentes(agora_brt.date())
 
     estado_base = "ao_vivo"
     if esta_aberto:
@@ -395,6 +428,17 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                 # Fallback de Partida a Frio para QUALQUER janela que não deva coletar normalmente
                 if not deve_coletar:
                     last_snap = app.banco.ler_snapshot(nome, ult_fechado)
+                    if janela in JANELAS_PROPRIAS:
+                        # O coletor grava em outra tabela ou com outra chave:
+                        # partida a frio é não ter rodado desde a última janela,
+                        # a semana para o semanal e o último pregão para os demais.
+                        desde = (
+                            agora_brt.date() - timedelta(days=6)
+                            if janela == "semanal"
+                            else ult_fechado
+                        )
+                        if _rodou_desde(nome, desde, execucoes):
+                            last_snap = {"execucao": True}
                     if not last_snap:
                         deve_coletar = True
                         eh_partida_a_frio = True

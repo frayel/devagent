@@ -18,6 +18,9 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Correção] #919 - Partida a frio dos coletores de janela própria:
+  - `app/agendador.py`: `_execucoes_recentes(hoje)` lê os `tempos` do snapshot `instrumentacao` dos últimos 8 dias numa consulta (`ler_snapshots_datas`); `_rodou_desde(nome, desde, execucoes)`. No fallback de partida a frio, as janelas de `JANELAS_PROPRIAS` (`semanal`, `pre_abertura`, `fechamento`) só coletam se o coletor não rodou desde 6 dias antes (semanal) ou desde o último pregão fechado. A janela `pregao` segue olhando só o snapshot com o nome do módulo; os radares que gravam com outra chave (`radar_exaustao_alta`, `radar_liquidez_abertura`, `radar_anomalias_spread`) ainda fazem partida a frio fora do pregão.
+  - Regressão em `tests/test_agendador_partida_a_frio.py`.
 - [Capacidade nova] Spec 174b - O seletor Marolas, Ondas e Maré no card da Maré:
   - `app/services/mare.py`: `nivel_valido`, `view_nivel(base, historico, nivel, data_passada)` (Ondas e Maré pelos `niveis` da 174a, estados `formacao` e `sem_registro`) e `seletor(params, nivel)` (links só de query, preservando `data` e `aba`).
   - `app/main.py`: `/` e `/mare` aceitam `?nivel=marolas|ondas|mare`; nova rota `GET /mare/card` devolve só o card (`app/templates/mare_card.html`), com `data` opcional.
