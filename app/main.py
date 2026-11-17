@@ -193,7 +193,8 @@ async def add_security_headers(request: Request, call_next):
     )
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' https://unpkg.com https://cdn.plot.ly; "
+        "script-src 'self' https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js "
+        "https://cdn.plot.ly/plotly-strict-2.27.0.min.js; "
         "style-src 'self' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=' 'sha256-pgn1TCGZX6O77zDvy0oTODMOxemn0oj0LeCnQTRj7Kg='; "
         "img-src 'self' data:; "
         "object-src 'none'; "

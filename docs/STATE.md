@@ -18,6 +18,10 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Saúde técnica] Spec 170 - O navegador recusa htmx e Plotly alterados na CDN:
+  - `app/templates/base.html`: o htmx passa a vir de `https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js` (o destino do redirecionamento de antes) e as duas tags externas ganham `integrity="sha384-..."` e `crossorigin="anonymous"`. Hashes remedidos em 17/11, iguais aos da spec.
+  - `app/main.py`: o `script-src` do CSP libera só os dois arquivos (`'self'` e os dois endereços completos), não mais `https://unpkg.com` e `https://cdn.plot.ly` inteiros.
+  - Aceite em `tests/test_aceite_170.py` (integridade em toda tag externa, valores da spec, nenhum endereço de pacote, CSP restrito e casando com o template).
 - [Experiência] Spec 169 - Os tiles do heatmap mostram o nome do ativo inteiro:
   - `app/static/tema.css`: `.heatmap-ativo` passa a `flex: calc(var(--ativo-peso, 1) * 1000) 1 0`, `min-width: 10ch`, `box-sizing: border-box` e `text-overflow: ellipsis` (sai o `width: max(30px, peso * 100%)`). O peso vai multiplicado por 1000 porque, com a soma dos `flex-grow` de uma linha abaixo de 1, o navegador reparte só essa fração da sobra e a linha não se preenche; a escala não muda a proporção. Sem o `ui.js`, tiles iguais.
   - Medido no Chromium: em 390 px, duas linhas de cinco, menor tile 70,6 px; em 1280 px, uma linha, de 252,8 px (`PETR4`) a 70,6 px.
