@@ -749,3 +749,55 @@ def test_monitor_so_reavalia_os_grupos_que_enxerga(monkeypatch):
     }
     monitor.atualizar_alertas(grupos, {"Integrações externas"})
     assert monitor._alertas_desde == {}
+
+
+def test_desde_do_alerta_aparece_na_hora_de_brasilia():
+    # Issue #902: o "(desde ...)" saía na hora UTC, 3 h à frente do rodapé
+    # em BRT. O campo "desde" do JSON continua em ISO UTC.
+    desde = "2026-11-16T10:48:00+00:00"
+    argumentos = dict(
+        agora=AGORA,
+        inicio=AGORA - timedelta(hours=1),
+        sha_local=None,
+        banco={
+            "tipo": "SQLite",
+            "database_url": True,
+            "tamanho": "1 MB",
+            "latencia_ms": 1,
+            "tabelas": 3,
+        },
+        coleta_ligada=True,
+        estado_coleta={"ultima_coleta": (AGORA - timedelta(minutes=5)).isoformat()},
+        intervalo_coleta=timedelta(minutes=15),
+        vazios={},
+        horas_vazios=3,
+        tempos={},
+        fontes={},
+        pausa_mt5=None,
+        prontas=[],
+        historico_pregoes=[],
+        ambiente={},
+    )
+    base = s.montar(
+        remoto={"github": _github(), "atualizado_em": AGORA.isoformat()}, **argumentos
+    )
+    chaves = {
+        f"{g['titulo']}/{i['nome']}": desde
+        for g in base["grupos"]
+        for i in g["itens"]
+        if i["nivel"] != s.OK
+    }
+    assert chaves, "o cenário precisa de pelo menos um item em alerta"
+    estado = s.montar(
+        remoto={
+            "github": _github(),
+            "atualizado_em": AGORA.isoformat(),
+            "_alertas_desde": chaves,
+        },
+        **argumentos,
+    )
+    alertas = [i for g in estado["grupos"] for i in g["itens"] if i.get("desde")]
+    assert alertas
+    for item in alertas:
+        assert item["resumo"].startswith("(desde 16/11 07:48) ")
+        assert item["desde"] == desde
