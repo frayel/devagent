@@ -1,7 +1,7 @@
 ---
 id: 171
 titulo: A página baixa só o Plotly que desenha linhas
-status: ready
+status: done
 esforco: P
 gaveta: poda
 aceite: tests/test_aceite_171.py

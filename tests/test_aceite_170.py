@@ -19,8 +19,8 @@ TEMPLATES = Path(__file__).resolve().parent.parent / "app" / "templates"
 
 HTMX_SRC = "https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"
 HTMX_SRI = "sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
-PLOTLY_SRC = "https://cdn.plot.ly/plotly-strict-2.27.0.min.js"
-PLOTLY_SRI = "sha384-rfGldZ9CDA25KeQk3fLmxTf/H2jlNsx6cfUIYwkBNUz1z5ngqchk1jAp7fC9dj9y"
+PLOTLY_SRC = "https://cdn.plot.ly/plotly-basic-2.27.0.min.js"
+PLOTLY_SRI = "sha384-C21rxKmXDHRC0bKRfO4BhLiAheJB5GEbL2ohT8ER/IW4/oXhpHW1iygb4d6p7vsb"
 
 _TAG = re.compile(r"<script\b[^>]*>", re.IGNORECASE)
 _ATTR = re.compile(r'([\w-]+)\s*=\s*"([^"]*)"')
