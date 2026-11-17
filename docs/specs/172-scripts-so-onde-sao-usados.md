@@ -6,6 +6,7 @@ esforco: P
 gaveta: poda
 aceite: tests/test_aceite_172.py
 origem: A página só carrega o script que usa
+revisada: 2026-11-17
 ---
 
 ## Problema
@@ -38,7 +39,7 @@ Bytes de JavaScript externo baixados por visita sem cache, com as medidas acima:
 - [ ] `tests/test_aceite_172.py`, com `exigir_spec_done("172")`, sem internet:
   - **htmx fora:** nenhum arquivo de `app/templates/` contém `htmx`, e o cabeçalho `Content-Security-Policy` de `GET /healthz` não contém `unpkg.com` nem `htmx`;
   - **CSP só com o Plotly:** as fontes do `script-src` são exatamente `["'self'", "https://cdn.plot.ly/plotly-basic-2.27.0.min.js"]`;
-  - **Plotly só em `/`:** com `TestClient`, o HTML de `GET /` tem exatamente uma tag `<script>` com `src` em `https://cdn.plot.ly/`, com o `integrity` do item 2, `crossorigin="anonymous"` e `defer`; o HTML de `GET /consultor`, `GET /sistema` e `GET /novidades` não tem nenhuma tag `<script>` cujo `src` comece com `http`. (Usar os mesmos fixtures e `monkeypatch` que os testes atuais dessas rotas usam para responder 200 sem banco e sem senha: `tests/test_aceite_088.py` (`mock_snapshots`), `tests/test_sistema.py` e `tests/test_consultor.py`. Um `TestClient(app)` cru, com o `lifespan`, não termina em 120 s neste ambiente, medido em 17/11. Se alguma rota não renderizar no teste, conferir o template renderizado pelo Jinja com o contexto mínimo e registrar a escolha no PR.)
+  - **Plotly só em `/`:** com `TestClient`, o HTML de `GET /` tem exatamente uma tag `<script>` com `src` em `https://cdn.plot.ly/`, com o `integrity` do item 2, `crossorigin="anonymous"` e `defer`; o HTML de `GET /consultor`, `GET /sistema` e `GET /novidades` não tem nenhuma tag `<script>` cujo `src` comece com `http`. (Usar os mesmos fixtures e `monkeypatch` que os testes atuais dessas rotas usam para responder 200 sem banco e sem senha: `tests/test_aceite_088.py` (`mock_snapshots`), `tests/test_sistema.py`, `tests/test_consultor.py` e, para `/novidades`, `tests/test_aceite_156.py` (fixture `arquivo`, que troca `app.services.novidades.CAMINHO` por um arquivo em `tmp_path`). Um `TestClient(app)` cru, com o `lifespan`, não termina em 120 s neste ambiente, medido em 17/11. Se alguma rota não renderizar no teste, conferir o template renderizado pelo Jinja com o contexto mínimo e registrar a escolha no PR.)
   - **ordem e `defer`:** no HTML de `GET /`, as tags de Plotly, `/static/graficos.js` e `/static/ui.js` aparecem nessa ordem e as três têm `defer`; nas outras três páginas, `graficos.js` e `ui.js` têm `defer`.
 - [ ] `tests/test_aceite_170.py`: as regras da 170 continuam valendo para o que sobra. `HTMX_SRC` e `HTMX_SRI` saem; `test_valores_sao_os_da_tabela` confere o Plotly em `index.html` (não mais em `base.html`); `test_csp_restrito_aos_dois_arquivos` passa a esperar `["'self'", PLOTLY_SRC]` (o nome do teste pode mudar para refletir um arquivo); `test_csp_e_template_casam` confere as tags externas de todos os templates, não só de `base.html`. `test_toda_tag_externa_tem_integridade` e `test_nenhum_endereco_de_pacote` não mudam.
 - [ ] `tests/test_aceite_171.py`: `test_pacote_basico_com_integridade` lê `index.html` em vez de `base.html`; `test_csp_casa_com_o_pacote_basico` espera `["'self'", PLOTLY_SRC]` (e `HTMX_SRC` sai). `test_so_tracos_do_pacote` não muda.
