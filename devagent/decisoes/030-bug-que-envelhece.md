@@ -15,3 +15,10 @@ A varredura do guardião (de hora em hora) aplica o label `prioridade` a toda is
 
 - Nenhum bug espera mais de ~25 h para ser tratado, salvo os `bloqueado`.
 - Um dia com muitos bugs antigos atrasa as specs na mesma medida. É a ordem que o `CICLO.md` sempre pediu.
+
+## Revisão de 17/11/2026
+
+A varredura só olhava issues com `bug`. Em 16/11 a raia de especificação abriu a #902 (o "desde" dos alertas em UTC) sem label nenhum, dizendo no texto que era correção, e ela nunca seria promovida. Duas mudanças:
+
+- A varredura também promove a issue **sem label nenhum** aberta há mais de 24 h. Pedido de feature chega com `enhancement` e continua de fora. O risco aceito: uma feature aberta sem label vira `prioridade`; quem a vê corrige o label.
+- As raias paralelas abrem issue de correção sempre com `--label bug` (`devagent/agents/raias.md`, regra comum 7).
