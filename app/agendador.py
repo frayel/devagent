@@ -231,6 +231,8 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
         "consultor_historico": "semanal",
         "consultor_fechamento": "fechamento",
         "consultor_yahoo": "fechamento",
+        # Uma vez por pregão completo, com o mercado fechado (spec 174a).
+        "mare_historico": "diario",
     }
     agora_brt = datetime.now(timezone.utc).astimezone(BRT)
     esta_aberto = calendario.mercado_aberto(datetime.now(timezone.utc))
@@ -259,6 +261,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
             "ibovespa",
             "highlights",
             "mare",
+            "mare_historico",
             "volume_alerts",
             "dolar_correlation",
             "sensibilidade_juros",
@@ -317,6 +320,16 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                     if eh_dia_pregao and (
                         agora_brt.time() >= time(7, 0)
                         and agora_brt.time() <= FIM_PREGAO
+                    ):
+                        deve_coletar = True
+                elif janela == "diario":
+                    # Snapshot gravado e procurado sempre pelo último pregão
+                    # completo: a data de referência não segue o pregão
+                    # corrente, senão a checagem nunca o acharia (#919).
+                    data_ref_coleta = ult_fechado
+                    estado_coleta = "final"
+                    if not esta_aberto and not app.banco.ler_snapshot(
+                        nome, ult_fechado
                     ):
                         deve_coletar = True
                 elif janela == "fechamento":

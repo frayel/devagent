@@ -1,7 +1,7 @@
 ---
 id: 174a
 titulo: O humor médio do último mês e do último ano, gravado uma vez por pregão
-status: ready
+status: done
 esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_174a.py

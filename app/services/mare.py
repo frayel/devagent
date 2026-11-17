@@ -327,6 +327,111 @@ def calcular(
 
 
 # --------------------------------------------------------------------------
+# Níveis: Ondas e Maré (spec 174a)
+# --------------------------------------------------------------------------
+
+# Janela de cada nível, em pregões completos, e o mínimo de leituras para o
+# nível existir. Abaixo do mínimo o nível está em formação (None).
+JANELAS_NIVEL = {"ondas": 21, "mare": 252}
+MINIMO_LEITURAS = {"ondas": 15, "mare": 189}
+# Componente presente em menos desta fração dos dias da janela fica ausente.
+PRESENCA_MINIMA = 0.75
+TOP_HEATMAP = 10
+
+
+def heatmap_janela(
+    acoes: dict[str, SerieAcao], janela: list[date], anterior: date
+) -> list[dict[str, float | str]]:
+    """As 10 ações de maior volume financeiro somado na janela.
+
+    `variacao` vai do fechamento do pregão `anterior` (o anterior ao primeiro
+    da janela) ao do último pregão da janela, em %; `financeiro` é a soma de
+    fechamento × volume nos pregões da janela, em reais; `peso` é a fração do
+    financeiro das 10. Ação sem um dos dois fechamentos fica de fora.
+    """
+    if not janela:
+        return []
+    ultimo = janela[-1]
+    ativos: list[dict[str, float | str]] = []
+    for ticker, serie in acoes.items():
+        if anterior not in serie or ultimo not in serie:
+            continue
+        fech_ant = serie[anterior][0]
+        if fech_ant <= 0:
+            continue
+        financeiro = sum(serie[d][0] * serie[d][1] for d in janela if d in serie)
+        ativos.append(
+            {
+                "ticker": ticker,
+                "variacao": float((serie[ultimo][0] / fech_ant - 1) * 100),
+                "financeiro": float(financeiro),
+            }
+        )
+    ativos.sort(key=lambda a: float(a["financeiro"]), reverse=True)
+    topo = ativos[:TOP_HEATMAP]
+    total = sum(float(a["financeiro"]) for a in topo)
+    for a in topo:
+        a["peso"] = float(a["financeiro"]) / total if total > 0 else 0.0
+    return topo
+
+
+def nivel(
+    leituras: list[dict[str, Any]],
+    n: int,
+    minimo: int,
+    heatmap: list[dict] | None = None,
+) -> dict[str, Any] | None:
+    """Nível a partir das leituras diárias (em ordem crescente de data).
+
+    O valor é a média dos `valor` das `n` leituras mais recentes, arredondada
+    meio para cima; cada componente é a média dos dias em que existe, e fica
+    ausente se existe em menos de 75% dos dias. Com menos de `minimo`
+    leituras, o nível está em formação e a função devolve None.
+    """
+    janela = [x for x in leituras if x.get("valor") is not None][-n:]
+    if len(janela) < minimo:
+        return None
+    valor = int(
+        _limitar(_arredondar(sum(x["valor"] for x in janela) / len(janela)), 0, 100)
+    )
+    medias: dict[str, float | None] = {}
+    for k in PESOS:
+        presentes = [x[k] for x in janela if x.get(k) is not None]
+        if presentes and len(presentes) / len(janela) >= PRESENCA_MINIMA:
+            medias[k] = sum(presentes) / len(presentes)
+        else:
+            medias[k] = None
+    _, pesos, ausentes = indice(medias)
+    return {
+        "valor": valor,
+        "faixa": faixa(valor),
+        "pregoes": len(janela),
+        "de": janela[0]["data"],
+        "ate": janela[-1]["data"],
+        "componentes": {k: _numero(v) for k, v in medias.items()},
+        "pesos": {k: round(v, 4) for k, v in pesos.items()},
+        "ausentes": ausentes,
+        "heatmap": heatmap or [],
+    }
+
+
+def niveis(historico: dict[str, Any] | None) -> dict[str, dict[str, Any] | None]:
+    """`niveis` do /api/snapshot a partir do snapshot `mare_historico`."""
+    if not historico:
+        return {k: None for k in JANELAS_NIVEL}
+    leituras = historico.get("leituras") or []
+    return {
+        k: nivel(
+            leituras,
+            n,
+            MINIMO_LEITURAS[k],
+            historico.get(f"heatmap_{k}") or [],
+        )
+        for k, n in JANELAS_NIVEL.items()
+    }
+
+
+# --------------------------------------------------------------------------
 # Dados para a página e para o /api/snapshot
 # --------------------------------------------------------------------------
 

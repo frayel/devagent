@@ -55,11 +55,14 @@ def _serie_do_bloco(bloco: dict) -> mare.SerieAcao:
     return serie
 
 
-def buscar_cesta(client: httpx.Client) -> dict[str, mare.SerieAcao]:
+def buscar_cesta(
+    client: httpx.Client, url_cesta: str = URL_CESTA
+) -> dict[str, mare.SerieAcao]:
+    """Séries da cesta; `url_cesta` muda o período (o histórico pede `range=2y`)."""
     series: dict[str, mare.SerieAcao] = {}
     for i, ticker in enumerate(TICKERS):
         domain = "query1" if i % 2 == 0 else "query2"
-        url = URL_CESTA.format(domain=domain, simbolo=f"{ticker}.SA")
+        url = url_cesta.format(domain=domain, simbolo=f"{ticker}.SA")
         try:
             dados = fetch_with_retry(url, client=client).json()
         except (httpx.HTTPError, ValueError) as e:
