@@ -1,7 +1,7 @@
 ---
 id: 170
 titulo: O navegador recusa htmx e Plotly alterados na CDN
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_170.py
