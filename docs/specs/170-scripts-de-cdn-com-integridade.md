@@ -6,6 +6,7 @@ esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_170.py
 origem: Scripts de CDN com integridade
+revisada: 2026-11-17
 ---
 
 ## Problema
@@ -55,7 +56,7 @@ O `integrity` é `sha384-` seguido do SHA-384 dos **bytes do arquivo como a CDN 
   - **CSP restrito:** as fontes do `script-src` de `GET /healthz`, separadas por espaço, são exatamente `'self'` e os dois endereços de arquivo; `https://unpkg.com` e `https://cdn.plot.ly` não aparecem como fonte sozinhos;
   - **CSP e template casam:** todo `src` externo de `base.html` aparece como fonte no `script-src` (trocar um sem o outro reprova).
 - [ ] `tests/test_main.py::test_security_headers` continua verde sem mudar asserção (as substrings `https://unpkg.com` e `https://cdn.plot.ly` seguem no CSP como prefixo dos caminhos).
-- [ ] Os testes que abortam requisições externas no Chromium (`tests/test_aceite_146.py`, `tests/test_correcao_883.py`, `tests/test_correcao_885.py`) e o resto do `make verify` continuam verdes.
+- [ ] Os testes que abortam requisições externas no Chromium (`tests/test_aceite_146.py`, `tests/test_correcao_883.py`, `tests/test_correcao_885.py`) e o resto do `make verify` continuam verdes. Os três roteiam `**/*` (casa o novo caminho do htmx) e o `_sem_scripts_externos` do 146 remove a tag inteira por `<script\b[^>]*\bsrc=[^>]*>`, que tolera os atributos novos: nenhum dos três precisa mudar.
 - Arquivos tocados: `app/templates/base.html`, `app/main.py` (só a linha do `script-src`) e o novo `tests/test_aceite_170.py`. Medido com `grep -rl "unpkg\|cdn.plot.ly" app tests`: 3 arquivos (`base.html`, `main.py`, `tests/test_main.py`), e o último não muda. `docs/STATE.md` e `CHANGELOG.md` na entrega, como em todo PR.
 
 ## Invariantes de produção
