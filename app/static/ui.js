@@ -8,26 +8,22 @@ document.addEventListener('DOMContentLoaded', () => {
         is.forEach(i => i.style.width = (18 + 70 * (parseFloat(i.dataset.v) / max)) + '%');
     });
 
-    document.querySelectorAll('.heatmap-ativo').forEach(el => {
-        const peso = parseFloat(el.dataset.peso);
-        el.style.setProperty('--ativo-peso', peso);
-        el.style.setProperty('--ativo-cor', el.dataset.cor);
-        el.style.setProperty('--ativo-opacidade', el.dataset.opacidade);
-    });
+    prepararHeatmaps(document);
 
     // Heatmap como treemap: a área de cada tile é proporcional ao peso (fração
     // do volume financeiro entre os dez maiores). Sem este trecho, vale o
     // layout em linhas da spec 169, que não respeita a proporção.
-    const heatmaps = [...document.querySelectorAll('.heatmap')];
-    heatmaps.forEach(desenharTreemap);
+    // Consulta a cada vez: o seletor da Maré (spec 174b) troca o heatmap do card.
+    const redesenhar = () => document.querySelectorAll('.heatmap').forEach(desenharTreemap);
+    redesenhar();
     let larguraAnterior = window.innerWidth;
     window.addEventListener('resize', () => {
         if (window.innerWidth === larguraAnterior) return;
         larguraAnterior = window.innerWidth;
-        heatmaps.forEach(desenharTreemap);
+        redesenhar();
     });
     // A fonte pode chegar depois: com ela o rótulo muda de largura.
-    window.addEventListener('load', () => heatmaps.forEach(desenharTreemap));
+    window.addEventListener('load', redesenhar);
 
     // Seletor de pregão (issue 883): a CSP bloqueia `onchange` inline, então a troca
     // de data envia o formulário daqui. Vale em toda página que usa o base.html.
@@ -260,3 +256,54 @@ function desenharTreemap(heatmap) {
         altura = Math.min(Math.round(altura * 1.15), base * 3);
     }
 }
+
+// Variáveis de cor e peso dos tiles do heatmap: a CSP proíbe style inline.
+function prepararHeatmaps(raiz) {
+    raiz.querySelectorAll('.heatmap-ativo').forEach(el => {
+        const peso = parseFloat(el.dataset.peso);
+        el.style.setProperty('--ativo-peso', peso);
+        el.style.setProperty('--ativo-cor', el.dataset.cor);
+        el.style.setProperty('--ativo-opacidade', el.dataset.opacidade);
+    });
+}
+
+// Seletor Marolas, Ondas e Maré (spec 174b). Sem JavaScript, cada opção é um
+// link que recarrega a página com ?nivel=. Com ele, o clique busca só o card
+// em /mare/card, troca o .mare-corpo e põe o nível na URL. Os links do
+// fragmento são refeitos sobre a URL da página, para `data` e `aba` seguirem.
+function linksDoNivel(seletor) {
+    seletor.querySelectorAll('a[data-nivel]').forEach(link => {
+        const destino = new URL(window.location.href);
+        destino.searchParams.set('nivel', link.dataset.nivel);
+        link.setAttribute('href', destino.search);
+    });
+}
+
+document.addEventListener('click', evento => {
+    if (evento.defaultPrevented || evento.button !== 0 || evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey) return;
+    const link = evento.target.closest && evento.target.closest('.mare-nivel a[data-nivel]');
+    if (!link || typeof fetch !== 'function') return;
+    const corpo = link.closest('.mare-corpo');
+    if (!corpo) return;
+    evento.preventDefault();
+    const nivel = link.dataset.nivel;
+    const pagina = new URL(window.location.href);
+    const pedido = new URLSearchParams({ nivel });
+    const data = pagina.searchParams.get('data');
+    if (data) pedido.set('data', data);
+    fetch('/mare/card?' + pedido.toString(), { headers: { 'Accept': 'text/html' } })
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(html => {
+            const modelo = document.createElement('template');
+            modelo.innerHTML = html;
+            const novo = modelo.content.querySelector('.mare-corpo');
+            if (!novo) throw new Error('fragmento sem .mare-corpo');
+            corpo.replaceWith(novo);
+            pagina.searchParams.set('nivel', nivel);
+            try { history.replaceState(history.state, '', pagina); } catch (e) { /* URL fica como está */ }
+            novo.querySelectorAll('.mare-nivel').forEach(linksDoNivel);
+            prepararHeatmaps(novo);
+            novo.querySelectorAll('.heatmap').forEach(desenharTreemap);
+        })
+        .catch(() => { window.location.href = link.href; });
+});

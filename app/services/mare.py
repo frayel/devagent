@@ -525,3 +525,129 @@ def get_mare_view() -> dict[str, Any] | None:
     from app.database import get_latest_mare_data
 
     return view(get_latest_mare_data())
+
+
+# --------------------------------------------------------------------------
+# Seletor Marolas, Ondas e Maré no card (spec 174b)
+# --------------------------------------------------------------------------
+
+# (nível, rótulo, janela em letra menor). Marolas é a leitura de hoje (027).
+NIVEIS_SELETOR = [
+    ("marolas", "Marolas", "hoje"),
+    ("ondas", "Ondas", "21 pregões"),
+    ("mare", "Maré", "252 pregões"),
+]
+NIVEL_PADRAO = "marolas"
+LEGENDA_HEATMAP = {
+    "marolas": "volume financeiro do dia",
+    "ondas": "volume financeiro dos últimos 21 pregões",
+    "mare": "volume financeiro dos últimos 252 pregões",
+}
+
+
+def nivel_valido(escolhido: str | None) -> str:
+    """Valor de `nivel` da query; desconhecido ou ausente vale Marolas."""
+    validos = {n for n, _, _ in NIVEIS_SELETOR}
+    return escolhido if escolhido in validos else NIVEL_PADRAO
+
+
+def legenda_heatmap(nivel_escolhido: str) -> str:
+    return (
+        f"Área: {LEGENDA_HEATMAP[nivel_valido(nivel_escolhido)]}, entre os 10 "
+        "maiores da cesta de 30 ações · cor: variação do preço"
+    )
+
+
+def _dd_mm(iso: str) -> str:
+    d = date.fromisoformat(str(iso)[:10])
+    return f"{d.day:02d}/{d.month:02d}"
+
+
+def view_nivel(
+    base: dict[str, Any] | None,
+    historico: dict[str, Any] | None,
+    nivel_escolhido: str | None,
+    data_passada: bool = False,
+) -> dict[str, Any] | None:
+    """O card da Maré no nível escolhido.
+
+    `base` é o `view` de hoje (Marolas), que volta sem mudança no nível padrão. Ondas e Maré trocam valor, faixa,
+    componentes e heatmap pelos de `niveis` (os mesmos do /api/snapshot) e
+    mantêm a sparkline de hoje. Nível em formação vira `estado="formacao"`;
+    numa data passada sem `mare_historico`, `estado="sem_registro"`.
+    """
+    escolhido = nivel_valido(nivel_escolhido)
+    if escolhido == NIVEL_PADRAO:
+        if base is None:
+            return None
+        return {**base, "nivel": escolhido, "legenda": legenda_heatmap(escolhido)}
+
+    comum: dict[str, Any] = {
+        "fonte": "",
+        "time": "",
+        "faixas": FAIXAS,
+        **(base or {}),
+        "nivel": escolhido,
+        "legenda": legenda_heatmap(escolhido),
+        "contexto": None,
+        "estado": None,
+    }
+    if historico is None and data_passada:
+        return {**comum, "estado": "sem_registro"}
+    n = niveis(historico)[escolhido]
+    if n is None:
+        gravadas = len((historico or {}).get("leituras") or [])
+        return {
+            **comum,
+            "estado": "formacao",
+            "formacao": (
+                f"Histórico da maré em formação: {gravadas} de "
+                f"{MINIMO_LEITURAS[escolhido]} pregões"
+            ),
+        }
+    medias = n["componentes"]
+    return {
+        **comum,
+        "valor": n["valor"],
+        "faixa": n["faixa"],
+        "componentes": [
+            {
+                "nome": NOMES[k],
+                "valor": None if medias.get(k) is None else _arredondar(medias[k]),
+                "peso": _peso_visivel(k, medias.get(k), n["pesos"]),
+            }
+            for k in ("fluxo", "calma", "volume")
+        ],
+        "parcial": bool(n["ausentes"]),
+        "ausentes": ", ".join(NOMES[k] for k in n["ausentes"]),
+        "cobertura": f"{len(PESOS) - len(n['ausentes'])} de {len(PESOS)} componentes",
+        "heatmap": n["heatmap"],
+        "contexto": (
+            f"média de {n['pregoes']} pregões completos, "
+            f"de {_dd_mm(n['de'])} a {_dd_mm(n['ate'])}"
+        ),
+    }
+
+
+def seletor(
+    params: dict[str, str], nivel_escolhido: str | None
+) -> list[dict[str, Any]]:
+    """As três opções do seletor, cada uma um link para a própria página.
+
+    O link é só a query (`?…`), então vale em `/` e em `/mare`; os outros
+    parâmetros (`data`, `aba`) seguem junto.
+    """
+    from urllib.parse import urlencode
+
+    escolhido = nivel_valido(nivel_escolhido)
+    outros = {k: v for k, v in params.items() if k != "nivel"}
+    return [
+        {
+            "nivel": n,
+            "rotulo": rotulo,
+            "janela": janela,
+            "href": "?" + urlencode({**outros, "nivel": n}),
+            "ativo": n == escolhido,
+        }
+        for n, rotulo, janela in NIVEIS_SELETOR
+    ]

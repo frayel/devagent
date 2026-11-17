@@ -131,14 +131,29 @@
 
 {#- Card da Maré do mercado (spec 173): uma fonte só para o painel geral e para /mare.
     carimbo é o {rodape, desatualizado} da spec 141 (None vira {}); historico escolhe o estado vazio.
-    O bloco opcional por `call` (gauges de Apetite e Rotação no painel geral) entra dentro do card. -#}
-{% macro card_mare(mare, carimbo=None, historico=False) %}
+    seletor (spec 174b) são as opções Marolas, Ondas e Maré; o conteúdo trocado pelo
+    ui.js é o .mare-corpo, então o bloco opcional por `call` (gauges de Apetite e
+    Rotação no painel geral) fica fora dele e não some na troca. -#}
+{% macro card_mare(mare, carimbo=None, historico=False, seletor=None) %}
 {%- set extra = caller() if caller is defined else '' -%}
 {%- set c_mare = carimbo or {} -%}
-{% call painel("Maré do mercado", 4, "Índice de 0 a 100. Fluxo (40%): parcela do volume financeiro da cesta de 30 ações que foi para ações em alta, uma aproximação do fluxo de ordens, que não tem fonte gratuita. Calma (35%): 100 menos o percentil da volatilidade de queda de 10 pregões do Ibovespa nos 252 anteriores; só os dias de queda contam, então uma alta forte não reduz a calma. Volume (25%): ritmo do volume contra a média de 21 pregões, ajustado pela hora do pregão, no sentido da maioria. A Maré descreve o humor do momento. Não é recomendação de compra ou venda.", mare.fonte if mare else "", c_mare.get('rodape') or (mare.time if mare else ""), "visao-macro painel-mare visao-geral", c_mare.get('desatualizado', False)) %}
-    {% if mare %}
+{% call painel("Maré do mercado", 4, "Índice de 0 a 100. Fluxo (40%): parcela do volume financeiro da cesta de 30 ações que foi para ações em alta, uma aproximação do fluxo de ordens, que não tem fonte gratuita. Calma (35%): 100 menos o percentil da volatilidade de queda de 10 pregões do Ibovespa nos 252 anteriores; só os dias de queda contam, então uma alta forte não reduz a calma. Volume (25%): ritmo do volume contra a média de 21 pregões, ajustado pela hora do pregão, no sentido da maioria. A Maré descreve o humor do momento. Não é recomendação de compra ou venda. Níveis: Marolas é a leitura de hoje; Ondas é a média dos últimos 21 pregões completos (existe a partir de 15 leituras); Maré, a dos últimos 252 pregões completos (a partir de 189). O valor do nível é a média dos valores diários: 20 pregões em 50 e um em 61 dão (20 × 50 + 61) / 21 = 50,5, que arredonda para 51. As barras são a média de cada componente na janela; quando algum dia teve componente ausente, a soma ponderada das barras pode diferir do valor em alguns pontos.", mare.fonte if mare else "", c_mare.get('rodape') or (mare.time if mare else ""), "visao-macro painel-mare visao-geral", c_mare.get('desatualizado', False)) %}
+    <div class="mare-corpo">
+    {% if seletor %}
+    <nav class="mare-nivel" aria-label="Janela da Maré">
+        {% for o in seletor %}
+        <a href="{{ o.href }}" data-nivel="{{ o.nivel }}"{% if o.ativo %} aria-current="true"{% endif %}>{{ o.rotulo }} <span class="janela">{{ o.janela }}</span></a>
+        {% endfor %}
+    </nav>
+    {% endif %}
+    {% if mare and mare.get('estado') == 'sem_registro' %}
+        {{ estado('sem_registro') }}
+    {% elif mare and mare.get('estado') == 'formacao' %}
+        <div class="vazio mare-formacao">{{ mare.formacao }}</div>
+    {% elif mare %}
         {% if mare.parcial %}<span class="selo alerta">parcial · sem {{ mare.ausentes }} · {{ mare.cobertura }}</span>{% endif %}
         {{ gauge(mare.valor, "", 0, 100, "{:.0f}", faixas=mare.faixas, resumo="Maré do mercado, de 0 a 100", grande=False, escala=["0", "100"]) }}
+        {% if mare.get('contexto') %}<p class="mare-contexto num">{{ mare.contexto }}</p>{% endif %}
         <div class="mare-componentes">
             {% for c in mare.componentes %}
             <div class="comp">
@@ -166,7 +181,7 @@
             </div>
             {% endfor %}
         </div>
-        <p class="heatmap-legenda">Área: volume financeiro do dia, entre os 10 maiores da cesta de 30 ações · cor: variação do preço</p>
+        <p class="heatmap-legenda">{{ mare.get('legenda') or "Área: volume financeiro do dia, entre os 10 maiores da cesta de 30 ações · cor: variação do preço" }}</p>
         {% endif %}
         {% if mare.sparkline %}
         <div class="spark">
@@ -177,6 +192,7 @@
     {% else %}
         {{ estado('sem_registro' if historico else 'indisponivel') }}
     {% endif %}
+    </div>
     {{ extra }}
 {% endcall %}
 {% endmacro %}

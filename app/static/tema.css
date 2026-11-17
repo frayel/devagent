@@ -409,6 +409,21 @@ a.destaque-item:hover { border-color: var(--destaque); }
 .painel-mare .selo { align-self: flex-start; }
 .painel-mare .mare-componentes .comp > span:first-child { opacity: 0.6; }
 
+/* Seletor Marolas, Ondas e Maré (spec 174b). O .mare-corpo é só o alvo da troca
+   pelo ui.js: com display: contents, os filhos continuam no fluxo do card. */
+.mare-corpo { display: contents; }
+.mare-nivel { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e1); }
+.mare-nivel a {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: var(--e1) var(--e2); border: 1px solid var(--borda); border-radius: var(--raio-p);
+  color: var(--texto-2); text-decoration: none; font-size: var(--fs-base); min-width: 0;
+}
+.mare-nivel a .janela { font-size: var(--fs-meta); color: var(--texto-3); white-space: nowrap; }
+.mare-nivel a[aria-current="true"] { color: var(--texto); border-color: var(--destaque); background: var(--superficie-2); }
+.mare-nivel a:focus-visible { outline: 2px solid var(--destaque); outline-offset: 2px; }
+.mare-contexto { margin: calc(-1 * var(--e3)) 0 0; text-align: center; font-size: var(--fs-meta); color: var(--texto-2); }
+.mare-formacao { text-align: center; }
+
 /* Tela solo da Maré (spec 173): o card no centro da janela, o aviso legal no pé. */
 body:has(> main.tela-solo) {
   min-height: 100dvh;
