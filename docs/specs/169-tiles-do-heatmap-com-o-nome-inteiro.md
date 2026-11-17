@@ -6,6 +6,7 @@ esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_169.py
 origem: nova
+revisada: 2026-11-17
 ---
 
 ## Problema
@@ -25,7 +26,7 @@ Medido em 17/11 no Chromium headless, com `tema.css` de hoje e dez ativos de pes
 A largura natural do texto, medida com `scrollWidth`, vai de 55 a 59 px nos tickers de 5 e 6 caracteres. O defeito não depende de ticker, só do peso e da largura da tela: o heatmap é o único componente do painel em que o nome do ativo é o conteúdo, e ele não se lê.
 
 ## Comportamento esperado
-1. **Largura mínima do tile pelo texto.** `.heatmap-ativo` ganha `min-width: 10ch` e `box-sizing: border-box`. O `ch` acompanha a fonte do tile (0,7rem), então o mínimo continua certo se o tamanho do texto mudar. A 0,7rem, 10ch mais o `padding` de 2 px de cada lado dão 71 px, contra 59 px do texto mais largo medido (folga de 12 px para `W` e `M`).
+1. **Largura mínima do tile pelo texto.** `.heatmap-ativo` ganha `min-width: 10ch` e `box-sizing: border-box`. O `ch` acompanha a fonte do tile (0,7rem), então o mínimo continua certo se o tamanho do texto mudar. Com `border-box`, o `padding` de 2 px de cada lado fica dentro dos 10ch: a 0,7rem (11,2 px) o Chromium mede 10ch = 70,6 px de tile, e o texto ganha 66,6 px, contra 59 px do texto mais largo medido (folga de 7 px para `W` e `M`).
 2. **O peso reparte a sobra, não define a largura.** No lugar de `flex-grow` mais `width: max(30px, ...)`, a regra passa a `flex: var(--ativo-peso, 1) 1 0`. A base é zero: cada tile começa no mínimo e a sobra da linha se divide na proporção do peso. Com `flex-basis` igual ao peso a soma passa de 100% por causa do `gap` (9 × 2 px) e o último tile caía sozinho numa linha de baixo; com base zero a linha quebra só quando o próximo mínimo não cabe, e cada linha termina preenchida de ponta a ponta.
 3. **O heatmap quebra em linhas por conta própria.** `.heatmap` já tem `flex-wrap: wrap` e não muda. Na tela larga os dez tiles cabem numa linha; no celular, em duas ou três. Nenhum JavaScript novo.
 4. **Sem o JavaScript, tiles iguais.** O peso chega pela variável `--ativo-peso`, que `app/static/ui.js:13` escreve por causa da CSP (sem `style` inline). O `1` do `var(--ativo-peso, 1)` faz a página ainda legível se o script não rodar: dez tiles de largura igual, nenhum cortado.
@@ -39,12 +40,14 @@ Nenhuma. O heatmap já recebe `ativos[].ticker`, `variacao` e `peso` da Maré. P
 ## Cálculos
 O peso é uma **fração** (0 a 1), não percentual: `PETR4` com `financeiro` 1.500.000 num total de 6.818.182 tem `peso = 0,22`. Largura de cada tile, de ponta a ponta, num contêiner de 374 px (janela de 390 px menos 16 px), dez tiles, `gap` de 2 px:
 
-1. Mínimo do tile: 10ch + 4 px de `padding` ≈ 71 px.
+1. Mínimo do tile: 10ch, já com o `padding` dentro (`border-box`): 70,6 px no Chromium, arredondado para 71 px nas contas abaixo.
 2. Quantos cabem numa linha: `n × 71 + (n − 1) × 2 ≤ 374`, então `n = 5` (363 px). Dez tiles, duas linhas de cinco.
 3. Largura da primeira linha (`PETR4`, `VALE3`, `ITUB4`, `BBDC4`, `BOVA11`, pesos 0,22 / 0,20 / 0,15 / 0,10 / 0,09, soma 0,76): sem mínimo, os tiles dividiriam os 366 px úteis (374 menos 4 `gap` de 2 px) na proporção do peso, e `BBDC4` ficaria com 48 px e `BOVA11` com 43 px. Os dois ficam abaixo de 71 px, então travam no mínimo; os 224 px que sobram (366 − 2 × 71) se dividem entre os outros três (soma 0,57): `ITUB4` receberia 59 px, também abaixo, e trava em 71 px; os 153 px restantes vão para `PETR4` (0,22 / 0,42 × 153 = 80 px) e `VALE3` (0,20 / 0,42 × 153 = 73 px). Larguras: 80, 73, 71, 71 e 71 px, que somam 366. É o que o Chromium devolve na medida.
 4. A segunda linha se reparte do mesmo jeito, pelos pesos 0,07 / 0,06 / 0,05 / 0,04 / 0,02.
 
-Na janela de 1280 px (contêiner de 1264 px) os dez tiles cabem numa linha (10 × 71 + 9 × 2 = 728 px): `PETR4` 253 px, `VALE3` 230 px, `ITUB4` 174 px, `BBDC4` 117 px, e os quatro últimos no mínimo de 71 px. Proporção: a ordem dos pesos se mantém; a proporção exata só vale para os tiles acima do mínimo.
+A 360 px (contêiner de 344 px) cabem quatro por linha (4 × 71 + 3 × 2 = 290; cinco dariam 363 > 344): três linhas de 4, 4 e 2. A 768 px cabem os dez numa linha.
+
+Na janela de 1280 px (contêiner de 1264 px) os dez tiles cabem numa linha (10 × 71 + 9 × 2 = 728 px). Sem mínimo, os 1246 px úteis (1264 − 9 × 2) se dividiriam pelo peso (soma 1,00): `WEGE3` 62 px, `KLBN11` 50 px e `RENT3` 25 px ficam abaixo e travam em 71 px; os 1033 px restantes (1246 − 3 × 71) vão para os outros sete (soma 0,89): `PETR4` 253 px, `VALE3` 230 px, `ITUB4` 174 px, `BBDC4` 117 px, `BOVA11` 106 px, `ABEV3` 83 px e `B3SA3` 72 px. Medido no Chromium em 17/11 na revisão: 252,8 / 230,1 / 173,6 / 117,1 / 105,8 / 83,1 / 71,8 / 70,6 / 70,6 / 70,6 px. Proporção: a ordem dos pesos se mantém; a proporção exata só vale para os tiles acima do mínimo.
 
 Pesos todos 0 (`total_fin = 0`) não chegam à tela: `heatmap` só é montado com amostra válida. Se chegassem, os tiles ficariam no mínimo, alinhados à esquerda, sem sumir.
 
@@ -56,7 +59,7 @@ Pesos todos 0 (`total_fin = 0`) não chegam à tela: `heatmap` só é montado co
   - **quebra esperada:** 1 linha a 768 e 1280 px, no máximo 3 a 360 e 390 px;
   - **peso ordena a largura a 1280 px:** `PETR4 >= VALE3 >= ITUB4 >= BBDC4 >= BOVA11` (larguras dos tiles de maior peso);
   - **ticker mais largo:** com `TAEE11` e `KLBN11` no lugar de dois ativos, e com `▼` e `■` no lugar de `▲`, o resultado de nenhum cortado se mantém a 360 px.
-- [ ] **Sem JavaScript:** sem escrever `--ativo-peso`, `--ativo-cor` e `--ativo-opacidade`, nenhum tile fica cortado a 390 px e os dez têm a mesma largura (tolerância de 1 px).
+- [ ] **Sem JavaScript:** sem escrever `--ativo-peso`, `--ativo-cor` e `--ativo-opacidade`, nenhum tile fica cortado a 390 px e os dez têm a mesma largura (tolerância de 1 px). Vale só a 390 px (duas linhas de cinco): a 360 px a última linha tem dois tiles, que se esticam até a borda e ficam mais largos que os outros oito.
 - [ ] **Ticker de 9 caracteres:** com `ABCDEFGHI`, o tile não passa da borda direita do contêiner.
 - [ ] `tests/test_aceite_147.py` (contraste e ausência de `opacity` em `.heatmap-ativo`), `tests/test_aceite_123.py` e o resto do `make verify` continuam verdes, sem mudar asserção.
 - Arquivos tocados: `app/static/tema.css` e o novo `tests/test_aceite_169.py`. Medido com `grep -rlw "heatmap-ativo" app tests`: 4 arquivos referenciam a classe (CSS, template, `ui.js`, testes 123 e 147), e nenhum deles muda além do CSS. O `docs/STATE.md` e o `CHANGELOG.md` são atualizados na entrega, como em todo PR.
