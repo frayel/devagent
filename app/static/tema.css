@@ -715,6 +715,38 @@ tbody td .spark svg { width: 100%; height: 100%; }
   text-overflow: ellipsis;
 }
 
+.heatmap-legenda {
+  margin: var(--e1) 0 0;
+  font-size: var(--fs-meta);
+  color: var(--texto-2);
+}
+
+/* Treemap (fix do heatmap, 17/11): com o ui.js, a área de cada tile é
+   proporcional ao volume financeiro. O script calcula a posição de cada tile
+   e põe a classe `treemap`; sem ele, vale o layout em linhas da spec 169. Na
+   spec 169 a última linha esticava os menores tiles até a borda, e o menor
+   volume saía como o maior quadro. */
+.heatmap.treemap {
+  display: block;
+  position: relative;
+}
+
+.heatmap.treemap .heatmap-ativo {
+  position: absolute;
+  left: var(--tm-x);
+  top: var(--tm-y);
+  width: var(--tm-w);
+  height: var(--tm-h);
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* "▲ PETR4" quebra em duas linhas no tile estreito; o ticker nunca. */
+  white-space: normal;
+  line-height: 1.15;
+  padding: 2px;
+}
+
 td.barra i { width: var(--barra-w); }
 
 .checagem-causa-acao {

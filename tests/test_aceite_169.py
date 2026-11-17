@@ -127,7 +127,10 @@ def _sem_corte(medida: dict) -> None:
 
 @pytest.mark.parametrize("janela", JANELAS)
 def test_tiles_inteiros_e_linhas_preenchidas(janela):
-    medida = _medir([_tile(*a) for a in EXEMPLO], janela)
+    # Desde o fix do treemap (17/11), o layout em linhas da spec 169 é o de
+    # quem não roda o ui.js; com ele, o heatmap vira treemap e é conferido em
+    # tests/test_heatmap_treemap.py. As outras checagens daqui rodam com o JS.
+    medida = _medir([_tile(*a) for a in EXEMPLO], janela, com_js=False)
     assert abs(medida["largura"] - (janela - 16)) <= 1
     _sem_corte(medida)
     for t in medida["tiles"]:
@@ -144,8 +147,9 @@ def test_tiles_inteiros_e_linhas_preenchidas(janela):
     else:
         assert len(linhas) <= 3
     if janela == 1280:
-        larguras = [t["largura"] for t in medida["tiles"][:5]]
-        assert larguras == sorted(larguras, reverse=True)
+        # Sem o ui.js não há peso: numa linha só, os dez têm a mesma largura.
+        larguras = [t["largura"] for t in medida["tiles"]]
+        assert max(larguras) - min(larguras) <= 1, larguras
 
 
 def test_tickers_largos_e_outras_setas_a_360():
