@@ -64,7 +64,7 @@ def test_security_headers():
     assert "base-uri 'self'" in csp
     assert "form-action 'self'" in csp
     assert "frame-ancestors 'none'" in csp
-    assert "https://unpkg.com" in csp
+    assert "https://unpkg.com" not in csp  # htmx saiu (spec 172)
     assert "https://cdn.plot.ly" in csp
     assert "'unsafe-inline'" not in csp.split("script-src")[1].split(";")[0]
 

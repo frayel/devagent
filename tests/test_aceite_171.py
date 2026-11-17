@@ -19,7 +19,6 @@ RAIZ = Path(__file__).resolve().parent.parent / "app"
 TEMPLATES = RAIZ / "templates"
 STATIC = RAIZ / "static"
 
-HTMX_SRC = "https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"
 PLOTLY_SRC = "https://cdn.plot.ly/plotly-basic-2.27.0.min.js"
 PLOTLY_SRI = "sha384-C21rxKmXDHRC0bKRfO4BhLiAheJB5GEbL2ohT8ER/IW4/oXhpHW1iygb4d6p7vsb"
 TRACOS_DO_PACOTE = {"scatter", "bar", "pie"}
@@ -43,7 +42,7 @@ def _fontes_script_src(csp: str) -> list[str]:
 
 
 def test_pacote_basico_com_integridade() -> None:
-    html = (TEMPLATES / "base.html").read_text(encoding="utf-8")
+    html = (TEMPLATES / "index.html").read_text(encoding="utf-8")
     plotly = [
         attrs
         for attrs in (dict(_ATTR.findall(tag)) for tag in _TAG.findall(html))
@@ -58,7 +57,7 @@ def test_pacote_basico_com_integridade() -> None:
 def test_csp_casa_com_o_pacote_basico() -> None:
     with TestClient(app) as client:
         csp = client.get("/healthz").headers["Content-Security-Policy"]
-    assert _fontes_script_src(csp) == ["'self'", HTMX_SRC, PLOTLY_SRC]
+    assert _fontes_script_src(csp) == ["'self'", PLOTLY_SRC]
     assert "plotly-strict" not in csp
 
 
@@ -72,5 +71,5 @@ def test_so_tracos_do_pacote() -> None:
     assert achados, "nenhum `type:` de traço encontrado: regex quebrada?"
     fora = [a for a in achados if a[1] not in TRACOS_DO_PACOTE]
     assert not fora, (
-        f"traço fora do plotly-basic: {fora}; troque o pacote em base.html e no CSP"
+        f"traço fora do plotly-basic: {fora}; troque o pacote em index.html e no CSP"
     )

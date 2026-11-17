@@ -7,7 +7,7 @@ Retrato do sistema como está na `main`. Atualize no mesmo PR que mudar algo aqu
 | Componente | Onde | Papel |
 |---|---|---|
 | Web | `app/main.py` | FastAPI; rotas `/` (painel) e `/healthz` |
-| Templates | `app/templates/` | `base.html` (layout e aviso legal), `index.html` (painel) |
+| Templates | `app/templates/` | `base.html` (layout, aviso legal e scripts locais com `defer`), `index.html` (painel; único que carrega o Plotly, pelo bloco `scripts_pagina`) |
 | Serviços | `app/services/` | montam os dados de cada painel a partir do banco |
 | Coletores | `app/collectors/` | buscam dados externos e gravam no banco |
 | Banco | `app/database.py` | Postgres (produção) via `DATABASE_URL` ou SQLite (`data.db`, local/testes) via `app/banco.py` |

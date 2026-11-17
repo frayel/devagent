@@ -1,7 +1,7 @@
 ---
 id: 172
 titulo: Cada página baixa só o script que usa
-status: ready
+status: done
 esforco: P
 gaveta: poda
 aceite: tests/test_aceite_172.py

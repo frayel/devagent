@@ -18,6 +18,11 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Poda] Spec 172 - Cada página baixa só o script que usa:
+  - `app/templates/base.html`: sai a tag do htmx (nenhum template usava `hx-`); entra o bloco vazio `scripts_pagina` antes de `graficos.js`, e `graficos.js` e `ui.js` ganham `defer`.
+  - `app/templates/index.html`: preenche `scripts_pagina` com a tag do Plotly básico (mesmo `src`, `integrity` e `crossorigin`), com `defer`. `/consultor`, `/sistema` e `/novidades` não baixam nenhum script externo (1.046.383 bytes a menos por visita sem cache); `/` baixa 47.755 a menos.
+  - `app/main.py`: o `script-src` do CSP fica `'self' https://cdn.plot.ly/plotly-basic-2.27.0.min.js`. A página deixa de depender de `unpkg.com`.
+  - Aceite em `tests/test_aceite_172.py`; `tests/test_aceite_170.py` e `tests/test_aceite_171.py` conferem o Plotly em `index.html` e o CSP com um arquivo só.
 - [Poda] Spec 171 - A página baixa só o Plotly que desenha linhas:
   - `app/templates/base.html`: o Plotly passa a vir de `https://cdn.plot.ly/plotly-basic-2.27.0.min.js` (traços `scatter`, `bar` e `pie`), com o `integrity` remedido em 17/11, igual ao da spec. Menos 2.919.951 bytes de JavaScript por visita sem cache.
   - `app/main.py`: o `script-src` do CSP libera o pacote básico no lugar do `strict`.
