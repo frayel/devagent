@@ -2,6 +2,13 @@
   {
     "data": "2026-11-17",
     "tipo": "novidade",
+    "texto": "O gráfico da Maré do mercado segue a opção escolhida: a curva de hoje em Marolas, os últimos pregões em Ondas e os meses do último ano em Maré, com quantos pontos ela andou.",
+    "onde": {"pagina": "/mare", "pagina_nome": "Maré do mercado"},
+    "spec": "175"
+  },
+  {
+    "data": "2026-11-17",
+    "tipo": "novidade",
     "texto": "O card da Maré do mercado ganhou três opções: Marolas (o humor de hoje), Ondas (a média do último mês) e Maré (a do último ano), cada uma com o valor, os componentes e o mapa de calor da janela.",
     "onde": {"pagina": "/mare", "pagina_nome": "Maré do mercado"},
     "spec": "174b"

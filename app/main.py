@@ -28,7 +28,7 @@ from app import gauge
 from fastapi.staticfiles import StaticFiles
 
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 from datetime import timezone as dt_timezone
 from app.services.ibovespa import get_ibovespa_view_data
 from app.services import carimbo as carimbo_servico
@@ -445,23 +445,35 @@ def pagina_novidades(request: Request):
 
 
 def _card_mare_nivel(
-    request: Request, nivel: str | None, data_passada: bool
+    request: Request,
+    nivel: str | None,
+    data_passada: bool,
+    data_ref: date | None = None,
 ) -> tuple[dict | None, list[dict]]:
     """View do card da Maré no nível escolhido e o seletor (spec 174b).
 
     Chamada dentro do contexto de leitura da página: numa data passada,
-    `ler_snapshot` já lê o `mare_historico` daquele pregão.
+    `ler_snapshot` já lê o `mare_historico` daquele pregão. Marolas lê a
+    curva intradiária de hoje ou, numa data passada, a de `data_ref` (175).
     """
     import app.banco
 
     escolhido = mare_servico.nivel_valido(nivel)
-    historico = (
-        None
-        if escolhido == mare_servico.NIVEL_PADRAO
-        else app.banco.ler_snapshot("mare_historico")
-    )
+    historico = intradia = None
+    hoje = mare_servico.hoje_brt()
+    if escolhido != mare_servico.NIVEL_PADRAO:
+        historico = app.banco.ler_snapshot("mare_historico")
+    elif data_passada and data_ref is not None:
+        intradia = mare_servico.buscar_intradia(data_ref, data_passada=True)
+    elif not data_passada:
+        intradia = mare_servico.buscar_intradia(hoje)
     card = mare_servico.view_nivel(
-        mare_servico.get_mare_view(), historico, escolhido, data_passada
+        mare_servico.get_mare_view(),
+        historico,
+        escolhido,
+        data_passada,
+        intradia=intradia,
+        hoje=hoje,
     )
     return card, mare_servico.seletor(dict(request.query_params), escolhido)
 
@@ -509,7 +521,9 @@ def fragmento_mare(
         app.banco.req_snapshot_cache_ctx(),
         app.banco.lendo_pregao(ctx["data_referencia"] if historico else None),
     ):
-        mare, seletor = _card_mare_nivel(request, nivel, historico)
+        mare, seletor = _card_mare_nivel(
+            request, nivel, historico, ctx["data_referencia"]
+        )
         carimbo = _carimbos_criticos(agora).get("mare")
     return templates.TemplateResponse(
         request=request,
@@ -1494,6 +1508,12 @@ def snapshot(
         resp["paineis"]["mare"]["niveis"] = mare_servico.niveis(
             app.banco.ler_snapshot("mare_historico")
         )
+        # Curva do dia que o Marolas desenha (spec 175); sem dia com dois
+        # pontos, null. Sem leitura da Maré, a chave segue vazia (174a).
+        if mare_data:
+            resp["paineis"]["mare"]["intradia"] = mare_servico.buscar_intradia(
+                mare_servico.hoje_brt()
+            )
 
         apetite_risco_data = get_latest_apetite_risco_data()
         if apetite_risco_data:
@@ -2297,7 +2317,9 @@ def index(
         volatilidade_silenciosa = get_volatilidade_silenciosa_view()
 
         mare = mare_servico.get_mare_view()
-        mare_card, mare_seletor = _card_mare_nivel(request, nivel, is_historical)
+        mare_card, mare_seletor = _card_mare_nivel(
+            request, nivel, is_historical, data_ref
+        )
 
         anomalia_data = get_latest_anomalia_peso_data()
 

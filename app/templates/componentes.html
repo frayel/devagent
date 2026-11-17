@@ -183,11 +183,16 @@
         </div>
         <p class="heatmap-legenda">{{ mare.get('legenda') or "Área: volume financeiro do dia, entre os 10 maiores da cesta de 30 ações · cor: variação do preço" }}</p>
         {% endif %}
-        {% if mare.sparkline %}
-        <div class="spark">
-            <svg viewBox="0 0 200 48" preserveAspectRatio="none" role="img" aria-label="{{ mare.resumo_serie }}"><polyline class="spark-linha" points="{{ mare.sparkline.pontos }}"/></svg>
-            {% if mare.comparacao %}<span class="num">{{ mare.comparacao }}</span>{% endif %}
+        {#- Gráfico no tempo do nível (spec 175): rótulos em HTML, fora do SVG esticado. -#}
+        {% set g = mare.get('grafico') %}
+        {% if g %}
+        <div class="spark mare-grafico">
+            <svg viewBox="0 0 200 48" preserveAspectRatio="none" role="img" aria-label="{{ g.resumo }}">{% if g.referencia_y is not none %}<line class="mare-media" x1="0" x2="200" y1="{{ g.referencia_y }}" y2="{{ g.referencia_y }}"/>{% endif %}<polyline class="spark-linha" points="{{ g.pontos }}"/></svg>
+            <div class="mare-tempo num"><span>{{ g.inicio }}</span><span>{{ g.fim }}</span></div>
+            <p class="mare-variacao num">{{ g.prefixo }}{{ variacao(g.variacao, g.sinal) }} · {{ g.faixa }}</p>
         </div>
+        {% elif mare.get('sem_grafico') %}
+        <p class="vazio mare-sem-curva">{{ mare.sem_grafico }}</p>
         {% endif %}
     {% else %}
         {{ estado('sem_registro' if historico else 'indisponivel') }}
