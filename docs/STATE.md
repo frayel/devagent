@@ -18,6 +18,11 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Poda] Spec 172 - Cada página baixa só o script que usa:
+  - `app/templates/base.html`: sai a tag do htmx (nenhum template usava `hx-`); entra o bloco vazio `scripts_pagina` antes de `graficos.js`, e `graficos.js` e `ui.js` ganham `defer`.
+  - `app/templates/index.html`: preenche `scripts_pagina` com a tag do Plotly básico (mesmo `src`, `integrity` e `crossorigin`), com `defer`. `/consultor`, `/sistema` e `/novidades` não baixam nenhum script externo (1.046.383 bytes a menos por visita sem cache); `/` baixa 47.755 a menos.
+  - `app/main.py`: o `script-src` do CSP fica `'self' https://cdn.plot.ly/plotly-basic-2.27.0.min.js`. A página deixa de depender de `unpkg.com`.
+  - Aceite em `tests/test_aceite_172.py`; `tests/test_aceite_170.py` e `tests/test_aceite_171.py` conferem o Plotly em `index.html` e o CSP com um arquivo só.
 - [Correção] O heatmap da Maré vira treemap, com área proporcional ao volume:
   - `app/static/ui.js`: `treemap` (algoritmo *squarified*) reparte o `.heatmap` em retângulos de área proporcional ao `peso` de cada tile, e `desenharTreemap` posiciona os tiles (`--tm-x`, `--tm-y`, `--tm-w`, `--tm-h`) e põe a classe `treemap`. Altura inicial de 35% da largura, entre 120 e 180 px; cresce 15% por vez, até 3 vezes, enquanto algum rótulo não couber. Refaz o desenho quando a largura da janela muda e no `load`.
   - `app/static/tema.css`: `.heatmap.treemap` em posição relativa e tiles absolutos, com o rótulo podendo quebrar entre a seta e o ticker. Sem o `ui.js`, segue o layout em linhas da spec 169.

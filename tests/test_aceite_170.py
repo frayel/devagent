@@ -1,4 +1,6 @@
-"""Aceite da spec 170: o navegador recusa htmx e Plotly alterados na CDN.
+"""Aceite da spec 170: o navegador recusa o Plotly alterado na CDN.
+
+O htmx saiu na spec 172; o Plotly mora só em `index.html` desde então.
 
 Sem internet: confere os templates e o cabeçalho CSP. Baixar as CDNs e
 comparar o hash é invariante do auditor, não teste.
@@ -17,8 +19,6 @@ from devagent.aceite import exigir_spec_done
 
 TEMPLATES = Path(__file__).resolve().parent.parent / "app" / "templates"
 
-HTMX_SRC = "https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"
-HTMX_SRI = "sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
 PLOTLY_SRC = "https://cdn.plot.ly/plotly-basic-2.27.0.min.js"
 PLOTLY_SRI = "sha384-C21rxKmXDHRC0bKRfO4BhLiAheJB5GEbL2ohT8ER/IW4/oXhpHW1iygb4d6p7vsb"
 
@@ -68,9 +68,8 @@ def test_toda_tag_externa_tem_integridade() -> None:
 
 
 def test_valores_sao_os_da_tabela() -> None:
-    base = _scripts_externos((TEMPLATES / "base.html").read_text(encoding="utf-8"))
-    por_src = {a["src"]: a for a in base}
-    assert por_src[HTMX_SRC]["integrity"] == HTMX_SRI
+    index = _scripts_externos((TEMPLATES / "index.html").read_text(encoding="utf-8"))
+    por_src = {a["src"]: a for a in index}
     assert por_src[PLOTLY_SRC]["integrity"] == PLOTLY_SRI
 
 
@@ -79,15 +78,14 @@ def test_nenhum_endereco_de_pacote() -> None:
         assert not re.search(r"@[\w.\-]+/?$", attrs["src"]), (arquivo, attrs["src"])
 
 
-def test_csp_restrito_aos_dois_arquivos() -> None:
+def test_csp_restrito_ao_arquivo_do_plotly() -> None:
     fontes = _fontes_script_src()
-    assert sorted(fontes) == sorted(["'self'", HTMX_SRC, PLOTLY_SRC])
+    assert fontes == ["'self'", PLOTLY_SRC]
     assert "https://unpkg.com" not in fontes
     assert "https://cdn.plot.ly" not in fontes
 
 
 def test_csp_e_template_casam() -> None:
     fontes = set(_fontes_script_src())
-    base = _scripts_externos((TEMPLATES / "base.html").read_text(encoding="utf-8"))
-    for attrs in base:
-        assert attrs["src"] in fontes, attrs["src"]
+    for arquivo, attrs in _todos_externos():
+        assert attrs["src"] in fontes, (arquivo, attrs["src"])

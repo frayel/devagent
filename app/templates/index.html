@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado, gauge, sparkline %}
 
+{#- Só a home desenha gráfico: as outras páginas não baixam o Plotly (spec 172). -#}
+{% block scripts_pagina %}
+    <script src="https://cdn.plot.ly/plotly-basic-2.27.0.min.js" integrity="sha384-C21rxKmXDHRC0bKRfO4BhLiAheJB5GEbL2ohT8ER/IW4/oXhpHW1iygb4d6p7vsb" crossorigin="anonymous" defer></script>
+{%- endblock %}
+
 {% block content %}
 {#- Carimbo dos cards críticos (spec 141): rodapé com a data do pregão e selo de desatualizado. -#}
 {%- set _cb = carimbos if carimbos is defined and carimbos else {} -%}
