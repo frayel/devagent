@@ -5,6 +5,7 @@ status: ready
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_167.py
+revisada: 2026-11-17
 origem: "O que se destaca hoje" acima da dobra
 ---
 
@@ -36,10 +37,10 @@ Regras de cada item:
 
 1. **Maior alta:** o primeiro de `highlights.highs`, só se `change_percent > 0`. Se a lista estiver vazia ou o primeiro não for positivo (dia em que nenhuma ação da cesta subiu), o item mostra `Maior alta: nenhuma ação em alta`, sem link.
 2. **Maior baixa:** o primeiro de `highlights.lows`, só se `change_percent < 0`. Senão, `Maior baixa: nenhuma ação em baixa`, sem link.
-3. **Em mais radares:** o primeiro de `confluencia.acoes` (já ordenado por número de radares e depois por ticker, `app/services/radares.py:203`). `K` é quantas outras ações de `confluencia.acoes` têm o mesmo número de radares que a primeira. Com `confluencia.acoes` vazio, o item **não aparece** (como o próprio card da spec 155, que some sem confluência).
+3. **Em mais radares:** o primeiro de `confluencia.acoes` (já ordenado por número de radares e depois por ticker, `app/services/radares.py:203`). `K` é quantas outras ações de `confluencia.acoes` têm o mesmo número de radares que a primeira. A contagem é sobre a lista que o card mostra (até `MAX_LINHAS_CONFLUENCIA = 10` linhas), não sobre os excedentes, para a faixa e o card nunca discordarem. Com `confluencia.acoes` vazio, o item **não aparece** (como o próprio card da spec 155, que some sem confluência).
 4. Com `highlights` ausente (`None`), os itens 1 e 2 não aparecem. Sem nenhum item, a faixa não é renderizada.
 
-As ações **em revisão** (variação acima do limite de outlier, `em_revisao`) nunca entram na faixa: o coletor já as separa de `highs` e `lows` (`app/collectors/highlights.py:216`), e a faixa só lê `highs` e `lows`.
+As ações **em revisão** (variação acima do limite de outlier, `em_revisao`) nunca entram na faixa: o coletor já as separa de `highs` e `lows` (`app/collectors/highlights.py:235`), e a faixa só lê `highs` e `lows`.
 
 ## Fontes de dados
 
@@ -55,7 +56,7 @@ Se qualquer um faltar, o item correspondente some (regra 4) e o resto da página
 
 A montagem fica numa função pura, `app/services/destaques.py: faixa(highlights, confluencia, carimbo_altas_baixas, data_historica) -> list[dict]`, chamada na rota `/` depois de `confluencia` e posta no contexto como `destaques`. O template só percorre a lista.
 
-Hora visível: `HH:MM` extraído dos carimbos que já existem. `highlights.time` tem o formato `dd/mm/aaaa HH:MM:SS BRT` (`highlights.py:66`) e `confluencia.horario_texto` tem `dd/mm/aaaa HH:MM BRT` (`carimbo.formatar`); a hora são os caracteres 11 a 15 dos dois. Carimbo vazio: sem `às HH:MM`.
+Hora visível: `HH:MM` extraído dos carimbos que já existem. `highlights.time` tem o formato `dd/mm/aaaa HH:MM:SS BRT` (`highlights.py:66`) e `confluencia.horario_texto` tem `dd/mm/aaaa HH:MM BRT` (`carimbo.formatar`); a hora é a fatia `texto[11:16]` dos dois (posições 11 a 15, contando do zero): `"17/11/2026 10:30:12 BRT"[11:16] == "10:30"`. Não converta fuso de novo: os dois carimbos já estão em BRT. Carimbo vazio ou com menos de 16 caracteres: sem `às HH:MM`.
 
 ### Exemplo de ponta a ponta
 
