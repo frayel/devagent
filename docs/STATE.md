@@ -23,6 +23,12 @@ Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres 
   - `app/templates/index.html`: preenche `scripts_pagina` com a tag do Plotly básico (mesmo `src`, `integrity` e `crossorigin`), com `defer`. `/consultor`, `/sistema` e `/novidades` não baixam nenhum script externo (1.046.383 bytes a menos por visita sem cache); `/` baixa 47.755 a menos.
   - `app/main.py`: o `script-src` do CSP fica `'self' https://cdn.plot.ly/plotly-basic-2.27.0.min.js`. A página deixa de depender de `unpkg.com`.
   - Aceite em `tests/test_aceite_172.py`; `tests/test_aceite_170.py` e `tests/test_aceite_171.py` conferem o Plotly em `index.html` e o CSP com um arquivo só.
+- [Correção] O heatmap da Maré vira treemap, com área proporcional ao volume:
+  - `app/static/ui.js`: `treemap` (algoritmo *squarified*) reparte o `.heatmap` em retângulos de área proporcional ao `peso` de cada tile, e `desenharTreemap` posiciona os tiles (`--tm-x`, `--tm-y`, `--tm-w`, `--tm-h`) e põe a classe `treemap`. Altura inicial de 35% da largura, entre 120 e 180 px; cresce 15% por vez, até 3 vezes, enquanto algum rótulo não couber. Refaz o desenho quando a largura da janela muda e no `load`.
+  - `app/static/tema.css`: `.heatmap.treemap` em posição relativa e tiles absolutos, com o rótulo podendo quebrar entre a seta e o ticker. Sem o `ui.js`, segue o layout em linhas da spec 169.
+  - `app/templates/index.html`: legenda abaixo do heatmap ("Área: volume financeiro do dia, entre os 10 maiores da cesta de 30 ações · cor: variação do preço").
+  - Antes, a última linha esticava os menores tiles até a borda: em 17/11, a 390 px, PRIO3 (5,5% do volume) tinha 162 px e PETR4 (18,4%) tinha 98 px.
+  - `scripts/telas.py` semeia dez ativos no heatmap da demonstração. Testes em `tests/test_heatmap_treemap.py`; o `test_aceite_169` passa a conferir o layout em linhas sem JavaScript.
 - [Poda] Spec 171 - A página baixa só o Plotly que desenha linhas:
   - `app/templates/base.html`: o Plotly passa a vir de `https://cdn.plot.ly/plotly-basic-2.27.0.min.js` (traços `scatter`, `bar` e `pie`), com o `integrity` remedido em 17/11, igual ao da spec. Menos 2.919.951 bytes de JavaScript por visita sem cache.
   - `app/main.py`: o `script-src` do CSP libera o pacote básico no lugar do `strict`.

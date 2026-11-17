@@ -15,6 +15,20 @@ document.addEventListener('DOMContentLoaded', () => {
         el.style.setProperty('--ativo-opacidade', el.dataset.opacidade);
     });
 
+    // Heatmap como treemap: a área de cada tile é proporcional ao peso (fração
+    // do volume financeiro entre os dez maiores). Sem este trecho, vale o
+    // layout em linhas da spec 169, que não respeita a proporção.
+    const heatmaps = [...document.querySelectorAll('.heatmap')];
+    heatmaps.forEach(desenharTreemap);
+    let larguraAnterior = window.innerWidth;
+    window.addEventListener('resize', () => {
+        if (window.innerWidth === larguraAnterior) return;
+        larguraAnterior = window.innerWidth;
+        heatmaps.forEach(desenharTreemap);
+    });
+    // A fonte pode chegar depois: com ela o rótulo muda de largura.
+    window.addEventListener('load', () => heatmaps.forEach(desenharTreemap));
+
     // Seletor de pregão (issue 883): a CSP bloqueia `onchange` inline, então a troca
     // de data envia o formulário daqui. Vale em toda página que usa o base.html.
     document.querySelectorAll('select.seletor-data').forEach(sel => {
@@ -173,3 +187,76 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 });
+
+// Treemap "squarified" (Bruls, Huizing e van Wijk, 2000): reparte o retângulo
+// largura x altura em retângulos de área proporcional a cada valor, perto de
+// quadrados. Devolve {x, y, w, h} na ordem dos valores recebidos.
+function treemap(valores, largura, altura) {
+    const total = valores.reduce((a, b) => a + b, 0);
+    const rects = new Array(valores.length);
+    if (!(total > 0)) return rects.fill({ x: 0, y: 0, w: 0, h: 0 });
+    const itens = valores
+        .map((v, i) => ({ i, a: (v / total) * largura * altura }))
+        .sort((p, q) => q.a - p.a);
+    let x = 0, y = 0, w = largura, h = altura;
+    const soma = l => l.reduce((a, t) => a + t.a, 0);
+    const pior = (l, lado) => {
+        const s = soma(l);
+        const maior = Math.max(...l.map(t => t.a));
+        const menor = Math.min(...l.map(t => t.a));
+        return Math.max((lado * lado * maior) / (s * s), (s * s) / (lado * lado * menor));
+    };
+    const assentar = l => {
+        const s = soma(l);
+        if (w >= h) {
+            const lw = s / h;
+            let yy = y;
+            l.forEach(t => { const th = t.a / lw; rects[t.i] = { x, y: yy, w: lw, h: th }; yy += th; });
+            x += lw; w -= lw;
+        } else {
+            const lh = s / w;
+            let xx = x;
+            l.forEach(t => { const tw = t.a / lh; rects[t.i] = { x: xx, y, w: tw, h: lh }; xx += tw; });
+            y += lh; h -= lh;
+        }
+    };
+    let linha = [];
+    for (const t of itens) {
+        const lado = Math.min(w, h);
+        if (!linha.length || pior(linha.concat([t]), lado) <= pior(linha, lado)) {
+            linha.push(t);
+        } else {
+            assentar(linha);
+            linha = [t];
+        }
+    }
+    if (linha.length) assentar(linha);
+    return rects;
+}
+
+// Posiciona os tiles de um .heatmap. A altura começa em 35% da largura, entre
+// 120 e 180 px, e cresce até o rótulo de todo tile caber, no máximo 3 vezes.
+function desenharTreemap(heatmap) {
+    const tiles = [...heatmap.querySelectorAll('.heatmap-ativo')];
+    const pesos = tiles.map(el => Math.max(parseFloat(el.dataset.peso) || 0, 0));
+    if (!tiles.length || !(pesos.reduce((a, b) => a + b, 0) > 0)) return;
+    heatmap.classList.add('treemap');
+    const largura = heatmap.clientWidth;
+    if (!largura) return;
+    const base = Math.min(180, Math.max(120, Math.round(largura * 0.35)));
+    const VAO = 1; // metade do espaço entre dois tiles
+    const cabe = el => el.scrollWidth <= el.clientWidth && el.scrollHeight <= el.clientHeight;
+    let altura = base;
+    for (;;) {
+        heatmap.style.height = altura + 'px';
+        treemap(pesos, largura, altura).forEach((r, i) => {
+            const el = tiles[i];
+            el.style.setProperty('--tm-x', (r.x + VAO) + 'px');
+            el.style.setProperty('--tm-y', (r.y + VAO) + 'px');
+            el.style.setProperty('--tm-w', Math.max(r.w - 2 * VAO, 0) + 'px');
+            el.style.setProperty('--tm-h', Math.max(r.h - 2 * VAO, 0) + 'px');
+        });
+        if (tiles.every(cabe) || altura >= base * 3) break;
+        altura = Math.min(Math.round(altura * 1.15), base * 3);
+    }
+}
