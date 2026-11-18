@@ -6,6 +6,7 @@ esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_184.py
 origem: Radares do snapshot num laço
+revisada: 2026-11-18
 ---
 
 ## Problema
@@ -38,7 +39,8 @@ Nada muda no JSON do `/api/snapshot`, nem em nenhuma página. Muda só a forma d
 2. Uma função `_painel_de_alertas(dado, agora, sem_dado)` devolve o objeto `{coletado_em, fonte, alertas}` quando há dado (com o mesmo `try` em volta do `json.loads`, falha vira `[]`) ou o valor sem dado. Um objeto novo (dict ou lista) a cada chamada, nunca um compartilhado.
 3. Dentro de `snapshot`, os 8 blocos saem e um laço sobre `RADARES_MOLDE_UNICO` preenche `resp["paineis"][chave]`. O getter é lido de `app.database` na hora da chamada (`getattr(app.database, nome)()`), para quem troca o getter no módulo, como os testes fazem, continuar sendo ouvido.
 4. O laço roda dentro do mesmo `with app.banco.lendo_pregao(...), app.banco.req_snapshot_cache_ctx()` de hoje: a leitura de data histórica (`?data=`) continua igual.
-5. As chamadas que hoje ficam no meio dos blocos e não são desses 8 continuam, na mesma ordem relativa entre si: em particular `get_latest_radar_congestionamento_data()` (lida hoje junto do short squeeze, linha 1683) e o bloco do `radar_congestionamento` que a usa.
+5. Os quatro nomes importados no topo de `app/main.py` só para esses blocos (`get_latest_variacao_subita_data`, `get_latest_compradores_fundo_data`, `get_latest_armadilha_abertura_data` e `get_latest_concentracao_ordens_data`, linhas 81–88) e os `from app.database import ...` locais de `faca_caindo`, `radar_short_squeeze`, `radar_inflexao` e `radar_absorcao_cruzada` dentro de `snapshot` (linhas 1585 e 1656–1667) saem quando ficarem sem uso, senão o `ruff` (F401) reprova. `_payloads_radares()` tem os próprios imports locais e não muda.
+6. As chamadas que hoje ficam no meio dos blocos e não são desses 8 continuam, na mesma ordem relativa entre si: em particular `get_latest_radar_congestionamento_data()` (lida hoje junto do short squeeze, linha 1683) e o bloco do `radar_congestionamento` que a usa.
 
 A ordem das chaves dentro de `paineis` pode mudar; o conteúdo, não. JSON é comparado como objeto (o auditor e os testes fazem `json.loads`).
 
@@ -82,4 +84,4 @@ Ordem sugerida para o desenvolvimento: escrever primeiro os três primeiros crit
 - Os outros 12 radares de `RADARES` e os demais painéis do snapshot (ibovespa, maré, clima, etc.): cada forma diferente que eles têm hoje é parte do contrato publicado, e unificá-la é mudança visível, com spec própria. O resto da visão (o registro declarativo de painéis, com um nome só por radar e as ~105 funções `save_*`/`get_*` de `app/database.py`) segue no item *Radares do snapshot num laço* da Fila do `docs/BACKLOG.md`.
 - Dar `try` aos `json.loads` dos radares que hoje não têm (`exaustao_queda`, `exaustao_alta`): muda a resposta quando o JSON está quebrado (hoje 500), por isso fica fora.
 - A divergência de nomes entre `RADARES`, os coletores e as chaves do snapshot (`short_squeeze`/`radar_short_squeeze`, `radar_anomalia_fechamento`/`anomalia_fechamento`) e os radares que não aparecem no snapshot (`scanner_capitulacao`).
-- A página `/` (`index()`), que monta o contexto dos radares por outro caminho (`app/main.py:1999`).
+- A página `/` (`index()`), que monta o contexto dos radares por outro caminho (`_payloads_radares()`, `app/main.py:1998`, e `index()`, linha 2222).
