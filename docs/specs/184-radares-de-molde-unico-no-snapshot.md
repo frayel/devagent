@@ -1,7 +1,7 @@
 ---
 id: 184
 titulo: Os radares de molde único entram no /api/snapshot por um laço só
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_184.py
