@@ -18,6 +18,10 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 177 - A Calma não apaga o pânico de verdade:
+  - `app/services/mare.py`: `LIMIAR_RETORNO_SUSPEITO` e `FRACAO_CONFIRMACAO`; `volatilidades(fechamentos, confirmacao=None)` mantém o retorno de `|r| ≥ 0,12` quando a mediana da cesta no pregão confirma (mesmo sinal, `|mediana| ≥ |r|/2`); `_Calculadora._medianas_cesta` calcula a mediana dos retornos log das ações válidas em cada pregão com pelo menos 20 delas.
+  - `app/templates/componentes.html`: o método do card da Maré cita a regra.
+  - Aceite em `tests/test_aceite_177.py`.
 - [Experiência] Spec 176 - A primeira dobra da Visão Geral sem espaço vazio:
   - `app/templates/index.html`: os gauges de Apetite aqui e Rotação saem do `call card_mare` (agora `{{ card_mare(...) }}`) para o card *Apetite e rotação* (`span-4`, `painel-apetite-rotacao visao-macro visao-geral`), logo depois do *Clima Global* (`span-4`, método citando o card novo). A escala `-10%`/`+10%` fica dentro do `<div>` de cada gauge do Ibovespa.
   - Grade sem buraco: Clima Global e o card novo têm `span-4` juntos e `span-8` sozinhos; `motores_span` passa a 12 fixo (antes 6 com Clima, para fazer par com ele).

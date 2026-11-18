@@ -63,6 +63,14 @@ MINIMO_ACOES = 20
 
 DIAS_HISTORICO = 21
 
+# Retorno diário do Ibovespa de 12% ou mais é suspeito de erro da fonte e sai
+# da janela da Calma, a menos que a cesta confirme o movimento: mediana dos
+# retornos log das ações com o mesmo sinal e pelo menos metade do tamanho
+# (spec 177). Sem a confirmação, a queda de 13,9% de 26/10/2026, que foi do
+# mercado inteiro, apagava a Calma por 10 pregões justo no pânico.
+LIMIAR_RETORNO_SUSPEITO = 0.12
+FRACAO_CONFIRMACAO = 0.5
+
 
 def faixa(valor: float) -> str:
     """Nome da faixa: 0-19 Pânico, 20-39 Medo, 40-59 Neutro, 60-79 Confiança, 80-100 Otimismo extremo."""
@@ -96,8 +104,29 @@ def componente_fluxo(acoes: list[tuple[float, float]]) -> float | None:
     return em_alta / com_variacao * 100
 
 
-def volatilidades(fechamentos: list[float]) -> list[float | None]:
+def _mediana(valores: list[float]) -> float:
+    ordenados = sorted(valores)
+    meio = len(ordenados) // 2
+    if len(ordenados) % 2:
+        return ordenados[meio]
+    return (ordenados[meio - 1] + ordenados[meio]) / 2
+
+
+def _retorno_confirmado(r: float, mediana: float | None) -> bool:
+    """A cesta confirma o retorno `r`: mesmo sinal e |mediana| ≥ |r| × 0,5 (spec 177)."""
+    if mediana is None or r == 0 or mediana == 0 or (r > 0) != (mediana > 0):
+        return False
+    return abs(mediana) >= abs(r) * FRACAO_CONFIRMACAO
+
+
+def volatilidades(
+    fechamentos: list[float], confirmacao: list[float | None] | None = None
+) -> list[float | None]:
     """Volatilidade de queda anualizada de 10 retornos log, alinhada com os fechamentos.
+
+    Retorno com |r| ≥ 0,12 é descartado como erro provável da fonte, salvo
+    quando `confirmacao` (alinhada com os fechamentos: mediana dos retornos log
+    da cesta em cada pregão, ou None) confirma o movimento (spec 177).
 
     Semidesvio com alvo zero: raiz da média dos quadrados dos retornos
     negativos (os positivos entram como zero), vezes raiz de 252. Dez dias
@@ -105,10 +134,16 @@ def volatilidades(fechamentos: list[float]) -> list[float | None]:
     que terminam no fechamento i; os primeiros 10 ficam None.
     """
     retornos: list[float | None] = [None]
-    for anterior, atual in zip(fechamentos, fechamentos[1:]):
+    for i, (anterior, atual) in enumerate(zip(fechamentos, fechamentos[1:]), 1):
         if anterior > 0 and atual > 0:
             r = math.log(atual / anterior)
-            retornos.append(r if abs(r) < 0.12 else None)
+            mediana = (
+                confirmacao[i]
+                if confirmacao is not None and i < len(confirmacao)
+                else None
+            )
+            mantem = abs(r) < LIMIAR_RETORNO_SUSPEITO or _retorno_confirmado(r, mediana)
+            retornos.append(r if mantem else None)
         else:
             retornos.append(None)
     saida: list[float | None] = []
@@ -231,7 +266,33 @@ class _Calculadora:
             for d in self.sessoes
         }
         self.dias_ibov = sorted(ibov)
-        self.sigmas = volatilidades([ibov[d] for d in self.dias_ibov])
+        medianas = self._medianas_cesta()
+        self.sigmas = volatilidades(
+            [ibov[d] for d in self.dias_ibov],
+            [medianas.get(d) for d in self.dias_ibov],
+        )
+
+    def _medianas_cesta(self) -> dict[date, float]:
+        """Mediana dos retornos log da cesta em cada pregão com pelo menos
+        `MINIMO_ACOES` ações com retorno; sem amostra, vazio (spec 177).
+
+        O retorno de uma ação em `dia` usa o último fechamento antes dele,
+        a mesma regra de `_variacoes`.
+        """
+        if not self.amostra_ok:
+            return {}
+        por_dia: dict[date, list[float]] = {}
+        for serie in self.acoes.values():
+            dias = sorted(serie)
+            for anterior, dia in zip(dias, dias[1:]):
+                fech_ant, fech = serie[anterior][0], serie[dia][0]
+                if fech_ant > 0 and fech > 0:
+                    por_dia.setdefault(dia, []).append(math.log(fech / fech_ant))
+        return {
+            dia: _mediana(retornos)
+            for dia, retornos in por_dia.items()
+            if len(retornos) >= MINIMO_ACOES
+        }
 
     def _variacoes(self, dia: date) -> list[tuple[float, float]]:
         pares = []

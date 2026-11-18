@@ -1,7 +1,7 @@
 ---
 id: 177
 titulo: A Calma não apaga o pânico de verdade
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_177.py
