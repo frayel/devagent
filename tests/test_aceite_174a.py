@@ -246,5 +246,5 @@ def test_sem_historico_niveis_nulos_e_resto_da_mare_igual():
     cliente = TestClient(aplicacao)
     mare_snap = cliente.get("/api/snapshot").json()["paineis"]["mare"]
     assert mare_snap["niveis"] == {"ondas": None, "mare": None}
-    resto = {k: v for k, v in mare_snap.items() if k != "niveis"}
+    resto = {k: v for k, v in mare_snap.items() if k not in ("niveis", "memoria")}
     assert set(resto) == {"fonte", "coletado_em"}

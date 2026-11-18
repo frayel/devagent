@@ -18,6 +18,13 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Capacidade nova] Spec 183 - O que o Ibovespa fez nos 5 pregões depois de cada faixa da Maré:
+  - `app/collectors/mare_historico.py`: cada leitura do `mare_historico` leva `ibov` (fechamento do Ibovespa no dia, `null` sem fechamento).
+  - `app/services/mare.py`: `memoria(leituras, faixa_hoje, horizonte=5)` (por faixa e no total: `casos`, `media`, `positivos`, `confianca`) e `view_memoria` (frase, linhas da tabela e método do bloco).
+  - `app/main.py`: `paineis.mare.memoria` no `/api/snapshot`; `pagina_mare` lê o `mare_historico` em qualquer nível para o bloco *Depois de cada faixa*.
+  - `app/templates/mare.html` e `app/static/tema.css`: o bloco abaixo do card, só na tela solo; `.tela-solo` em coluna.
+  - Até a primeira coleta do `mare_historico` depois do merge, as leituras não têm `ibov` e o bloco mostra "Memória em formação".
+  - Aceite em `tests/test_aceite_183.py`.
 - [Experiência] Spec 182 - O seletor da Maré mostra que está carregando:
   - `app/static/ui.js`: o clique no seletor marca a opção (`aria-current`, `aria-busy`, `.carregando`) e o `.mare-corpo` (`aria-busy`) no mesmo quadro; `atualizando` só depois de `MARE_ESMAECER_MS` (150); `AbortController` para o clique mais novo vencer; `MARE_DESISTIR_MS` (8.000) ou erro recarregam pelo `href`.
   - `app/static/tema.css`: anel `.mare-nivel a.carregando::after` (parado com movimento reduzido), esmaecimento nos filhos do `.mare-corpo` menos o seletor, e a classe `.so-leitor`.

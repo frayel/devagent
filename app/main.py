@@ -492,10 +492,25 @@ def pagina_mare(request: Request, nivel: str | None = Query(default=None)):
     with app.banco.req_snapshot_cache_ctx():
         mare, seletor = _card_mare_nivel(request, nivel, False)
         carimbo = _carimbos_criticos(agora).get("mare")
+        # Depois de cada faixa (spec 183): fora do card, em qualquer nível.
+        historico = app.banco.ler_snapshot("mare_historico")
+        hoje = mare_servico.get_mare_view()
+        memoria = mare_servico.view_memoria(
+            mare_servico.memoria(
+                (historico or {}).get("leituras") or [],
+                hoje["faixa"] if hoje else None,
+            ),
+            historico,
+        )
     return templates.TemplateResponse(
         request=request,
         name="mare.html",
-        context={"mare": mare, "carimbo": carimbo, "seletor": seletor},
+        context={
+            "mare": mare,
+            "carimbo": carimbo,
+            "seletor": seletor,
+            "memoria": memoria,
+        },
     )
 
 
@@ -1505,8 +1520,12 @@ def snapshot(
             else {"fonte": "nd", "coletado_em": agora.isoformat()}
         )
         # Ondas e Maré (spec 174a): do histórico gravado uma vez por pregão.
-        resp["paineis"]["mare"]["niveis"] = mare_servico.niveis(
-            app.banco.ler_snapshot("mare_historico")
+        mare_historico = app.banco.ler_snapshot("mare_historico")
+        resp["paineis"]["mare"]["niveis"] = mare_servico.niveis(mare_historico)
+        # O que o Ibovespa fez depois de cada faixa (spec 183); sem caso, null.
+        resp["paineis"]["mare"]["memoria"] = mare_servico.memoria(
+            (mare_historico or {}).get("leituras") or [],
+            resp["paineis"]["mare"].get("faixa"),
         )
         # Curva do dia que o Marolas desenha (spec 175); sem dia com dois
         # pontos, null. Sem leitura da Maré, a chave segue vazia (174a).

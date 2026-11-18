@@ -10,6 +10,9 @@ URLs do coletor `mare`, com `range=2y` na cesta) e grava o snapshot
   janela (21 e 252 pregões);
 - `ate`: o último pregão completo.
 
+Cada leitura leva também `ibov`, o fechamento do Ibovespa no dia (spec 183),
+para a memória da Maré (`mare.memoria`).
+
 Quem decide quando roda é o agendador (janela `"diario"`); a conta dos níveis
 fica em `app/services/mare.py` (`nivel`). Se o Yahoo falhar, nada é gravado e
 a leitura continua no snapshot anterior.
@@ -57,6 +60,9 @@ def calcular(
                 "fluxo": c["fluxo"],
                 "calma": c["calma"],
                 "volume": c["volume"],
+                # Fechamento do Ibovespa no dia (spec 183): a memória da Maré
+                # cruza a faixa de cada dia com o retorno dos pregões seguintes.
+                "ibov": ibov.get(d),
             }
         )
     if not leituras:

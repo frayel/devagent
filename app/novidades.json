@@ -1,6 +1,13 @@
 [
   {
     "data": "2026-11-18",
+    "tipo": "novidade",
+    "texto": "A tela da Maré mostra o que o Ibovespa fez nos 5 pregões seguintes a cada faixa da Maré no último ano, com o número de casos à vista. É o passado, não uma previsão.",
+    "onde": {"pagina": "/mare", "pagina_nome": "Maré do mercado"},
+    "spec": "183"
+  },
+  {
+    "data": "2026-11-18",
     "tipo": "melhoria",
     "texto": "Ao trocar entre Marolas, Ondas e Maré, a opção clicada acende na hora e mostra que está carregando; se a resposta demora, o card esmaece até o novo chegar.",
     "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Maré do mercado"},

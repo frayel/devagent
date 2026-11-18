@@ -499,6 +499,179 @@ def niveis(historico: dict[str, Any] | None) -> dict[str, dict[str, Any] | None]
 
 
 # --------------------------------------------------------------------------
+# Memória da Maré: o que o Ibovespa fez depois de cada faixa (spec 183)
+# --------------------------------------------------------------------------
+
+HORIZONTE_MEMORIA = 5
+CASOS_MINIMOS = 10  # abaixo disto, "poucos casos" e sem números
+CASOS_MODERADA = 30  # a partir disto, confiança moderada (nunca alta)
+RESSALVAS_MEMORIA = [
+    "Os casos de dias vizinhos compartilham pregões (as janelas de 5 se "
+    "sobrepõem), então não são independentes: 38 casos valem menos que 38 "
+    "observações soltas.",
+    "O histórico é recalculado com a cesta de ações de hoje: ação que saiu da "
+    "bolsa no período não entra.",
+    "É o que aconteceu num ano, não uma previsão.",
+]
+
+
+def _confianca(casos: int) -> str:
+    if casos < CASOS_MINIMOS:
+        return "poucos casos"
+    return "baixa" if casos < CASOS_MODERADA else "moderada"
+
+
+def _resumo(retornos: list[float]) -> dict[str, Any]:
+    casos = len(retornos)
+    if not casos:
+        return {"casos": 0, "media": None, "positivos": None}
+    return {
+        "casos": casos,
+        "media": round(sum(retornos) / casos, 2),
+        "positivos": _arredondar(100 * sum(1 for r in retornos if r > 0) / casos),
+    }
+
+
+def memoria(
+    leituras: list[dict[str, Any]],
+    faixa_hoje: str | None,
+    horizonte: int = HORIZONTE_MEMORIA,
+) -> dict[str, Any] | None:
+    """Retorno do Ibovespa `horizonte` pregões depois de cada faixa da Maré.
+
+    Só entram as leituras com `valor` e `ibov` (em ordem crescente de data);
+    as `horizonte` últimas não têm retorno seguinte. Sem nenhum caso (como no
+    snapshot gravado antes da spec 183, sem `ibov`), devolve None.
+    """
+    validas = sorted(
+        (
+            x
+            for x in leituras
+            if x.get("valor") is not None and x.get("ibov") is not None
+        ),
+        key=lambda x: x["data"],
+    )
+    casos = [
+        (x, faixa(x["valor"]), (validas[i + horizonte]["ibov"] / x["ibov"] - 1) * 100)
+        for i, x in enumerate(validas[:-horizonte] if horizonte else validas)
+        if x["ibov"]
+    ]
+    if not casos:
+        return None
+    if faixa_hoje not in FAIXAS:
+        com_valor = [x for x in leituras if x.get("valor") is not None]
+        faixa_hoje = faixa(com_valor[-1]["valor"]) if com_valor else casos[-1][1]
+    faixas = []
+    for nome in FAIXAS:
+        resumo = _resumo([r for _, f, r in casos if f == nome])
+        confianca = _confianca(resumo["casos"])
+        if confianca == "poucos casos":
+            resumo["media"] = resumo["positivos"] = None
+        faixas.append({"faixa": nome, **resumo, "confianca": confianca})
+    return {
+        "horizonte": horizonte,
+        "de": casos[0][0]["data"],
+        "ate": casos[-1][0]["data"],
+        "faixa_hoje": faixa_hoje,
+        "todos": _resumo([r for _, _, r in casos]),
+        "faixas": faixas,
+    }
+
+
+def _pct(x: float, casas: int = 2) -> str:
+    return f"{x:+.{casas}f}%".replace(".", ",")
+
+
+def _data_br(iso: str) -> str:
+    d = date.fromisoformat(str(iso)[:10])
+    return f"{d.day:02d}/{d.month:02d}/{d.year}"
+
+
+def view_memoria(
+    mem: dict[str, Any] | None, historico: dict[str, Any] | None
+) -> dict[str, Any]:
+    """O bloco *Depois de cada faixa* da tela `/mare` (spec 183)."""
+    if mem is None:
+        return {
+            "formacao": True,
+            "frase": "Memória em formação: o histórico ainda não tem o "
+            "fechamento do Ibovespa de cada dia.",
+        }
+    h = mem["horizonte"]
+    de, ate = _data_br(mem["de"]), _data_br(mem["ate"])
+    todos = mem["todos"]
+    hoje = next(f for f in mem["faixas"] if f["faixa"] == mem["faixa_hoje"])
+    if hoje["confianca"] == "poucos casos":
+        n = hoje["casos"]
+        quantos = (
+            "em nenhum pregão"
+            if n == 0
+            else f"em só {n} {'pregão' if n == 1 else 'pregões'}"
+        )
+        frase = (
+            f"A Maré fechou em {hoje['faixa']} {quantos} entre {de} e {ate}: "
+            "poucos casos para dizer o que costuma vir depois."
+        )
+    else:
+        frase = (
+            f"Nos {hoje['casos']} pregões entre {de} e {ate} em que a Maré fechou "
+            f"em {hoje['faixa']}, o Ibovespa andou em média {_pct(hoje['media'])} "
+            f"nos {h} pregões seguintes e subiu em {hoje['positivos']}% deles. "
+            f"Em todos os {todos['casos']}: {_pct(todos['media'])} e "
+            f"{todos['positivos']}%."
+        )
+    linhas = []
+    for f in mem["faixas"]:
+        poucos = f["confianca"] == "poucos casos"
+        media = f["media"]
+        linhas.append(
+            {
+                "faixa": f["faixa"],
+                "casos": f["casos"],
+                "hoje": f["faixa"] == mem["faixa_hoje"],
+                "poucos": poucos,
+                "media": None if poucos else _pct(media),
+                "seta": ""
+                if poucos
+                else ("▲" if media > 0 else "▼" if media < 0 else "■"),
+                "classe": ""
+                if poucos
+                else ("alta" if media > 0 else "baixa" if media < 0 else "neutra"),
+                "positivos": None if poucos else f"{f['positivos']}%",
+                "confianca": f["confianca"],
+            }
+        )
+    historico = historico or {}
+    coletado = historico.get("coletado_em")
+    quando = (
+        datetime.fromisoformat(coletado).astimezone(BRT).strftime("%d/%m/%Y %H:%M BRT")
+        if coletado
+        else ""
+    )
+    ressalvas = " ".join(f"({i}) {r}" for i, r in enumerate(RESSALVAS_MEMORIA, 1))
+    metodo = (
+        f"Fonte {historico.get('fonte') or 'nd'}, coleta de {quando or 'data desconhecida'}. "
+        f"Conta: para cada pregão entre {de} e {ate}, o retorno do Ibovespa do "
+        f"fechamento daquele dia ao fechamento {h} pregões depois, agrupado pela "
+        "faixa em que a Maré fechou no dia; a média é a média desses retornos e "
+        '"subiu em" é a parcela deles acima de zero. Grau de confiança: menos '
+        f"de {CASOS_MINIMOS} casos, poucos casos (sem números); de {CASOS_MINIMOS} "
+        f"a {CASOS_MODERADA - 1}, baixa; {CASOS_MODERADA} ou mais, moderada; nunca "
+        f"alta. Na faixa de hoje ({hoje['faixa']}): {hoje['confianca']}. "
+        f"Ressalvas: {ressalvas}"
+    )
+    return {
+        "formacao": False,
+        "frase": frase,
+        "linhas": linhas,
+        "horizonte": h,
+        "metodo": metodo,
+        "fonte": historico.get("fonte") or "",
+        "quando": quando,
+    }
+
+
+# --------------------------------------------------------------------------
 # Dados para a página e para o /api/snapshot
 # --------------------------------------------------------------------------
 
