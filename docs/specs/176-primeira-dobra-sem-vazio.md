@@ -1,7 +1,7 @@
 ---
 id: 176
 titulo: A primeira dobra da Visão Geral sem espaço vazio
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_176.py

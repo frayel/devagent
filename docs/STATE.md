@@ -18,6 +18,12 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 176 - A primeira dobra da Visão Geral sem espaço vazio:
+  - `app/templates/index.html`: os gauges de Apetite aqui e Rotação saem do `call card_mare` (agora `{{ card_mare(...) }}`) para o card *Apetite e rotação* (`span-4`, `painel-apetite-rotacao visao-macro visao-geral`), logo depois do *Clima Global* (`span-4`, método citando o card novo). A escala `-10%`/`+10%` fica dentro do `<div>` de cada gauge do Ibovespa.
+  - Grade sem buraco: Clima Global e o card novo têm `span-4` juntos e `span-8` sozinhos; `motores_span` passa a 12 fixo (antes 6 com Clima, para fazer par com ele).
+  - `app/static/tema.css`: `.grade > .painel-ibovespa { align-self: start; }` e, a partir de 768 px, `.grade > .painel-mare { grid-row: span 2; }`.
+  - `app/templates/componentes.html`: só o comentário da macro `card_mare`.
+  - Aceite em `tests/test_aceite_176.py` (HTML e medidas no Chromium a 1440, 1024 e 390 px).
 - [Capacidade nova] Spec 175 - O gráfico da Maré anda no tempo do nível:
   - `app/collectors/mare.py`: `gravar_ponto_intradia(dado)`, chamado por `collect_and_save` depois da leitura e dentro de try/except; acrescenta `{hora, valor}` ao snapshot `mare_intradia` do dia BRT, só de 10:00 a 18:15 num pregão, no máximo 40 pontos, mesma `HH:MM` substitui. Ignora a data de referência fixada pelo agendador na partida a frio.
   - `app/services/mare.py`: `janela_nivel` (as leituras que dão o nível e os pontos do gráfico), `acrescentar_ponto`, `hora_intradia`, `buscar_intradia(hoje, data_passada)` (hoje e até 5 pregões anteriores, por `ler_snapshot`), `serie_mensal` (média de cada mês civil, mês com menos de 5 leituras sai), `grafico`, `grafico_marolas`, `grafico_nivel`; `view_nivel` ganha `intradia` e `hoje` e devolve `grafico` (ou `sem_grafico`). A chave `comparacao` (`há 5 pregões`), `sparkline` e `resumo_serie` saem de `view`.

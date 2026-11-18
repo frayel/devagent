@@ -134,7 +134,8 @@ def test_um_card_uma_fonte():
         assert "card_mare(" in (TEMPLATES / nome).read_text(), nome
 
 
-def test_painel_geral_mantem_apetite_e_rotacao_no_card(com_mare, monkeypatch):
+def test_painel_geral_tira_apetite_e_rotacao_do_card(com_mare, monkeypatch):
+    """Spec 176: os gauges de Apetite e Rotação moram no card Apetite e rotação."""
     monkeypatch.setattr(
         "app.main.get_apetite_risco_view_data",
         lambda: {
@@ -162,8 +163,16 @@ def test_painel_geral_mantem_apetite_e_rotacao_no_card(com_mare, monkeypatch):
     assert m, "card da Maré ausente no painel geral"
     card = m.group(1)
     assert 'aria-label="Maré do mercado, de 0 a 100' in card
-    assert "SMLL − IBOV" in card
-    assert "bancos − commodities" in card
+    assert "SMLL − IBOV" not in card
+    assert "bancos − commodities" not in card
+    novo = re.search(
+        r'<section class="painel[^"]*\bpainel-apetite-rotacao\b[^"]*">(.*?)</section>',
+        html,
+        re.S,
+    )
+    assert novo, "card Apetite e rotação ausente no painel geral"
+    assert "SMLL − IBOV" in novo.group(1)
+    assert "bancos − commodities" in novo.group(1)
 
 
 # --- Centralização no navegador ------------------------------------------------

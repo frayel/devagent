@@ -47,6 +47,7 @@ TITULOS_PERMITIDOS = {
     "Concentração Setorial",
     "Pressão Vendedora",
     "Concentração de Ganhos",
+    "Apetite e rotação",  # spec 176
 }
 
 
@@ -202,7 +203,18 @@ def test_12_colunas_fecham(com_setorial):
     ):
         assert esperado in titulos, (esperado, visiveis)
     assert ("Concentração Setorial" in titulos) is com_setorial
-    assert empacotar([s for _, s in visiveis], 12) == [], visiveis
+    assert empacotar(_com_mare_em_duas_linhas(visiveis), 12) == [], visiveis
+
+
+def _com_mare_em_duas_linhas(visiveis) -> list[int]:
+    """Spec 176: a Maré tem `grid-row: span 2` na grade de 12 colunas. As colunas
+    dela na linha seguinte entram como um span a mais, logo depois dela."""
+    spans = []
+    for titulo, s in visiveis:
+        spans.append(s)
+        if titulo == "Maré do mercado":
+            spans.append(s)
+    return spans
 
 
 @pytest.mark.parametrize("com_setorial", [True, False])

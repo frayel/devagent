@@ -1,5 +1,11 @@
 [
   {
+    "data": "2026-11-18",
+    "tipo": "novidade",
+    "texto": "O alto da Visão Geral ficou sem espaço vazio: o card do Ibovespa tem o tamanho do conteúdo, e Apetite aqui e Rotação ganharam um card próprio, ao lado do Clima Global.",
+    "spec": "176"
+  },
+  {
     "data": "2026-11-17",
     "tipo": "novidade",
     "texto": "O gráfico da Maré do mercado segue a opção escolhida: a curva de hoje em Marolas, os últimos pregões em Ondas e os meses do último ano em Maré, com quantos pontos ela andou.",
