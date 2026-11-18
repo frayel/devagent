@@ -616,41 +616,43 @@ def ler_snapshots_datas(painel: str, datas: list[date]) -> dict[date, dict]:
 
 
 def gravar_serie(ticker: str, barras: list[dict]):
+    """Grava as barras diárias de um ticker com um só `executemany` (spec 179).
+
+    Cada barra vira uma linha de `series_diarias`; barras repetidas na mesma
+    chamada são comandos separados, então a última vence, como antes.
+    """
     if not barras:
         return
     init_db()
     conn, backend = get_connection()
     agora = datetime.now().isoformat()
+    parametros = [
+        (ticker, barra.get("data"), serialize_json([barra]), agora) for barra in barras
+    ]
     try:
         if backend == "postgres":
             with conn.cursor() as cursor:
-                for barra in barras:
-                    data_pregao = barra.get("data")
-                    barras_str = serialize_json([barra])
-                    cursor.execute(
-                        """
-                        INSERT INTO series_diarias (ticker, data_pregao, barras, criado_em)
-                        VALUES (%s, %s, %s, %s)
-                        ON CONFLICT (ticker, data_pregao)
-                        DO UPDATE SET barras = EXCLUDED.barras, criado_em = EXCLUDED.criado_em
-                        """,
-                        (ticker, data_pregao, barras_str, agora),
-                    )
+                cursor.executemany(
+                    """
+                    INSERT INTO series_diarias (ticker, data_pregao, barras, criado_em)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (ticker, data_pregao)
+                    DO UPDATE SET barras = EXCLUDED.barras, criado_em = EXCLUDED.criado_em
+                    """,
+                    parametros,
+                )
             conn.commit()
         else:
             cursor = conn.cursor()
-            for barra in barras:
-                data_pregao = barra.get("data")
-                barras_str = serialize_json([barra])
-                cursor.execute(
-                    """
-                    INSERT INTO series_diarias (ticker, data_pregao, barras, criado_em)
-                    VALUES (?, ?, ?, ?)
-                    ON CONFLICT(ticker, data_pregao)
-                    DO UPDATE SET barras = excluded.barras, criado_em = excluded.criado_em
-                    """,
-                    (ticker, data_pregao, barras_str, agora),
-                )
+            cursor.executemany(
+                """
+                INSERT INTO series_diarias (ticker, data_pregao, barras, criado_em)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(ticker, data_pregao)
+                DO UPDATE SET barras = excluded.barras, criado_em = excluded.criado_em
+                """,
+                parametros,
+            )
             conn.commit()
     finally:
         conn.close()

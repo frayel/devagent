@@ -1,7 +1,7 @@
 ---
 id: 179
 titulo: A série diária é gravada em lote
-status: ready
+status: done
 revisada: 2026-11-18
 esforco: P
 gaveta: saúde técnica

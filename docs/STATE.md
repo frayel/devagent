@@ -18,6 +18,10 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Saúde técnica] Spec 179 - A série diária é gravada em lote:
+  - `app/banco.py`: `gravar_serie` monta as tuplas `(ticker, data_pregao, barras, agora)` de todas as barras e faz um `executemany` por série, nos dois backends, com o mesmo `INSERT ... ON CONFLICT` e um `commit`. Barra repetida na chamada: a última vence, como antes. Assinatura e retorno iguais.
+  - Renovação do `consultor_historico`: de ~38.000 `execute` para 76 `executemany`.
+  - Aceite em `tests/test_aceite_179.py`.
 - [Saúde técnica] Spec 178 - Teste que não confere nada reprova o CI:
   - `tests/test_aceite_178.py`: verificador estático (`Verificador`, regras 1.1 a 1.4), `SEM_CONFERENCIA` vazia, casos próprios do verificador.
   - Testes corrigidos: `test_instrumentacao_coleta_tempo`, `test_consultor_dados_reais`, `test_historico_diario_proxy`, `test_scanner_capitulacao`, `test_aceite_095`, `test_aceite_092b`, `test_consultor_opinioes`, `test_avaliador_historico`, `test_radar_congestionamento`, `test_pagina_ponta_a_ponta`.
