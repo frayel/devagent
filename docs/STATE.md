@@ -18,6 +18,10 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 180 - O rodapé avisa que os dados podem conter erros:
+  - `app/templates/base.html`: novo `<p class="aviso-dados">` logo depois do `<p class="aviso-legal">` (que não muda), em todas as páginas que estendem o `base.html`; o fragmento `/mare/card` não o traz. Estilo de `footer p`, sem regra nova.
+  - `app/novidades.json`: entrada de 18/11.
+  - Aceite em `tests/test_aceite_180.py`.
 - [Saúde técnica] Spec 179 - A série diária é gravada em lote:
   - `app/banco.py`: `gravar_serie` monta as tuplas `(ticker, data_pregao, barras, agora)` de todas as barras e faz um `executemany` por série, nos dois backends, com o mesmo `INSERT ... ON CONFLICT` e um `commit`. Barra repetida na chamada: a última vence, como antes. Assinatura e retorno iguais.
   - Renovação do `consultor_historico`: de ~38.000 `execute` para 76 `executemany`.
