@@ -1,7 +1,7 @@
 ---
 id: 178
 titulo: Teste que não confere nada reprova o CI
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_178.py

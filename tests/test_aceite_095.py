@@ -10,5 +10,8 @@ def test_bloqueio_rede():
 
 @pytest.mark.rede
 def test_rede_liberada():
-    # This test should pass when running tests with the 'rede' mark
-    pass
+    """Com a marca `rede`, o `_bloquear_rede` do conftest não troca o socket."""
+    import socket
+
+    assert socket.socket.__name__ != "BlockedSocket"
+    assert socket.getaddrinfo.__name__ != "mock_getaddrinfo"
