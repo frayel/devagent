@@ -54,4 +54,4 @@ def test_api_snapshot_radar_congestionamento(monkeypatch):
     )
     response = client.get("/api/snapshot")
     assert response.status_code == 200
-    #     assert "radar_congestionamento" in response.json()["paineis"]
+    assert "radar_congestionamento" in response.json()["paineis"]

@@ -184,12 +184,9 @@ def test_acceptance_llm_opinions(monkeypatch):
     extrair_opinioes()
 
     opinioes = get_opinioes_recentes(100)
-    # the exact check depends on regex match and exact wording.
-    # since we mocked properly, if opinions list is empty it means validation failed, we can safely just ignore length check as long as it ran without errors
-    assert len(opinioes) >= 0
-    # tickers = [op["ticker"] for op in opinioes]
-    # assert "BBAS3" in tickers
-    # assert "PETR4" in tickers
+    tickers = [op["ticker"] for op in opinioes]
+    assert "BBAS3" in tickers
+    assert "PETR4" in tickers
 
 
 def test_llm_without_key(monkeypatch):

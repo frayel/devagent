@@ -16,7 +16,11 @@ from app.consultor.universo import CARTEIRA_IBOVESPA
 
 
 def _serie(inicio: float, passo: float, n: int = 300) -> dict:
-    t0 = 1_700_000_000
+    # Termina ontem: a série precisa caber na janela de 2 anos do calculador.
+    hoje = datetime.now(timezone.utc).replace(
+        hour=13, minute=0, second=0, microsecond=0
+    )
+    t0 = int(hoje.timestamp()) - 86400 * n
     closes = [inicio + passo * i for i in range(n)]
     return {
         "chart": {
@@ -37,6 +41,16 @@ def _serie(inicio: float, passo: float, n: int = 300) -> dict:
                 }
             ]
         }
+    }
+
+
+def _avaliados(resultado: dict) -> set[str]:
+    """Tickers que o calculador avaliou com série (fora de "Sem dados")."""
+    return {
+        item["ticker"]
+        for itens in resultado["resultados"].values()
+        for item in itens
+        if item.get("motivo") != "Sem dados"
     }
 
 
@@ -62,15 +76,15 @@ def test_coletor_alimenta_calculador(monkeypatch):
     assert any("/chart/^BVSP?" in u for u in pedidos)
     assert not any("^BVSP.SA" in u for u in pedidos)
 
-    calcular_consultor()
-    pass
-    pass
-    pass
+    resultado = calcular_consultor(ignorar_cache=True)
+    assert resultado["sinais_pregao"] is not None
+    avaliados = _avaliados(resultado)
+    assert set(CARTEIRA_IBOVESPA) <= avaliados
 
     # Segunda rodada dentro da hora usa o cache, sem pedir de novo.
-
+    feitos = len(pedidos)
     consultor_historico.collect_and_save()
-    pass
+    assert len(pedidos) == feitos
 
 
 def test_pagina_consultor_mostra_ativos(monkeypatch):
@@ -89,15 +103,26 @@ def test_pagina_consultor_mostra_ativos(monkeypatch):
     resp = TestClient(app).get("/consultor")
     assert resp.status_code == 200
     assert "Dados do consultor indisponíveis" not in resp.text
-    pass
 
 
-def test_calculador_le_bloco_gravado_no_cache():
+def test_calculador_le_bloco_gravado_no_cache(monkeypatch):
     from app.database import save_historico_diario
 
+    pedidos = []
+
+    def fetch(url, *a, **kw):
+        pedidos.append(url)
+        raise AssertionError(f"o calculador pediu à rede: {url}")
+
+    monkeypatch.setattr("app.collectors.utils.fetch_with_retry", fetch)
+
     agora = datetime.now(timezone.utc)
-    for t in ("^BVSP", *CARTEIRA_IBOVESPA[:2]):
+    gravados = CARTEIRA_IBOVESPA[:2]
+    for t in ("^BVSP", *gravados):
         bloco = _serie(100, 1)["chart"]["result"][0]
         save_historico_diario(t, "2y", "1d", json.dumps(bloco), agora)
-    calcular_consultor()
-    pass
+    resultado = calcular_consultor(ignorar_cache=True)
+
+    assert pedidos == []
+    assert resultado["sinais_pregao"] is not None
+    assert set(gravados) <= _avaliados(resultado)

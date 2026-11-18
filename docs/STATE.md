@@ -18,6 +18,10 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Saúde técnica] Spec 178 - Teste que não confere nada reprova o CI:
+  - `tests/test_aceite_178.py`: verificador estático (`Verificador`, regras 1.1 a 1.4), `SEM_CONFERENCIA` vazia, casos próprios do verificador.
+  - Testes corrigidos: `test_instrumentacao_coleta_tempo`, `test_consultor_dados_reais`, `test_historico_diario_proxy`, `test_scanner_capitulacao`, `test_aceite_095`, `test_aceite_092b`, `test_consultor_opinioes`, `test_avaliador_historico`, `test_radar_congestionamento`, `test_pagina_ponta_a_ponta`.
+  - Defeito achado: card *Assimetria Risco/Retorno* sem dado na rota `/` (#963); `test_pagina_renderiza_com_dados_reais_dos_coletores` com `xfail(strict=True)` até a correção.
 - [Experiência] Spec 177 - A Calma não apaga o pânico de verdade:
   - `app/services/mare.py`: `LIMIAR_RETORNO_SUSPEITO` e `FRACAO_CONFIRMACAO`; `volatilidades(fechamentos, confirmacao=None)` mantém o retorno de `|r| ≥ 0,12` quando a mediana da cesta no pregão confirma (mesmo sinal, `|mediana| ≥ |r|/2`); `_Calculadora._medianas_cesta` calcula a mediana dos retornos log das ações válidas em cada pregão com pelo menos 20 delas.
   - `app/templates/componentes.html`: o método do card da Maré cita a regra.

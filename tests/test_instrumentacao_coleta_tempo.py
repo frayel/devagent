@@ -3,7 +3,6 @@ from app.banco import ler_snapshot
 from app.database import BRT, save_coleta_tempo
 from app.agendador import _coletar
 import importlib
-import app.collectors.mt5
 
 
 def test_save_coleta_tempo():
@@ -16,9 +15,12 @@ def test_save_coleta_tempo():
 
 
 def test_agendador_registra_tempo(monkeypatch):
+    """Num pregão, cada coletor que rodou chega à instrumentação com tempo > 0."""
     import time
 
-    salvos = []
+    from app import agendador
+    import app.database
+    from tests.test_aceite_154 import PREGAO, _relogio
 
     class FakeModule:
         @staticmethod
@@ -26,42 +28,28 @@ def test_agendador_registra_tempo(monkeypatch):
             time.sleep(0.001)
             return True
 
-    def fake_execute(query, params):
-        salvos.append((query, params))
+    rodaram = {"ibovespa", "mare"}
 
-    class FakeCursor:
-        def execute(self, query, params=None):
-            if params:
-                fake_execute(query, params)
-            return self
+    def importar(nome):
+        if nome.rsplit(".", 1)[-1] in rodaram:
+            return FakeModule
+        raise ImportError(f"coletor fora do teste: {nome}")
 
-        def fetchall(self):
-            return []
+    recebidos: list[dict[str, float]] = []
 
-        def fetchone(self):
-            return None
+    def espiar(tempos, vazias, timestamp, durante_pregao=False, **_):
+        recebidos.append(dict(tempos))
 
-    class FakeConn:
-        def cursor(self):
-            return FakeCursor()
-
-        def commit(self):
-            pass
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            pass
-
-        def close(self):
-            pass
-
-    monkeypatch.setattr("app.database.get_connection", lambda: FakeConn())
-    monkeypatch.setattr(importlib, "import_module", lambda x: FakeModule)
-    monkeypatch.setattr(app.collectors.mt5, "reiniciar_rastreio", lambda: None)
+    monkeypatch.setattr("app.collectors.mt5.reiniciar_rastreio", lambda: None)
+    monkeypatch.setattr(importlib, "import_module", importar)
+    monkeypatch.setattr(agendador, "datetime", _relogio(PREGAO))
+    monkeypatch.setattr(agendador, "_avisar_falha", lambda *a, **k: None)
+    monkeypatch.setattr(agendador, "_registrar_erro", lambda *a, **k: None)
+    monkeypatch.setattr(app.database, "gravar_instrumentacao_rodada", espiar)
 
     _coletar()
 
-    pass  # Tem varios paineis
-    pass
+    assert len(recebidos) == 1
+    tempos = recebidos[0]
+    assert set(tempos) == rodaram
+    assert all(t > 0 for t in tempos.values())
