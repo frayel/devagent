@@ -6,6 +6,7 @@ esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_180.py
 origem: O rodapé avisa que os dados podem conter erros
+revisada: 2026-11-18
 ---
 
 ## Problema
@@ -36,7 +37,9 @@ Nenhum.
   - em `GET /`, `/mare`, `/sistema`, `/consultor` e `/novidades`, o HTML contém exatamente uma vez `<p class="aviso-dados">Os números vêm de fontes gratuitas e podem conter erros ou atrasos. Confira na fonte antes de decidir.</p>`, dentro do `<footer>`;
   - nas mesmas páginas, o texto "Conteúdo informativo gerado automaticamente. Não constitui recomendação de investimento." continua aparecendo exatamente uma vez, e o `aviso-dados` vem depois dele no HTML;
   - `GET /mare/card` não contém `aviso-dados`.
+  - `/consultor` e `/sistema` passam por `exigir_senha` (`app/main.py:565`): o teste roda com `monkeypatch.delenv("CONSULTOR_SENHA", raising=False)`, que libera as duas páginas, ou envia o HTTP Basic de usuário `consultor`, como o `tests/test_aceite_146.py:175`.
 - [ ] `tests/test_aceite_146.py`, `tests/test_aceite_156.py`, `tests/test_aceite_173.py` e `tests/test_aceite_174b.py` seguem verdes sem alteração.
+  O `test_card_no_centro_da_tela` do 173 (`tests/test_aceite_173.py:212`) mede o topo do `<footer>` em 390 px e 1440 px: o rodapé fica uma ou duas linhas mais alto, e o card da Maré tem de seguir centrado dentro da tolerância de 10% da janela, sem mexer no teste.
 - Arquivos tocados: `app/templates/base.html` e o novo `tests/test_aceite_180.py`. Hoje `grep -rl "aviso-legal" app tests` dá só `app/templates/base.html`.
 
 ## Invariantes de produção
