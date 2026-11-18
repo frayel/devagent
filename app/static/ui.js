@@ -279,6 +279,21 @@ function linksDoNivel(seletor) {
     });
 }
 
+// Carga do card (spec 182): o clique responde no mesmo quadro (destaque,
+// aria-busy e o anel de carga em .carregando); o card só esmaece se a
+// resposta passar de MARE_ESMAECER_MS; acima de MARE_DESISTIR_MS, ou com
+// erro, a página recarrega pelo href, como na 174b. Um clique em outra opção
+// aborta o pedido em curso; um clique na que já carrega é ignorado. A região
+// viva .mare-anuncio fica fora do .mare-corpo e só troca de texto.
+const MARE_ESMAECER_MS = 150;
+const MARE_DESISTIR_MS = 8000;
+let mareCarga = null;
+
+function encerrarCargaMare(carga) {
+    clearTimeout(carga.esmaecer);
+    clearTimeout(carga.desistir);
+}
+
 document.addEventListener('click', evento => {
     if (evento.defaultPrevented || evento.button !== 0 || evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey) return;
     const link = evento.target.closest && evento.target.closest('.mare-nivel a[data-nivel]');
@@ -287,23 +302,56 @@ document.addEventListener('click', evento => {
     if (!corpo) return;
     evento.preventDefault();
     const nivel = link.dataset.nivel;
+    if (mareCarga && mareCarga.corpo === corpo && mareCarga.nivel === nivel) return;
+    if (mareCarga) {
+        encerrarCargaMare(mareCarga);
+        mareCarga.controle.abort();
+    }
+    corpo.querySelectorAll('.mare-nivel a[data-nivel]').forEach(opcao => {
+        opcao.removeAttribute('aria-current');
+        opcao.removeAttribute('aria-busy');
+        opcao.classList.remove('carregando');
+    });
+    link.setAttribute('aria-current', 'true');
+    link.setAttribute('aria-busy', 'true');
+    link.classList.add('carregando');
+    corpo.setAttribute('aria-busy', 'true');
+    const rotulo = (link.firstChild && link.firstChild.textContent || nivel).trim();
+    const regiao = corpo.parentElement && corpo.parentElement.querySelector('.mare-anuncio');
+    if (regiao) regiao.textContent = 'Carregando ' + rotulo;
+
+    const controle = typeof AbortController === 'function' ? new AbortController() : { abort() {}, signal: undefined };
+    const carga = { corpo, nivel, controle, desistiu: false };
+    carga.esmaecer = setTimeout(() => corpo.classList.add('atualizando'), MARE_ESMAECER_MS);
+    carga.desistir = setTimeout(() => { carga.desistiu = true; controle.abort(); }, MARE_DESISTIR_MS);
+    mareCarga = carga;
+
     const pagina = new URL(window.location.href);
     const pedido = new URLSearchParams({ nivel });
     const data = pagina.searchParams.get('data');
     if (data) pedido.set('data', data);
-    fetch('/mare/card?' + pedido.toString(), { headers: { 'Accept': 'text/html' } })
+    fetch('/mare/card?' + pedido.toString(), { headers: { 'Accept': 'text/html' }, signal: controle.signal })
         .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
         .then(html => {
+            if (mareCarga !== carga) return;
             const modelo = document.createElement('template');
             modelo.innerHTML = html;
             const novo = modelo.content.querySelector('.mare-corpo');
             if (!novo) throw new Error('fragmento sem .mare-corpo');
+            encerrarCargaMare(carga);
+            mareCarga = null;
             corpo.replaceWith(novo);
+            if (regiao) regiao.textContent = novo.dataset.anuncio || '';
             pagina.searchParams.set('nivel', nivel);
             try { history.replaceState(history.state, '', pagina); } catch (e) { /* URL fica como está */ }
             novo.querySelectorAll('.mare-nivel').forEach(linksDoNivel);
             prepararHeatmaps(novo);
             novo.querySelectorAll('.heatmap').forEach(desenharTreemap);
         })
-        .catch(() => { window.location.href = link.href; });
+        .catch(() => {
+            // Pedido trocado por um clique mais novo: quem desenha é o outro.
+            if (mareCarga !== carga && !carga.desistiu) return;
+            encerrarCargaMare(carga);
+            window.location.href = link.href;
+        });
 });

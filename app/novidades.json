@@ -2,6 +2,13 @@
   {
     "data": "2026-11-18",
     "tipo": "melhoria",
+    "texto": "Ao trocar entre Marolas, Ondas e Maré, a opção clicada acende na hora e mostra que está carregando; se a resposta demora, o card esmaece até o novo chegar.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Maré do mercado"},
+    "spec": "182"
+  },
+  {
+    "data": "2026-11-18",
+    "tipo": "melhoria",
     "texto": "Quando o navegador não consegue carregar a biblioteca de gráficos, o gráfico do Ibovespa diz isso em vez de ficar em branco.",
     "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Ibovespa hoje"},
     "spec": "181"

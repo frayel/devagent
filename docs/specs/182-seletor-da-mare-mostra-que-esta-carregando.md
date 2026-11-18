@@ -1,7 +1,7 @@
 ---
 id: 182
 titulo: O seletor da Maré mostra que está carregando
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_182.py

@@ -138,7 +138,18 @@
 {%- set extra = caller() if caller is defined else '' -%}
 {%- set c_mare = carimbo or {} -%}
 {% call painel("Maré do mercado", 4, "Índice de 0 a 100. Fluxo (40%): parcela do volume financeiro da cesta de 30 ações que foi para ações em alta, uma aproximação do fluxo de ordens, que não tem fonte gratuita. Calma (35%): 100 menos o percentil da volatilidade de queda de 10 pregões do Ibovespa nos 252 anteriores; só os dias de queda contam, então uma alta forte não reduz a calma. Um dia de mais de 12% só fica de fora se as ações da cesta não acompanharam o movimento (erro provável da fonte). Volume (25%): ritmo do volume contra a média de 21 pregões, ajustado pela hora do pregão, no sentido da maioria. A Maré descreve o humor do momento. Não é recomendação de compra ou venda. Níveis: Marolas é a leitura de hoje; Ondas é a média dos últimos 21 pregões completos (existe a partir de 15 leituras); Maré, a dos últimos 252 pregões completos (a partir de 189). O valor do nível é a média dos valores diários: 20 pregões em 50 e um em 61 dão (20 × 50 + 61) / 21 = 50,5, que arredonda para 51. As barras são a média de cada componente na janela; quando algum dia teve componente ausente, a soma ponderada das barras pode diferir do valor em alguns pontos.", mare.fonte if mare else "", c_mare.get('rodape') or (mare.time if mare else ""), "visao-macro painel-mare visao-geral", c_mare.get('desatualizado', False)) %}
-    <div class="mare-corpo">
+    {#- Anúncio do nível para leitor de tela (spec 182): o texto vem do servidor e o ui.js o copia para a região viva, que fica fora do .mare-corpo. -#}
+    {%- set anuncio = none -%}
+    {%- if seletor -%}
+    {%- set opcao = seletor | selectattr('ativo') | first -%}
+    {%- set rotulo = opcao.rotulo if opcao else '' -%}
+    {%- if mare and mare.get('estado') == 'formacao' -%}{%- set anuncio = rotulo ~ ': histórico em formação' -%}
+    {%- elif mare and mare.get('estado') == 'sem_registro' -%}{%- set anuncio = rotulo ~ ': sem registro neste pregão' -%}
+    {%- elif mare and mare.get('valor') is not none -%}{%- set anuncio = rotulo ~ ': ' ~ ('%.0f' | format(mare.valor)) ~ (', ' ~ mare.faixa if mare.get('faixa') else '') -%}
+    {%- else -%}{%- set anuncio = rotulo ~ ': dado indisponível' -%}
+    {%- endif -%}
+    {%- endif %}
+    <div class="mare-corpo"{% if anuncio %} data-anuncio="{{ anuncio }}"{% endif %}>
     {% if seletor %}
     <nav class="mare-nivel" aria-label="Janela da Maré">
         {% for o in seletor %}
@@ -198,6 +209,7 @@
         {{ estado('sem_registro' if historico else 'indisponivel') }}
     {% endif %}
     </div>
+    {% if seletor %}<p class="so-leitor mare-anuncio" aria-live="polite"></p>{% endif %}
     {{ extra }}
 {% endcall %}
 {% endmacro %}
