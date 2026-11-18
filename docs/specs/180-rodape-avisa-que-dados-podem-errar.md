@@ -1,7 +1,7 @@
 ---
 id: 180
 titulo: O rodapé avisa que os dados podem conter erros
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_180.py
