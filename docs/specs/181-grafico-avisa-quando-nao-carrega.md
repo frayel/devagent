@@ -6,6 +6,7 @@ esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_181.py
 origem: O gráfico diz quando a CDN não carregou
+revisada: 2026-11-18
 ---
 
 ## Problema
@@ -36,11 +37,13 @@ Nenhuma nova. O aviso depende só de o navegador ter ou não carregado o arquivo
 Nenhum.
 
 ## Critérios de aceite
-- [ ] `tests/test_aceite_181.py`, com `exigir_spec_done("181")`, sem internet. Mesmo arranjo do `tests/test_aceite_173.py:180` e do `tests/test_heatmap_treemap.py:68` (Playwright, `CHROMIUM_PATH`, `aba.route("**/*", ...)`), com o HTML de `GET /` gerado pelo `TestClient` com uma série de pelo menos 2 pregões em `data.serie` (o fixture de série da home usado pelos testes da spec 145):
-  - **CDN bloqueada:** a rota serve `/static/graficos.js`, `/static/ui.js` e `/static/tema.css` lidos do disco e aborta `cdn.plot.ly`. Depois do `load`, `#grafico-ibovespa` contém o texto "Gráfico indisponível agora." e um `.grafico-indisponivel`, e nenhum erro de página (`aba.on("pageerror", ...)`) foi registrado;
-  - **Plotly presente:** a rota serve para `cdn.plot.ly` um stub `window.Plotly = {newPlot: (id) => { document.getElementById(id).dataset.desenhado = '1'; return Promise.resolve(); }}`. `#grafico-ibovespa` tem `data-desenhado="1"` e **não** contém "Gráfico indisponível";
-  - **newPlot rejeita:** stub com `newPlot: () => Promise.reject(new Error('x'))`. `#grafico-ibovespa` contém "Gráfico indisponível agora.";
+- [ ] `tests/test_aceite_181.py`, com `exigir_spec_done("181")`, sem internet. Arranjo do `_abrir_no_navegador` de `tests/test_aceite_156.py:244` (Playwright, `CHROMIUM_PATH`, `aba.route("**/*", ...)`, `aba.on("pageerror", ...)`), com o HTML de `GET /` gerado pelo `TestClient` com a série de 30 pregões dos helpers `relogio` e `_gravar` de `tests/test_aceite_145.py` (podem ser copiados para o teste novo). A rota responde `http://painel.teste/` com esse HTML **sem mudar as tags `<script>`**, serve `/static/graficos.js`, `/static/ui.js` e `/static/tema.css` lidos do disco e aborta todo o resto, inclusive `cdn.plot.ly`. A página é aberta com `aba.goto("http://painel.teste/")`, e o teste espera o `load` mais ~200 ms antes de ler o DOM.
+  - **CDN bloqueada:** sem stub. `#grafico-ibovespa` contém o texto "Gráfico indisponível agora." e um `.grafico-indisponivel`, e nenhum `pageerror` foi registrado;
+  - **Plotly presente:** antes do `goto`, `aba.add_init_script("window.Plotly = {newPlot: (id) => { document.getElementById(id).dataset.desenhado = '1'; return Promise.resolve(); }};")`. `#grafico-ibovespa` tem `data-desenhado="1"` e **não** contém "Gráfico indisponível";
+  - **newPlot rejeita:** `add_init_script` com `window.Plotly = {newPlot: () => Promise.reject(new Error('x'))};`. `#grafico-ibovespa` contém "Gráfico indisponível agora.";
   - nos três casos, `#grafico-ibovespa` mantém `role="img"` e o mesmo `aria-label` do HTML do servidor.
+
+  O stub entra por `add_init_script`, e não servido no lugar de `cdn.plot.ly`, porque o `<script>` da CDN tem `integrity` (specs 170 e 171): um corpo diferente do arquivo real é recusado pelo navegador, e o stub nunca rodaria. Com a CDN abortada, o `<script>` falha sem tocar no `window.Plotly` já definido pelo init script.
 - [ ] `tests/test_aceite_145.py`, `tests/test_aceite_170.py`, `tests/test_aceite_171.py`, `tests/test_aceite_172.py` e `tests/test_aceite_173.py` seguem verdes sem alteração (o `index.html` não muda).
 - [ ] `app/novidades.json` ganha uma entrada `melhoria` da 181 (exigência do `tests/test_aceite_156.py:232` para a gaveta experiência), por exemplo: "Quando o navegador não consegue carregar a biblioteca de gráficos, o gráfico do Ibovespa diz isso em vez de ficar em branco."
 - Arquivos tocados: `app/static/graficos.js`, `app/novidades.json` e o novo `tests/test_aceite_181.py`. Hoje `grep -rl "Painel.grafico\|graficos.js" app tests` dá `app/static/ui.js`, `app/templates/base.html` e quatro testes (`test_aceite_172.py`, `test_aceite_146.py`, `test_aceite_176.py`, `test_design.py`), que não precisam mudar: a assinatura de `Painel.grafico` e o carregamento dos scripts ficam iguais.
