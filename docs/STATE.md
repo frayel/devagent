@@ -18,6 +18,11 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 182 - O seletor da Maré mostra que está carregando:
+  - `app/static/ui.js`: o clique no seletor marca a opção (`aria-current`, `aria-busy`, `.carregando`) e o `.mare-corpo` (`aria-busy`) no mesmo quadro; `atualizando` só depois de `MARE_ESMAECER_MS` (150); `AbortController` para o clique mais novo vencer; `MARE_DESISTIR_MS` (8.000) ou erro recarregam pelo `href`.
+  - `app/static/tema.css`: anel `.mare-nivel a.carregando::after` (parado com movimento reduzido), esmaecimento nos filhos do `.mare-corpo` menos o seletor, e a classe `.so-leitor`.
+  - `app/templates/componentes.html`: `card_mare` põe `data-anuncio` no `.mare-corpo` e, com seletor, a região `aria-live` fora dele.
+  - Aceite em `tests/test_aceite_182.py`.
 - [Experiência] Spec 181 - O gráfico do Ibovespa avisa quando a biblioteca não carregou:
   - `app/static/graficos.js`: `Painel.grafico` confere `window.Plotly.newPlot` antes de desenhar; sem ele, ou com a promessa rejeitada (`.catch`), o contêiner recebe `.vazio.grafico-indisponivel` com "Gráfico indisponível agora." e a função não lança erro. Com a CDN no ar, nada muda.
   - `app/novidades.json`: entrada de 18/11.
