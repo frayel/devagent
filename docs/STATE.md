@@ -18,6 +18,10 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 181 - O gráfico do Ibovespa avisa quando a biblioteca não carregou:
+  - `app/static/graficos.js`: `Painel.grafico` confere `window.Plotly.newPlot` antes de desenhar; sem ele, ou com a promessa rejeitada (`.catch`), o contêiner recebe `.vazio.grafico-indisponivel` com "Gráfico indisponível agora." e a função não lança erro. Com a CDN no ar, nada muda.
+  - `app/novidades.json`: entrada de 18/11.
+  - Aceite em `tests/test_aceite_181.py`.
 - [Experiência] Spec 180 - O rodapé avisa que os dados podem conter erros:
   - `app/templates/base.html`: novo `<p class="aviso-dados">` logo depois do `<p class="aviso-legal">` (que não muda), em todas as páginas que estendem o `base.html`; o fragmento `/mare/card` não o traz. Estilo de `footer p`, sem regra nova.
   - `app/novidades.json`: entrada de 18/11.

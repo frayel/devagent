@@ -1,7 +1,7 @@
 ---
 id: 181
 titulo: O gráfico do Ibovespa avisa quando a biblioteca não carregou
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_181.py
