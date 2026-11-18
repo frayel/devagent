@@ -6,6 +6,7 @@ esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_183.py
 origem: Os sinais do sistema têm memória
+revisada: 2026-11-18
 ---
 
 ## Problema
@@ -23,7 +24,7 @@ Desde a spec 174a o sistema grava, uma vez por pregão, a leitura diária da Mar
    {
      "horizonte": 5,
      "de": "2025-11-18", "ate": "2026-11-10",
-     "faixa_hoje": "Neutro",
+     "faixa_hoje": "Medo",
      "todos": {"casos": 247, "media": 0.21, "positivos": 53},
      "faixas": [
        {"faixa": "Pânico", "casos": 4, "media": null, "positivos": null, "confianca": "poucos casos"},
@@ -32,11 +33,12 @@ Desde a spec 174a o sistema grava, uma vez por pregão, a leitura diária da Mar
      ]
    }
    ```
-   `faixas` traz as cinco faixas sempre, na ordem de `FAIXAS`, inclusive com `casos: 0`. `media` em %, duas casas; `positivos` em % inteiro. Sem `mare_historico` ou sem caso, `memoria` é `null` e o resto de `paineis.mare` não muda.
+   `faixas` traz as cinco faixas sempre, na ordem de `FAIXAS`, inclusive com `casos: 0`. `media` em %, duas casas; `positivos` em % inteiro. Sem `mare_historico` ou sem caso, `memoria` é `null` e o resto de `paineis.mare` não muda. A chave `memoria` está sempre presente, como `niveis`; por isso o `test_sem_historico_niveis_nulos_e_resto_da_mare_igual` de `tests/test_aceite_174a.py` (que hoje exige `set(resto) == {"fonte", "coletado_em"}` tirando só `niveis`) passa a tirar também `memoria` do `resto`, e só isso muda nele.
 4. **Na tela solo `/mare` (spec 173), abaixo do card**, um bloco *Depois de cada faixa*, **fora** do card e do fragmento `/mare/card` (o seletor Marolas, Ondas e Maré não o troca nem o recarrega). Ele tem:
    - uma frase sobre a faixa de hoje: *"Nos 38 pregões entre 18/11/2025 e 10/11/2026 em que a Maré fechou em Medo, o Ibovespa andou em média +0,62% nos 5 pregões seguintes e subiu em 58% deles. Em todos os 247: +0,21% e 53%."* Com a faixa de hoje em *poucos casos*: *"A Maré fechou em Pânico em só 4 pregões entre 18/11/2025 e 10/11/2026: poucos casos para dizer o que costuma vir depois."*;
    - uma tabela com as cinco faixas: **Faixa**, **Casos**, **Ibovespa 5 pregões depois** (média, com sinal e seta, números tabulares) e **Subiu em**; a linha da faixa de hoje marcada (texto "hoje", não só cor). Faixa em *poucos casos* mostra o número de casos e "poucos casos" no lugar dos outros dois números;
    - o método em uma linha recolhível, no padrão dos outros métodos da página: fonte (Yahoo, o `fonte` do snapshot), data da coleta (`coletado_em` do `mare_historico`), a conta, o grau de confiança e as três ressalvas de *Cálculos*.
+   A rota `pagina_mare` de `app/main.py` lê o `mare_historico` ela mesma para o bloco, em qualquer `?nivel=` (hoje `_card_mare_nivel` só o lê fora do Marolas), e a `faixa_hoje` vem da mesma view da Maré que o card usa (`get_mare_view()`).
    Com `memoria` `null`, o bloco mostra *"Memória em formação: o histórico ainda não tem o fechamento do Ibovespa de cada dia."* e nada mais. Os dados do bloco vêm do servidor; nenhum JavaScript novo.
 5. **A página inicial não muda.** O card da Maré da página inicial e o fragmento `/mare/card` ficam como estão (a primeira dobra da spec 176 não cresce).
 
@@ -76,7 +78,7 @@ Sobre `leituras` em ordem crescente de data, só as que têm `valor` e `ibov` (a
 ## Invariantes de produção
 - Quando `paineis.mare.memoria` não é `null`: `horizonte` = 5; `faixas` tem 5 itens, na ordem de `FAIXAS`; a soma dos `casos` das faixas é igual a `todos.casos`; `todos.casos` ≤ 247.
 - Em cada faixa com `casos` ≥ 10, `positivos` está entre 0 e 100 e `confianca` é `baixa` ou `moderada`; com `casos` < 10, `media` e `positivos` são `null`.
-- `memoria.ate` é anterior a `paineis.mare.niveis.mare.ate` (fica 5 pregões antes) e é dia útil da B3.
+- `memoria.ate` é anterior ao `ate` do `mare_historico` (o mesmo de `paineis.mare.niveis.ondas.ate`, quando `ondas` não é `null`; fica 5 leituras com `ibov` antes) e é dia útil da B3.
 - `memoria.faixa_hoje` é um dos cinco nomes de `FAIXAS`.
 
 ## Fora do escopo
