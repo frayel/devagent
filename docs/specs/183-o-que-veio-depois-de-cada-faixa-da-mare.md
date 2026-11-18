@@ -1,7 +1,7 @@
 ---
 id: 183
 titulo: O que o Ibovespa fez nos 5 pregões depois de cada faixa da Maré
-status: ready
+status: done
 esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_183.py

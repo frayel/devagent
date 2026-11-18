@@ -452,6 +452,8 @@ body:has(> main.tela-solo) {
 .tela-solo {
   flex: 1 0 auto;
   display: flex;
+  flex-direction: column;
+  gap: var(--e4);
   align-items: center;
   justify-content: center;
   padding: var(--e4);
@@ -461,6 +463,14 @@ body:has(> main.tela-solo) {
   max-width: 480px;
 }
 body:has(> main.tela-solo) > footer { margin-top: 0; }
+/* Depois de cada faixa (spec 183): tabela de 4 colunas que cabe em 360 px. */
+.mare-memoria-frase { margin: 0 0 var(--e3); color: var(--texto-2); }
+.mare-memoria-tabela th[scope="row"] { font-weight: 500; color: var(--texto); background: none; border: 0; padding: var(--e1) var(--e2); font-size: var(--fs-base); }
+.mare-memoria-tabela thead th { white-space: normal; }
+.mare-memoria-tabela td { white-space: nowrap; }
+.mare-memoria-hoje { background: var(--superficie-2); }
+.mare-memoria-hoje .selo { color: var(--destaque); border: 1px solid var(--borda); }
+.mare-memoria-poucos { color: var(--texto-3); font-size: var(--fs-meta); }
 .mare-componentes { display: grid; gap: var(--e2); }
 .comp { display: grid; grid-template-columns: 112px 1fr 28px; align-items: center; gap: var(--e2); font-size: var(--fs-meta); color: var(--texto-2); }
 .comp-peso { color: var(--texto-3); }
