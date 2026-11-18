@@ -1,6 +1,13 @@
 [
   {
     "data": "2026-11-18",
+    "tipo": "correcao",
+    "texto": "A Calma da Maré do mercado deixa de sumir depois de uma queda forte do mercado inteiro: um dia de mais de 12% no Ibovespa só fica fora da conta quando as ações da cesta não o acompanharam.",
+    "onde": {"pagina": "/mare", "pagina_nome": "Maré do mercado"},
+    "spec": "177"
+  },
+  {
+    "data": "2026-11-18",
     "tipo": "novidade",
     "texto": "O alto da Visão Geral ficou sem espaço vazio: o card do Ibovespa tem o tamanho do conteúdo, e Apetite aqui e Rotação ganharam um card próprio, ao lado do Clima Global.",
     "spec": "176"
