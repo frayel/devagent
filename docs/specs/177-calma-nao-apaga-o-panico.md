@@ -6,6 +6,7 @@ esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_177.py
 origem: nova
+revisada: 2026-11-18
 ---
 
 ## Problema
@@ -28,7 +29,7 @@ O efeito é o inverso do que o card promete. A Calma mede a agitação das queda
 2. **Sem confirmação possível, o comportamento de hoje.** Quando a cesta não cobre o pregão (amostra pequena, ou pregão anterior ao `range=3mo` da leitura do dia), o retorno de `|r| ≥ 0,12` continua descartado. Retornos abaixo de 12% não mudam.
 3. **O mesmo cálculo nos três níveis.** A regra vale dentro de `_Calculadora`, que serve à leitura do dia (Marolas), ao histórico longo (`app/collectors/mare_historico.py`, Ondas e Maré) e ao histórico de 21 pregões do coletor `mare`. Nenhuma fórmula nova de componente: só o filtro muda.
 4. **Constantes nomeadas** no topo de `app/services/mare.py`, com comentário que cita esta spec e o 26/10/2026: o limiar (`0,12`) e a fração de confirmação (`0,5`).
-5. **Método do card.** O parágrafo da Calma no botão `i` ganha uma frase: `Um dia de mais de 12% só fica de fora se as ações da cesta não acompanharam o movimento (erro provável da fonte).`
+5. **Método do card.** O texto do botão `i` é uma única string, no `painel("Maré do mercado", ...)` de `app/templates/componentes.html`. A frase entra logo depois de `então uma alta forte não reduz a calma.`: `Um dia de mais de 12% só fica de fora se as ações da cesta não acompanharam o movimento (erro provável da fonte).`
 
 ## Fontes de dados
 Nenhuma nova. A confirmação usa as séries da cesta que `_Calculadora` já recebe (`self.acoes`). Plano B: item 2.
@@ -36,7 +37,17 @@ Nenhuma nova. A confirmação usa as séries da cesta que `_Calculadora` já rec
 ## Cálculos
 - `r_t = ln(Ibov_t / Ibov_{t−1})`, como hoje.
 - Mediana da cesta no pregão `t`: mediana de `ln(fech_t / fech_ant)` das ações válidas da amostra (`self.acoes`, depois de `_acoes_validas`) que têm o pregão `t` e algum pregão anterior. `fech_ant` é o último fechamento antes de `t`, a mesma regra de `_variacoes`.
+- Alinhamento: `confirmacao[i]` é a mediana da cesta no pregão `self.dias_ibov[i]`; pregão do Ibovespa que não está em `self.sessoes`, ou com menos de `MINIMO_ACOES` ações com retorno, vale `None`. Com `amostra_ok` falso, toda a lista é `None` (item 2).
 - Sugestão de interface, para não quebrar quem chama: `volatilidades(fechamentos, confirmacao=None)`, em que `confirmacao` é uma lista alinhada com os fechamentos, com a mediana da cesta em cada pregão ou `None`. Sem o argumento, o comportamento é o atual (os testes de `tests/test_mare.py` que chamam `volatilidades(fech)` não mudam).
+
+**Exemplo de ponta a ponta (26/10/2026).** O Yahoo entrega o fechamento do `^BVSP` em pontos e o de cada ação em reais por ação (`chart.result[0].indicators.quote[0].close`).
+1. Ibovespa: 23/10 = 205.083 pontos, 26/10 = 176.608 pontos. `r = ln(176.608 / 205.083) = ln(0,86116) = −0,1495`. `|r| = 0,1495 ≥ 0,12`: candidato a descarte.
+2. Cesta: 30 ações válidas com o pregão de 26/10 (≥ 20, a amostra basta). A mediana dos retornos simples foi −14,9%; em log, a mediana é `ln(1 − 0,149) = −0,1613` (a mediana dos logs é o log da mediana, porque `ln` é crescente).
+3. Confirmação: mesmo sinal (as duas negativas) e `|−0,1613| = 0,1613 ≥ |r| / 2 = 0,0747`. O retorno de −0,1495 fica na janela.
+4. σ10 de 26/10: a janela tem os 10 retornos de 12/10 a 26/10; o −0,1495 domina a soma dos quadrados (`0,1495² = 0,02235`). Com os outros 9 retornos medidos, `σ10 = √(Σ min(r,0)² / 10) × √252 = 0,758` (anualizado, fração: 75,8% ao ano), contra 0,105 em 23/10.
+5. Calma: 0,758 é maior que todos os 252 σ10 anteriores, então o percentil é 100 e `Calma = 100 − 100 = 0` (Pânico), o número que o card mostra.
+
+Contraexemplo: com a mediana da cesta em −1% (`ln 0,99 = −0,0101`), `0,0101 < 0,0747`: o retorno é descartado e a Calma de 26/10 a 09/11 fica `None`, como hoje.
 
 **Efeito medido em 18/11** (dados do Yahoo de 18/11/2024 a 17/11/2026, protótipo da regra acima):
 
