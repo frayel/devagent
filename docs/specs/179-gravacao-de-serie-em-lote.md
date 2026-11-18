@@ -2,6 +2,7 @@
 id: 179
 titulo: A série diária é gravada em lote
 status: ready
+revisada: 2026-11-18
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_179.py
@@ -25,6 +26,7 @@ Nada muda no que o usuário vê, nem no conteúdo de `series_diarias`. Muda só 
 - A assinatura, o retorno (`None`), o `init_db()`, o `get_connection()` e o `conn.close()` no `finally` continuam iguais. Lista vazia continua retornando antes de abrir conexão.
 - **Barras com a mesma data na mesma chamada:** hoje a última vence (cada `INSERT` posterior atualiza o anterior). Com `executemany`, cada linha continua sendo um comando separado, então a última continua vencendo. O teste de aceite fixa isso.
 - **Barra sem `data`:** hoje vai `data_pregao = None` ao banco e o erro sobe para quem chamou (`save_historico_diario` engole). Continua igual: a spec não acrescenta filtro.
+- **Falha no meio da série:** hoje, no Postgres, um `execute` que falha interrompe o laço antes do `commit`, e a conexão devolvida ao pool desfaz o que já tinha ido; nada da série fica gravado. Com `executemany` é o mesmo: a exceção sobe antes do `commit`. Não se acrescenta `try` por barra.
 
 ## Fontes de dados
 Nenhuma fonte nova. Nenhuma dependência nova (`executemany` é do `psycopg` e do `sqlite3`, já usados).
@@ -44,7 +46,7 @@ Ganho esperado na renovação do `consultor_historico`: de ~38.000 chamadas a `e
 Em `tests/test_aceite_179.py`, com `exigir_spec_done("179")`, sem internet e só em diretório temporário:
 
 - [ ] **Uma chamada por série.** Com `app.banco.get_connection` trocado por uma conexão falsa (cursor que registra as chamadas, backend `"postgres"` e depois `"sqlite_efemero"`) e `init_db` neutralizado, `gravar_serie("PETR4", <3 barras do exemplo>)` faz exatamente 1 `executemany`, com 3 tuplas iguais às do exemplo (comparando os três primeiros campos; o quarto é o mesmo `agora` nas três), 0 `execute` com `INSERT`, e 1 `commit`. Vale para os dois backends.
-- [ ] **Mesmo conteúdo no banco.** Com SQLite real em diretório temporário (`BANCO_TIPO=sqlite`), a gravação do exemplo deixa 2 linhas para `PETR4`, e `ler_serie` devolve `close` 38.1 e 38.5 (a última barra repetida vence).
+- [ ] **Mesmo conteúdo no banco.** Com o SQLite real do fixture `setup_db` do `tests/conftest.py` (arquivo em `tmp_path`, sem `DATABASE_URL`, backend `"sqlite_efemero"`; `BANCO_TIPO` não é lido por `app/`), a gravação do exemplo deixa 2 linhas para `PETR4`, e `ler_serie` devolve `close` 38.1 e 38.5 (a última barra repetida vence).
 - [ ] **Lista vazia não abre conexão.** `gravar_serie("PETR4", [])` não chama `get_connection`.
 - [ ] Os testes existentes que usam `gravar_serie` (`test_aceite_086.py`, `test_aceite_108a.py`, `test_aceite_122.py`) passam sem mudar a expectativa.
 
