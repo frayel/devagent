@@ -2,6 +2,13 @@
   {
     "data": "2026-11-18",
     "tipo": "melhoria",
+    "texto": "Quando o navegador não consegue carregar a biblioteca de gráficos, o gráfico do Ibovespa diz isso em vez de ficar em branco.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Ibovespa hoje"},
+    "spec": "181"
+  },
+  {
+    "data": "2026-11-18",
+    "tipo": "melhoria",
     "texto": "O rodapé de todas as páginas avisa que os números vêm de fontes gratuitas e podem conter erros ou atrasos: confira na fonte antes de decidir.",
     "spec": "180"
   },
