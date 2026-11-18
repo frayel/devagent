@@ -78,14 +78,10 @@ from app.database import (
     get_latest_atrasadas_rally_data,
     get_latest_concentracao_data,
     get_latest_concentracao_vendedora_data,
-    get_latest_variacao_subita_data,
     get_latest_rotacao_capital_data,
-    get_latest_compradores_fundo_data,
-    get_latest_armadilha_abertura_data,
     get_latest_sobrevivencia_semanal_data,
     get_latest_mare_data,
     get_latest_radar_anomalias_spread_data,
-    get_latest_concentracao_ordens_data,
     get_latest_exaustao_tendencia_data,
     get_latest_exaustao_queda_data,
     get_latest_exaustao_alta_data,
@@ -1133,6 +1129,39 @@ def api_consultor(
     )
 
 
+# Radares que entram no /api/snapshot com o mesmo molde (spec 184): chave em
+# `paineis`, nome do getter em `app.database` e o que sai sem dado ("nd" para
+# `{"fonte": "nd", "coletado_em": agora}`, "lista" para `[]`). As formas sem
+# dado são parte do contrato publicado (`auditoria/README.md`) e não mudam.
+RADARES_MOLDE_UNICO: tuple[tuple[str, str, str], ...] = (
+    ("variacao_subita", "get_latest_variacao_subita_data", "nd"),
+    ("faca_caindo", "get_latest_faca_caindo_data", "nd"),
+    ("compradores_fundo", "get_latest_compradores_fundo_data", "nd"),
+    ("concentracao_ordens", "get_latest_concentracao_ordens_data", "nd"),
+    ("armadilha_abertura", "get_latest_armadilha_abertura_data", "nd"),
+    ("short_squeeze", "get_latest_radar_short_squeeze_data", "lista"),
+    ("radar_inflexao", "get_latest_radar_inflexao_data", "lista"),
+    ("radar_absorcao_cruzada", "get_latest_radar_absorcao_cruzada_data", "lista"),
+)
+
+
+def _painel_de_alertas(dado: Any, agora: datetime, sem_dado: str) -> Any:
+    """Painel de um radar de molde único; um objeto novo a cada chamada."""
+    if not dado:
+        if sem_dado == "lista":
+            return []
+        return {"fonte": "nd", "coletado_em": agora.isoformat()}
+    try:
+        alertas = json.loads(dado.alertas_json)
+    except Exception:
+        alertas = []
+    return {
+        "coletado_em": dado.timestamp.isoformat(),
+        "fonte": dado.fonte,
+        "alertas": alertas,
+    }
+
+
 @app.get("/api/snapshot")
 def snapshot(
     data_query: str | None = Query(default=None, alias="data"),
@@ -1548,22 +1577,10 @@ def snapshot(
                 "coletado_em": agora.isoformat(),
             }
 
-        variacao_subita_data = get_latest_variacao_subita_data()
-        if variacao_subita_data:
-            try:
-                alertas = json.loads(variacao_subita_data.alertas_json)
-            except Exception:
-                alertas = []
-            resp["paineis"]["variacao_subita"] = {
-                "coletado_em": variacao_subita_data.timestamp.isoformat(),
-                "fonte": variacao_subita_data.fonte,
-                "alertas": alertas,
-            }
-        else:
-            resp["paineis"]["variacao_subita"] = {
-                "fonte": "nd",
-                "coletado_em": agora.isoformat(),
-            }
+        for chave, nome_getter, sem_dado in RADARES_MOLDE_UNICO:
+            resp["paineis"][chave] = _painel_de_alertas(
+                getattr(app.database, nome_getter)(), agora, sem_dado
+            )
 
         rotacao_capital_data = get_latest_rotacao_capital_data()
         if rotacao_capital_data:
@@ -1582,85 +1599,13 @@ def snapshot(
                 "coletado_em": agora.isoformat(),
             }
 
-        from app.database import get_latest_faca_caindo_data
         from app.database import get_latest_volatilidade_silenciosa_data
 
-        faca_caindo_data = get_latest_faca_caindo_data()
-        if faca_caindo_data:
-            try:
-                alertas = json.loads(faca_caindo_data.alertas_json)
-            except Exception:
-                alertas = []
-            resp["paineis"]["faca_caindo"] = {
-                "coletado_em": faca_caindo_data.timestamp.isoformat(),
-                "fonte": faca_caindo_data.fonte,
-                "alertas": alertas,
-            }
-        else:
-            resp["paineis"]["faca_caindo"] = {
-                "fonte": "nd",
-                "coletado_em": agora.isoformat(),
-            }
-
-        compradores_fundo_data = get_latest_compradores_fundo_data()
-        if compradores_fundo_data:
-            try:
-                alertas = json.loads(compradores_fundo_data.alertas_json)
-            except Exception:
-                alertas = []
-            resp["paineis"]["compradores_fundo"] = {
-                "coletado_em": compradores_fundo_data.timestamp.isoformat(),
-                "fonte": compradores_fundo_data.fonte,
-                "alertas": alertas,
-            }
-        else:
-            resp["paineis"]["compradores_fundo"] = {
-                "fonte": "nd",
-                "coletado_em": agora.isoformat(),
-            }
-
-        concentracao_ordens_data = get_latest_concentracao_ordens_data()
-        if concentracao_ordens_data:
-            try:
-                alertas = json.loads(concentracao_ordens_data.alertas_json)
-            except Exception:
-                alertas = []
-            resp["paineis"]["concentracao_ordens"] = {
-                "fonte": concentracao_ordens_data.fonte,
-                "coletado_em": concentracao_ordens_data.timestamp.isoformat(),
-                "alertas": alertas,
-            }
-        else:
-            resp["paineis"]["concentracao_ordens"] = {
-                "fonte": "nd",
-                "coletado_em": agora.isoformat(),
-            }
-
-        armadilha_abertura_data = get_latest_armadilha_abertura_data()
-        if armadilha_abertura_data:
-            try:
-                alertas = json.loads(armadilha_abertura_data.alertas_json)
-            except Exception:
-                alertas = []
-            resp["paineis"]["armadilha_abertura"] = {
-                "coletado_em": armadilha_abertura_data.timestamp.isoformat(),
-                "fonte": armadilha_abertura_data.fonte,
-                "alertas": alertas,
-            }
-        else:
-            resp["paineis"]["armadilha_abertura"] = {
-                "fonte": "nd",
-                "coletado_em": agora.isoformat(),
-            }
-
         from app.database import (
-            get_latest_radar_inflexao_data,
             get_latest_anomalia_peso_data,
-            get_latest_radar_short_squeeze_data,
             get_latest_radar_congestionamento_data,
             get_latest_esforco_resultado_data,
             get_latest_radar_divergencia_volume_data,
-            get_latest_radar_absorcao_cruzada_data,
             get_latest_fator_peso_pesado_data,
             get_latest_liquidez_abertura_data,
             get_latest_falso_rompimento_data,
@@ -1679,21 +1624,7 @@ def snapshot(
 
         elif is_historical:
             resp["paineis"]["correlacao_di"] = None
-        radar_short_squeeze_data = get_latest_radar_short_squeeze_data()
         db_radar_congestionamento = get_latest_radar_congestionamento_data()
-        if radar_short_squeeze_data:
-            try:
-                alertas = json.loads(radar_short_squeeze_data.alertas_json)
-            except Exception:
-                alertas = []
-            resp["paineis"]["short_squeeze"] = {
-                "coletado_em": radar_short_squeeze_data.timestamp.isoformat(),
-                "fonte": radar_short_squeeze_data.fonte,
-                "alertas": alertas,
-            }
-        else:
-            resp["paineis"]["short_squeeze"] = []
-
         resp["paineis"]["radar_congestionamento"] = (
             [
                 {
@@ -1707,19 +1638,6 @@ def snapshot(
             else None
         )
 
-        radar_inflexao_data = get_latest_radar_inflexao_data()
-        if radar_inflexao_data:
-            try:
-                alertas = json.loads(radar_inflexao_data.alertas_json)
-            except Exception:
-                alertas = []
-            resp["paineis"]["radar_inflexao"] = {
-                "coletado_em": radar_inflexao_data.timestamp.isoformat(),
-                "fonte": radar_inflexao_data.fonte,
-                "alertas": alertas,
-            }
-        else:
-            resp["paineis"]["radar_inflexao"] = []
         esforco_resultado_data = get_latest_esforco_resultado_data()
         if esforco_resultado_data:
             try:
@@ -1750,7 +1668,6 @@ def snapshot(
         else:
             resp["paineis"]["falso_rompimento"] = []
 
-        radar_absorcao_cruzada_data = get_latest_radar_absorcao_cruzada_data()
         fator_peso_pesado_data = get_latest_fator_peso_pesado_data()
 
         if fator_peso_pesado_data:
@@ -1759,19 +1676,6 @@ def snapshot(
             resp["paineis"]["fator_peso_pesado"] = _fpp(fator_peso_pesado_data)
         elif is_historical:
             resp["paineis"]["fator_peso_pesado"] = None
-        if radar_absorcao_cruzada_data:
-            try:
-                alertas = json.loads(radar_absorcao_cruzada_data.alertas_json)
-            except Exception:
-                alertas = []
-            resp["paineis"]["radar_absorcao_cruzada"] = {
-                "coletado_em": radar_absorcao_cruzada_data.timestamp.isoformat(),
-                "fonte": radar_absorcao_cruzada_data.fonte,
-                "alertas": alertas,
-            }
-        else:
-            resp["paineis"]["radar_absorcao_cruzada"] = []
-
         liquidez_abertura_data = get_latest_liquidez_abertura_data()
         if liquidez_abertura_data:
             try:

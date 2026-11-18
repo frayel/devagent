@@ -18,6 +18,10 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Saúde técnica] Spec 184 - Os radares de molde único entram no /api/snapshot por um laço só:
+  - `app/main.py`: `RADARES_MOLDE_UNICO` (chave, getter em `app.database`, forma sem dado) e `_painel_de_alertas(dado, agora, sem_dado)`; dentro de `snapshot`, um laço preenche `variacao_subita`, `faca_caindo`, `compradores_fundo`, `concentracao_ordens`, `armadilha_abertura`, `short_squeeze`, `radar_inflexao` e `radar_absorcao_cruzada`, lendo o getter em `app.database` na hora da chamada. O JSON publicado não muda.
+  - `app/main.py`: de 2.448 para 2.352 linhas; `json.loads(` dentro de `snapshot`: de 40 para 32.
+  - Aceite em `tests/test_aceite_184.py`.
 - [Capacidade nova] Spec 183 - O que o Ibovespa fez nos 5 pregões depois de cada faixa da Maré:
   - `app/collectors/mare_historico.py`: cada leitura do `mare_historico` leva `ibov` (fechamento do Ibovespa no dia, `null` sem fechamento).
   - `app/services/mare.py`: `memoria(leituras, faixa_hoje, horizonte=5)` (por faixa e no total: `casos`, `media`, `positivos`, `confianca`) e `view_memoria` (frase, linhas da tabela e método do bloco).
