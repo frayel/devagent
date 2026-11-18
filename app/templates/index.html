@@ -64,43 +64,23 @@
         {% endif %}
         {% if data.mm21 or data.mm200 %}
         <div class="gauges espaco-topo">
-            <div>{{ gauge(data.mm21_dist_pct, "MM21 " ~ data.mm21 if data.mm21 else "MM21", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 21 pregões", escala=False) }}</div>
-            <div>{{ gauge(data.mm200_dist_pct, "MM200 " ~ data.mm200 if data.mm200 else "MM200", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 200 pregões", escala=False) }}</div>
+            {#- Spec 176: a escala fica junto de cada gauge, não numa linha solta abaixo dos dois. -#}
+            <div>{{ gauge(data.mm21_dist_pct, "MM21 " ~ data.mm21 if data.mm21 else "MM21", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 21 pregões", escala=False) }}<div class="g-escala num"><span>-10%</span><span>+10%</span></div></div>
+            <div>{{ gauge(data.mm200_dist_pct, "MM200 " ~ data.mm200 if data.mm200 else "MM200", -10.0, 10.0, "{:+.2f}%", divergente=True, resumo="Ibovespa contra a média de 200 pregões", escala=False) }}<div class="g-escala num"><span>-10%</span><span>+10%</span></div></div>
         </div>
-        <div class="g-escala num"><span>-10%</span><span>+10%</span></div>
         {% endif %}
     {% else %}
         {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
 
-{% call card_mare(mare_card, c_mare, is_historical, mare_seletor) %}
-    {% if apetite_risco or rotacao_capital %}
-    <div class="gauges-pequenos espaco-topo">
-        {% if apetite_risco %}
-        <div class="texto-centro">
-            {% set apetite_class = 'texto-alta' if apetite_risco.estado == 'Tomando risco' else 'texto-baixa' if apetite_risco.estado == 'Defensivo' else 'texto-neutro' %}
-            {% set apetite_valor = ('<span class="' | safe) ~ apetite_class ~ (' texto-medio">' | safe) ~ apetite_risco.estado ~ ('</span>' | safe) %}
-            {% set apetite_rotulo = 'Apetite aqui <span class="sub bloco">(SMLL − IBOV)</span>' | safe %}
-            {{ kpi(apetite_valor, apetite_rotulo, gauge(apetite_risco.diferenca, "SMLL − IBOV hoje", -2.0, 2.0, "{:+.2f} p.p.", divergente=True, resumo="Small caps menos Ibovespa hoje", escala=False), True) }}
-        </div>
-        {% endif %}
+{{ card_mare(mare_card, c_mare, is_historical, mare_seletor) }}
 
-        {% if rotacao_capital %}
-        <div class="texto-centro">
-            {% set rotacao_class = 'texto-alta' if rotacao_capital.estado == 'Para Bancos' or rotacao_capital.estado == 'Para Commodities' else 'texto-neutro' %}
-            {% set rotacao_valor = ('<span class="' | safe) ~ rotacao_class ~ (' texto-medio">' | safe) ~ rotacao_capital.estado ~ ('</span>' | safe) %}
-            {% set rotacao_rotulo = 'Rotação <span class="sub bloco">(Bancos - Cmdts)</span>' | safe %}
-            {{ kpi(rotacao_valor, rotacao_rotulo, gauge(rotacao_capital.diferenca, "bancos − commodities", -3.0, 3.0, "{:+.2f} p.p.", divergente=True, resumo="Variação de bancos menos commodities hoje", escala=["Para Commodities", "Para Bancos"]), True) }}
-        </div>
-        {% endif %}
-    </div>
-    {% endif %}
-
-{% endcall %}
-
-{% set clima_metodo = "S&P 500 futuro (ES=F) e VIX (^VIX), variação do último fechamento sobre o anterior. Tomando risco quando o VIX cai mais de 2% e o S&P sobe mais de 0,5%; Defensivo quando o VIX sobe mais de 3% e o S&P cai mais de 0,5%; Neutro no resto. O apetite lá fora e o apetite aqui (card Maré do mercado) são medidas diferentes e podem divergir." %}
-{% call painel("Clima Global", 6, clima_metodo, clima_global.fonte if clima_global else "", clima_global.timestamp.strftime('%d/%m/%Y %H:%M:%S BRT') if clima_global else "", "painel-clima-global visao-geral escondido" if not clima_global else "painel-clima-global visao-geral") %}
+{% set clima_metodo = "S&P 500 futuro (ES=F) e VIX (^VIX), variação do último fechamento sobre o anterior. Tomando risco quando o VIX cai mais de 2% e o S&P sobe mais de 0,5%; Defensivo quando o VIX sobe mais de 3% e o S&P cai mais de 0,5%; Neutro no resto. O apetite lá fora e o apetite aqui (card Apetite e rotação) são medidas diferentes e podem divergir." %}
+{#- Spec 176: a Maré ocupa duas linhas; abaixo do Ibovespa sobram 8 colunas para Clima Global
+    e Apetite e rotação. Sem um deles, o outro ocupa as 8 (como o Motores do Índice faz). -#}
+{% set clima_span = 4 if (apetite_risco or rotacao_capital) else 8 %}
+{% call painel("Clima Global", clima_span, clima_metodo, clima_global.fonte if clima_global else "", clima_global.timestamp.strftime('%d/%m/%Y %H:%M:%S BRT') if clima_global else "", "painel-clima-global visao-geral escondido" if not clima_global else "painel-clima-global visao-geral") %}
     {% if clima_global %}
         <div class="conteudo-centralizado">
             {% if clima_global.status == 'Apetite a Risco' %}
@@ -122,7 +102,44 @@
     {% endif %}
 {% endcall %}
 
-{% set motores_span = 6 if clima_global else 12 %}
+{#- Spec 176: Apetite aqui e Rotação num card próprio, ao lado do Clima Global
+    (o apetite lá fora). Saíram do card da Maré, que ditava a altura da primeira linha. -#}
+{% if apetite_risco or rotacao_capital %}
+{% set ar_metodo = "Apetite aqui: variação do dia do SMAL11 menos a do Ibovespa, em pontos percentuais. Tomando risco acima de +0,1 p.p., Defensivo abaixo de −0,1 p.p., Neutro no resto. Rotação: média da variação do dia de ITUB4, BBDC4 e BBAS3 menos a de VALE3, PETR4 e PRIO3. Para Bancos quando os bancos sobem mais de 0,5% e as commodities caem mais de 0,5%; Para Commodities no inverso; Neutra no resto. O apetite aqui e o lá fora (card Clima Global) são medidas diferentes e podem divergir." %}
+{% if apetite_risco %}
+    {% set ar_fonte, ar_horario = apetite_risco.fonte, apetite_risco.time %}
+    {% if rotacao_capital and rotacao_capital.fonte and rotacao_capital.fonte != apetite_risco.fonte %}
+        {% set ar_horario = ar_horario ~ " · Rotação: " ~ rotacao_capital.fonte ~ " · " ~ rotacao_capital.time %}
+    {% endif %}
+{% else %}
+    {% set ar_fonte, ar_horario = rotacao_capital.fonte, rotacao_capital.time %}
+{% endif %}
+{% call painel("Apetite e rotação", 4 if clima_global else 8, ar_metodo, ar_fonte, ar_horario, "painel-apetite-rotacao visao-macro visao-geral") %}
+    <div class="gauges-pequenos espaco-topo">
+        {% if apetite_risco %}
+        <div class="texto-centro">
+            {% set apetite_class = 'texto-alta' if apetite_risco.estado == 'Tomando risco' else 'texto-baixa' if apetite_risco.estado == 'Defensivo' else 'texto-neutro' %}
+            {% set apetite_valor = ('<span class="' | safe) ~ apetite_class ~ (' texto-medio">' | safe) ~ apetite_risco.estado ~ ('</span>' | safe) %}
+            {% set apetite_rotulo = 'Apetite aqui <span class="sub bloco">(SMLL − IBOV)</span>' | safe %}
+            {{ kpi(apetite_valor, apetite_rotulo, gauge(apetite_risco.diferenca, "SMLL − IBOV hoje", -2.0, 2.0, "{:+.2f} p.p.", divergente=True, resumo="Small caps menos Ibovespa hoje", escala=False), True) }}
+        </div>
+        {% endif %}
+
+        {% if rotacao_capital %}
+        <div class="texto-centro">
+            {% set rotacao_class = 'texto-alta' if rotacao_capital.estado == 'Para Bancos' or rotacao_capital.estado == 'Para Commodities' else 'texto-neutro' %}
+            {% set rotacao_valor = ('<span class="' | safe) ~ rotacao_class ~ (' texto-medio">' | safe) ~ rotacao_capital.estado ~ ('</span>' | safe) %}
+            {% set rotacao_rotulo = 'Rotação <span class="sub bloco">(Bancos - Cmdts)</span>' | safe %}
+            {{ kpi(rotacao_valor, rotacao_rotulo, gauge(rotacao_capital.diferenca, "bancos − commodities", -3.0, 3.0, "{:+.2f} p.p.", divergente=True, resumo="Variação de bancos menos commodities hoje", escala=["Para Commodities", "Para Bancos"]), True) }}
+        </div>
+        {% endif %}
+    </div>
+{% endcall %}
+{% endif %}
+
+{#- Spec 176: o Motores fazia par com o Clima Global (span-6); o Clima subiu para o lado da
+    Maré, e o Motores ocupa a linha inteira para Fator e Setorial seguirem lado a lado. -#}
+{% set motores_span = 12 %}
 {% call painel("Motores do Índice", motores_span, "Desempenho dos 3 principais grupos de ações que ditam o rumo do Ibovespa.", c_mot.get('fonte', ''), c_mot.get('rodape', ''), "painel-motores-indice visao-geral escondido" if not motores_cards and not motores_sem_carimbo else "painel-motores-indice visao-geral", c_mot.get('desatualizado', False)) %}
     {% if motores_cards %}
         <div class="motores-grid">

@@ -460,6 +460,14 @@ body:has(> main.tela-solo) > footer { margin-top: 0; }
 .mare-tempo { display: flex; justify-content: space-between; }
 .mare-variacao { margin: 0; color: var(--texto-2); overflow-wrap: anywhere; }
 
+/* Primeira dobra sem vazio (spec 176): o Ibovespa fica com a altura do conteúdo e a
+   Maré ocupa duas linhas, ao lado do Ibovespa e de Clima Global + Apetite e rotação.
+   Só na grade (a tela solo /mare não é grade) e só com mais de uma coluna. */
+.grade > .painel-ibovespa { align-self: start; }
+@media (min-width: 768px) {
+  .grade > .painel-mare { grid-row: span 2; }
+}
+
 /* Gráfico do Ibovespa: altura fixa (DESIGN.md, seção 5), sem salto de layout. */
 .painel-ibovespa .grafico { width: 100%; height: 200px; }
 /* Legenda da janela do gráfico (spec 145): o desenho é dos pregões, não do dia. */

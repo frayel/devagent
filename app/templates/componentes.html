@@ -132,8 +132,8 @@
 {#- Card da Maré do mercado (spec 173): uma fonte só para o painel geral e para /mare.
     carimbo é o {rodape, desatualizado} da spec 141 (None vira {}); historico escolhe o estado vazio.
     seletor (spec 174b) são as opções Marolas, Ondas e Maré; o conteúdo trocado pelo
-    ui.js é o .mare-corpo, então o bloco opcional por `call` (gauges de Apetite e
-    Rotação no painel geral) fica fora dele e não some na troca. -#}
+    ui.js é o .mare-corpo, então um bloco opcional passado por `call` fica fora dele
+    e não some na troca. -#}
 {% macro card_mare(mare, carimbo=None, historico=False, seletor=None) %}
 {%- set extra = caller() if caller is defined else '' -%}
 {%- set c_mare = carimbo or {} -%}
