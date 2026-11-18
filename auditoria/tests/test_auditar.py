@@ -254,3 +254,27 @@ def test_mare_incoerente_falha(mudanca):
 def test_mare_sem_chave_falha_e_vazia_avisa():
     assert checar_mare({"paineis": {}})[0].status == FALHA
     assert checar_mare({"paineis": {"mare": {}}})[0].status != FALHA
+
+
+def test_rodape_com_pregao_depois_do_brt_passa():
+    # Produção em 18/11/2026: o carimbo escreve o pregão depois do horário
+    # quando a coleta é de outro dia, e a checagem antiga exigia BRT no fim.
+    from auditoria.auditar import rodapes_sem_fuso
+
+    html = (
+        '<div class="rodape">Fonte mt5 · 18/11/2026 10:27 BRT · pregão 17/11/2026</div>'
+        '<div class="rodape">Fonte BCB · 18/11/2026 09:00 BRT</div>'
+    )
+    assert rodapes_sem_fuso(html) == []
+
+
+def test_rodape_sem_brt_reprova():
+    from auditoria.auditar import rodapes_sem_fuso
+
+    html = (
+        '<div class="rodape">Fonte mt5 · 18/11/2026 10:27 · pregão 17/11/2026</div>'
+        '<div class="rodape">Fonte BCB · 18/11/2026 09:00 BRT</div>'
+    )
+    assert rodapes_sem_fuso(html) == [
+        "Fonte mt5 · 18/11/2026 10:27 · pregão 17/11/2026"
+    ]
