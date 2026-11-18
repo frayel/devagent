@@ -875,6 +875,14 @@ def checar_clima_global(snapshot: dict) -> list[Resultado]:
     return r
 
 
+def rodapes_sem_fuso(html: str) -> list[str]:
+    """Rodapés com fonte que não dizem o fuso (BRT) em lugar nenhum do texto."""
+    import re
+
+    rodapes = re.findall(r'<div class="rodape">\s*(Fonte[^<]*)</div>', html)
+    return [r for r in rodapes if "BRT" not in r]
+
+
 def auditar(
     url: str,
     agora: datetime | None = None,
@@ -920,14 +928,17 @@ def auditar(
             )
         )
 
-    # Nova checagem do fuso horário
-    if re.search(r'<div class="rodape">\s*Fonte[^<]+(?<!BRT)</div>', html):
+    # Fuso horário: todo rodapé com fonte diz BRT em algum ponto. Depois do
+    # horário pode vir "· pregão dd/mm/aaaa" (carimbo.py), então exigir BRT
+    # no fim do texto reprovava um rodapé correto.
+    sem_fuso = rodapes_sem_fuso(html)
+    if sem_fuso:
         r.append(
             Resultado(
                 "app.rodape_sem_fuso",
                 FALHA,
                 "Existem rodapés sem a indicação explícita do fuso horário BRT",
-                "Encontrado rodapé sem BRT no HTML",
+                f"{len(sem_fuso)} rodapé(s) sem BRT; primeiro: {sem_fuso[0]!r}",
             )
         )
     else:
