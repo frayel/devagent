@@ -26,19 +26,21 @@ jobs:
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.name == 'CI' &&
       github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'failure'
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
+      # O nome da branch vem do autor do PR: passa por variável de ambiente,
+      # nunca interpolado no script (injeção de comando).
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >-
-          python3 -m devagent.guardiao_prs
-          --ci-falhou "${{ github.event.workflow_run.head_branch }}"
-          --run-id "${{ github.event.workflow_run.id }}"
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: python3 -m devagent.guardiao_prs --ci-falhou "$BRANCH" --run-id "$RUN_ID"
 
   varredura:
     if: >-

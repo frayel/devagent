@@ -298,6 +298,7 @@ def test_estado_github_conta_o_pr_marcado_como_do_agente() -> None:
     pr = {
         "title": "feat: x",
         "user": {"login": "frayel"},
+        "author_association": "OWNER",
         "body": "<!-- devagent:raia:desenvolvimento -->",
     }
     assert estado_github.eh_do_agente(pr)

@@ -115,6 +115,17 @@ def workflows_do_repositorio(raiz: Path = RAIZ) -> list[dict[str, Any]]:
 # --------------------------------------------------------------------------
 
 
+# O repositório é público: issue ou PR de estranho não entra na página de saúde,
+# que o agente lê no primeiro comando de cada sessão (devagent/confianca.py).
+_ASSOCIACOES_CONFIAVEIS = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
+
+
+def _de_quem_manda(item: dict[str, Any]) -> bool:
+    if str(item.get("author_association") or "").upper() in _ASSOCIACOES_CONFIAVEIS:
+        return True
+    return (item.get("user") or {}).get("type") == "Bot"
+
+
 def _get_github(client: httpx.Client, caminho: str) -> Any:
     _enforce_rate_limit("api.github.com")
     headers = {
@@ -188,6 +199,7 @@ def ler_github(client: httpx.Client) -> dict[str, Any]:
             "rascunho": p.get("draft", False),
         }
         for p in _get_github(client, f"/repos/{repo}/pulls?state=open&per_page=50")
+        if _de_quem_manda(p)
     ]
     issues = [
         {
@@ -198,7 +210,7 @@ def ler_github(client: httpx.Client) -> dict[str, Any]:
             "labels": [lb["name"] for lb in i.get("labels", [])],
         }
         for i in _get_github(client, f"/repos/{repo}/issues?state=open&per_page=100")
-        if "pull_request" not in i
+        if "pull_request" not in i and _de_quem_manda(i)
     ]
     head = _get_github(client, f"/repos/{repo}/commits/main")
     main = {
