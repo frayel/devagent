@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -28,6 +29,10 @@ BACKLOG_SEM_CORRECAO = """# Backlog
 
 - ideia qualquer
 """
+
+
+# Relatório com o nome que as regras 9 e 11 aceitam: a hora UTC de agora.
+RELATORIO = f"docs/runs/{datetime.now(timezone.utc):%Y-%m-%d-%H%M}.md"
 
 
 def spec(numero: int, status: str) -> str:
@@ -191,24 +196,16 @@ def test_pr_com_alteracao_passa_mesmo_exigindo(repo: Path) -> None:
 
 def test_pr_so_de_registro_reprova(repo: Path, monkeypatch) -> None:
     monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
-    escrever(repo, {".jules/sentinel.md": "# Diário\n- nada a fazer\n"})
-    escrever(repo, {"docs/runs/2026-10-18-x.md": "# Relatório\n"})
-    falhas = conferir(repo, "base", exigir_alteracao=True).falhas
-    assert any("registros da execução" in f for f in falhas)
-
-
-def test_pr_so_de_registro_agents_reprova(repo: Path, monkeypatch) -> None:
-    monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
-    escrever(repo, {".agents/sentinel.md": "# Diário\n- nada a fazer\n"})
-    escrever(repo, {"docs/runs/2026-10-18-x.md": "# Relatório\n"})
+    escrever(repo, {"docs/diarios/sentinel.md": "# Diário\n- nada a fazer\n"})
+    escrever(repo, {RELATORIO: "# Relatório\n"})
     falhas = conferir(repo, "base", exigir_alteracao=True).falhas
     assert any("registros da execução" in f for f in falhas)
 
 
 def test_registro_junto_com_entrega_passa(repo: Path) -> None:
     fechar(repo)
-    escrever(repo, {".jules/sentinel.md": "# Diário\n- nada a fazer\n"})
-    escrever(repo, {"docs/runs/2026-10-18-x.md": "# Relatório\n"})
+    escrever(repo, {"docs/diarios/sentinel.md": "# Diário\n- nada a fazer\n"})
+    escrever(repo, {RELATORIO: "# Relatório\n"})
     assert conferir(repo, "base", exigir_alteracao=True).falhas == []
 
 
@@ -218,13 +215,13 @@ def test_registro_que_fecha_issue_passa(
     evento = tmp_path_factory.mktemp("evento") / "evento.json"
     evento.write_text('{"pull_request": {"body": "Duplicada.\\n\\nCloses #12"}}')
     monkeypatch.setenv("GITHUB_EVENT_PATH", str(evento))
-    escrever(repo, {"docs/runs/2026-10-18-x.md": "# Relatório\n"})
+    escrever(repo, {RELATORIO: "# Relatório\n"})
     assert conferir(repo, "base", exigir_alteracao=True).falhas == []
 
 
 def test_registro_so_reprova_quando_exigido(repo: Path, monkeypatch) -> None:
     monkeypatch.delenv("GITHUB_EVENT_NAME", raising=False)
-    escrever(repo, {"docs/runs/2026-10-18-x.md": "# Relatório\n"})
+    escrever(repo, {RELATORIO: "# Relatório\n"})
     assert conferir(repo, "base").falhas == []
 
 
@@ -249,3 +246,45 @@ def test_nome_do_relatorio_e_a_hora_utc_em_que_foi_escrito() -> None:
         "docs/verificacao/relatorios/2026-11-14-2150.md", escrito
     )
     assert hora_do_relatorio_errada("docs/runs/notas-soltas.md", escrito) == ""
+
+
+# Regra 11 (19/11): repositório enxuto. Havia 42 relatórios com nome fora do
+# padrão, sobras de sessão na raiz e os diários em duas pastas idênticas.
+def test_enxuto_reprova_relatorio_fora_do_padrao() -> None:
+    from devagent.conferir_pr import Resultado, conferir_enxuto
+
+    res = Resultado()
+    conferir_enxuto(
+        res,
+        [
+            "docs/runs/2026-11-19-1249.md",
+            "docs/runs/108a_run.md",
+            "docs/verificacao/relatorios/relatorio.md",
+            "docs/verificacao/achados/qualquer-nome.md",
+        ],
+        {},
+    )
+    assert len(res.falhas) == 2
+    assert "108a_run.md" in res.falhas[0]
+
+
+def test_enxuto_reprova_pasta_aposentada_e_raiz_fora_da_lista() -> None:
+    from devagent.conferir_pr import Resultado, conferir_enxuto
+
+    res = Resultado()
+    conferir_enxuto(
+        res,
+        ["README.md", "plan.md", ".jules/bolt.md", "app/main.py"],
+        {"raiz": ["README.md"], "pastas_proibidas": [".jules/"]},
+    )
+    assert len(res.falhas) == 2
+    assert any(".jules/bolt.md" in f for f in res.falhas)
+    assert any("plan.md" in f for f in res.falhas)
+
+
+def test_enxuto_sem_secao_nao_confere_a_raiz() -> None:
+    from devagent.conferir_pr import Resultado, conferir_enxuto
+
+    res = Resultado()
+    conferir_enxuto(res, ["plan.md", "notas.txt"], {})
+    assert res.falhas == []

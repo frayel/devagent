@@ -54,3 +54,22 @@ revisao_obrigatoria_desde = "084"
 # A partir desta spec, spec nova de PR `spec:` declara `origem:` e o item da
 # Fila do backlog de onde veio sai no mesmo PR (regra 10 do devagent/conferir_pr.py).
 origem_obrigatoria_desde = "161"
+
+[enxuto]
+# Regra 11 do devagent/conferir_pr.py: só estes arquivos ficam na raiz. Arquivo
+# novo na raiz entra aqui, no mesmo PR, com o motivo; sobra de sessão sai.
+raiz = [
+  ".gitignore",
+  "AGENTS.md",        # porta de entrada dos agentes
+  "CHANGELOG.md",
+  "Makefile",         # contrato de verificação (make verify, smoke, audit)
+  "PRODUTO.md",       # o que o agente constrói
+  "README.md",
+  "devagent.toml",    # liga o núcleo ao projeto
+  "pyproject.toml",   # configuração do pytest e do mypy
+  "render.yaml",      # deploy no Render
+  "requirements-dev.txt",
+  "requirements.txt",
+]
+# Pastas aposentadas: os diários dos especialistas foram para docs/diarios/.
+pastas_proibidas = [".jules/", ".agents/"]

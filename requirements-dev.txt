@@ -9,3 +9,5 @@ respx
 # Capturas da interface (make telas). Só desenvolvimento.
 playwright
 pytest-asyncio
+# Código morto (tests/test_enxuto.py): função ou classe sem uso reprova o CI.
+vulture==2.16

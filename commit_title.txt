@@ -1,1 +1,0 @@
-fix: evitar que erro em um coletor interrompa a coleta inteira

@@ -61,6 +61,15 @@ Regras (mantenha em sincronia com devagent/CICLO.md, Passos 1 e 4):
        (`spec NNN`). Em 15/11 o backlog tinha 318 linhas, boa parte já
        entregue, porque nada tirava a ideia que virava spec.
 
+   11. O repositório fica enxuto, olhando a árvore inteira: todo arquivo de
+       `docs/runs/` e `docs/verificacao/relatorios/` se chama
+       AAAA-MM-DD-HHMM.md (nome fora do padrão escapava da regra 9: em 19/11
+       havia 42 assim, e 87 com a hora errada); nada versionado nas
+       `pastas_proibidas` e, se a seção [enxuto] do devagent.toml lista a
+       `raiz`, nenhum arquivo na raiz fora dela. Em 19/11 a raiz tinha
+       sobras de sessões (`plan.md`, `commit_desc.txt`) e os diários
+       existiam em duas cópias idênticas (`.jules/` e `.agents/`).
+
 Uma regra nunca é afrouxada no mesmo PR que corrige o que ela aponta
 (README do núcleo, separação de poderes).
 """
@@ -73,6 +82,7 @@ import os
 import re
 import subprocess
 import sys
+from typing import Any
 from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -107,7 +117,7 @@ PADRAO_DOCUMENTOS = {
     "teto_fila": 25,
 }
 # Prefixos de caminho que só registram a execução (relatório, diário).
-PADRAO_REGISTROS = ("docs/runs/", ".jules/", ".agents/")
+PADRAO_REGISTROS = ("docs/runs/", "docs/diarios/")
 FECHA_ISSUE = re.compile(r"\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\s+#\d+", re.I)
 
 STATUS = re.compile(r"^status:\s*([\w-]+)\s*$", re.MULTILINE)
@@ -346,6 +356,38 @@ def hora_do_relatorio_errada(rel: str, quando: datetime) -> str:
     )
 
 
+def conferir_enxuto(
+    res: Resultado, arquivos: list[str], enxuto: dict[str, Any]
+) -> None:
+    """Regra 11: relatório com nome de hora UTC, nada em pasta proibida, raiz listada."""
+    for rel in arquivos:
+        if rel.startswith(PASTAS_DE_RELATORIO) and not NOME_DE_RELATORIO.fullmatch(
+            rel.rsplit("/", 1)[-1]
+        ):
+            res.falha(
+                f"{rel}: relatório se chama AAAA-MM-DD-HHMM.md, com a hora UTC em "
+                "que foi escrito (`date -u +%Y-%m-%d-%H%M`). Renomeie (regra 11)."
+            )
+    proibidas = tuple(enxuto.get("pastas_proibidas", ()))
+    for rel in arquivos:
+        if proibidas and rel.startswith(proibidas):
+            res.falha(
+                f"{rel} está numa pasta que o projeto aposentou ({', '.join(proibidas)}). "
+                "Use o lugar que o devagent.toml e o CICLO.md indicam (regra 11)."
+            )
+    raiz_permitida = enxuto.get("raiz")
+    if raiz_permitida is None:
+        return
+    permitidos = set(raiz_permitida)
+    for rel in arquivos:
+        if "/" not in rel and rel not in permitidos:
+            res.falha(
+                f"{rel} na raiz não está na lista [enxuto] raiz do devagent.toml. "
+                "Sobra de sessão sai do PR; arquivo que precisa ficar na raiz "
+                "entra na lista, no mesmo PR, com o motivo (regra 11)."
+            )
+
+
 def arquivos_versionados(raiz: Path) -> list[str]:
     saida = git("ls-files", "--cached", "--others", "--exclude-standard", raiz=raiz)
     return [linha for linha in (saida or "").splitlines() if linha]
@@ -399,6 +441,9 @@ def conferir(
                 f"{caminho} parece teste ou script de exploração fora de `tests/`. "
                 "Mova para `tests/` ou apague do PR."
             )
+
+    # Regra 11: árvore enxuta.
+    conferir_enxuto(res, arquivos_versionados(raiz), CONFIG.get("enxuto", {}))
 
     mb = resolver_base(raiz, base)
     if mb is None:

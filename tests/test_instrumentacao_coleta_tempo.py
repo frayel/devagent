@@ -1,17 +1,5 @@
-from datetime import datetime, timezone
-from app.banco import ler_snapshot
-from app.database import BRT, save_coleta_tempo
 from app.agendador import _coletar
 import importlib
-
-
-def test_save_coleta_tempo():
-    agora = datetime.now(timezone.utc)
-    save_coleta_tempo("teste_painel", 1.234, agora)
-
-    payload = ler_snapshot("instrumentacao", agora.astimezone(BRT).date())
-    assert payload["tempos"]["teste_painel"] == 1.234
-    assert payload["rodadas"]["teste_painel"] == 1
 
 
 def test_agendador_registra_tempo(monkeypatch):

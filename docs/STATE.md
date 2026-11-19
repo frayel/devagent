@@ -212,7 +212,7 @@ Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres 
   - Removidos `devagent/adaptadores/jules.py`, `.github/workflows/jules.yml` e `.github/workflows/auditoria-llm.yml`; o CI não lê mais `JULES_API_KEY`.
   - A regra 8 do `conferir_pr` confere a raia do título contra o marcador `<!-- devagent:raia:<nome> -->` do corpo, sem consulta externa; saiu o caminho pela sessão do Jules (`raia_da_sessao`, `TAREFA_NO_CORPO`).
   - O alvo do Verificador (`python -m devagent.papel verificador`) lista os PRs da raia de desenvolvimento pela API do GitHub, com as regras da spec 139 (`merges_do_desenvolvimento`, `sensor_do_pr`, `lista_do_verificador` em `devagent/papel.py`).
-  - O guardião cobra `@antigravity` e descreve os PRs como do agente; `google-labs-jules` saiu de `AUTORES_CONHECIDOS`. A pasta `.jules/` continua aceita como registro (diários antigos ainda estão no repositório).
+  - O guardião cobra `@antigravity` e descreve os PRs como do agente; `google-labs-jules` saiu de `AUTORES_CONHECIDOS`. Os diários dos especialistas ficam em `docs/diarios/` (19/11: `.jules/` e `.agents/` eram cópias idênticas e foram mesclados).
 - [Experiência] Spec 149 - A grade não deixa célula vazia entre os painéis macro:
   - `app/templates/index.html`: Fator Peso Pesado e Concentração Setorial em `span-6` cada (fecham em 12 e em 6 colunas); sem a Concentração, o Fator ocupa a linha (`fator_span`, como o `motores_span`). Removido o `<div class="span-4">` que envolvia a Anomalias de Spread: era filho direto da grade, ficava vazio na visão geral e deixava 8 colunas sobrando no fim.
   - Testes de aceite em `tests/test_aceite_149.py` (empacotador de 12 e 6 colunas sobre o HTML renderizado, com e sem a Concentração Setorial).
@@ -339,7 +339,7 @@ Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres 
   - Fuso horário BRT corrigido em consultas de instrumentação de coletas.
 - Migração para Antigravity Remote e modelo híbrido (ADR 032):
   - Validação de raias no CI via marcador HTML no corpo do PR (`<!-- devagent:raia:<nome> -->`), sem chamadas de rede à API externa do Jules.
-  - Pasta `.agents/` para diários dos especialistas (com fallback retrocompatível a `.jules/`).
+  - Diários dos especialistas em `docs/diarios/`.
   - Reconhecimento dos logins do Antigravity no guardião de PRs e conferência de disciplina.
   - Removido schedule de cron do GitHub Actions (`jules.yml` e `auditoria-llm.yml`).
   - Criada skill `/ciclo` para execução autônoma; desde 15/11 em `.claude/skills/ciclo/SKILL.md`, ao lado de `/revisor`, `/especificador` e `/verificador`.
