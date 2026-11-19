@@ -189,7 +189,10 @@ def main() -> int:
             "Só a sessão da raia mexe no PR dela."
         )
         for p in raias:
-            print(f"  #{p['numero']} [{p['raia']}] {p['titulo']} · CI: {p['ci']}")
+            herdada = " (falha herdada da main)" if papeis.falha_herdada(p) else ""
+            print(
+                f"  #{p['numero']} [{p['raia']}] {p['titulo']} · CI: {p['ci']}{herdada}"
+            )
     humanos = [p for p in estado["prs"] if p["humano"]]
     if humanos:
         print(f"\nPRs de pessoas (não são do agente; não mexa neles): {len(humanos)}")
