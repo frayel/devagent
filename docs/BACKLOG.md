@@ -1,6 +1,6 @@
 # Backlog
 
-Uma lista só, em ordem de prioridade. Consolidada em 15/11/2026 a partir de 318 linhas espalhadas por 52 seções de ideias e uma tabela de features; o mapa do que saiu e por quê está em `docs/runs/2026-11-15-backlog-consolidado.md`.
+Uma lista só, em ordem de prioridade. Consolidada em 15/11/2026 a partir de 318 linhas espalhadas por 52 seções de ideias e uma tabela de features; o mapa do que saiu e por quê está em `docs/runs/2026-11-15-2056.md`.
 
 **Regras deste arquivo** (Passo 7 do `devagent/CICLO.md`):
 

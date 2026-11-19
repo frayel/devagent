@@ -1,0 +1,9 @@
+# Configuração das ferramentas de desenvolvimento (antes em mypy.ini e pytest.ini).
+# As dependências ficam em requirements*.txt; este arquivo não empacota nada.
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+markers = ["rede: mark a test as requiring network access."]
+
+[tool.mypy]
+ignore_missing_imports = true

@@ -89,21 +89,3 @@ def ultimo_pregao_fechado(agora: datetime) -> date:
         return d
     # Caso contrário, é o pregão anterior
     return pregao_anterior(d)
-
-
-def proximos_pregoes(agora: datetime, n: int) -> list[date]:
-    local = agora.astimezone(BRT)
-    d = local.date()
-    # If today is pregao and it hasn't ended yet, today is the first next pregao.
-    # Otherwise we start looking from tomorrow.
-    if e_pregao(d) and local.time() <= FIM_DA_JANELA:
-        pass
-    else:
-        d += timedelta(days=1)
-
-    result: list[date] = []
-    while len(result) < n:
-        if e_pregao(d):
-            result.append(d)
-        d += timedelta(days=1)
-    return result

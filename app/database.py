@@ -456,18 +456,6 @@ def save_fator_mola_data(data: FatorMolaData) -> None:
     gravar_snapshot("fator_mola", data.timestamp.date(), "ao_vivo", data.fonte, payload)
 
 
-def get_latest_fator_mola_data() -> FatorMolaData | None:
-    from app.banco import ler_snapshot
-
-    payload = ler_snapshot("fator_mola")
-    if not payload:
-        return None
-    payload_copy = dict(payload)
-    if isinstance(payload_copy.get("timestamp"), str):
-        payload_copy["timestamp"] = datetime.fromisoformat(payload_copy["timestamp"])
-    return FatorMolaData(**payload_copy)
-
-
 def save_scanner_capitulacao_data(data: ScannerCapitulacaoData) -> None:
     from app.banco import gravar_snapshot
 
@@ -1364,25 +1352,6 @@ def gravar_instrumentacao_rodada(
         }
 
     gravar_snapshot("instrumentacao", hoje, "ao_vivo", "sistema", payload)
-
-
-def save_coleta_tempo(painel: str, duracao: float, timestamp: datetime) -> None:
-    gravar_instrumentacao_rodada({painel: duracao}, [], timestamp)
-
-
-def save_coleta_vazia(painel: str, timestamp: datetime) -> None:
-    gravar_instrumentacao_rodada({}, [painel], timestamp)
-
-
-def get_coletas_vazias_count(painel: str) -> int:
-    from app.banco import ler_snapshot
-    from datetime import datetime as dt
-
-    hoje = dt.now(timezone.utc).astimezone(BRT).date()
-    payload = ler_snapshot("instrumentacao", hoje)
-    if payload and "vazias" in payload:
-        return payload["vazias"].get(painel, 0)
-    return 0
 
 
 def _somar_por_hora(

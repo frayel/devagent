@@ -66,8 +66,8 @@ docs/
   skills/              # procedimentos que só fazem sentido neste produto
   auditoria/           # relatórios, achados e diário do auditor (escritos só por ele)
   verificacao/         # achados, relatórios e diário do Verificador (raia de verificação)
+  diarios/             # diários dos especialistas Sentinel, Palette e Bolt
 auditoria/             # checagens de produção deste produto (PROTEGIDO)
-.agents/               # diários dos especialistas (compatível com o legado .jules/)
 .claude/skills/         # porta de entrada de cada tarefa agendada: /ciclo, /revisor, /especificador, /verificador
 ```
 
@@ -109,7 +109,7 @@ O Passo 5 não é refúgio. De 13/11 a 14/11, com oito specs esperando uma raia 
 Toda execução só termina bem com uma entrega concreta: um PR que muda o produto, as specs, o backlog ou o próprio agente. Por isso:
 
 - **Um passo que se aplica mas não gera mudança não encerra a execução.** As verificações do Passo 1 passaram, a publicação do Passo 3 já estava em dia, a issue escolhida já tem spec: escreva uma linha no relatório e siga para o próximo passo da lista, nesta mesma sessão.
-- **Nunca abra PR só com o relatório em `docs/runs/` ou só com um diário de `.agents/` (ou `.jules/`).** O relatório vai no PR da entrega. O job `disciplina` reprova PR só de registro (regra 6 do `conferir_pr`), salvo quando o corpo fecha issues (`Closes #N`), como no Passo 6.
+- **Nunca abra PR só com o relatório em `docs/runs/` ou só com um diário de `docs/diarios/`.** O relatório vai no PR da entrega. O job `disciplina` reprova PR só de registro (regra 6 do `conferir_pr`), salvo quando o corpo fecha issues (`Closes #N`), como no Passo 6.
 - **As exceções são as paradas obrigatórias:** existe PR da raia de desenvolvimento aberto (Passo 2, onde só se mexe nele), você ficou bloqueado (seção 6), a fila está travada com o bloqueio já registrado (*Fila travada*) ou chegou ao Passo 7, que é da raia de especificação. Nelas a execução termina sem PR novo.
 
 O modelo de operação é híbrido (ADR 032): automações agendadas a cada 2h mantêm o batimento e a manutenção do projeto, enquanto execuções sob demanda (`/goal`) aceleram lotes de trabalho. Uma sessão que termina com entrega permite à próxima rodada partir do novo estado da `main`.
@@ -326,6 +326,7 @@ O índice do projeto está no `PRODUTO.md`. Ao criar um arquivo novo em `devagen
 - Toda execução termina com a *Retrospectiva* do relatório. É assim que o agente aprende entre execuções que não compartilham memória.
 - Quando um problema se repetir, transforme a solução em skill. Quando descobrir um fato durável sobre o domínio, uma fonte ou a operação, registre-o em `docs/context/`.
 - Prefira editar e condensar a acrescentar. Um arquivo curto e verdadeiro vale mais que um longo e contraditório.
+- O repositório fica enxuto. Código que perdeu o último uso sai no mesmo PR, com os testes que só o exercitavam; script novo só entra com quem o chame (Makefile ou workflow); nada de rascunho de sessão na raiz (`plan.md`, `commit_*.txt`). A regra 11 do `conferir_pr` (raiz listada em `[enxuto]` do `devagent.toml`, relatórios com nome AAAA-MM-DD-HHMM em hora UTC) e o teste de código morto do projeto reprovam o CI quando isso escapa.
 
 ### Limites do autoaperfeiçoamento
 
