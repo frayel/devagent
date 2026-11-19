@@ -18,6 +18,11 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 185 - O radar sem alerta diz há quantos pregões acendeu pela última vez:
+  - `app/services/radares.py`: `JANELA_ULTIMO_ALERTA = 20`, `janela_pregoes(agora)` (começa em `pregao_corrente`), `ultimo_alerta(historico, pregoes)` (pura: `janela`, `registrados` e, por chave de `RADARES`, `ultimo` e `pregoes_atras`), `frase_ultimo_alerta` e `ultimo_alerta_api`. `resumo` recebe `ultimo` e monta cada item de `sem_alertas` como `{nome, frase}`.
+  - `app/main.py`: `_ultimo_alerta_radares` lê `instrumentacao` das 20 datas numa consulta (data histórica ou falha devolvem o resultado sem registro); usado em `index` e em `paineis.radares_ultimo_alerta` do `/api/snapshot` (com `fonte` e `coletado_em`, do contrato da auditoria).
+  - `app/templates/index.html` e `app/static/tema.css`: `span.ultimo-alerta` depois do nome, em `--texto-2`.
+  - Aceite em `tests/test_aceite_185.py`.
 - [Saúde técnica] Spec 184 - Os radares de molde único entram no /api/snapshot por um laço só:
   - `app/main.py`: `RADARES_MOLDE_UNICO` (chave, getter em `app.database`, forma sem dado) e `_painel_de_alertas(dado, agora, sem_dado)`; dentro de `snapshot`, um laço preenche `variacao_subita`, `faca_caindo`, `compradores_fundo`, `concentracao_ordens`, `armadilha_abertura`, `short_squeeze`, `radar_inflexao` e `radar_absorcao_cruzada`, lendo o getter em `app.database` na hora da chamada. O JSON publicado não muda.
   - `app/main.py`: de 2.448 para 2.352 linhas; `json.loads(` dentro de `snapshot`: de 40 para 32.

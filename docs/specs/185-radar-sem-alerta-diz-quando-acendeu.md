@@ -1,7 +1,7 @@
 ---
 id: 185
 titulo: O radar sem alerta diz há quantos pregões acendeu pela última vez
-status: ready
+status: done
 revisada: 2026-11-19
 esforco: P
 gaveta: experiência

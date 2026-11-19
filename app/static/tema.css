@@ -842,6 +842,7 @@ td.barra i { width: var(--barra-w); }
   color: var(--texto-2);
 }
 .radares-sem-alerta li { overflow-wrap: anywhere; }
+.radares-sem-alerta .ultimo-alerta { color: var(--texto-2); font-size: 0.9em; }
 .form-vazios button {
   background: var(--superficie-2);
   color: var(--texto);
