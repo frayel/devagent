@@ -119,3 +119,81 @@ def test_ci_falhou_de_especialista_sem_achado_nao_abre_issue(
     assert ("comentar", 406) in chamadas
     assert any(a[:3] == ("gh", "pr", "close") for a in chamadas if isinstance(a, tuple))
     assert not any("issue" in a for a in chamadas if isinstance(a, tuple))
+
+
+# 19/11: a `main` quebrou por um teste dependente do relógio real. O PR
+# `spec:` #989 (só docs/) falhou no job `test`, foi cobrado três vezes e
+# fechado, embora nada nele pudesse ser corrigido.
+def _pr_da_raia(titulo: str) -> dict[str, Any]:
+    return {
+        "number": 989,
+        "title": titulo,
+        "headRefName": "raia-1",
+        "body": "",
+        "url": "u",
+    }
+
+
+def _guardiao_falso(
+    monkeypatch: pytest.MonkeyPatch, pr: dict[str, Any], jobs: set[str], coms=()
+) -> dict[str, Any]:
+    chamadas: dict[str, Any] = {"comentarios": []}
+    monkeypatch.setattr(guardiao_prs, "prs_do_agente", lambda: [pr])
+    monkeypatch.setattr(guardiao_prs, "sh", lambda *a, **k: "log")
+    monkeypatch.setattr(guardiao_prs, "jobs_que_falharam", lambda r: jobs)
+    monkeypatch.setattr(
+        guardiao_prs, "arquivos_do_pr", lambda n: ["docs/specs/187-a.md"]
+    )
+    monkeypatch.setattr(
+        guardiao_prs, "comentarios", lambda n: [{"body": c} for c in coms]
+    )
+    monkeypatch.setattr(
+        guardiao_prs, "comentar", lambda n, c: chamadas["comentarios"].append(c)
+    )
+    monkeypatch.setattr(
+        guardiao_prs,
+        "fechar",
+        lambda *a, **k: chamadas.setdefault("fechou", True),
+    )
+    return chamadas
+
+
+def test_falha_herdada_da_main_nao_cobra_nem_fecha(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pr = _pr_da_raia("spec: 187 · algo")
+    marcas = [guardiao_prs.MARCA_CI] * guardiao_prs.MAX_TENTATIVAS
+    chamadas = _guardiao_falso(monkeypatch, pr, {"test"}, marcas)
+    guardiao_prs.ci_falhou("raia-1", "1")
+    assert "fechou" not in chamadas
+    assert len(chamadas["comentarios"]) == 1
+    aviso = chamadas["comentarios"][0]
+    assert guardiao_prs.MARCA_HERDADA in aviso
+    assert guardiao_prs.MARCA_CI not in aviso
+
+
+def test_falha_herdada_avisa_uma_vez(monkeypatch: pytest.MonkeyPatch) -> None:
+    pr = _pr_da_raia("revisão: spec 186 · algo")
+    chamadas = _guardiao_falso(monkeypatch, pr, {"test"}, [guardiao_prs.MARCA_HERDADA])
+    guardiao_prs.ci_falhou("raia-1", "1")
+    assert chamadas["comentarios"] == []
+    assert "fechou" not in chamadas
+
+
+def test_raia_reprovada_na_disciplina_continua_cobrada(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pr = _pr_da_raia("spec: 187 · algo")
+    chamadas = _guardiao_falso(monkeypatch, pr, {"disciplina"})
+    guardiao_prs.ci_falhou("raia-1", "1")
+    assert guardiao_prs.MARCA_CI in chamadas["comentarios"][0]
+
+
+def test_desenvolvimento_reprovado_no_test_continua_cobrado(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pr = _pr_da_raia("feat: algo (spec 186)")
+    chamadas = _guardiao_falso(monkeypatch, pr, {"test"})
+    monkeypatch.setattr(guardiao_prs, "arquivos_do_pr", lambda n: ["app/main.py"])
+    guardiao_prs.ci_falhou("raia-1", "1")
+    assert guardiao_prs.MARCA_CI in chamadas["comentarios"][0]

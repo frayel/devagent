@@ -2201,7 +2201,7 @@ def index(
                 "status": clima_global_data.status,
                 "fonte": clima_global_data.fonte,
             }
-        ibovespa_data = get_ibovespa_view_data()
+        ibovespa_data = get_ibovespa_view_data(agora)
 
         highlights = get_highlights_view_data()
         highs_dict = {}
