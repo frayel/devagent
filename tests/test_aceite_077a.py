@@ -28,7 +28,9 @@ class _Gravador:
     def __init__(self) -> None:
         self.chamadas: list[tuple[str, tuple]] = []
         cursor = MagicMock()
-        cursor.fetchone.return_value = None
+        # Uma linha com zero, como o Postgres responde a `SELECT COUNT(*)`
+        # (`set_opinioes_status` conta opiniões e matérias antes de gravar).
+        cursor.fetchone.return_value = (0,)
         cursor.fetchall.return_value = []
         cursor.execute.side_effect = self._executar
         cursor.__enter__.return_value = cursor

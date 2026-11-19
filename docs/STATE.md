@@ -18,6 +18,9 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Saúde técnica] Spec 077a - Resíduos do SQLite depois da migração (fechada em 19/11/2026):
+  - Dividida em 23/10 em 077b (consultor no Postgres), 077c (diagnóstico do banco) e 077d (radar e confiança em snapshots), as três `done`; a 077a ficou em `draft` como a original de uma divisão, e o aceite dela nunca rodava.
+  - `tests/test_aceite_077a.py` e `tests/test_aceite_migracao_snapshots.py` passam a rodar; a conexão Postgres falsa do primeiro devolve `(0,)` em `fetchone`, como o `COUNT(*)` que `set_opinioes_status` passou a fazer.
 - [Experiência] Spec 185 - O radar sem alerta diz há quantos pregões acendeu pela última vez:
   - `app/services/radares.py`: `JANELA_ULTIMO_ALERTA = 20`, `janela_pregoes(agora)` (começa em `pregao_corrente`), `ultimo_alerta(historico, pregoes)` (pura: `janela`, `registrados` e, por chave de `RADARES`, `ultimo` e `pregoes_atras`), `frase_ultimo_alerta` e `ultimo_alerta_api`. `resumo` recebe `ultimo` e monta cada item de `sem_alertas` como `{nome, frase}`.
   - `app/main.py`: `_ultimo_alerta_radares` lê `instrumentacao` das 20 datas numa consulta (data histórica ou falha devolvem o resultado sem registro); usado em `index` e em `paineis.radares_ultimo_alerta` do `/api/snapshot` (com `fonte` e `coletado_em`, do contrato da auditoria).
