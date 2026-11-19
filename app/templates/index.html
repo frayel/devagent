@@ -814,14 +814,13 @@
         {% else %}
             {% set linhas = [] %}
             {% for alerta in assimetria_risco_retorno.alertas %}
-                {% set _ = linhas.append({
-                    'ticker': alerta.ticker,
-                    'magnitudes': [alerta.dist_max_pct],
-                    'var_formatada': "{:.1f}% min".format(alerta.dist_min_pct).replace(".", ","),
-                    'sinal': 1
-                }) %}
+                {% set _ = linhas.append([
+                    {'tk': True, 'conteudo': alerta.ticker},
+                    {'conteudo': ("{:.1f}% min".format(alerta.dist_min_pct)).replace(".", ","), 'num': True},
+                    {'conteudo': ("{:.1f}% máx".format(alerta.dist_max_pct)).replace(".", ","), 'num': True}
+                ]) %}
             {% endfor %}
-            {{ tabela_ativos(linhas, [{'titulo': 'Distância', 'num': true}]) }}
+            {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Da mínima', 'num': True}, {'titulo': 'Da máxima', 'num': True}], 'assimetria-risco-retorno') }}
         {% endif %}
     {% else %}
         {{ estado('sem_registro' if is_historical else 'indisponivel') }}
