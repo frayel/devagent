@@ -2,6 +2,7 @@
 id: 185
 titulo: O radar sem alerta diz há quantos pregões acendeu pela última vez
 status: ready
+revisada: 2026-11-19
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_185.py
@@ -48,6 +49,9 @@ Só o snapshot diário `instrumentacao` que a spec 166 já grava (`radares_prega
 
 ## Cálculos
 Uma função nova em `app/services/radares.py`, por exemplo `ultimo_alerta(historico: dict[date, dict], pregoes: list[date]) -> dict[str, dict]`, pura (sem banco), com `pregoes` do mais recente para o mais antigo (`pregoes[0]` é `calendario.pregao_corrente(agora)`, os outros vêm de `pregao_anterior`, 20 no total):
+
+Não reaproveite `sistema.ultimos_pregoes(agora)`: ela começa em `ultimo_pregao_fechado`, que durante o pregão é ontem, e deslocaria `pregoes_atras` em um (Faca Caindo diria "há 1 pregão" em vez de "mais cedo neste pregão"). A janela daqui começa em `pregao_corrente`.
+
 
 - um pregão **tem registro** se o payload dele tem `radares_pregao` inteiro (não `bool`) e maior que 0;
 - o radar `c` **acendeu** num pregão com registro se `escondidos_pregao.get(c, 0) < radares_pregao`;
