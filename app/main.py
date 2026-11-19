@@ -2292,6 +2292,20 @@ def index(
             except Exception:
                 pass
 
+        assimetria_data = get_latest_assimetria_risco_retorno_data()
+        assimetria_risco_retorno = None
+        if assimetria_data:
+            try:
+                assimetria_risco_retorno = {
+                    "coletado_em": assimetria_data.timestamp.astimezone(
+                        timezone(timedelta(hours=-3))
+                    ).strftime("%d/%m/%Y %H:%M:%S BRT"),
+                    "fonte": getattr(assimetria_data, "fonte", "yfinance"),
+                    "alertas": json.loads(assimetria_data.alertas_json),
+                }
+            except Exception:
+                pass
+
         relogio_data = get_latest_relogio_volatilidade_data()
         relogio = None
         if relogio_data:
@@ -2345,6 +2359,7 @@ def index(
             "sobrevivencia_semanal": sobrevivencia_semanal,
             "volatilidade_silenciosa": volatilidade_silenciosa,
             "anomalia_peso": anomalia_peso,
+            "assimetria_risco_retorno": assimetria_risco_retorno,
             "fator_peso_pesado_data": fator_peso_pesado_data,
             "mare": mare,
             "mare_card": mare_card,

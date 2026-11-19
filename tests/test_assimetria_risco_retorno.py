@@ -79,3 +79,28 @@ def test_assimetria_logic(monkeypatch):
     assert alertas[0]["ticker"] == "PETR4"
     assert alertas[0]["dist_min_pct"] == 0.0
     assert alertas[0]["dist_max_pct"] == 62.5
+
+
+def test_pagina_inicial_mostra_card_com_snapshot_gravado():
+    """Regressão da #963: a rota / não passava o snapshot ao template."""
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    init_db()
+    alertas = [{"ticker": "ASSM3", "dist_min_pct": 1.5, "dist_max_pct": 14.0}]
+    save_assimetria_risco_retorno_data(
+        AssimetriaRiscoRetornoData(
+            timestamp=datetime.now(timezone.utc),
+            alertas_json=json.dumps(alertas),
+            fonte="mock",
+        )
+    )
+
+    html = TestClient(app).get("/").text
+    inicio = html.index("Assimetria Risco/Retorno")
+    card = html[inicio : html.index("Atrasadas do Rally", inicio)]
+    assert "ASSM3" in card
+    assert "1,5% min" in card
+    assert "14,0% máx" in card
+    assert "Dado indisponível agora" not in card

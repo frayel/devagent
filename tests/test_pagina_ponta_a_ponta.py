@@ -12,7 +12,6 @@ renderizada com o indefinido estrito do `conftest.py`. Campo com nome errado
 em qualquer painel faz este teste falhar.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app import agendador
@@ -80,10 +79,6 @@ def test_todo_painel_recebe_dados_do_seu_coletor(monkeypatch):
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="#963: a rota / não passa assimetria_risco_retorno ao template",
-)
 def test_pagina_renderiza_com_dados_reais_dos_coletores(monkeypatch):
     _coletar_tudo(monkeypatch)
     resposta = TestClient(app).get("/")
