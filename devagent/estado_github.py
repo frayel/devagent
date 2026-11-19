@@ -26,6 +26,7 @@ from typing import Any
 
 from devagent import papel as papeis
 from devagent import saude
+from devagent.confianca import autor_confiavel, so_confiaveis
 from devagent.fila_specs import (
     LABELS_DE_PRODUCAO,
     correcao_mergeada,
@@ -78,8 +79,9 @@ def marcar_correcoes(repo: str, issues: list[dict[str, Any]]) -> None:
         except (urllib.error.URLError, OSError, ValueError):
             i["correcao_mergeada"] = False
             continue
+        # Comentário de estranho não marca correção (repositório público).
         i["correcao_mergeada"] = correcao_mergeada(
-            [c.get("body") or "" for c in comentarios]
+            [c.get("body") or "" for c in so_confiaveis(comentarios)]
         )
 
 
@@ -100,7 +102,14 @@ def eh_do_agente(pr: dict[str, Any]) -> bool:
 
 
 def _do_agente(pr: dict[str, Any]) -> bool:
-    return pr_do_agente((pr.get("user") or {}).get("login"), pr.get("body"))
+    """Login do agente ou marcador de raia, e só de quem pode mandar no repo.
+
+    O marcador no corpo qualquer um escreve: sem a conferência do autor, um
+    PR de fork passaria por PR da raia de desenvolvimento.
+    """
+    return autor_confiavel(pr) and pr_do_agente(
+        (pr.get("user") or {}).get("login"), pr.get("body")
+    )
 
 
 def status_ci(repo: str, sha: str) -> str:
@@ -120,6 +129,10 @@ def coletar() -> dict[str, Any]:
     repo = _repo()
     prs = []
     for pr in _get(f"/repos/{repo}/pulls?state=open&per_page=50"):
+        # PR de estranho (fork) não entra em fila nenhuma: o agente não o
+        # destrava, não o revisa e não lê o que ele diz.
+        if not autor_confiavel(pr):
+            continue
         detalhe = _get(f"/repos/{repo}/pulls/{pr['number']}")
         prs.append(
             {
@@ -147,7 +160,7 @@ def coletar() -> dict[str, Any]:
             "corpo": i.get("body") or "",
         }
         for i in _get(f"/repos/{repo}/issues?state=open&per_page=100")
-        if "pull_request" not in i
+        if "pull_request" not in i and autor_confiavel(i)
     ]
     marcar_correcoes(repo, issues)
     return {"repo": repo, "prs": prs, "issues": issues}

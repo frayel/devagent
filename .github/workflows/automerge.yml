@@ -3,7 +3,9 @@ name: Auto-merge
 # Faz squash merge de qualquer PR assim que o workflow CI passa.
 # O agente abre PRs mas não faz merge; este workflow fecha o ciclo.
 # Não há caminhos protegidos nem revisão humana: todo PR com CI verde entra
-# (ADR 007).
+# (ADR 007), desde que a branch seja deste repositório. O repositório é
+# público: PR de fork nunca é mesclado sozinho, porque o Render publica a main
+# com as chaves de produção (revisão de segurança de 19/11).
 on:
   workflow_run:
     workflows: [CI]
@@ -19,7 +21,8 @@ jobs:
   merge:
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'pull_request'
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,7 +49,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
-          pr=$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number -q '.[0].number')
+          # Só PR com a branch neste repositório: um fork pode abrir PR com o
+          # mesmo nome de branch, e o `--head` sozinho não os distingue.
+          pr=$(gh pr list -R "$GITHUB_REPOSITORY" --head "$BRANCH" --state open \
+            --json number,isCrossRepository \
+            -q '[.[] | select(.isCrossRepository | not)][0].number // empty')
           if [ -z "$pr" ]; then echo "Nenhum PR aberto para $BRANCH"; exit 0; fi
 
           # Segunda trava contra PR vazio (a primeira é a regra 5 do

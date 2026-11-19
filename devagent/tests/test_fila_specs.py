@@ -188,7 +188,12 @@ def test_marcar_correcoes_so_le_issues_de_producao(
 
     def get(caminho: str) -> list[dict[str, str]]:
         lidas.append(caminho)
-        return [{"body": f"PR #1 {fila_specs.MARCA_CORRECAO}"}]
+        return [
+            {
+                "body": f"PR #1 {fila_specs.MARCA_CORRECAO}",
+                "user": {"login": "github-actions[bot]", "type": "Bot"},
+            }
+        ]
 
     monkeypatch.setattr(estado_github, "_get", get)
     issues = [
@@ -212,3 +217,25 @@ def test_issue_de_saude_curada_por_entrega_nao_trava_a_fila(raiz: Path) -> None:
     texto = fila_specs.instrucao(fila_specs.specs_prontas(raiz), raiz, [issue])
     assert "#807" not in texto
     assert "docs/specs/068b-regras.md" in texto
+
+
+def test_comentario_de_estranho_nao_marca_correcao(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Repositório público: qualquer um comenta, só quem manda marca correção."""
+    from devagent import estado_github
+
+    monkeypatch.setattr(
+        estado_github,
+        "_get",
+        lambda caminho: [
+            {
+                "body": f"PR #1 {fila_specs.MARCA_CORRECAO}",
+                "author_association": "NONE",
+                "user": {"login": "estranho", "type": "User"},
+            }
+        ],
+    )
+    issues = [{"numero": 1, "labels": ["producao-incorreta"]}]
+    estado_github.marcar_correcoes("dono/repo", issues)
+    assert issues[0]["correcao_mergeada"] is False

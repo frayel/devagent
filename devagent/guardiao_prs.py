@@ -60,6 +60,7 @@ from devagent.conferir_pr import (
     status_de,
 )
 from devagent.config import VERIFICACAO
+from devagent.confianca import autor_confiavel
 from devagent.papel import JOBS_DA_RAIA, RAIAS_AUXILIARES
 from devagent.raias import VERIFICACAO as RAIA_VERIFICACAO
 from devagent.raias import do_desenvolvimento, pr_do_agente, raia_do_titulo
@@ -118,12 +119,17 @@ def prs_do_agente() -> list[dict[str, Any]]:
     PR de pessoa (o dono do produto) não é cobrado nem fechado: o guardião
     cuidaria dele como se fosse do agente e abriria `tentativa-falhou` (ADR 024).
     """
-    campos = "number,title,headRefName,headRefOid,body,labels,createdAt,url,author"
+    campos = (
+        "number,title,headRefName,headRefOid,body,labels,createdAt,url,author,"
+        "isCrossRepository"
+    )
     prs = gh_json("pr", "list", "--state", "open", "--json", campos, "--limit", "50")
+    # PR de fork nunca é do agente, mesmo com o marcador de raia no corpo.
     return [
         p
         for p in prs
-        if not p["title"].startswith("auditoria:")
+        if not p.get("isCrossRepository")
+        and not p["title"].startswith("auditoria:")
         and pr_do_agente((p.get("author") or {}).get("login"), p.get("body"))
     ]
 
@@ -782,17 +788,27 @@ def bugs_para_priorizar(issues: list[dict[str, Any]], momento: datetime) -> list
     return sorted(numeros)
 
 
+def issues_confiaveis() -> list[dict[str, Any]]:
+    """Issues abertas do dono, de colaborador ou de bot instalado.
+
+    Pela API REST, que traz o `author_association` (o `gh issue list` não
+    traz). Num repositório público, issue de estranho sem label viraria
+    `prioridade` em 24 h e o agente a implementaria.
+    """
+    brutas = gh_json("api", "repos/{owner}/{repo}/issues?state=open&per_page=100")
+    return [
+        {
+            "number": i["number"],
+            "createdAt": i["created_at"],
+            "labels": i.get("labels", []),
+        }
+        for i in brutas
+        if "pull_request" not in i and autor_confiavel(i)
+    ]
+
+
 def priorizar_bugs_antigos() -> None:
-    issues = gh_json(
-        "issue",
-        "list",
-        "--state",
-        "open",
-        "--json",
-        "number,createdAt,labels",
-        "--limit",
-        "100",
-    )
+    issues = issues_confiaveis()
     for numero in bugs_para_priorizar(issues, agora()):
         sh(
             "gh",

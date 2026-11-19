@@ -24,6 +24,19 @@ def _issue(numero: int, criada: str, *labels: str) -> dict[str, Any]:
     }
 
 
+def _rest(
+    numero: int, criada: str, *labels: str, associacao: str = "OWNER"
+) -> dict[str, Any]:
+    """Issue como a API REST devolve (o `gh api` do guardião)."""
+    return {
+        "number": numero,
+        "created_at": criada,
+        "labels": [{"name": nome} for nome in labels],
+        "author_association": associacao,
+        "user": {"login": "x", "type": "User"},
+    }
+
+
 def test_bug_antigo_ganha_prioridade() -> None:
     issues = [
         _issue(557, "2026-10-27T21:35:06Z", "bug", "verificacao"),
@@ -67,9 +80,9 @@ def test_priorizar_aplica_o_label_e_explica(monkeypatch: pytest.MonkeyPatch) -> 
         lambda *a: (
             consultas.append(a)
             or [
-                _issue(557, "2026-10-27T21:35:06Z", "bug"),
-                _issue(902, "2026-10-27T08:32:46Z"),
-                _issue(908, "2026-10-27T12:51:00Z", "enhancement"),
+                _rest(557, "2026-10-27T21:35:06Z", "bug"),
+                _rest(902, "2026-10-27T08:32:46Z"),
+                _rest(908, "2026-10-27T12:51:00Z", "enhancement"),
             ]
         ),
     )
@@ -81,3 +94,26 @@ def test_priorizar_aplica_o_label_e_explica(monkeypatch: pytest.MonkeyPatch) -> 
         assert ("gh", "issue", "edit", numero, "--add-label", "prioridade") in comandos
         assert any(c[:4] == ("gh", "issue", "comment", numero) for c in comandos)
     assert not any("908" in c for c in comandos)
+
+
+# Repositório público (revisão de 19/11): issue de estranho sem label viraria
+# `prioridade` em 24 h, e o agente a implementaria.
+def test_issue_de_estranho_nao_ganha_prioridade(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    comandos: list[tuple[str, ...]] = []
+    monkeypatch.setattr(guardiao_prs, "agora", lambda: AGORA)
+    monkeypatch.setattr(
+        guardiao_prs,
+        "gh_json",
+        lambda *a: [
+            _rest(901, "2026-10-27T08:00:00Z", associacao="NONE"),
+            _rest(902, "2026-10-27T08:00:00Z", "bug", associacao="CONTRIBUTOR"),
+            _rest(903, "2026-10-27T08:00:00Z", associacao="COLLABORATOR"),
+            {**_rest(904, "2026-10-27T08:00:00Z"), "pull_request": {}},
+        ],
+    )
+    monkeypatch.setattr(guardiao_prs, "sh", lambda *a, **k: comandos.append(a) or "")
+    guardiao_prs.priorizar_bugs_antigos()
+    editadas = [c[3] for c in comandos if c[:3] == ("gh", "issue", "edit")]
+    assert editadas == ["903"]
