@@ -135,7 +135,8 @@ def test_criterio_ttl_durante_o_pregao(relogio, idade, selo):
     relogio.agora = _brt(5, 14, 0)
     _ibov(relogio.agora - timedelta(minutes=idade), "2026-11-05")
 
-    card = _secao(client.get("/").text, "Ibovespa")
+    # Coleta e página no mesmo dia: o card se chama "Ibovespa hoje".
+    card = _secao(client.get("/").text, "Ibovespa hoje")
     assert ("selo-desatualizado" in card) is selo
     assert "172.288 pontos" in card
 
@@ -235,3 +236,27 @@ def test_criterio_falha_parcial_sem_segredo(monkeypatch, caplog):
     depois = get_latest_ibovespa_data()
     assert depois is not None
     assert depois.timestamp == antes.timestamp
+
+
+def test_titulo_do_card_segue_o_relogio_da_pagina(relogio, monkeypatch):
+    """Regressão da issue #988: o relógio real coincide com o dia da coleta.
+
+    A página congela 20/11 (feriado) e o "datetime.now" real de
+    app.services.ibovespa cai em 19/11, o dia da coleta. O título do card
+    tem de seguir o agora da página ("Ibovespa"), não o relógio real
+    ("Ibovespa hoje").
+    """
+    coleta = _brt(19, 16, 0)
+
+    class RelogioReal(datetime):
+        @classmethod
+        def now(cls, tz=None):  # type: ignore[override]
+            return coleta if tz is None else coleta.astimezone(tz)
+
+    monkeypatch.setattr("app.services.ibovespa.datetime", RelogioReal)
+    relogio.agora = _brt(20, 14, 0)
+    _ibov(coleta, coleta.date().isoformat())
+
+    html = client.get("/").text
+    assert "selo-desatualizado" not in _secao(html, "Ibovespa")
+    assert "Ibovespa hoje" not in html

@@ -108,14 +108,66 @@ def _relativo(caminho: Path, raiz: Path | None = None) -> str:
         return caminho.as_posix()
 
 
+# Jobs do CI que um PR de raia auxiliar consegue reprovar sozinho. As raias
+# auxiliares só escrevem documentação (regra 8 do conferir_pr): se o PR delas
+# falha em outro job (testes, smoke), a falha veio da `main`, não do PR.
+JOBS_DA_RAIA = frozenset({"disciplina"})
+RAIAS_AUXILIARES = frozenset({REVISAO, ESPECIFICACAO, VERIFICACAO})
+
+
+def jobs_que_falharam(ci: str) -> set[str]:
+    """Os jobs de um status `falhou: a, b` do estado_github."""
+    texto = str(ci or "")
+    if not texto.startswith("falhou"):
+        return set()
+    _, _, nomes = texto.partition(":")
+    return {n.strip() for n in nomes.split(",") if n.strip()}
+
+
+def falha_herdada(p: dict[str, Any]) -> bool:
+    """PR de raia auxiliar que falhou num job que ele não tem como reprovar.
+
+    Em 19/11 um teste dependente do relógio real quebrou a `main`. O PR
+    `revisão:` aberto (só `docs/`) falhou no job `test`, o `papel` mandou o
+    Revisor destravá-lo, o Revisor não pode mexer em código e a fila parou.
+    """
+    if p.get("raia") not in RAIAS_AUXILIARES:
+        return False
+    return bool(jobs_que_falharam(str(p.get("ci", ""))) - JOBS_DA_RAIA)
+
+
+def main_quebrada(prs: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """O primeiro PR de raia auxiliar cuja falha de CI só pode vir da `main`."""
+    return next((p for p in prs if falha_herdada(p)), None)
+
+
 def pr_travado(raia: str, prs: list[dict[str, Any]]) -> dict[str, Any] | None:
-    """O PR aberto da raia, se o CI falhou ou há conflito: ninguém mais o salva."""
+    """O PR aberto da raia, se o CI falhou ou há conflito: ninguém mais o salva.
+
+    Falha herdada da `main` não conta: ela é da raia de desenvolvimento, e a
+    raia auxiliar não tem como corrigi-la.
+    """
     for p in prs:
         if p.get("raia") != raia:
             continue
-        if str(p.get("ci", "")).startswith("falhou") or p.get("merge") == "dirty":
+        if p.get("merge") == "dirty":
+            return p
+        if str(p.get("ci", "")).startswith("falhou") and not falha_herdada(p):
             return p
     return None
+
+
+def _consertar_main(p: dict[str, Any]) -> str:
+    jobs = ", ".join(sorted(jobs_que_falharam(str(p.get("ci", ""))) - JOBS_DA_RAIA))
+    return (
+        f"O PR #{p['numero']} ({p.get('raia')}) só mexe em documentação e falhou "
+        f"no CI em `{jobs}`: a falha vem da `main`. A entrega desta sessão é "
+        "consertar a `main` (Passo 1): reproduza com `make verify` na "
+        "`origin/main`, ache a causa raiz e abra um PR `fix:` com teste de "
+        "regressão (cite a issue do bug, se houver, com `Closes #N`). Nunca "
+        "apague, pule nem afrouxe o teste que falha. Não mexa no PR da raia: "
+        "com a `main` consertada, ele passa ao trazer a `main`."
+    )
 
 
 def _com_pr(raia: str, prs: list[dict[str, Any]]) -> bool:
@@ -144,6 +196,8 @@ def trabalho_do_desenvolvimento(
     """
     if any(p.get("do_agente") for p in prs):
         return "Existe PR aberto da raia de desenvolvimento."
+    if main_quebrada(prs):
+        return "A main está quebrada."
     if producao_quebrada or producao_pendente(issues):
         return "A produção acusa problema."
     if issue_prioritaria(issues):
@@ -373,6 +427,9 @@ def decidir(
     porque spec escrita e não revisada ainda não é trabalho para ninguém.
     """
     motivo = trabalho_do_desenvolvimento(prontas, issues, prs, producao_quebrada)
+    quebra = main_quebrada(prs)
+    if motivo and quebra and not any(p.get("do_agente") for p in prs):
+        return Papel(DESENVOLVEDOR, motivo, _consertar_main(quebra))
     if motivo:
         return Papel(DESENVOLVEDOR, motivo)
     alvo = alvo_do_revisor(prontas, issues, prs, raiz)

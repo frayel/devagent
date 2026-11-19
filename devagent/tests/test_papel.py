@@ -185,3 +185,47 @@ def test_especificador_nao_reusa_numero_ocupado() -> None:
     assert "ocupado" in papel.alvo_ocupado(papel.ESPECIFICADOR, "152", [], "x")
     pr = _aberto("spec: 152 · nova", "especificacao")
     assert "#847" in papel.alvo_ocupado(papel.ESPECIFICADOR, "152", [pr], None)
+
+
+# 19/11: um teste dependente do relógio real quebrou a `main`. O PR `revisão:`
+# (só docs/) falhou no job `test`, o papel mandou o Revisor destravá-lo, o
+# Revisor não pode mexer em código e a fila parou por um dia inteiro.
+
+
+def test_falha_de_raia_fora_da_disciplina_e_herdada_da_main() -> None:
+    assert papel.falha_herdada(_pr("revisao", ci="falhou: test"))
+    assert papel.falha_herdada(_pr("especificacao", ci="falhou: disciplina, smoke"))
+    assert not papel.falha_herdada(_pr("revisao", ci="falhou: disciplina"))
+    assert not papel.falha_herdada(_pr("revisao", ci="passou"))
+    assert not papel.falha_herdada(_pr("desenvolvimento", ci="falhou: test"))
+
+
+def test_main_quebrada_vira_sessao_do_desenvolvedor(raiz: Path) -> None:
+    a = _spec(raiz / "docs/specs", "186-a.md")
+    herdada = _pr("revisao", ci="falhou: test")
+    p = papel.decidir([a], [], [herdada], raiz=raiz)
+    assert p.persona == papel.DESENVOLVEDOR
+    assert "main está quebrada" in p.motivo
+    assert "#9" in p.alvo and "fix:" in p.alvo and "`test`" in p.alvo
+    assert "main está quebrada" in p.frase()
+
+
+def test_main_quebrada_vem_antes_da_producao(raiz: Path) -> None:
+    herdada = _pr("especificacao", ci="falhou: test")
+    p = papel.decidir([], [], [herdada], producao_quebrada=True, raiz=raiz)
+    assert "main está quebrada" in p.motivo
+
+
+def test_pr_de_desenvolvimento_aberto_continua_primeiro(raiz: Path) -> None:
+    prs = [_pr("desenvolvimento", do_agente=True), _pr("revisao", ci="falhou: test")]
+    p = papel.decidir([], [], prs, raiz=raiz)
+    assert p.motivo == "Existe PR aberto da raia de desenvolvimento."
+    assert not p.alvo
+
+
+def test_raia_nao_recebe_falha_herdada_para_destravar(raiz: Path) -> None:
+    a = _spec(raiz / "docs/specs", "186-a.md")
+    herdada = _pr("revisao", ci="falhou: test")
+    assert papel.pr_travado(papel.REVISAO, [herdada]) is None
+    alvo = papel.para_persona(papel.REVISOR, [a], [], [herdada]).alvo
+    assert "destravá-lo" not in alvo

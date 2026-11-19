@@ -19,6 +19,10 @@ Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
       nada a corrigir na branch (a sessão perdeu o trabalho). Fecha na hora,
       sem cobrar o agente, e abre `tentativa-falhou` (ADR 018). Cobrar só
       gerava sessões filhas com PRs vazios (#402 e #403, em 22/10).
+    - Falha herdada: PR de raia auxiliar (spec, revisão, verificação) só mexe
+      em documentação. Se o CI dele falha fora do job `disciplina`, a causa
+      está na `main`: avisa uma vez, não cobra e não fecha. Quem conserta é a
+      raia de desenvolvimento, e o PR passa quando trouxer a `main` (19/11).
     - Sem reação: se o guardião cobrou e não houve commit novo em SEM_REACAO_HORAS, fecha.
     - Conflito pequeno (<= CONFLITO_MAX_ARQUIVOS e <= CONFLITO_MAX_LINHAS): pede ao agente
       para resolver. Conflito grande: fecha o PR; o próximo ciclo refaz a partir da main.
@@ -56,6 +60,7 @@ from devagent.conferir_pr import (
     status_de,
 )
 from devagent.config import VERIFICACAO
+from devagent.papel import JOBS_DA_RAIA, RAIAS_AUXILIARES
 from devagent.raias import VERIFICACAO as RAIA_VERIFICACAO
 from devagent.raias import do_desenvolvimento, pr_do_agente, raia_do_titulo
 
@@ -66,6 +71,8 @@ CONFLITO_MAX_LINHAS = 40
 ORFA_HORAS = 24
 
 MARCA_CI = "<!-- guardiao:ci -->"
+MARCA_HERDADA = "<!-- guardiao:falha-herdada -->"
+RUINS = {"failure", "timed_out", "cancelled", "action_required"}
 
 
 def retomada(branch: str) -> str:
@@ -432,6 +439,41 @@ def fechar(
     print(f"PR #{numero} fechado: {motivo}")
 
 
+def jobs_que_falharam(run_id: str) -> set[str]:
+    """Nomes dos jobs que falharam no run; vazio se a consulta falhar."""
+    try:
+        dados = json.loads(sh("gh", "run", "view", run_id, "--json", "jobs"))
+    except (json.JSONDecodeError, subprocess.CalledProcessError):
+        return set()
+    return {
+        j.get("name", "") for j in dados.get("jobs", []) if j.get("conclusion") in RUINS
+    }
+
+
+def falha_herdada(pr: dict[str, Any], jobs: set[str]) -> bool:
+    """PR de raia auxiliar reprovado num job que ele não consegue reprovar."""
+    if raia_do_titulo(pr.get("title") or "") not in RAIAS_AUXILIARES:
+        return False
+    return bool(jobs - JOBS_DA_RAIA)
+
+
+def avisar_falha_herdada(pr: dict[str, Any], jobs: set[str], log: str) -> None:
+    if any(MARCA_HERDADA in c["body"] for c in comentarios(pr["number"])):
+        print(f"PR #{pr['number']}: falha herdada da main já avisada")
+        return
+    nomes = ", ".join(f"`{j}`" for j in sorted(jobs - JOBS_DA_RAIA))
+    comentar(
+        pr["number"],
+        f"{MARCA_HERDADA}\nEste PR só mexe em documentação e falhou em {nomes}: "
+        "a falha vem da `main`, não daqui. Não é cobrança e o PR não será fechado "
+        "por ela. A próxima sessão do ciclo atua como desenvolvedor e conserta a "
+        "`main` num PR `fix:` (`python -m devagent.papel` diz isso); depois, este "
+        "PR passa ao trazer a `main`.\n\n"
+        f"<details><summary>Log da falha</summary>\n\n```\n{log}\n```\n</details>",
+    )
+    print(f"PR #{pr['number']}: falha herdada da main avisada")
+
+
 def ci_falhou(branch: str, run_id: str) -> None:
     pr = next((p for p in prs_do_agente() if p["headRefName"] == branch), None)
     if not pr:
@@ -445,6 +487,10 @@ def ci_falhou(branch: str, run_id: str) -> None:
     irrecuperavel = motivo_irrecuperavel(arquivos, pr.get("body") or "")
     if irrecuperavel:
         fechar(pr, irrecuperavel, log, registrar=True)
+        return
+    jobs = jobs_que_falharam(run_id)
+    if falha_herdada(pr, jobs):
+        avisar_falha_herdada(pr, jobs, log)
         return
     tentativas = sum(MARCA_CI in c["body"] for c in comentarios(pr["number"]))
     if tentativas >= MAX_TENTATIVAS:
