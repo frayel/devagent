@@ -5,6 +5,7 @@ status: ready
 esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_186.py
+revisada: 2026-11-19
 origem: Os sinais do sistema têm memória
 ---
 
@@ -16,7 +17,7 @@ Hoje ele esquece. A confluência é calculada na hora, a cada requisição (`rad
 Esta é a fatia 2a do item: guardar a confluência de cada pregão fechado num snapshot que acumula, recuperar os pregões que ainda estão no banco e dizer no card quantos pregões já estão guardados. Mostrar o que veio depois (retorno das ações nos 5 pregões seguintes) é a fatia 2b, quando houver amostra.
 
 ## Comportamento esperado
-1. **Função pura `registro_do_pregao(payloads, data)` em `app/services/radares.py`.** Recebe os payloads dos radares de um pregão (o mesmo dicionário que `_payloads_radares()` devolve) e a data. Chama `confluencia(payloads, agora, is_historical=True, limite=None)` e devolve:
+1. **Função pura `registro_do_pregao(payloads, data)` em `app/services/radares.py`.** Recebe os payloads dos radares de um pregão (o mesmo dicionário que `_payloads_radares()` devolve, indexado pelas chaves de `RADARES`) e a data (`date`). Chama `confluencia(payloads, datetime.now(timezone.utc), is_historical=True, limite=None)` (com `is_historical=True`, `classificar` não usa o `agora`, então o registro não depende da hora em que é calculado) e devolve:
    ```json
    {"data": "2026-11-18", "lidos": 17,
     "acoes": [{"ticker": "PETR4", "radares": ["Radar de volume", "Variação Súbita", "Radar de Faca Caindo"]},
@@ -35,7 +36,7 @@ Esta é a fatia 2a do item: guardar a confluência de cada pregão fechado num s
    Uma data que já está em `registros` nunca é recalculada: o registro do pregão é o que os radares tinham quando ele foi guardado.
 5. **Agendador:** `"confluencia_historico": "diario"` em `janelas` de `_coletar` (`app/agendador.py`), e o nome entra no **fim** da tupla de coletores, depois de `consultor_yahoo`. Com a janela `diario`, ele roda uma vez por pregão fechado, com o mercado fechado e só se ainda não há snapshot `confluencia_historico` daquele pregão. No fim da tupla, na rodada logo depois do fechamento, ele lê os snapshots que os radares acabaram de gravar como `final` na mesma rodada. A primeira execução depois do deploy recupera os até 30 pregões que o banco ainda tem.
 6. **Card "Em vários radares"**, abaixo da linha "de N radares lidos agora" (`app/templates/index.html`, `confluencia-lidos`): uma linha `<div class="confluencia-memoria">` com o texto **"Guardada a cada fechamento: N pregões, desde DD/MM/AAAA."** (`N` = número de registros, singular "1 pregão"; a data é a `de` do snapshot). Sem snapshot `confluencia_historico` ou com leitura que falha, a linha não aparece e o resto do card fica como hoje. Em data histórica (`?data=`) a linha também não aparece. A classe segue `.confluencia-lidos` em `app/static/tema.css` (`font-size: var(--fs-meta)`, `color: var(--texto-3)`) e acrescenta `overflow-wrap: anywhere`, para a frase não vazar em 390 px.
-7. **`/api/snapshot`:** `paineis.confluencia_historico` com `{"pregoes": N, "de": "AAAA-MM-DD", "ate": "AAAA-MM-DD", "ultimo": <o registro mais recente, completo>, "fonte": "composto", "coletado_em": <o coletado_em do snapshot>}`. Sem snapshot: `{"pregoes": 0, "de": null, "ate": null, "ultimo": null, "fonte": "composto", "coletado_em": <agora>}`. Todo painel publica `fonte` e `coletado_em` (contrato de `auditoria/README.md`, issue #872). A lista completa de registros **não** vai para o `/api/snapshot`.
+7. **`/api/snapshot`:** `paineis.confluencia_historico` com `{"pregoes": N, "de": "AAAA-MM-DD", "ate": "AAAA-MM-DD", "ultimo": <o registro mais recente, completo>, "fonte": "composto", "coletado_em": <o coletado_em do snapshot>}`. Sem snapshot: `{"pregoes": 0, "de": null, "ate": null, "ultimo": null, "fonte": "composto", "coletado_em": <agora>}`. Com `?data=`, a leitura segue o `lendo_pregao` que a rota já abre: vale o snapshot `confluencia_historico` gravado naquele pregão (com os registros até ele) ou, sem ele, o formato "sem snapshot". Não há código novo para isso: é o `ler_snapshot("confluencia_historico")` sem data dentro do contexto da rota. Todo painel publica `fonte` e `coletado_em` (contrato de `auditoria/README.md`, issue #872). A lista completa de registros **não** vai para o `/api/snapshot`.
 
 ## Fontes de dados
 Nenhuma fonte externa. Lê os snapshots dos 20 radares de `RADARES` já gravados no banco (Postgres em produção, SQLite nos testes) e grava um snapshot novo. Plano B: leitura de um pregão que falha (exceção em `_payloads_radares` ou no banco) é registrada no log e pula só aquele pregão, que volta a ser tentado no dia seguinte enquanto estiver entre os 30; o card e o `/api/snapshot` seguem sem a linha de memória.
@@ -61,7 +62,7 @@ Com um snapshot `confluencia_historico` anterior com registros de 13/11, 14/11 e
 - [ ] `registro_do_pregao` com os payloads do exemplo devolve exatamente o registro do exemplo; com todos os 20 payloads `None`, devolve `None`.
 - [ ] `confluencia(..., limite=None)` com 12 ações em 2 ou mais radares devolve as 12 em `acoes` e `excedentes == 0`; sem o parâmetro, devolve 10 e `excedentes == 2` (como hoje).
 - [ ] `acumular` com data repetida fica com a de `novos`, devolve em ordem crescente e, com `maximo=3` e 5 registros, mantém os 3 mais recentes.
-- [ ] `collect_and_save` com snapshots de radares gravados em 3 pregões (um deles só com radares sem snapshot) e o relógio congelado num dia útil às 19h BRT grava `confluencia_historico` com 2 registros; rodado de novo com um registro já guardado e os snapshots daquele pregão trocados, não recalcula o registro guardado.
+- [ ] `collect_and_save` com o relógio congelado num dia útil às 19h BRT (`ultimo_pregao_fechado` = esse dia) e 3 pregões dentro da janela de 30: dois com snapshots de radares gravados (ao menos um radar lido em cada) e um sem nenhum snapshot de radar, grava `confluencia_historico` com 2 registros (o pregão sem leitura fica fora); rodado de novo com um registro já guardado e os snapshots daquele pregão trocados, não recalcula o registro guardado.
 - [ ] Sem nenhum snapshot de radar e sem histórico anterior, `collect_and_save` devolve `False` e não grava.
 - [ ] `app/agendador.py` declara `"confluencia_historico": "diario"` e o nome é o último da tupla de coletores de `_coletar`.
 - [ ] `/` com o histórico do exemplo e radares com confluência mostra "Guardada a cada fechamento: 4 pregões, desde 13/11/2026." dentro de `painel-confluencia`; com 1 registro, "1 pregão"; sem snapshot, a classe `confluencia-memoria` não aparece; em `/?data=2026-11-18`, também não.
