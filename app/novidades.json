@@ -2,6 +2,13 @@
   {
     "data": "2026-11-19",
     "tipo": "melhoria",
+    "texto": "O card \"Em vários radares\" guarda, a cada fechamento, as ações que estiveram em vários radares no pregão e diz quantos pregões já estão guardados.",
+    "onde": {"aba": "alertas", "aba_nome": "Alertas Intraday", "painel": "Em vários radares"},
+    "spec": "186"
+  },
+  {
+    "data": "2026-11-19",
+    "tipo": "melhoria",
     "texto": "Na lista \"Sem alertas\", cada radar diz quando acendeu pela última vez: mais cedo neste pregão, há quantos pregões, ou que não acende em nenhum dos pregões registrados.",
     "onde": {"aba": "alertas", "aba_nome": "Alertas Intraday", "painel": "Sem alertas"},
     "spec": "185"

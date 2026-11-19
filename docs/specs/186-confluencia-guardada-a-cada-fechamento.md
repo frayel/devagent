@@ -1,7 +1,7 @@
 ---
 id: 186
 titulo: A confluência de cada pregão fica guardada depois que os radares somem
-status: ready
+status: done
 esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_186.py

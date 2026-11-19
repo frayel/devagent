@@ -1913,6 +1913,7 @@ def snapshot(
             "coletado_em": agora.isoformat(),
             "fonte": "composto",
         }
+        resp["paineis"]["confluencia_historico"] = _confluencia_historico_api(agora)
 
         # Spec 156: fora de `paineis` (sem fonte/coletado_em) e independente do ?data=.
         resp["novidades"] = novidades_servico.recentes()
@@ -1924,6 +1925,45 @@ def snapshot(
         }
 
         return resp
+
+
+def _memoria_confluencia() -> dict[str, Any] | None:
+    """A memória da confluência (spec 186), lida no `lendo_pregao` de quem chama."""
+    from app.banco import ler_snapshot
+
+    try:
+        return radares_servico.memoria_confluencia(
+            ler_snapshot("confluencia_historico")
+        )
+    except Exception:  # noqa: BLE001 - sem memória, o card fica como antes
+        logging.getLogger(__name__).exception("Memória da confluência não lida")
+        return None
+
+
+def _frase_memoria_confluencia() -> str:
+    return radares_servico.frase_memoria(_memoria_confluencia())
+
+
+def _confluencia_historico_api(agora: datetime) -> dict[str, Any]:
+    """`paineis.confluencia_historico` do `/api/snapshot` (spec 186)."""
+    memoria = _memoria_confluencia()
+    if memoria is None:
+        return {
+            "pregoes": 0,
+            "de": None,
+            "ate": None,
+            "ultimo": None,
+            "fonte": "composto",
+            "coletado_em": agora.isoformat(),
+        }
+    return {
+        "pregoes": memoria["pregoes"],
+        "de": memoria["de"],
+        "ate": memoria["ate"],
+        "ultimo": memoria["ultimo"],
+        "fonte": "composto",
+        "coletado_em": memoria["coletado_em"] or agora.isoformat(),
+    }
 
 
 def _payloads_radares() -> dict[str, Any]:
@@ -2386,6 +2426,9 @@ def index(
         )
         contexto["confluencia"] = radares_servico.confluencia(
             contexto, agora, is_historical
+        )
+        contexto["confluencia_memoria"] = (
+            "" if is_historical else _frase_memoria_confluencia()
         )
         contexto["destaques"] = destaques_servico.faixa(
             highlights,

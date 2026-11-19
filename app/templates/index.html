@@ -389,6 +389,7 @@
         {% if confluencia.excedentes %}<li class="confluencia-resto">{{ confluencia.texto_excedentes }}</li>{% endif %}
     </ul>
     <div class="confluencia-lidos">de {{ confluencia.lidos }} radares lidos agora</div>
+    {% if confluencia_memoria %}<div class="confluencia-memoria">{{ confluencia_memoria }}</div>{% endif %}
     {% if not confluencia.horario_texto %}<div class="rodape">Fonte os radares desta aba</div>{% endif %}
 {% endcall %}
 {% endif %}
