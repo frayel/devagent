@@ -18,6 +18,13 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Capacidade nova] Spec 186 - A confluência de cada pregão fica guardada depois que os radares somem:
+  - `app/services/radares.py`: `confluencia` ganha `limite` (`None` traz todas as linhas); `registro_do_pregao(payloads, data)` (`None` sem radar lido), `acumular(anterior, novos, maximo=252)`, `memoria_confluencia(snapshot)` e `frase_memoria`.
+  - `app/collectors/confluencia_historico.py`: novo coletor; para cada um dos 30 últimos pregões fechados que ainda não está no snapshot, lê os radares dentro de `lendo_pregao(d)` com `_payloads_radares` e guarda o registro. Registro guardado nunca é recalculado; pregão que falha é pulado e volta a ser tentado no dia seguinte.
+  - `app/agendador.py`: janela `"diario"`, último da tupla de coletores (lê os `final` que os radares acabaram de gravar).
+  - `app/main.py` e `app/templates/index.html`: linha "Guardada a cada fechamento: N pregões, desde DD/MM/AAAA." no card *Em vários radares* (fora de data histórica); `paineis.confluencia_historico` no `/api/snapshot` (`pregoes`, `de`, `ate`, `ultimo`, `fonte`, `coletado_em`).
+  - `app/static/tema.css`: `.confluencia-memoria`, como `.confluencia-lidos` e com `overflow-wrap: anywhere`.
+  - A primeira execução depois do deploy recupera os até 30 pregões que o banco ainda tem. Aceite em `tests/test_aceite_186.py`.
 - [Saúde técnica] Spec 077a - Resíduos do SQLite depois da migração (fechada em 19/11/2026):
   - Dividida em 23/10 em 077b (consultor no Postgres), 077c (diagnóstico do banco) e 077d (radar e confiança em snapshots), as três `done`; a 077a ficou em `draft` como a original de uma divisão, e o aceite dela nunca rodava.
   - `tests/test_aceite_077a.py` e `tests/test_aceite_migracao_snapshots.py` passam a rodar; a conexão Postgres falsa do primeiro devolve `(0,)` em `fetchone`, como o `COUNT(*)` que `set_opinioes_status` passou a fazer.

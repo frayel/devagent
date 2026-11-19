@@ -282,12 +282,16 @@ def _texto_excedentes(resto: list[dict[str, Any]]) -> str:
 
 
 def confluencia(
-    contexto: dict[str, Any], agora: datetime, is_historical: bool
+    contexto: dict[str, Any],
+    agora: datetime,
+    is_historical: bool,
+    limite: int | None = MAX_LINHAS_CONFLUENCIA,
 ) -> dict[str, Any]:
     """As ações citadas por 2 ou mais radares com coleta em dia (spec 155).
 
     Conta citações; não pesa radares nem recomenda. Radar desatualizado ou
-    indisponível fica fora da contagem e de `lidos`.
+    indisponível fica fora da contagem e de `lidos`. Com `limite=None`, todas
+    as linhas vão em `acoes` (registro do pregão, spec 186).
     """
     citacoes: dict[str, list[str]] = {}
     horarios: dict[str, datetime | None] = {}
@@ -315,12 +319,78 @@ def confluencia(
     )
     citados = {nome for linha in linhas for nome in linha["radares"]}
     carimbos = [_utc(ts) for nome in citados if (ts := horarios.get(nome))]
-    resto = linhas[MAX_LINHAS_CONFLUENCIA:]
+    corte = len(linhas) if limite is None else limite
+    resto = linhas[corte:]
     return {
-        "acoes": linhas[:MAX_LINHAS_CONFLUENCIA],
+        "acoes": linhas[:corte],
         "excedentes": len(resto),
         "texto_excedentes": _texto_excedentes(resto),
         "lidos": lidos,
         "horario": min(carimbos) if carimbos else None,
         "horario_texto": carimbo.formatar(min(carimbos)) if carimbos else "",
     }
+
+
+MAXIMO_REGISTROS = 252
+
+
+def registro_do_pregao(payloads: dict[str, Any], data: date) -> dict[str, Any] | None:
+    """A confluência de um pregão fechado, para guardar (spec 186).
+
+    `None` quando nenhum radar foi lido: pregão sem leitura não é pregão sem
+    confluência. Com `is_historical=True`, o `agora` não pesa no resultado.
+    """
+    resultado = confluencia(
+        payloads, datetime.now(timezone.utc), is_historical=True, limite=None
+    )
+    if not resultado["lidos"]:
+        return None
+    return {
+        "data": data.isoformat(),
+        "lidos": resultado["lidos"],
+        "acoes": [
+            {"ticker": linha["ticker"], "radares": list(linha["radares"])}
+            for linha in resultado["acoes"]
+        ],
+    }
+
+
+def acumular(
+    anterior: list[dict[str, Any]],
+    novos: list[dict[str, Any]],
+    maximo: int = MAXIMO_REGISTROS,
+) -> list[dict[str, Any]]:
+    """Um registro por data (o de `novos` vence), crescente, só os `maximo` mais recentes."""
+    por_data = {r["data"]: r for r in anterior}
+    por_data.update({r["data"]: r for r in novos})
+    ordenados = [por_data[d] for d in sorted(por_data)]
+    return ordenados[-maximo:] if maximo > 0 else []
+
+
+def memoria_confluencia(snapshot: Any) -> dict[str, Any] | None:
+    """`{"pregoes", "de", "ate", "ultimo", "coletado_em"}` do snapshot, ou None (spec 186)."""
+    if not isinstance(snapshot, dict):
+        return None
+    registros = snapshot.get("registros")
+    if not isinstance(registros, list) or not registros:
+        return None
+    return {
+        "pregoes": len(registros),
+        "de": snapshot.get("de") or registros[0].get("data"),
+        "ate": snapshot.get("ate") or registros[-1].get("data"),
+        "ultimo": registros[-1],
+        "coletado_em": snapshot.get("coletado_em"),
+    }
+
+
+def frase_memoria(memoria: dict[str, Any] | None) -> str:
+    """ "Guardada a cada fechamento: N pregões, desde DD/MM/AAAA."; vazia sem memória."""
+    if not memoria:
+        return ""
+    try:
+        desde = date.fromisoformat(str(memoria["de"])).strftime("%d/%m/%Y")
+    except ValueError:
+        return ""
+    n = memoria["pregoes"]
+    unidade = "pregão" if n == 1 else "pregões"
+    return f"Guardada a cada fechamento: {n} {unidade}, desde {desde}."

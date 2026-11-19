@@ -265,6 +265,9 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
         "consultor_yahoo": "fechamento",
         # Uma vez por pregão completo, com o mercado fechado (spec 174a).
         "mare_historico": "diario",
+        # Confluência de cada pregão fechado (spec 186): roda por último, depois
+        # que os radares gravaram o `final` na mesma rodada.
+        "confluencia_historico": "diario",
     }
     agora_brt = datetime.now(timezone.utc).astimezone(BRT)
     esta_aberto = calendario.mercado_aberto(datetime.now(timezone.utc))
@@ -338,6 +341,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
             "consultor_historico",
             "consultor_fechamento",
             "consultor_yahoo",
+            "confluencia_historico",
         ):
             try:
                 janela = janelas.get(nome, "pregao")

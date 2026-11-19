@@ -872,6 +872,7 @@ td.barra i { width: var(--barra-w); }
 .confluencia-nomes { color: var(--texto-2); overflow-wrap: anywhere; }
 .confluencia li.confluencia-resto { display: block; color: var(--texto-3); font-size: var(--fs-meta); }
 .confluencia-lidos { font-size: var(--fs-meta); color: var(--texto-3); margin-bottom: var(--e2); }
+.confluencia-memoria { font-size: var(--fs-meta); color: var(--texto-3); margin-bottom: var(--e2); overflow-wrap: anywhere; }
 @media (max-width: 767px) {
   .radares-sem-alerta { grid-template-columns: 1fr; }
   .confluencia li { grid-template-columns: auto 1fr; }
