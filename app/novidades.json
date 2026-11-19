@@ -1,5 +1,12 @@
 [
   {
+    "data": "2026-11-19",
+    "tipo": "melhoria",
+    "texto": "Na lista \"Sem alertas\", cada radar diz quando acendeu pela última vez: mais cedo neste pregão, há quantos pregões, ou que não acende em nenhum dos pregões registrados.",
+    "onde": {"aba": "alertas", "aba_nome": "Alertas Intraday", "painel": "Sem alertas"},
+    "spec": "185"
+  },
+  {
     "data": "2026-11-18",
     "tipo": "novidade",
     "texto": "A tela da Maré mostra o que o Ibovespa fez nos 5 pregões seguintes a cada faixa da Maré no último ano, com o número de casos à vista. É o passado, não uma previsão.",

@@ -9,7 +9,7 @@ lista vazia é "sem alertas"; o resto é card com alertas.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 from app.services import carimbo
@@ -107,15 +107,119 @@ def _hora(timestamp: datetime | None) -> str:
     return carimbo.formatar(timestamp)[11:16]
 
 
+JANELA_ULTIMO_ALERTA = 20
+
+
+def janela_pregoes(agora: datetime, n: int = JANELA_ULTIMO_ALERTA) -> list[date]:
+    """Os `n` pregões que terminam no corrente, do mais novo ao mais antigo (spec 185).
+
+    Começa em `pregao_corrente`, não em `ultimo_pregao_fechado`: durante o
+    pregão o dia corrente é a posição 0 ("mais cedo neste pregão").
+    """
+    from app.calendario import pregao_anterior, pregao_corrente
+
+    if n <= 0:
+        return []
+    datas = [pregao_corrente(agora)]
+    while len(datas) < n:
+        datas.append(pregao_anterior(datas[-1]))
+    return datas
+
+
+def _rodadas(payload: Any) -> int:
+    """`radares_pregao` do payload, ou 0 quando o pregão não tem registro."""
+    if not isinstance(payload, dict):
+        return 0
+    r = payload.get("radares_pregao")
+    if isinstance(r, bool) or not isinstance(r, int) or r <= 0:
+        return 0
+    return r
+
+
+def ultimo_alerta(historico: dict[date, Any], pregoes: list[date]) -> dict[str, Any]:
+    """Pregão mais recente da janela em que cada radar acendeu (spec 185).
+
+    `historico` são os payloads `instrumentacao` por data; `pregoes` vai do
+    mais novo ao mais antigo. Um radar acendeu num pregão com registro quando
+    ficou escondido em menos rodadas do que as contadas.
+    """
+    registrados = 0
+    resultado: dict[str, dict[str, Any]] = {
+        chave: {"ultimo": None, "pregoes_atras": None} for chave, _n, _c in RADARES
+    }
+    for posicao, dia in enumerate(pregoes):
+        payload = historico.get(dia)
+        rodadas = _rodadas(payload)
+        if not rodadas or not isinstance(payload, dict):
+            continue
+        registrados += 1
+        escondidos_dia = payload.get("escondidos_pregao")
+        if not isinstance(escondidos_dia, dict):
+            escondidos_dia = {}
+        for chave, info in resultado.items():
+            if info["ultimo"] is not None:
+                continue
+            vezes = escondidos_dia.get(chave, 0)
+            if isinstance(vezes, bool) or not isinstance(vezes, int):
+                vezes = 0
+            if vezes < rodadas:
+                info["ultimo"] = dia
+                info["pregoes_atras"] = posicao
+    return {"janela": len(pregoes), "registrados": registrados, "radares": resultado}
+
+
+def ultimo_alerta_vazio(janela: int = JANELA_ULTIMO_ALERTA) -> dict[str, Any]:
+    """O resultado sem nenhum registro: data histórica ou leitura falha."""
+    return {**ultimo_alerta({}, []), "janela": janela}
+
+
+def frase_ultimo_alerta(chave: str, ultimo: dict[str, Any] | None) -> str:
+    """A frase depois do nome na seção "Sem alertas"; vazia sem registro."""
+    if not ultimo or not ultimo.get("registrados"):
+        return ""
+    info = ultimo["radares"].get(chave) or {}
+    atras = info.get("pregoes_atras")
+    if atras == 0:
+        return "· teve alerta mais cedo neste pregão"
+    if atras is not None:
+        dia = info["ultimo"]
+        unidade = "pregão" if atras == 1 else "pregões"
+        return f"· último alerta há {atras} {unidade} ({dia.strftime('%d/%m')})"
+    m = ultimo["registrados"]
+    if m == 1:
+        return "· sem alerta no 1 pregão registrado"
+    return f"· sem alerta nos {m} pregões registrados"
+
+
+def ultimo_alerta_api(ultimo: dict[str, Any]) -> dict[str, Any]:
+    """`paineis.radares_ultimo_alerta` do `/api/snapshot`, com datas ISO."""
+    return {
+        "janela": ultimo["janela"],
+        "registrados": ultimo["registrados"],
+        "radares": {
+            chave: {
+                "ultimo": info["ultimo"].isoformat() if info["ultimo"] else None,
+                "pregoes_atras": info["pregoes_atras"],
+            }
+            for chave, info in ultimo["radares"].items()
+        },
+    }
+
+
 def resumo(
     contexto: dict[str, Any],
     agora: datetime,
     is_historical: bool,
     mostrar_vazios: bool,
+    ultimo: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """O que a aba Alertas precisa: a classe de cada card e a seção "Sem alertas"."""
+    """O que a aba Alertas precisa: a classe de cada card e a seção "Sem alertas".
+
+    Cada item de `sem_alertas` é `{"nome", "frase"}`; a frase do último alerta
+    (spec 185) só aparece fora de data histórica.
+    """
     classes: dict[str, str] = {}
-    sem_alertas: list[str] = []
+    sem_alertas: list[dict[str, str]] = []
     outros: list[dict[str, str]] = []
     for chave, nome, _campo_lista in RADARES:
         estado, timestamp = classificar(
@@ -124,7 +228,8 @@ def resumo(
         if estado == COM_ALERTAS:
             classes[chave] = _CLASSE_BASE
         elif estado == SEM_ALERTAS:
-            sem_alertas.append(nome)
+            frase = "" if is_historical else frase_ultimo_alerta(chave, ultimo)
+            sem_alertas.append({"nome": nome, "frase": frase})
             classes[chave] = f"{_CLASSE_BASE} radar-vazio" + (
                 "" if mostrar_vazios else " escondido"
             )

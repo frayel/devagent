@@ -1162,6 +1162,24 @@ def _painel_de_alertas(dado: Any, agora: datetime, sem_dado: str) -> Any:
     }
 
 
+def _ultimo_alerta_radares(agora: datetime, is_historical: bool) -> dict[str, Any]:
+    """Último pregão em que cada radar acendeu, numa só leitura (spec 185).
+
+    Data histórica ou leitura que falha devolvem o resultado sem registro.
+    """
+    if is_historical:
+        return radares_servico.ultimo_alerta_vazio()
+    import app.banco as banco_module
+
+    pregoes = radares_servico.janela_pregoes(agora)
+    try:
+        historico = banco_module.ler_snapshots_datas("instrumentacao", pregoes)
+    except Exception:
+        logging.getLogger(__name__).exception("leitura da instrumentação falhou")
+        return radares_servico.ultimo_alerta_vazio()
+    return radares_servico.ultimo_alerta(historico, pregoes)
+
+
 @app.get("/api/snapshot")
 def snapshot(
     data_query: str | None = Query(default=None, alias="data"),
@@ -1222,6 +1240,15 @@ def snapshot(
 
         elif is_historical:
             resp["paineis"]["assimetria_risco_retorno"] = None
+        # O contrato da auditoria exige `fonte` e `coletado_em` em todo painel
+        # (issue #872); a contagem vem da instrumentação lida agora (spec 185).
+        resp["paineis"]["radares_ultimo_alerta"] = {
+            **radares_servico.ultimo_alerta_api(
+                _ultimo_alerta_radares(agora, is_historical)
+            ),
+            "fonte": "instrumentacao",
+            "coletado_em": agora.isoformat(),
+        }
         data = get_latest_ibovespa_data()
         if data:
             if data.previous_close and data.previous_close > 0:
@@ -2336,7 +2363,11 @@ def index(
             "relogio": relogio,
         }
         contexto["radares"] = radares_servico.resumo(
-            contexto, agora, is_historical, mostrar_vazios=vazios == "1"
+            contexto,
+            agora,
+            is_historical,
+            mostrar_vazios=vazios == "1",
+            ultimo=_ultimo_alerta_radares(agora, is_historical),
         )
         contexto["confluencia"] = radares_servico.confluencia(
             contexto, agora, is_historical

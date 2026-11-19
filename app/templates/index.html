@@ -398,7 +398,7 @@
     <div class="cab"><h2 id="titulo-sem-alertas">Sem alertas</h2></div>
     {% if radares.sem_alertas %}
     <ul class="radares-sem-alerta">
-        {% for nome in radares.sem_alertas %}<li>{{ nome }}</li>{% endfor %}
+        {% for r in radares.sem_alertas %}<li>{{ r.nome }}{% if r.frase %} <span class="ultimo-alerta">{{ r.frase }}</span>{% endif %}</li>{% endfor %}
     </ul>
     {% endif %}
     {% if radares.outros %}
