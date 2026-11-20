@@ -6,6 +6,7 @@ esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_188.py
 origem: Teste que reprova classe sem estilo
+revisada: 2026-11-20
 ---
 
 ## Problema
@@ -41,14 +42,14 @@ Nenhum cálculo novo; só o sinal que escolhe a cor. Exemplo de ponta a ponta, d
 
 - **Falso Rompimento.** O Yahoo entrega fechamentos em reais e volumes em unidades: D-1 fecha 20,00 com volume 1.000.000; D-0 fecha 19,50 com volume 1.800.000 e máxima acima da de D-1. O coletor grava `variacao = (19,50 − 20,00) / 20,00 × 100 = −2,5` e `var_volume = (1.800.000 − 1.000.000) / 1.000.000 × 100 = 80,0` (percentuais, não frações). Células: `<span class="var baixa">▼ -2,50%</span>` e `<span class="var alta">▲ 80,00%</span>`.
 - **Divergência.** Fechamentos de 5 pregões de 10,00 a 10,50; volume médio dos 3 primeiros 1.000.000 e dos 2 últimos 600.000. O coletor grava `alta_acumulada = (10,50 − 10,00) / 10,00 × 100 = 5,0` e `var_volume = (600.000 − 1.000.000) / 1.000.000 × 100 = −40,0`. Células: `<span class="var alta">▲ 5,00%</span>` e `<span class="var baixa">▼ -40,00%</span>`.
-- **Anomalias de Spread.** `spread_percent = 0,85` (percentual, como gravado). Célula `n` com o texto `0,85%`, sem `var`, sem seta e sem cor.
-- **Sinal zero.** `var_volume = 0,0` sai `<span class="var neutra">■ 0,00%</span>`.
+- **Anomalias de Spread.** A fonte entrega `bid = 20,00` e `ask = 20,17` em reais; o coletor (`app/collectors/radar_anomalias_spread.py`) grava `spread_percent = (20,17 − 20,00) / 20,00 × 100 = 0,85` (percentual, não fração, sem arredondar). Célula `n` com o texto `0,85%`, sem `var`, sem seta e sem cor.
+- **Sinal zero.** Um segundo alerta de *Falso Rompimento* gravado direto no banco (o coletor nunca o produz, porque exige volume maior) com `variacao = -1,0` e `var_volume = 0,0`: a célula de volume sai `<span class="var neutra">■ 0,00%</span>`.
 
 ## Critérios de aceite
-`tests/test_aceite_188.py`, com `exigir_spec_done("188")`, sem internet, gravando os dados com `save_radar_anomalias_spread_data`, `save_falso_rompimento_data` e `save_radar_divergencia_volume_data` no banco temporário do `conftest` e lendo `GET /` com o `TestClient` (como `tests/test_aceite_185.py`):
+`tests/test_aceite_188.py`, com `exigir_spec_done("188")`, sem internet, gravando os dados com `save_radar_anomalias_spread_data`, `save_falso_rompimento_data` e `save_radar_divergencia_volume_data` no banco temporário do `conftest` e lendo `GET /` com o `TestClient` (como `tests/test_aceite_185.py`). O HTML de cada card é o trecho entre o `<h2>` com o título dele e o `</section>` seguinte (macro `painel` de `componentes.html`); card sem alerta ou sem dado continua no HTML, só com a classe `escondido` posta por `app/services/radares.py`:
 
 - [ ] Com os alertas do exemplo da seção *Cálculos*, o card *Falso Rompimento* contém `var baixa` com `▼ -2,50%` e `var alta` com `▲ 80,00%`, e as duas células têm a classe `n`; o card *Divergência Volume/Preço* contém `var alta` com `▲ 5,00%` e `var baixa` com `▼ -40,00%`.
-- [ ] Com `var_volume = 0,0`, a célula sai com `var neutra` e `■`.
+- [ ] Com o segundo alerta de *Falso Rompimento* do exemplo *Sinal zero* (`var_volume = 0,0`), a célula de volume dele sai com `var neutra` e `■ 0,00%`.
 - [ ] O card *Anomalias de Spread* mostra `0,85%` numa célula `n` e não contém `var alta` nem `var baixa`.
 - [ ] O ticker de cada linha sai numa célula `tk`.
 - [ ] Com os três radares gravados sem alertas, cada card mostra o texto de vazio da tabela dentro de um `div` com a classe `vazio`.
