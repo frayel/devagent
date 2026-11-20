@@ -6,6 +6,7 @@ esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_187.py
 origem: Teste que reprova classe sem estilo
+revisada: 2026-11-20
 ---
 
 ## Problema
@@ -13,9 +14,9 @@ Quando um template ganha uma classe, ela muda alguma coisa na tela? Hoje ningué
 
 Medido na `main` de 19/11/2026 (`e76e1c1`), com o método da seção *Cálculos*:
 
-- Os 8 templates de `app/templates/` usam **187 classes estáticas** distintas.
+- Os 8 templates de `app/templates/` usam **187 classes estáticas** distintas (188 na `main` de 20/11, `26bdda7`: a nova tem seletor, e as 43 sem estilo são as mesmas).
 - **48** não têm seletor em `app/static/tema.css` nem no `<style>` de `app/templates/sistema.html`. Dessas, **5** são lidas pelo JavaScript (`alertas`, `destaque`, `fora`, `mare-anuncio`, `voltar-hoje` aparecem em `app/static/ui.js` ou `app/static/graficos.js`), e **43** não fazem nada em lugar nenhum do navegador.
-- Exemplo visível: os painéis *Falso Rompimento* e *Divergência Volume/Preço* (`app/templates/index.html:700–760`) montam a tabela à mão com `ranking`, `numero`, `positivo`, `negativo` e `dado-indisponivel`, e nenhuma dessas classes tem estilo. Os números saem sem cor e alinhados à esquerda, enquanto os outros radares usam `tabela_ativos` (`num`, `texto-alta`, `texto-baixa`) e `vazio`. E a coluna de volume leva `positivo` fixo mesmo quando o valor tem ▼: se alguém der estilo a `positivo` sem olhar, a tela passa a pintar de verde uma queda.
+- Exemplo visível: os painéis *Falso Rompimento* e *Divergência Volume/Preço* (`app/templates/index.html:700–760`) montam a tabela à mão com `ranking`, `numero`, `positivo`, `negativo` e `dado-indisponivel`, e nenhuma dessas classes tem estilo. Os números saem sem cor e alinhados à esquerda, enquanto os outros radares usam `tabela_ativos` (`num`, `texto-alta`, `texto-baixa`) e `vazio`. A cor é fixa por coluna (`positivo` ou `negativo`), não pelo sinal do valor; hoje os coletores só gravam alertas em que a coluna e o sinal coincidem (conferido na spec 188), mas a tela depende dessa regra para não pintar uma queda de verde.
 
 Esta spec é a primeira fatia: impedir que a lista cresça. Zerar as 43 fica para depois (ver *Fora do escopo*).
 
@@ -47,7 +48,7 @@ Nenhuma fonte externa. O teste lê arquivos do repositório: `app/templates/*.ht
 **Classes dos templates.** Para cada atributo `class="..."` de cada `app/templates/*.html`:
 
 1. troque cada trecho `{{ ... }}` por um caractere marcador sem espaço (por exemplo `\x00`), para que o pedaço de nome colado nele (`g-faixa-{{ n }}`) não conte;
-2. apague cada trecho `{% ... %}`, mantendo o texto entre eles (as classes condicionais de `{% if %}badge-positivo{% else %}badge-negativo{% endif %}` contam);
+2. troque cada trecho `{% ... %}` por um espaço, mantendo o texto entre eles (as classes condicionais de `{% if %}badge-positivo{% else %}badge-negativo{% endif %}` contam). Por espaço, não por nada: apagar colaria `badge-positivo{% else %}badge-negativo` em `badge-positivobadge-negativo`, um nome só, que casa o passo 3 e viraria falso positivo;
 3. separe por espaço e fique só com os nomes que casam `^[a-z][a-z0-9-]*$` (sem `_`: isso descarta os pedaços de expressão Jinja que caem dentro de um `class="` montado por concatenação, como o `clima_class` de `index.html:93`).
 
 **Classes com estilo.** Junte o texto de `app/static/*.css` e de todo bloco `<style>...</style>` dos templates. Apague **uma única vez** os blocos de declaração `{...}` que não contêm outra chave (`re.sub(r"\{[^{}]*\}", "", texto)`): os números das declarações, como `0.5rem`, somem, e os seletores de dentro de um `@media { .x { } }` continuam visíveis. Não repita a troca até estabilizar: a segunda passada apaga o `@media` inteiro com os seletores dentro (na `main` medida, `.pregao .form-inline`, `app/static/tema.css:123`, deixaria de contar e `form-inline` viraria falso positivo). Toda ocorrência de `\.([a-zA-Z][\w-]*)` no que sobra é um seletor de classe.
@@ -60,7 +61,7 @@ Exemplo de ponta a ponta:
 
 - template: `<span class="badge {% if ok %}badge-positivo{% else %}badge-negativo{% endif %} g-faixa-{{ n }}">`
 - passo 1: `badge {% if ok %}badge-positivo{% else %}badge-negativo{% endif %} g-faixa-\x00`
-- passo 2: `badge badge-positivo badge-negativo g-faixa-\x00`
+- passo 2: `badge   badge-positivo badge-negativo  g-faixa-\x00` (cada `{% ... %}` virou um espaço)
 - passo 3: `{"badge", "badge-positivo", "badge-negativo"}` (`g-faixa-\x00` não casa)
 - CSS: `.badge-confianca { color: red } @media (max-width: 600px) { .badge-positivo { margin: 0.5rem } }` → seletores `{"badge-confianca", "badge-positivo"}` (`badge` não, porque `.badge-confianca` não é `.badge` seguido de fim de nome)
 - JS vazio, `SEM_ESTILO_CONHECIDAS = {"badge": "..."}`
@@ -71,7 +72,7 @@ Na `main` medida: 187 classes − 139 com seletor − 5 do JS = 43, igual ao tam
 ## Critérios de aceite
 `tests/test_aceite_187.py`, com `exigir_spec_done("187")`, sem internet e sem servidor, chamando as funções puras que o teste da regra expõe (por exemplo `classes_dos_templates(textos)`, `seletores_do_css(texto)`, `citadas_no_js(nomes, texto)`), com textos montados no próprio teste:
 
-- [ ] O exemplo da seção *Cálculos* dá exatamente os conjuntos mostrados em cada passo, e o resultado final é `{"badge", "badge-negativo"}`.
+- [ ] O exemplo da seção *Cálculos* dá exatamente os conjuntos mostrados em cada passo (no passo 2, `badge-positivobadge-negativo` não aparece), e o resultado final é `{"badge", "badge-negativo"}`.
 - [ ] Uma classe só citada dentro de `@media` conta como estilizada, inclusive quando o `@media` tem mais de uma regra; `0.5rem` e `1.25em` nas declarações não viram seletor.
 - [ ] `voltar-hoje` sem seletor, mas com `document.querySelector(".voltar-hoje")` no JS, não reprova; `voltar` no mesmo JS não salva uma classe `voltar-ontem`.
 - [ ] Uma classe nova sem estilo fora da lista reprova, e a mensagem cita o nome da classe e o template.
@@ -84,7 +85,7 @@ Na `main` medida: 187 classes − 139 com seletor − 5 do JS = 43, igual ao tam
 - `/api/snapshot` responde 200 com as mesmas chaves.
 
 ## Fora do escopo
-- Corrigir as 43 classes (dar estilo, trocar por uma que já existe ou apagar). Cada correção muda o visual e cabe numa spec de *Experiência* ou num PR `fix:`; o resto da visão segue no item *Teste que reprova classe sem estilo* da Fila do `docs/BACKLOG.md`. Os primeiros candidatos são os painéis *Falso Rompimento* e *Divergência Volume/Preço*, que deviam usar `tabela_ativos` e `vazio` como os outros radares, com a cor da célula pelo sinal do valor e não fixa por coluna.
+- Corrigir as 43 classes (dar estilo, trocar por uma que já existe ou apagar). Cada correção muda o visual e cabe numa spec de *Experiência* ou num PR `fix:`; o resto da visão segue no item *Teste que reprova classe sem estilo* da Fila do `docs/BACKLOG.md`. A fatia 2 já é a spec 188 (*Anomalias de Spread*, *Falso Rompimento* e *Divergência Volume/Preço* em `tabela_ativos`, 11 classes a menos), que depende desta.
 - Classes montadas em tempo de execução (`g-cor-{{ n }}`, `span-{{ largura }}`, `class="{{ x }}"`) e classes postas pelo JS (`classList.add`): o teste não as enxerga, e conferir as dinâmicas pede renderizar as páginas.
 - O caminho inverso (seletor no CSS que nenhum template ou JS usa, CSS morto). É uma poda própria.
 - Estilos inline (`style="..."`).
