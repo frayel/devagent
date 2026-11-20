@@ -808,7 +808,7 @@
     {% endif %}
 {% endcall %}
 
-{% call painel("Assimetria Risco/Retorno", 4, "Ações muito próximas da sua mínima de 30 dias (<=2%) e distantes da sua máxima (>=10%).", assimetria_risco_retorno.fonte if assimetria_risco_retorno else "", assimetria_risco_retorno.coletado_em if assimetria_risco_retorno else "", "visao-micro rankings") %}
+{% call painel("Assimetria Risco/Retorno", 4, "Ações a até 2% acima da mínima dos últimos 30 pregões (cerca de 6 semanas) que precisam subir 10% ou mais para voltar à máxima desses 30 pregões.", assimetria_risco_retorno.fonte if assimetria_risco_retorno else "", assimetria_risco_retorno.coletado_em if assimetria_risco_retorno else "", "visao-micro rankings") %}
     {% if assimetria_risco_retorno %}
         {% if assimetria_risco_retorno.alertas|length == 0 %}
             <div class="vazio">Nenhuma ação neste perfil hoje.</div>
@@ -817,11 +817,11 @@
             {% for alerta in assimetria_risco_retorno.alertas %}
                 {% set _ = linhas.append([
                     {'tk': True, 'conteudo': alerta.ticker},
-                    {'conteudo': ("{:.1f}% min".format(alerta.dist_min_pct)).replace(".", ","), 'num': True},
-                    {'conteudo': ("{:.1f}% máx".format(alerta.dist_max_pct)).replace(".", ","), 'num': True}
+                    {'conteudo': ("{:.1f}%".format(alerta.dist_min_pct)).replace(".", ","), 'num': True},
+                    {'conteudo': ("+{:.1f}%".format(alerta.dist_max_pct)).replace(".", ","), 'num': True}
                 ]) %}
             {% endfor %}
-            {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Da mínima', 'num': True}, {'titulo': 'Da máxima', 'num': True}], 'assimetria-risco-retorno') }}
+            {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Acima da mínima', 'num': True}, {'titulo': 'Até a máxima', 'num': True}], 'assimetria-risco-retorno') }}
         {% endif %}
     {% else %}
         {{ estado('sem_registro' if is_historical else 'indisponivel') }}

@@ -9,6 +9,10 @@ from app.collectors import mt5
 
 logger = logging.getLogger(__name__)
 
+# Janela em pregões (candles diários válidos), não em dias corridos: 30 pregões
+# cobrem cerca de 6 semanas. O rótulo do card diz "30 pregões" (#997).
+JANELA_PREGOES = 30
+
 TICKERS = [
     "PETR4",
     "VALE3",
@@ -61,10 +65,10 @@ def collect_and_save() -> bool:
 
             valid_closes = [c for c in closes if c is not None]
 
-            if len(valid_closes) < 30:
+            if len(valid_closes) < JANELA_PREGOES:
                 continue
 
-            closes_30 = valid_closes[-30:]
+            closes_30 = valid_closes[-JANELA_PREGOES:]
             atual = closes_30[-1]
             min_30 = min(closes_30)
             max_30 = max(closes_30)
