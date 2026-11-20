@@ -1,5 +1,12 @@
 [
   {
+    "data": "2026-11-20",
+    "tipo": "melhoria",
+    "texto": "Anomalias de Spread, Falso Rompimento e Divergência Volume/Preço ficam como os outros radares: números à direita, seta e cor pelo sinal, e o spread sem cor.",
+    "onde": {"aba": "alertas", "aba_nome": "Alertas Intraday", "painel": "Falso Rompimento"},
+    "spec": "188"
+  },
+  {
     "data": "2026-11-19",
     "tipo": "melhoria",
     "texto": "O card \"Em vários radares\" guarda, a cada fechamento, as ações que estiveram em vários radares no pregão e diz quantos pregões já estão guardados.",

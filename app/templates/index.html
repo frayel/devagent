@@ -653,32 +653,22 @@
     {% endif %}
 {% endcall %}
 
-    {% call painel("Anomalias de Spread", 4, "Ações de alta liquidez com spread (ask - bid) anormalmente superior à média, indicando possível retirada de ordens por formadores de mercado (pânico incipiente).", anomalias_spread.fonte if anomalias_spread else "", anomalias_spread.coletado_em if anomalias_spread else "", radares.classes['anomalias_spread']) %}
-        {% if not anomalias_spread %}
-            <div class="estado vazia"><span class="icone">--</span> Sem dados</div>
-        {% elif not anomalias_spread.alertas %}
-            <div class="estado normal"><span class="icone">✓</span> Spreads normais hoje</div>
-        {% else %}
-            <table class="ranking">
-                <thead>
-                    <tr>
-                        <th class="esq">Ativo</th>
-                        <th class="dir">Spread</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for a in anomalias_spread.alertas %}
-                    <tr>
-                        <td class="esq">{{ a.ticker }}</td>
-                        <td class="dir">
-                            <span class="var alta">{{ ("%.2f"|format(a.spread_percent))|replace(".", ",") }}%</span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
-    {% endcall %}
+{% call painel("Anomalias de Spread", 4, "Ações de alta liquidez com spread (ask - bid) anormalmente superior à média, indicando possível retirada de ordens por formadores de mercado (pânico incipiente).", anomalias_spread.fonte if anomalias_spread else "", anomalias_spread.coletado_em if anomalias_spread else "", radares.classes['anomalias_spread']) %}
+    {% if not anomalias_spread %}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
+    {% elif not anomalias_spread.alertas %}
+        <div class="vazio">Spreads normais hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in anomalias_spread.alertas %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': ("%.2f%%" | format(a.spread_percent))|replace(".", ","), 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Spread', 'num': True}], 'anomalias-spread') }}
+    {% endif %}
+{% endcall %}
 
 {% call painel("Radar de Short Squeeze", 4, "Ações que vêm de forte queda recente mas hoje reagem com alta violenta e volume atípico (capitulação vendida).", short_squeeze.fonte if short_squeeze else "", short_squeeze.coletado_em if short_squeeze else "", radares.classes['short_squeeze']) %}
     {% if not short_squeeze %}
@@ -698,67 +688,41 @@
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Queda 10d', 'num': True}, {'titulo': 'Volume'}, {'titulo': 'Alta', 'num': True}], 'short-squeeze') }}
     {% endif %}
 {% endcall %}
-        {% call painel("Falso Rompimento", 4, "Ações que romperam a máxima anterior, mas reverteram para baixo com volume alto (Bull Trap).", falso_rompimento.fonte if falso_rompimento else "", falso_rompimento.coletado_em if falso_rompimento else "", radares.classes['falso_rompimento']) %}
-            {% if not falso_rompimento %}
-                <div class="dado-indisponivel">Dado indisponível agora</div>
-            {% elif not falso_rompimento.alertas %}
-                <div class="dado-indisponivel">Nenhum falso rompimento detectado</div>
-            {% else %}
-                <table class="ranking">
-                    <thead>
-                        <tr>
-                            <th>Ativo</th>
-                            <th class="numero">Variação (%)</th>
-                            <th class="numero">Vol (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for a in falso_rompimento.alertas %}
-                        <tr>
-                            <td>{{ a.ticker }}</td>
-                            <td class="numero negativo">
-                                {% if a.variacao > 0 %}▲ {% else %}▼ {% endif %}{{ "%.2f"|format(a.variacao)|replace('.', ',') }}%
-                            </td>
-                            <td class="numero positivo">
-                                {% if a.var_volume > 0 %}▲ {% else %}▼ {% endif %}{{ "%.2f"|format(a.var_volume)|replace('.', ',') }}%
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% endif %}
-        {% endcall %}
+{% call painel("Falso Rompimento", 4, "Ações que romperam a máxima anterior, mas reverteram para baixo com volume alto (Bull Trap).", falso_rompimento.fonte if falso_rompimento else "", falso_rompimento.coletado_em if falso_rompimento else "", radares.classes['falso_rompimento']) %}
+    {% if not falso_rompimento %}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
+    {% elif not falso_rompimento.alertas %}
+        <div class="vazio">Nenhum falso rompimento detectado hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in falso_rompimento.alertas %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': (variacao((("%.2f%%" | format(a.variacao))|replace(".", ",")) | e, (1 if a.variacao > 0 else -1 if a.variacao < 0 else 0))) | safe, 'num': True},
+                {'conteudo': (variacao((("%.2f%%" | format(a.var_volume))|replace(".", ",")) | e, (1 if a.var_volume > 0 else -1 if a.var_volume < 0 else 0))) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Variação', 'num': True}, {'titulo': 'Volume', 'num': True}], 'falso-rompimento') }}
+    {% endif %}
+{% endcall %}
 
-        {% call painel("Divergência Volume/Preço", 4, "Ações que subiram nos últimos 5 dias, mas cujo volume negociado secou (exaustão).", radar_divergencia_volume.fonte if radar_divergencia_volume else "", radar_divergencia_volume.coletado_em if radar_divergencia_volume else "", radares.classes['radar_divergencia_volume']) %}
-            {% if not radar_divergencia_volume %}
-                <div class="dado-indisponivel">Dado indisponível agora</div>
-            {% elif not radar_divergencia_volume.alertas %}
-                <div class="dado-indisponivel">Nenhuma divergência detectada</div>
-            {% else %}
-                <table class="ranking">
-                    <thead>
-                        <tr>
-                            <th>Ativo</th>
-                            <th class="numero">Alta (%)</th>
-                            <th class="numero">Vol (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for a in radar_divergencia_volume.alertas %}
-                        <tr>
-                            <td>{{ a.ticker }}</td>
-                            <td class="numero positivo">
-                                {% if a.alta_acumulada > 0 %}▲ {% else %}▼ {% endif %}{{ "%.2f"|format(a.alta_acumulada)|replace('.', ',') }}%
-                            </td>
-                            <td class="numero negativo">
-                                {% if a.var_volume > 0 %}▲ {% else %}▼ {% endif %}{{ "%.2f"|format(a.var_volume)|replace('.', ',') }}%
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% endif %}
-        {% endcall %}
+{% call painel("Divergência Volume/Preço", 4, "Ações que subiram nos últimos 5 dias, mas cujo volume negociado secou (exaustão).", radar_divergencia_volume.fonte if radar_divergencia_volume else "", radar_divergencia_volume.coletado_em if radar_divergencia_volume else "", radares.classes['radar_divergencia_volume']) %}
+    {% if not radar_divergencia_volume %}
+        {{ estado('sem_registro' if is_historical else 'indisponivel') }}
+    {% elif not radar_divergencia_volume.alertas %}
+        <div class="vazio">Nenhuma divergência detectada hoje.</div>
+    {% else %}
+        {% set linhas = [] %}
+        {% for a in radar_divergencia_volume.alertas %}
+            {% set _ = linhas.append([
+                {'tk': True, 'conteudo': a.ticker},
+                {'conteudo': (variacao((("%.2f%%" | format(a.alta_acumulada))|replace(".", ",")) | e, (1 if a.alta_acumulada > 0 else -1 if a.alta_acumulada < 0 else 0))) | safe, 'num': True},
+                {'conteudo': (variacao((("%.2f%%" | format(a.var_volume))|replace(".", ",")) | e, (1 if a.var_volume > 0 else -1 if a.var_volume < 0 else 0))) | safe, 'num': True}
+            ]) %}
+        {% endfor %}
+        {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Alta 5d', 'num': True}, {'titulo': 'Volume', 'num': True}], 'divergencia-volume') }}
+    {% endif %}
+{% endcall %}
 
 {% call painel("Índice de Esforço vs Resultado", 4, "Ações com volume muito acima da média (esforço alto) mas cuja amplitude de preço (abertura vs atual) permaneceu perto de zero, indicando absorção institucional.", esforco_resultado.fonte if esforco_resultado else "", esforco_resultado.coletado_em if esforco_resultado else "", radares.classes['esforco_resultado']) %}
     {% if not esforco_resultado %}
