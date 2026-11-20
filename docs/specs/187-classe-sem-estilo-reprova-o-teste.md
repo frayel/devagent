@@ -1,7 +1,7 @@
 ---
 id: 187
 titulo: Classe nova sem estilo reprova o teste
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_187.py
