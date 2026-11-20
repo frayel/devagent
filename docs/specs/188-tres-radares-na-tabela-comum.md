@@ -1,7 +1,7 @@
 ---
 id: 188
 titulo: Três radares montados à mão passam a usar a tabela comum
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_188.py

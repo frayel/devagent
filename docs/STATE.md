@@ -18,6 +18,9 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 188 - Três radares montados à mão passam a usar a tabela comum:
+  - `app/templates/index.html`: *Anomalias de Spread*, *Falso Rompimento* e *Divergência Volume/Preço* usam `tabela_ativos` (`id_rank` `anomalias-spread`, `falso-rompimento`, `divergencia-volume`), `variacao` com a cor do sinal do próprio valor, `estado('sem_registro' if is_historical else 'indisponivel')` e `div.vazio`. O spread sai em texto simples, sem cor. Dados, coletores e `/api/snapshot` não mudam.
+  - `SEM_ESTILO_CONHECIDAS` (`tests/test_classes_com_estilo.py`) perde as 11 classes que só esses cards usavam e fica com 32. Aceite em `tests/test_aceite_188.py`.
 - [Saúde técnica] Spec 187 - Classe nova sem estilo reprova o teste:
   - `tests/test_classes_com_estilo.py` (roda sempre): lê `app/templates/*.html`, `app/static/*.css` (mais os `<style>` dos templates) e `app/static/*.js`, e reprova classe estática de template sem seletor, fora do JS e fora de `SEM_ESTILO_CONHECIDAS`; reprova também exceção vencida (a lista só encolhe).
   - Medida na `main` de 20/11 (`20857a5`): 188 classes estáticas, 140 com seletor, 5 só no JS, 43 sem efeito, as mesmas da tabela da spec. Nenhuma página muda. Aceite em `tests/test_aceite_187.py`.
