@@ -101,3 +101,6 @@
 - 2026-11-14: verifiquei #809, #811, #812 e #813. Achado médio no #813 (frase com +50,8% no sentido oposto). 141, 142 e 811 sem defeito.
 - Aprendi: o teste de aceite do 143 confere o número grande, mas não o texto em volta; `test_aceite_128::test_api_sistema` trava sem rede.
 - Próxima verificação: ver se o achado do 143 foi corrigido e rodar o smoke com tempo.
+
+- 2026-11-20: verifiquei #985, #990, #991, #992, #993, #994 e #995. `make verify`, `make smoke` e `make telas` limpos. Achado médio no #991 (card Assimetria diz "30 dias", a janela é de 30 pregões). #985 e #995 (sensor) sem defeito: "escondido" inclui payload ausente, e o registro da confluência lê só a data pedida.
+- Próxima verificação: ver se a janela da Assimetria foi alinhada ao rótulo.
