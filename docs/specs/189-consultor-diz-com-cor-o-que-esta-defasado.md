@@ -2,6 +2,7 @@
 id: 189
 titulo: O Consultor mostra com cor qual informação está defasada
 status: ready
+revisada: 2026-11-21
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_189.py
@@ -44,7 +45,13 @@ Nenhum cálculo novo; o estado já é calculado em `informacoes.py`. Exemplo de 
 - Os sinais referem-se ao pregão de 18/11/2026 e o último pregão fechado, às 15:00 de 19/11, é 18/11: `estado_sinais = "Atualizado"`. O quadro mostra `<span class="selo ok">Atualizado</span>` em *Sinais técnicos*.
 
 ## Critérios de aceite
-`tests/test_aceite_189.py`, com `exigir_spec_done("189")`, sem internet, lendo `GET /consultor` com o `TestClient` (como `tests/test_aceite_165.py` e `tests/test_aceite_180.py`) e trocando `app.consultor.informacoes.construir_informacoes_de` por um dublê com `monkeypatch`, para fixar os estados sem depender do relógio:
+`tests/test_aceite_189.py`, com `exigir_spec_done("189")`, sem internet, lendo `GET /consultor` com o `TestClient` (como `tests/test_aceite_165.py` e `tests/test_aceite_180.py`) e trocando `app.consultor.informacoes.construir_informacoes_de` por um dublê com `monkeypatch`, para fixar os estados sem depender do relógio. Detalhes que a revisão conferiu na `main`:
+
+- `app/main.py:842` importa `construir_informacoes_de` dentro da rota, então o `monkeypatch.setattr(app.consultor.informacoes, "construir_informacoes_de", dublê)` vale na chamada seguinte. O dublê devolve todas as chaves que o template lê: `estado_sinais`, `frase_sinais`, `sinais_pregao`, `sinais_coletado_em`, `estado_opinioes`, `frase_opinioes`, `opinioes_extraidas_em`, `opinioes_materia_mais_recente` e `composicao_conferida_em`.
+- `calcular_consultor` também é trocado (`monkeypatch.setattr(app.main, "calcular_consultor", ...)`), com o mesmo dicionário de `_pagina` do `tests/test_aceite_165.py`.
+- O rodapé "Última extração:" só aparece quando não há opinião (`{% if not opinioes_por_ativo %}`, `consultor.html:144`): o caso que confere o `fonte-dado` usa `opinioes_recentes = []`.
+- O teto de `tests/test_aceite_187.py:108` (`<= 43`) continua passando com 25; só o de `tests/test_classes_com_estilo.py:176` muda.
+
 
 - [ ] Com `estado_sinais = "Atualizado"` e `estado_opinioes = "Defasado"`, o HTML contém `<span class="selo ok">Atualizado</span>` dentro do bloco *Sinais técnicos* e `<span class="selo atencao">Defasado</span>` dentro do bloco *Opiniões de especialistas* (o bloco é o trecho entre o `<h4>` com o título e o `</div>` que fecha o `info-conteudo`).
 - [ ] Com os dois estados `"Defasado"`, nenhum dos dois blocos contém `selo ok`.
