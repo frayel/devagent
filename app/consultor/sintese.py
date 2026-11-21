@@ -1,6 +1,9 @@
+import logging
 from datetime import datetime, timezone, timedelta
 
-from app.consultor.armazenamento import ler_data, ler_preco_alvo
+from app.consultor.armazenamento import get_fechamentos, ler_data, ler_preco_alvo
+
+logger = logging.getLogger(__name__)
 
 
 JANELA_CONSENSO = timedelta(days=30)
@@ -46,14 +49,84 @@ def _classe_recomendacao(recomendacao) -> str:
 _ROTULOS_CONTAGEM = (("compra", "Comprar"), ("neutro", "Neutro"), ("venda", "Vender"))
 
 
+def situacao_do_alvo(
+    opiniao: dict, fechamentos: list[tuple[str, float]]
+) -> dict | None:
+    """Se o preço-alvo da opinião já foi atingido ou quanto falta (spec 190).
+
+    `fechamentos` é a lista do ticker da opinião, crescente por data. O sentido
+    vem do fechamento anterior ao dia (Brasília) da matéria; sem ele, `None`.
+    """
+    alvo = ler_preco_alvo(opiniao.get("preco_alvo"))
+    if alvo is None or alvo <= 0:
+        return None
+    momento = ler_data(opiniao.get("data_materia"))
+    if momento is None:
+        return None
+    from app.services.carimbo import FUSO
+
+    dia = momento.astimezone(FUSO).strftime("%Y-%m-%d")
+    antes = [(d, p) for d, p in fechamentos if d < dia]
+    if not antes:
+        return None
+    base_data, base_preco = antes[-1]
+    if alvo > base_preco:
+        sentido = "alta"
+    elif alvo < base_preco:
+        sentido = "baixa"
+    else:
+        return None
+    situacao = {
+        "sentido": sentido,
+        "alvo": alvo,
+        "base_data": base_data,
+        "base_preco": base_preco,
+    }
+    for data, preco in fechamentos:
+        if data < dia:
+            continue
+        if (sentido == "alta" and preco >= alvo) or (
+            sentido == "baixa" and preco <= alvo
+        ):
+            return {"estado": "atingido", **situacao, "data": data, "preco": preco}
+    data, preco = fechamentos[-1]
+    return {
+        "estado": "falta",
+        **situacao,
+        "data": data,
+        "preco": preco,
+        "distancia": alvo / preco - 1,
+    }
+
+
+def fechamentos_das_opinioes(
+    opinioes: list[dict], ate: str | None = None
+) -> dict[str, list[tuple[str, float]]]:
+    """Os fechamentos guardados dos tickers que têm opinião (spec 190).
+
+    Erro de leitura vira `{}` e um registro no log: a coluna sai `-` e a
+    página não cai.
+    """
+    tickers = sorted({op["ticker"] for op in opinioes if op.get("ticker")})
+    try:
+        return get_fechamentos(tickers, ate=ate)
+    except Exception:
+        logger.exception("Falha ao ler consultor_fechamentos para a spec 190")
+        return {}
+
+
 def agrupar_por_ativo(
-    opinioes: list[dict], referencia: datetime | None = None
+    opinioes: list[dict],
+    referencia: datetime | None = None,
+    fechamentos: dict[str, list[tuple[str, float]]] | None = None,
 ) -> list[dict]:
     """Uma linha por ativo para a lista Opiniões Recentes (spec 165).
 
     A contagem usa a mesma regra do consenso (`ultima_por_casa`), e
-    `cobertura_insuficiente` pergunta ao próprio `calcular_consenso`.
+    `cobertura_insuficiente` pergunta ao próprio `calcular_consenso`. Cada
+    opinião da linha é uma cópia com `alvo_situacao` (spec 190).
     """
+    fechamentos = fechamentos or {}
     limite = _limite_janela(referencia)
     por_ticker: dict[str, list[dict]] = {}
     for op in opinioes:
@@ -101,7 +174,15 @@ def agrupar_por_ativo(
                 "alvo_max": max(alvos) if alvos else None,
                 "mais_recente_data": mais_recente_data,
                 "mais_recente_casa": (mais_recente or {}).get("casa"),
-                "opinioes": [op for _, op in na_janela],
+                "opinioes": [
+                    {
+                        **op,
+                        "alvo_situacao": situacao_do_alvo(
+                            op, fechamentos.get(ticker, [])
+                        ),
+                    }
+                    for _, op in na_janela
+                ],
             }
         )
     linhas.sort(key=lambda linha: linha["ticker"])

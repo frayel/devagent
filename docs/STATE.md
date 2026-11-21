@@ -18,6 +18,10 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Capacidade nova] Spec 190 - Cada opinião com preço-alvo diz se o alvo já foi atingido ou quanto falta:
+  - `app/consultor/sintese.py`: `situacao_do_alvo(opiniao, fechamentos)` (base = último fechamento antes do dia da matéria em Brasília; sentido pelo preço; atingido = primeiro fechamento no alvo; falta = distância do último fechamento) e `fechamentos_das_opinioes`; `agrupar_por_ativo(..., fechamentos=)` devolve cópias com `alvo_situacao`.
+  - `app/consultor/armazenamento.py`: `get_fechamentos(tickers, ate=None)` lê `consultor_fechamentos` numa consulta só.
+  - `app/templates/consultor.html`: coluna *Até o alvo* (`td.n`, filtros `ate_o_alvo` e `metodo_do_alvo` em `app/main.py`) e a linha de método. Aceite em `tests/test_aceite_190.py`.
 - [Experiência] Spec 189 - O Consultor mostra com cor qual informação está defasada:
   - `app/templates/consultor.html`: o quadro de informações usa `selo ok` ("Atualizado") e `selo atencao` ("Defasado"), as classes de `/sistema`; o título "Opiniões Recentes" sai sem classe; o rodapé do diagnóstico das opiniões vai num `div.fonte-dado`; a tabela "Sem sinal" fica só com `tabela-consultor`. Dados, `informacoes.py` e `/api/consultor` não mudam.
   - `SEM_ESTILO_CONHECIDAS` perde as 7 classes do `consultor.html` e fica com 25 (teto `<= 25`). Aceite em `tests/test_aceite_189.py`.

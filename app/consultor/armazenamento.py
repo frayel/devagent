@@ -970,6 +970,39 @@ def save_fechamentos(resultados_list: list[dict]):
         conn.close()
 
 
+def get_fechamentos(
+    tickers: list[str], ate: str | None = None
+) -> dict[str, list[tuple[str, float]]]:
+    """Ticker -> [(data_pregao 'AAAA-MM-DD', fechamento)], em ordem crescente de data;
+    com `ate`, só data_pregao <= ate (spec 190). Uma consulta só."""
+    tickers = list(dict.fromkeys(t for t in tickers if t))
+    if not tickers:
+        return {}
+    init_db()
+    conn, backend = get_connection()
+    try:
+        cur = conn.cursor()
+        marcas = ",".join("?" for _ in tickers)
+        sql = (
+            "SELECT data_pregao, ticker, preco_fechamento FROM consultor_fechamentos "
+            f"WHERE ticker IN ({marcas})"
+        )
+        parametros: list = list(tickers)
+        if ate:
+            sql += " AND data_pregao <= ?"
+            parametros.append(ate)
+        sql += " ORDER BY data_pregao ASC"
+        cur.execute(sql_para(backend, sql), parametros)
+        resultado: dict[str, list[tuple[str, float]]] = {}
+        for data_pregao, ticker, preco in cur.fetchall():
+            resultado.setdefault(ticker, []).append(
+                (str(data_pregao)[:10], float(preco))
+            )
+        return resultado
+    finally:
+        conn.close()
+
+
 def get_recomendacoes(data_referencia: str) -> list[dict]:
     init_db()
     conn, backend = get_connection()

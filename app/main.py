@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 
 from fastapi.responses import JSONResponse
 from app.consultor.calculador import calcular_consultor
-from app.consultor.sintese import agrupar_por_ativo
+from app.consultor.sintese import agrupar_por_ativo, fechamentos_das_opinioes
 from app.consultor.universo import (
     composicao_esta_desatualizada,
     FONTE_URL,
@@ -147,6 +147,39 @@ def _dia_brasilia(momento) -> str:
 
 
 templates.env.filters["dia_brasilia"] = _dia_brasilia
+
+
+def _dia_mes(data_iso) -> str:
+    """`AAAA-MM-DD` -> `dd/mm` (spec 190)."""
+    texto = str(data_iso or "")
+    return f"{texto[8:10]}/{texto[5:7]}" if len(texto) >= 10 else "-"
+
+
+def _ate_o_alvo(situacao) -> str:
+    """Texto da célula Até o alvo da lista Opiniões Recentes (spec 190)."""
+    if not isinstance(situacao, dict):
+        return "-"
+    if situacao.get("estado") == "atingido":
+        preco = f"{situacao['preco']:.2f}".replace(".", ",")
+        return f"atingido em {_dia_mes(situacao['data'])} · R$ {preco}"
+    distancia = f"{situacao['distancia'] * 100:+.1f}".replace(".", ",")
+    return f"faltam {distancia}% · fech. {_dia_mes(situacao['data'])}"
+
+
+def _metodo_do_alvo(situacao) -> str:
+    """O `title` da célula Até o alvo: o alvo, a base e o sentido (spec 190)."""
+    if not isinstance(situacao, dict):
+        return ""
+    alvo = f"{situacao['alvo']:.2f}".replace(".", ",")
+    base = f"{situacao['base_preco']:.2f}".replace(".", ",")
+    return (
+        f"Alvo R$ {alvo} · antes da matéria: R$ {base} em "
+        f"{_dia_mes(situacao['base_data'])} ({situacao['sentido']})"
+    )
+
+
+templates.env.filters["ate_o_alvo"] = _ate_o_alvo
+templates.env.filters["metodo_do_alvo"] = _metodo_do_alvo
 
 
 def _referencia_do_dia(target_data: str | None) -> datetime | None:
@@ -730,7 +763,11 @@ def pagina_consultor(
                 "regras_confianca": {},
                 "opinioes_recentes": opinioes_historicas,
                 "opinioes_por_ativo": agrupar_por_ativo(
-                    opinioes_historicas, referencia=_referencia_do_dia(target_data)
+                    opinioes_historicas,
+                    referencia=_referencia_do_dia(target_data),
+                    fechamentos=fechamentos_das_opinioes(
+                        opinioes_historicas, ate=target_data
+                    ),
                 ),
                 "opinioes_status": {},
             }
@@ -980,7 +1017,11 @@ def api_consultor(
                 "regras_confianca": {},
                 "opinioes_recentes": opinioes_historicas_api,
                 "opinioes_por_ativo": agrupar_por_ativo(
-                    opinioes_historicas_api, referencia=_referencia_do_dia(target_data)
+                    opinioes_historicas_api,
+                    referencia=_referencia_do_dia(target_data),
+                    fechamentos=fechamentos_das_opinioes(
+                        opinioes_historicas_api, ate=target_data
+                    ),
                 ),
                 "opinioes_status": {},
             }
