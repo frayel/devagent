@@ -5,6 +5,7 @@ status: ready
 esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_190.py
+revisada: 2026-11-21
 origem: O placar mede o alvo que a casa declarou
 ---
 
@@ -21,7 +22,7 @@ O item da *Fila* que originou esta spec dizia que "o placar da 072b dá acerto p
   - alvo ainda não atingido: `faltam +13,4% · fech. 19/11` (a distância do último fechamento guardado até o alvo, com sinal, uma casa decimal e vírgula; e o dia desse fechamento);
   - sem alvo legível, sem data legível ou sem fechamento de referência (veja *Cálculos*): `-`.
   - A célula tem um `title` com o método da linha: `Alvo R$ 45,00 · antes da matéria: R$ 40,00 em 10/11 (alta)`, para a pessoa conferir o sentido usado.
-- **Uma linha de método**, uma vez só, logo abaixo da lista (antes do rodapé "Última extração: ..."), num `<p class="fonte-dado">`, só quando a lista tem linhas: `Até o alvo: compara o preço-alvo com os fechamentos guardados pelo Consultor desde o dia da matéria. "Atingido" é o primeiro fechamento que chegou ao alvo, no sentido do fechamento anterior à matéria.`
+- **Uma linha de método**, uma vez só, logo abaixo da lista (antes do rodapé "Última extração: ..."), num `<p class="fonte-dado">`, só quando a lista tem linhas, escrita literalmente no template (não por variável: o autoescape trocaria as aspas por `&#34;` e o teste de texto exato falharia): `Até o alvo: compara o preço-alvo com os fechamentos guardados pelo Consultor desde o dia da matéria. "Atingido" é o primeiro fechamento que chegou ao alvo, no sentido do fechamento anterior à matéria.`
 - Nenhuma classe CSS nova (o `tests/test_classes_com_estilo.py` reprova classe sem estilo): a célula usa `class="n"`, que já existe (`th.n, td.n` em `app/static/tema.css`), e o texto sai sem cor nem seta. "Faltam +13,4%" não é alta nem queda do papel; cor de alta e baixa aqui confundiria (convenção da seção 7 do `PRODUTO.md`).
 - **Pregão passado.** Em `/consultor?data=AAAA-MM-DD` e `/api/consultor?data=...`, a coluna usa só os fechamentos com `data_pregao` até a data pedida, inclusive: a página mostra o que se sabia naquele dia.
 - **JSON.** Em `/api/consultor`, cada opinião dentro de `opinioes_por_ativo[].opinioes[]` ganha a chave `alvo_situacao`: `null`, ou o dicionário de *Cálculos*. Nenhuma outra chave muda; `opinioes_recentes` não ganha a chave.
@@ -52,7 +53,7 @@ def situacao_do_alvo(opiniao: dict, fechamentos: list[tuple[str, float]]) -> dic
 1. `alvo = ler_preco_alvo(opiniao.get("preco_alvo"))`; `None` ou `<= 0` → devolve `None`.
 2. `dia = ` o dia de `ler_data(opiniao.get("data_materia"))` **no fuso de Brasília** (`app.services.carimbo.FUSO`), como `AAAA-MM-DD`; data ilegível → `None`. Uma matéria às 01h00 UTC de 12/11 é do dia 11/11.
 3. **Base:** o último fechamento com `data_pregao < dia` (o preço que a casa via ao publicar). Sem base → `None`. Não há outro caminho para decidir o sentido do alvo, e o conservador é não afirmar nada.
-4. **Sentido:** `alta` se `alvo >= base`, senão `baixa`. O sentido vem do preço, não da recomendação: uma casa "neutra" com alvo acima do preço também espera alta, e uma "venda" com alvo acima do preço existe (alvo acima, mas abaixo do potencial de outras ações).
+4. **Sentido:** `alta` se `alvo > base`, `baixa` se `alvo < base`; `alvo == base` → devolve `None` (a casa não apontou direção, e qualquer sentido violaria as invariantes no caso sem fechamento depois da matéria). O sentido vem do preço, não da recomendação: uma casa "neutra" com alvo acima do preço também espera alta, e uma "venda" com alvo acima do preço existe (alvo acima, mas abaixo do potencial de outras ações).
 5. **Depois da matéria:** os fechamentos com `data_pregao >= dia`. O pregão do próprio dia conta: a maioria das matérias sai antes ou durante o pregão.
 6. **Atingido:** o primeiro fechamento de *depois* com `preco >= alvo` (alta) ou `preco <= alvo` (baixa). Devolve:
    `{"estado": "atingido", "sentido", "alvo", "base_data", "base_preco", "data", "preco"}` (`data` e `preco` do fechamento que atingiu).
@@ -102,9 +103,9 @@ Na mesma tabela com `ate="2026-11-13"` (página de 13/11): **a** fica `faltam +2
 
 ## Critérios de aceite
 - [ ] `tests/test_aceite_190.py`, com `exigir_spec_done("190")`, sem rede:
-  - `situacao_do_alvo` com cada opinião de a a g e a lista de fechamentos do ticker dela (tabela do exemplo) devolve o `estado`, o `sentido`, a `data`, o `preco` e a `distancia` (com `pytest.approx`, 4 casas) da tabela; d, f e g devolvem `None`.
+  - `situacao_do_alvo` com cada opinião de a a g e a lista de fechamentos do ticker dela (tabela do exemplo) devolve o `estado`, o `sentido`, a `data`, o `preco` e a `distancia` (com `pytest.approx`, 4 casas) da tabela; d, f e g devolvem `None`; uma opinião extra com alvo igual ao fechamento-base (PETR4, alvo `44,10`, matéria em 20/11 12:00 UTC, base 19/11 · 44,10) também devolve `None`.
   - Com os fechamentos cortados em `2026-11-13`, **a** e **e** saem `falta`, com `distancia` 0,02273 e −0,05455.
-  - `get_fechamentos(["PETR4", "VALE3", "ITUB4"])`, depois de gravar as linhas do exemplo em `consultor_fechamentos` (banco de teste), devolve as duas listas em ordem crescente e nenhuma chave `ITUB4`; com `ate="2026-11-13"`, a última data de PETR4 é `2026-11-13`; com `[]`, devolve `{}`.
+  - `get_fechamentos(["PETR4", "VALE3", "ITUB4"])`, depois de gravar as linhas do exemplo em `consultor_fechamentos` (banco de teste, por `INSERT` direto: `save_fechamentos` grava só a data de hoje e só depois das 18h BRT, então não serve para semear datas passadas), devolve as duas listas em ordem crescente e nenhuma chave `ITUB4`; com `ate="2026-11-13"`, a última data de PETR4 é `2026-11-13`; com `[]`, devolve `{}`.
   - `agrupar_por_ativo` com as opiniões a, b, c, d, a referência 21/11/2026 12:00 UTC e os fechamentos do exemplo: cada item de `linha["opinioes"]` tem `alvo_situacao`, e os dicionários de entrada não ganharam a chave (cópia, não mutação). Sem `fechamentos`, toda `alvo_situacao` é `None`.
   - Com as opiniões a, b e c gravadas por `save_opiniao`, os fechamentos do exemplo gravados e `calcular_consultor` trocado por uma função que devolve o dicionário mínimo com `opinioes_por_ativo` calculado delas e dos fechamentos (mesmo molde de `tests/test_aceite_165.py`), o HTML de `GET /consultor` contém `atingido em 16/11 · R$ 45,20`, `faltam +13,4% · fech. 19/11`, `faltam -4,8% · fech. 19/11`, o cabeçalho `Até o alvo` e a linha de método exatamente uma vez.
   - Sem opiniões (lista vazia), o HTML não contém a linha de método.
