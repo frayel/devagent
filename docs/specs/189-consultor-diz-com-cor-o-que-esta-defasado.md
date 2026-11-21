@@ -1,7 +1,7 @@
 ---
 id: 189
 titulo: O Consultor mostra com cor qual informação está defasada
-status: ready
+status: done
 revisada: 2026-11-21
 esforco: P
 gaveta: experiência
