@@ -4,6 +4,7 @@ from app.consultor.universo import CARTEIRA_IBOVESPA
 from app.consultor.sintese import (
     agrupar_por_ativo,
     calcular_consenso,
+    fechamentos_das_opinioes,
     obter_decisao_final,
 )
 from app.consultor.regras import avaliar_ativo, calcular_mm
@@ -234,13 +235,16 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
     ]:
         regras_summary[regra] = obter_confianca(regra)
 
+    opinioes_por_ativo_lista = [op for ops in opinioes_ativos.values() for op in ops]
     res_dict = {
         "resultados": resultados,
         "ativos_avaliados": len(CARTEIRA_IBOVESPA),
         "regras_confianca": regras_summary,
         "opinioes_recentes": opinioes_recentes,
         "opinioes_por_ativo": agrupar_por_ativo(
-            [op for ops in opinioes_ativos.values() for op in ops], referencia=agora
+            opinioes_por_ativo_lista,
+            referencia=agora,
+            fechamentos=fechamentos_das_opinioes(opinioes_por_ativo_lista),
         ),
         "opinioes_status": opinioes_status,
         # Timestamp da última barra do ^BVSP: o pregão a que os sinais se referem.

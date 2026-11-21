@@ -1,7 +1,7 @@
 ---
 id: 190
 titulo: Cada opinião com preço-alvo diz se o alvo já foi atingido ou quanto falta
-status: ready
+status: done
 esforco: M
 gaveta: capacidade nova
 aceite: tests/test_aceite_190.py

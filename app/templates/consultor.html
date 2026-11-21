@@ -118,6 +118,7 @@
                                     <th>Casa</th>
                                     <th>Recomendação</th>
                                     <th>Preço-Alvo</th>
+                                    <th class="n">Até o alvo</th>
                                     <th>Resumo</th>
                                     <th>Data</th>
                                     <th>Via</th>
@@ -130,6 +131,7 @@
                                     <td>{{ op.casa }}</td>
                                     <td>{{ op.recomendacao }}</td>
                                     <td>{{ op.preco_alvo if op.preco_alvo else '-' }}</td>
+                                    <td class="n"{% if op.alvo_situacao %} title="{{ op.alvo_situacao | metodo_do_alvo }}"{% endif %}>{{ op.alvo_situacao | ate_o_alvo }}</td>
                                     <td>{{ op.resumo }}</td>
                                     <td>{{ (op.data_materia | string)[:10] }}</td>
                                     <td>{{ op.link | origem_opiniao }}</td>
@@ -141,6 +143,9 @@
                     </div>
                 </details>
                 {% endfor %}
+                {% if opinioes_por_ativo %}
+                <p class="fonte-dado">Até o alvo: compara o preço-alvo com os fechamentos guardados pelo Consultor desde o dia da matéria. "Atingido" é o primeiro fechamento que chegou ao alvo, no sentido do fechamento anterior à matéria.</p>
+                {% endif %}
                 {% if not opinioes_por_ativo %}
                     {% if opinioes_diagnostico.codigo == "sem_chave" %}
                     <p>Extração desligada: falta a chave do Gemini.</p>
