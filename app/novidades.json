@@ -1,5 +1,12 @@
 [
   {
+    "data": "2026-11-21",
+    "tipo": "melhoria",
+    "texto": "O quadro do topo do Consultor mostra em amarelo a informação defasada e em verde a que está em dia, com a palavra escrita ao lado da cor.",
+    "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Informações"},
+    "spec": "189"
+  },
+  {
     "data": "2026-11-20",
     "tipo": "melhoria",
     "texto": "Anomalias de Spread, Falso Rompimento e Divergência Volume/Preço ficam como os outros radares: números à direita, seta e cor pelo sinal, e o spread sem cor.",

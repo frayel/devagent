@@ -52,14 +52,6 @@ SEM_ESTILO_CONHECIDAS: dict[str, str] = {
     "aviso-dados": _DIVIDA,
     "aviso-legal": _DIVIDA,
     "espacador-direita": _DIVIDA,
-    # consultor.html
-    "badge": _DIVIDA,
-    "badge-negativo": _DIVIDA,
-    "badge-positivo": _DIVIDA,
-    "lista-opinioes": _DIVIDA,
-    "rodape-painel": _DIVIDA,
-    "status-neutro": _DIVIDA,
-    "tabela-sem-sinal": _DIVIDA,
     # sistema.html
     "checagem-corpo": _DIVIDA,
 }
@@ -173,4 +165,4 @@ def test_toda_classe_dos_templates_faz_alguma_coisa():
 
 
 def test_lista_de_excecoes_nao_cresce_alem_da_medida():
-    assert len(SEM_ESTILO_CONHECIDAS) <= 43
+    assert len(SEM_ESTILO_CONHECIDAS) <= 25

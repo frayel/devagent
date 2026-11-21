@@ -18,6 +18,9 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 189 - O Consultor mostra com cor qual informação está defasada:
+  - `app/templates/consultor.html`: o quadro de informações usa `selo ok` ("Atualizado") e `selo atencao` ("Defasado"), as classes de `/sistema`; o título "Opiniões Recentes" sai sem classe; o rodapé do diagnóstico das opiniões vai num `div.fonte-dado`; a tabela "Sem sinal" fica só com `tabela-consultor`. Dados, `informacoes.py` e `/api/consultor` não mudam.
+  - `SEM_ESTILO_CONHECIDAS` perde as 7 classes do `consultor.html` e fica com 25 (teto `<= 25`). Aceite em `tests/test_aceite_189.py`.
 - [Experiência] Spec 188 - Três radares montados à mão passam a usar a tabela comum:
   - `app/templates/index.html`: *Anomalias de Spread*, *Falso Rompimento* e *Divergência Volume/Preço* usam `tabela_ativos` (`id_rank` `anomalias-spread`, `falso-rompimento`, `divergencia-volume`), `variacao` com a cor do sinal do próprio valor, `estado('sem_registro' if is_historical else 'indisponivel')` e `div.vazio`. O spread sai em texto simples, sem cor. Dados, coletores e `/api/snapshot` não mudam.
   - `SEM_ESTILO_CONHECIDAS` (`tests/test_classes_com_estilo.py`) perde as 11 classes que só esses cards usavam e fica com 32. Aceite em `tests/test_aceite_188.py`.

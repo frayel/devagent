@@ -35,7 +35,7 @@
                 <div class="info-conteudo">
                     Pregão: {{ informacoes_de.sinais_pregao }}<br>
                     Coleta: {{ informacoes_de.sinais_coletado_em }}<br>
-                    <span class="badge {% if informacoes_de.estado_sinais == 'Atualizado' %}badge-positivo{% else %}badge-negativo{% endif %}">{{ informacoes_de.estado_sinais }}</span>
+                    <span class="selo {% if informacoes_de.estado_sinais == 'Atualizado' %}ok{% else %}atencao{% endif %}">{{ informacoes_de.estado_sinais }}</span>
                 </div>
             </div>
             <div>
@@ -43,14 +43,14 @@
                 <div class="info-conteudo">
                     Extração: {{ informacoes_de.opinioes_extraidas_em }}<br>
                     Matéria mais recente: {{ informacoes_de.opinioes_materia_mais_recente }}<br>
-                    <span class="badge {% if informacoes_de.estado_opinioes == 'Atualizado' %}badge-positivo{% else %}badge-negativo{% endif %}">{{ informacoes_de.estado_opinioes }}</span>
+                    <span class="selo {% if informacoes_de.estado_opinioes == 'Atualizado' %}ok{% else %}atencao{% endif %}">{{ informacoes_de.estado_opinioes }}</span>
                 </div>
             </div>
             <div>
                 <h4>Composição do Ibovespa</h4>
                 <div class="info-conteudo">
                     Conferida em: {{ informacoes_de.composicao_conferida_em }}<br>
-                    <span class="badge badge-positivo">Atualizado</span>
+                    <span class="selo ok">Atualizado</span>
                 </div>
             </div>
         </div>
@@ -100,8 +100,8 @@
         </details>
 
         <div class="grupo-consultor">
-            <h3 class="status-neutro">Opiniões Recentes</h3>
-            <div class="lista-opinioes">
+            <h3>Opiniões Recentes</h3>
+            <div>
                 {% set opinioes_por_ativo = dados.get("opinioes_por_ativo") or [] if dados is mapping else [] %}
                 {% for linha in opinioes_por_ativo %}
                 <details class="opiniao-ativo">
@@ -160,8 +160,8 @@
                     <p>Nenhuma opinião nos últimos 30 dias.</p>
                     {% endif %}
                 {% endif %}
-                <div class="rodape-painel">
-                    <small>Última extração: {{ opinioes_diagnostico.ultima_extracao_em or "nunca" }} · matérias processadas em 24 h: {{ opinioes_diagnostico.materias_processadas }} · opiniões gravadas em 7 dias: {{ opinioes_diagnostico.opinioes_gravadas }} · descartadas: {{ opinioes_diagnostico.descartadas }}</small>
+                <div class="fonte-dado">
+                    Última extração: {{ opinioes_diagnostico.ultima_extracao_em or "nunca" }} · matérias processadas em 24 h: {{ opinioes_diagnostico.materias_processadas }} · opiniões gravadas em 7 dias: {{ opinioes_diagnostico.opinioes_gravadas }} · descartadas: {{ opinioes_diagnostico.descartadas }}
                 </div>
             </div>
         </div>
@@ -233,7 +233,7 @@
         <details class="accordion-sem-sinal">
             <summary>Sem sinal ({{ dados.resultados["Sem sinal"]|length }} ativos)</summary>
             <div class="tabela-responsiva">
-                <table class="tabela-consultor tabela-sem-sinal">
+                <table class="tabela-consultor">
                     <thead>
                         <tr>
                             <th>Ticker</th>
