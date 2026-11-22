@@ -1,7 +1,7 @@
 ---
 id: 191
 titulo: O Consultor escreve preços, potenciais e datas no padrão brasileiro
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_191.py

@@ -8,6 +8,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi.responses import JSONResponse
+from app.consultor import formato
 from app.consultor.calculador import calcular_consultor
 from app.consultor.sintese import agrupar_por_ativo, fechamentos_das_opinioes
 from app.consultor.universo import (
@@ -160,7 +161,7 @@ def _ate_o_alvo(situacao) -> str:
     if not isinstance(situacao, dict):
         return "-"
     if situacao.get("estado") == "atingido":
-        preco = f"{situacao['preco']:.2f}".replace(".", ",")
+        preco = formato.numero_br(situacao["preco"])
         return f"atingido em {_dia_mes(situacao['data'])} · R$ {preco}"
     distancia = f"{situacao['distancia'] * 100:+.1f}".replace(".", ",")
     return f"faltam {distancia}% · fech. {_dia_mes(situacao['data'])}"
@@ -170,8 +171,8 @@ def _metodo_do_alvo(situacao) -> str:
     """O `title` da célula Até o alvo: o alvo, a base e o sentido (spec 190)."""
     if not isinstance(situacao, dict):
         return ""
-    alvo = f"{situacao['alvo']:.2f}".replace(".", ",")
-    base = f"{situacao['base_preco']:.2f}".replace(".", ",")
+    alvo = formato.numero_br(situacao["alvo"])
+    base = formato.numero_br(situacao["base_preco"])
     return (
         f"Alvo R$ {alvo} · antes da matéria: R$ {base} em "
         f"{_dia_mes(situacao['base_data'])} ({situacao['sentido']})"
@@ -180,6 +181,9 @@ def _metodo_do_alvo(situacao) -> str:
 
 templates.env.filters["ate_o_alvo"] = _ate_o_alvo
 templates.env.filters["metodo_do_alvo"] = _metodo_do_alvo
+templates.env.filters["reais"] = formato.reais
+templates.env.filters["percentual"] = formato.percentual
+templates.env.filters["data_brasilia"] = formato.data_brasilia
 
 
 def _referencia_do_dia(target_data: str | None) -> datetime | None:

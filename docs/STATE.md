@@ -18,6 +18,10 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 191 - O Consultor escreve preços, potenciais e datas no padrão brasileiro:
+  - `app/consultor/formato.py`: `numero_br`, `reais` (via `ler_preco_alvo`), `percentual` (entrada em fração, sempre com sinal) e `data_brasilia` (via `ler_data`, dia em Brasília, `dd/mm/aaaa`); nenhuma levanta exceção, ilegível sai `-`.
+  - `app/main.py` registra os três como filtros do Jinja; `_ate_o_alvo` e `_metodo_do_alvo` usam `numero_br`, mesmo texto de antes.
+  - `app/templates/consultor.html`: resumo do ativo, colunas Preço-Alvo e Data do detalhe, fechamento das recomendações, alvo e potencial do consenso e preço do *Sem sinal* passam pelos filtros. `gatilho` e `motivo` seguem com ponto (item 23 do backlog). `/api/consultor` e o banco não mudam. Aceite em `tests/test_aceite_191.py`.
 - [Capacidade nova] Spec 190 - Cada opinião com preço-alvo diz se o alvo já foi atingido ou quanto falta:
   - `app/consultor/sintese.py`: `situacao_do_alvo(opiniao, fechamentos)` (base = último fechamento antes do dia da matéria em Brasília; sentido pelo preço; atingido = primeiro fechamento no alvo; falta = distância do último fechamento) e `fechamentos_das_opinioes`; `agrupar_por_ativo(..., fechamentos=)` devolve cópias com `alvo_situacao`.
   - `app/consultor/armazenamento.py`: `get_fechamentos(tickers, ate=None)` lê `consultor_fechamentos` numa consulta só.
