@@ -6,6 +6,7 @@ esforco: P
 gaveta: poda
 aceite: tests/test_aceite_192.py
 origem: CSS sem uso sai do tema
+revisada: 2026-11-22
 ---
 
 ## Problema
@@ -13,7 +14,7 @@ origem: CSS sem uso sai do tema
 
 O teste da spec 187 (`tests/test_classes_com_estilo.py`) cobre um lado: classe de template sem seletor. O outro lado, seletor sem classe em lugar nenhum, ninguém confere, e a lista cresce a cada card renomeado.
 
-Medido na `main` de 22/11/2026 (`8d2f78f`), com o método da seção *Cálculos*:
+Medido na `main` de 22/11/2026 (`8d2f78f`, e de novo na revisão em `ad5b03c`, mesmos números), com o método da seção *Cálculos*:
 
 - `app/static/tema.css` tem **180** nomes de classe em seletores (880 linhas).
 - **20** não aparecem como palavra inteira em nenhum `.html`, `.js` ou `.py` de `app/`.
@@ -45,7 +46,7 @@ Nada muda na tela, em nenhuma página, largura ou modo. Muda o `tema.css` e o `m
 2. **Teste novo, o avesso da 187:** um nome de classe que aparece em seletor do `tema.css` (ou de um `<style>` dos templates) e não aparece como palavra inteira em nenhum `.html`, `.js` ou `.py` de `app/` reprova, com a mensagem `seletor .<classe> em app/static/tema.css não é usado por nenhum template, JS ou Python: apague a regra ou registre em SEM_USO_CONHECIDOS com o motivo`.
 3. **Exceção só com motivo:** as classes montadas em tempo de execução entram num dicionário `SEM_USO_CONHECIDOS` (nome → motivo) ou num prefixo declarado (`g-cor-`, `span-`, `novidade-`, cada um com o arquivo e a linha que o monta). Como na 187, exceção que deixa de valer (a classe passou a aparecer literalmente, ou o seletor saiu do CSS) também reprova até a linha sair.
 
-O extrator de seletores reaproveita `seletores_do_css` e `estilos_dos_templates` de `tests/test_classes_com_estilo.py` (importar ou mover para um módulo comum de `tests/`), para os dois testes lerem o CSS do mesmo jeito.
+O extrator de seletores reaproveita `seletores_do_css` e `estilos_dos_templates` de `tests/test_classes_com_estilo.py` (importar ou mover para um módulo comum de `tests/`), para os dois testes lerem o CSS do mesmo jeito. Se mover, `tests/test_aceite_187.py` (linha 12) importa as duas de `tests.test_classes_com_estilo`: atualize esse import ou mantenha o nome reexportado, para o aceite da 187 continuar passando sem outra mudança.
 
 ## Fontes de dados
 Nenhuma. Só os arquivos do repositório: `app/static/tema.css`, `app/templates/*.html`, `app/static/*.js`, `app/**/*.py`.
