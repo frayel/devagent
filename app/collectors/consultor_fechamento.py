@@ -31,7 +31,15 @@ def collect_and_save() -> bool:
                 )
 
         save_recomendacoes(flat_resultados)
-        save_fechamentos(flat_resultados)
+
+        # O ^BVSP não é recomendação, mas o "resultado depois do fato" compara
+        # cada ativo com ele: o fechamento do índice vai junto para a tabela
+        # de fechamentos (#1005).
+        fechamentos = list(flat_resultados)
+        ibov = dados.get("ibov_fechamento")
+        if ibov:
+            fechamentos.append({"ticker": "^BVSP", "preco": ibov})
+        save_fechamentos(fechamentos)
         return True
     except Exception as e:
         logger.error(f"Erro no coletor consultor_fechamento: {e}", exc_info=True)

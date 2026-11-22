@@ -250,6 +250,9 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
         # Timestamp da última barra do ^BVSP: o pregão a que os sinais se referem.
         "sinais_pregao": ibov_ts[-1] if ibov_ts else None,
         "sinais_coletado_em": sinais_coletado_em,
+        # Fechamento do ^BVSP no mesmo pregão: o coletor o grava em
+        # consultor_fechamentos para o "resultado depois do fato" (#1005).
+        "ibov_fechamento": ibov_closes[-1] if ibov_closes else None,
     }
 
     _consultor_cache = res_dict
