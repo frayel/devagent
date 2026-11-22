@@ -108,7 +108,7 @@
                     <summary>
                         <span class="opiniao-campo"><strong>{{ linha.ticker }}</strong></span>
                         <span class="opiniao-campo"><span class="opiniao-rotulo">Opiniões</span> {{ linha.opinioes_texto }}{% if linha.cobertura_insuficiente %} · cobertura insuficiente{% endif %}</span>
-                        <span class="opiniao-campo"><span class="opiniao-rotulo">Preço-alvo</span> {% if linha.alvo_min is none %}-{% elif linha.alvo_min == linha.alvo_max %}R$ {{ "%.2f"|format(linha.alvo_min) }}{% else %}R$ {{ "%.2f"|format(linha.alvo_min) }} a R$ {{ "%.2f"|format(linha.alvo_max) }}{% endif %}</span>
+                        <span class="opiniao-campo"><span class="opiniao-rotulo">Preço-alvo</span> {% if linha.alvo_min is none %}-{% elif linha.alvo_min == linha.alvo_max %}{{ linha.alvo_min | reais }}{% else %}{{ linha.alvo_min | reais }} a {{ linha.alvo_max | reais }}{% endif %}</span>
                         <span class="opiniao-campo"><span class="opiniao-rotulo">Mais recente</span> {{ linha.mais_recente_data | dia_brasilia }} · {{ linha.mais_recente_casa }}</span>
                     </summary>
                     <div class="tabela-responsiva">
@@ -130,10 +130,10 @@
                                 <tr>
                                     <td>{{ op.casa }}</td>
                                     <td>{{ op.recomendacao }}</td>
-                                    <td>{{ op.preco_alvo if op.preco_alvo else '-' }}</td>
+                                    <td>{{ op.preco_alvo | reais }}</td>
                                     <td class="n"{% if op.alvo_situacao %} title="{{ op.alvo_situacao | metodo_do_alvo }}"{% endif %}>{{ op.alvo_situacao | ate_o_alvo }}</td>
                                     <td>{{ op.resumo }}</td>
-                                    <td>{{ (op.data_materia | string)[:10] }}</td>
+                                    <td>{{ op.data_materia | data_brasilia }}</td>
                                     <td>{{ op.link | origem_opiniao }}</td>
                                     <td><a href="{{ op.link }}" target="_blank">Ler</a></td>
                                 </tr>
@@ -195,7 +195,7 @@
                             <tr>
                                 <td>
                                     <strong>{{ item.ticker }}</strong><br>
-                                    R$ {{ "%.2f"|format(item.fechamento) }}
+                                    {{ item.fechamento | reais }}
                                 </td>
                                 <td>
                                     <span title="{{ item.motivo }}">{{ item.regra }}</span><br>
@@ -215,9 +215,9 @@
                                     {% else %}
                                         Consenso: {{ item.consenso.consenso }}<br>
                                         {% if item.consenso.preco_alvo_mediano %}
-                                            Alvo: R$ {{ "%.2f"|format(item.consenso.preco_alvo_mediano) }}
+                                            Alvo: {{ item.consenso.preco_alvo_mediano | reais }}
                                             {% if item.consenso.potencial != None %}
-                                                ({% if item.consenso.potencial > 0 %}+{% endif %}{{ "%.1f"|format(item.consenso.potencial * 100) }}%)
+                                                ({{ item.consenso.potencial | percentual }})
                                             {% endif %}
                                         {% endif %}
                                     {% endif %}
@@ -251,7 +251,7 @@
                         {% for item in dados.resultados["Sem sinal"] %}
                         <tr>
                             <td><strong>{{ item.ticker }}</strong></td>
-                            <td>R$ {{ "%.2f"|format(item.fechamento) }}</td>
+                            <td>{{ item.fechamento | reais }}</td>
                             <td>{{ item.regra }}</td>
                             <td>{{ item.motivo }}</td>
                         </tr>

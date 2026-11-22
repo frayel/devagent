@@ -1,5 +1,12 @@
 [
   {
+    "data": "2026-11-22",
+    "tipo": "melhoria",
+    "texto": "O Consultor escreve preços-alvo, fechamentos e potenciais com vírgula decimal e as datas das opiniões em dd/mm/aaaa, no dia de Brasília.",
+    "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Opiniões recentes"},
+    "spec": "191"
+  },
+  {
     "data": "2026-11-21",
     "tipo": "novidade",
     "texto": "Cada opinião com preço-alvo, no detalhe do ativo em Opiniões recentes, diz se o alvo já foi atingido (e em que dia) ou quanto ainda falta, pelo último fechamento guardado.",
