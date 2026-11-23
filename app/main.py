@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from app.consultor import formato
 from app.consultor.calculador import calcular_consultor
-from app.consultor.sintese import agrupar_por_ativo, fechamentos_das_opinioes
+from app.consultor.placar import consultor_de_pregao_passado
 from app.consultor.universo import (
     composicao_esta_desatualizada,
     FONTE_URL,
@@ -663,118 +663,9 @@ def pagina_consultor(
 
     try:
         if is_historical:
-            from app.consultor.armazenamento import get_recomendacoes
-
-            hist = get_recomendacoes(target_data or "")
-
-            # format hist to look like calcular_consultor output
-            resultados: dict[str, list[Any]] = {
-                "Comprar": [],
-                "Vender": [],
-                "Aguardar": [],
-                "No radar": [],
-                "Sem sinal": [],
-            }
-            for row in hist:
-                group = row["decisao"]
-                if group not in resultados:
-                    resultados[group] = []
-                # map consensus back, and format
-                from app.consultor.armazenamento import ler_consenso
-
-                consenso_dict = ler_consenso(row["consenso"])
-
-                resultados[group].append(
-                    {
-                        "ticker": row["ticker"],
-                        "fechamento": row["preco"],
-                        "regra": row["regra"],
-                        "gatilho": row["gatilho"],
-                        "consenso": consenso_dict,
-                        "justificativa": "",
-                        "motivo": row["regra"],
-                        "timestamp": row["timestamp"],
-                        "mensagem_confianca": "histórico indisponível (pregão passado)",
-                    }
-                )
-                from app.consultor.armazenamento import (
-                    get_connection,
-                    init_db,
-                    sql_para,
-                )
-                from app.consultor.placar import _calcular_excesso
-
-                init_db()
-                c_conn, c_backend = get_connection()
-                try:
-                    cur = c_conn.cursor()
-                    cur.execute(
-                        "SELECT data_pregao FROM consultor_fechamentos ORDER BY data_pregao ASC"
-                    )
-                    dps = sorted(list(set([x[0] for x in cur.fetchall()])))
-                    dp_rec = row["timestamp"][:10]
-                    msg = "ainda sem resultado"
-                    if dp_rec in dps:
-                        idx = dps.index(dp_rec)
-                        offset = min(5, len(dps) - 1 - idx)
-                        if offset > 0:
-                            dp_futuro = dps[idx + offset]
-                            cur.execute(
-                                sql_para(
-                                    c_backend,
-                                    "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
-                                ),
-                                (dp_futuro, row["ticker"]),
-                            )
-                            p_futuro_row = cur.fetchone()
-                            cur.execute(
-                                sql_para(
-                                    c_backend,
-                                    "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
-                                ),
-                                (dp_rec, "^BVSP"),
-                            )
-                            ibov_hoje_row = cur.fetchone()
-                            cur.execute(
-                                sql_para(
-                                    c_backend,
-                                    "SELECT preco_fechamento FROM consultor_fechamentos WHERE data_pregao = ? AND ticker = ?",
-                                ),
-                                (dp_futuro, "^BVSP"),
-                            )
-                            ibov_futuro_row = cur.fetchone()
-
-                            if p_futuro_row and ibov_hoje_row and ibov_futuro_row:
-                                p_futuro = p_futuro_row[0]
-                                ibov_hoje = ibov_hoje_row[0]
-                                ibov_futuro = ibov_futuro_row[0]
-                                excesso = _calcular_excesso(
-                                    row["preco"], p_futuro, ibov_hoje, ibov_futuro
-                                )
-                                sinal = "+" if excesso > 0 else ""
-                                msg = f"{sinal}{excesso * 100:.1f}% contra o IBOV em {offset} pregões"
-                finally:
-                    c_conn.close()
-                resultados[group][-1]["mensagem_confianca"] = msg
-
-            from app.consultor.armazenamento import get_opinioes_historicas
-
-            opinioes_historicas = get_opinioes_historicas(target_data or "")
-
-            dados = {
-                "resultados": resultados,
-                "ativos_avaliados": len(hist),
-                "regras_confianca": {},
-                "opinioes_recentes": opinioes_historicas,
-                "opinioes_por_ativo": agrupar_por_ativo(
-                    opinioes_historicas,
-                    referencia=_referencia_do_dia(target_data),
-                    fechamentos=fechamentos_das_opinioes(
-                        opinioes_historicas, ate=target_data
-                    ),
-                ),
-                "opinioes_status": {},
-            }
+            dados = consultor_de_pregao_passado(
+                target_data or "", _referencia_do_dia(target_data)
+            )
         else:
             dados = calcular_consultor()
         consultor_indisponivel = False
@@ -930,105 +821,9 @@ def api_consultor(
     _t0 = time.perf_counter()
     try:
         if is_historical:
-            from app.consultor.armazenamento import (
-                get_recomendacoes,
-                get_opinioes_historicas,
+            dados: dict[str, Any] = consultor_de_pregao_passado(
+                target_data or "", _referencia_do_dia(target_data)
             )
-
-            hist = get_recomendacoes(target_data or "")
-
-            resultados: dict[str, list[Any]] = {
-                "Comprar": [],
-                "Vender": [],
-                "Aguardar": [],
-                "No radar": [],
-                "Sem sinal": [],
-            }
-            from app.consultor.armazenamento import get_connection, init_db, sql_para
-            from app.consultor.placar import _calcular_excesso
-
-            init_db()
-            c_conn, c_backend = get_connection()
-            try:
-                cur = c_conn.cursor()
-                cur.execute(
-                    "SELECT data_pregao FROM consultor_fechamentos ORDER BY data_pregao ASC"
-                )
-                dps = sorted(list(set([x[0] for x in cur.fetchall()])))
-
-                tickers_to_fetch = list(set([r["ticker"] for r in hist] + ["^BVSP"]))
-                fechamentos_dict = {}
-                if tickers_to_fetch:
-                    placeholders = ",".join("?" for _ in tickers_to_fetch)
-                    cur.execute(
-                        sql_para(
-                            c_backend,
-                            f"SELECT data_pregao, ticker, preco_fechamento FROM consultor_fechamentos WHERE ticker IN ({placeholders})",
-                        ),
-                        tickers_to_fetch,
-                    )
-                    for dp, t, preco in cur.fetchall():
-                        fechamentos_dict[(dp, t)] = preco
-            finally:
-                c_conn.close()
-
-            for row in hist:
-                group = row["decisao"]
-                if group not in resultados:
-                    resultados[group] = []
-                from app.consultor.armazenamento import ler_consenso
-
-                consenso_dict = ler_consenso(row["consenso"])
-                resultados[group].append(
-                    {
-                        "ticker": row["ticker"],
-                        "fechamento": row["preco"],
-                        "regra": row["regra"],
-                        "gatilho": row["gatilho"],
-                        "consenso": consenso_dict,
-                        "justificativa": "",
-                        "motivo": row["regra"],
-                        "timestamp": row["timestamp"],
-                        "mensagem_confianca": "histórico indisponível (pregão passado)",
-                    }
-                )
-                dp_rec = row["timestamp"][:10]
-                msg = "ainda sem resultado"
-                if dp_rec in dps:
-                    idx = dps.index(dp_rec)
-                    offset = min(5, len(dps) - 1 - idx)
-                    if offset > 0:
-                        dp_futuro = dps[idx + offset]
-                        p_futuro = fechamentos_dict.get((dp_futuro, row["ticker"]))
-                        ibov_hoje = fechamentos_dict.get((dp_rec, "^BVSP"))
-                        ibov_futuro = fechamentos_dict.get((dp_futuro, "^BVSP"))
-
-                        if (
-                            p_futuro is not None
-                            and ibov_hoje is not None
-                            and ibov_futuro is not None
-                        ):
-                            excesso = _calcular_excesso(
-                                row["preco"], p_futuro, ibov_hoje, ibov_futuro
-                            )
-                            sinal = "+" if excesso > 0 else ""
-                            msg = f"{sinal}{excesso * 100:.1f}% contra o IBOV em {offset} pregões"
-                resultados[group][-1]["mensagem_confianca"] = msg
-            opinioes_historicas_api = get_opinioes_historicas(target_data or "")
-            dados: dict[str, Any] = {
-                "resultados": resultados,
-                "ativos_avaliados": len(hist),
-                "regras_confianca": {},
-                "opinioes_recentes": opinioes_historicas_api,
-                "opinioes_por_ativo": agrupar_por_ativo(
-                    opinioes_historicas_api,
-                    referencia=_referencia_do_dia(target_data),
-                    fechamentos=fechamentos_das_opinioes(
-                        opinioes_historicas_api, ate=target_data
-                    ),
-                ),
-                "opinioes_status": {},
-            }
             _usou_cache = False
         else:
             _cache_ts_before = _consultor_cache_time
