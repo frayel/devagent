@@ -7,6 +7,13 @@
     "spec": "191"
   },
   {
+    "data": "2026-11-22",
+    "tipo": "correcao",
+    "texto": "Num pregão passado do Consultor, cada recomendação volta a dizer como o ativo se saiu depois, comparado ao Ibovespa. Antes ficava sempre em \"ainda sem resultado\".",
+    "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Recomendações"},
+    "pr": "#1014"
+  },
+  {
     "data": "2026-11-21",
     "tipo": "novidade",
     "texto": "Cada opinião com preço-alvo, no detalhe do ativo em Opiniões recentes, diz se o alvo já foi atingido (e em que dia) ou quanto ainda falta, pelo último fechamento guardado.",
@@ -28,6 +35,13 @@
     "spec": "188"
   },
   {
+    "data": "2026-11-20",
+    "tipo": "correcao",
+    "texto": "O card Assimetria Risco/Retorno diz a janela que usa de fato: os últimos 30 pregões (cerca de 6 semanas), e não 30 dias. A coluna Até a máxima mostra a alta que falta com o sinal.",
+    "onde": {"aba": "rankings", "aba_nome": "Rankings & Destaques", "painel": "Assimetria Risco/Retorno"},
+    "pr": "#998"
+  },
+  {
     "data": "2026-11-19",
     "tipo": "melhoria",
     "texto": "O card \"Em vários radares\" guarda, a cada fechamento, as ações que estiveram em vários radares no pregão e diz quantos pregões já estão guardados.",
@@ -40,6 +54,13 @@
     "texto": "Na lista \"Sem alertas\", cada radar diz quando acendeu pela última vez: mais cedo neste pregão, há quantos pregões, ou que não acende em nenhum dos pregões registrados.",
     "onde": {"aba": "alertas", "aba_nome": "Alertas Intraday", "painel": "Sem alertas"},
     "spec": "185"
+  },
+  {
+    "data": "2026-11-19",
+    "tipo": "correcao",
+    "texto": "O card Assimetria Risco/Retorno mostrava sempre \"Dado indisponível agora\". Agora aparecem as ações que a coleta encontrou.",
+    "onde": {"aba": "rankings", "aba_nome": "Rankings & Destaques", "painel": "Assimetria Risco/Retorno"},
+    "pr": "#991"
   },
   {
     "data": "2026-11-18",
@@ -123,6 +144,13 @@
     "spec": "167"
   },
   {
+    "data": "2026-11-17",
+    "tipo": "correcao",
+    "texto": "No mapa de calor da Maré do mercado, o tamanho de cada quadrado segue o volume negociado. Antes, ações menores podiam sair como os maiores quadrados. Uma legenda diz o que é tamanho e o que é cor.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Maré do mercado"},
+    "pr": "#942"
+  },
+  {
     "data": "2026-11-16",
     "tipo": "melhoria",
     "texto": "As Opiniões Recentes do Consultor têm uma linha por ação: quantas casas dizem comprar, manter ou vender, a faixa de preço-alvo e a mais recente. Clique para ver cada opinião.",
@@ -142,6 +170,12 @@
     "texto": "Na coluna Casas do Consultor, cada ação com cobertura mostra a média dos analistas do Yahoo Finance, quantos são e o preço-alvo médio. É só informação: não muda a decisão.",
     "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Coluna Casas"},
     "spec": "159"
+  },
+  {
+    "data": "2026-11-16",
+    "tipo": "correcao",
+    "texto": "No tablet, o rótulo do pregão no topo da página quebra em linhas em vez de ser cortado.",
+    "pr": "#909"
   },
   {
     "data": "2026-11-15",

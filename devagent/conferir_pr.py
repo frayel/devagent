@@ -70,6 +70,13 @@ Regras (mantenha em sincronia com devagent/CICLO.md, Passos 1 e 4):
        sobras de sessões (`plan.md`, `commit_desc.txt`) e os diários
        existiam em duas cópias idênticas (`.jules/` e `.agents/`).
 
+   12. PR `feat:` ou `fix:` que altera os `caminhos` da seção [novidades] do
+       devagent.toml escreve também o `arquivo` de novidades, ou diz no corpo
+       `Novidades: nenhuma` com o motivo. Em 23/11 a página de novidades do
+       produto tinha só uma entrada em 22/11: a regra vivia só na spec que
+       criou a página, as specs a repetiam e as correções a esqueciam (cinco
+       correções visíveis de 16/11 a 22/11 ficaram de fora).
+
 Uma regra nunca é afrouxada no mesmo PR que corrige o que ela aponta
 (README do núcleo, separação de poderes).
 """
@@ -388,6 +395,42 @@ def conferir_enxuto(
             )
 
 
+ENTREGA_VISIVEL = re.compile(r"^\s*(feat|fix)\b", re.IGNORECASE)
+SEM_NOVIDADE = re.compile(r"novidades?:\s*nenhuma\b", re.IGNORECASE)
+
+
+def conferir_novidades(
+    res: Resultado,
+    titulo: str,
+    corpo: str,
+    alterados: set[str],
+    novidades: dict[str, Any],
+) -> None:
+    """Regra 12: PR `feat:` ou `fix:` que muda o produto escreve a novidade.
+
+    Sem a seção [novidades] do devagent.toml, ou fora do CI (sem título), a
+    regra não roda. Mudança que ninguém vê na tela declara no corpo
+    `Novidades: nenhuma`, com o motivo.
+    """
+    arquivo = novidades.get("arquivo")
+    if not arquivo or not titulo or not ENTREGA_VISIVEL.match(titulo):
+        return
+    caminhos = tuple(novidades.get("caminhos", ()))
+    produto = [
+        a
+        for a in alterados
+        if a.startswith(caminhos) and "tests" not in Path(a).parts and a != arquivo
+    ]
+    if not produto or arquivo in alterados or SEM_NOVIDADE.search(corpo or ""):
+        return
+    res.falha(
+        f"O PR muda o produto ({', '.join(sorted(produto)[:3])}) e não escreve "
+        f"`{arquivo}`. Acrescente a entrada do que mudou para quem usa o site, "
+        "ou, se nada muda na tela, diga no corpo `Novidades: nenhuma` e o "
+        "motivo (regra 12)."
+    )
+
+
 def arquivos_versionados(raiz: Path) -> list[str]:
     saida = git("ls-files", "--cached", "--others", "--exclude-standard", raiz=raiz)
     return [linha for linha in (saida or "").splitlines() if linha]
@@ -508,6 +551,11 @@ def conferir(
     # PR com o login do dono do repositório (raias.pr_do_agente).
     titulo = titulo_do_pr() if titulo is None else titulo
     corpo = corpo_do_pr() if corpo is None else corpo
+
+    # Regra 12: mudança visível entra nas novidades do produto (vale também
+    # para PR de pessoa: quem usa o site não sabe quem abriu o PR).
+    conferir_novidades(res, titulo, corpo, alterados, CONFIG.get("novidades", {}))
+
     autor = autor_do_pr()
     if autor and not pr_do_agente(autor, corpo):
         titulo = ""
