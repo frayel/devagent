@@ -113,6 +113,7 @@ Soma-se ao checklist de `devagent/CICLO.md`:
 - Toda a interface segue `docs/DESIGN.md`: tema escuro, tokens, grade, componentes e gráficos. Painel novo é montado com as macros de `app/templates/componentes.html` e uma classe `span-N`.
 - Cores coerentes para alta e baixa em todos os painéis, sempre com seta além da cor.
 - A página funciona em 390 px sem rolagem horizontal.
+- **Toda mudança que quem usa o site percebe entra em `app/novidades.json`, no mesmo PR**: spec entregue e também correção (`fix:`). Tipo `novidade`, `melhoria` ou `correcao`; texto em linguagem de usuário, sem nome de função; `onde` aponta a aba ou página e o painel; `spec` ou `pr` diz de onde veio. A página `/novidades` só mostra o que está ali (spec 156). Mudança sem efeito na tela declara no corpo do PR `Novidades: nenhuma` com o motivo; a regra 12 do `devagent/conferir_pr.py` cobra.
 
 ## 8. Onde procurar ideias
 

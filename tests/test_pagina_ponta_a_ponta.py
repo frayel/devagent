@@ -64,6 +64,22 @@ def _coletar_tudo(monkeypatch) -> None:
     monkeypatch.setattr(
         "app.collectors.consultor_fechamento.collect_and_save", lambda: True
     )
+    # O `confluencia_historico` (spec 186) guarda o último pregão fechado, e os
+    # radares deste teste gravam no pregão corrente. Durante o pregão os dois
+    # diferem (numa segunda às 10h, o fechado é a sexta) e o coletor não acha
+    # dado: o teste só passava fora do horário de pregão (falhou em 23/11).
+    # Aqui o pregão fechado é o mesmo em que os radares acabaram de gravar.
+    import app.collectors.confluencia_historico as confluencia_historico
+    from app import calendario
+
+    class _MesmoPregao:
+        pregao_anterior = staticmethod(calendario.pregao_anterior)
+
+        @staticmethod
+        def ultimo_pregao_fechado(agora):
+            return calendario.pregao_corrente(agora)
+
+    monkeypatch.setattr(confluencia_historico, "calendario", _MesmoPregao)
     agendador.coletar_tudo()
     assert agendador.estado["ultimo_erro"] is None, agendador.estado["ultimo_erro"]
 

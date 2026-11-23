@@ -73,3 +73,10 @@ raiz = [
 ]
 # Pastas aposentadas: os diários dos especialistas foram para docs/diarios/.
 pastas_proibidas = [".jules/", ".agents/"]
+
+[novidades]
+# Regra 12 do devagent/conferir_pr.py: PR `feat:` ou `fix:` que muda estes
+# caminhos escreve a entrada em app/novidades.json (spec 156), ou declara no
+# corpo `Novidades: nenhuma` com o motivo.
+arquivo = "app/novidades.json"
+caminhos = ["app/"]

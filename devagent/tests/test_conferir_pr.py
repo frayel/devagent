@@ -288,3 +288,42 @@ def test_enxuto_sem_secao_nao_confere_a_raiz() -> None:
     res = Resultado()
     conferir_enxuto(res, ["plan.md", "notas.txt"], {})
     assert res.falhas == []
+
+
+# Regra 12 (23/11): a página de novidades só tinha uma entrada em 22/11; as
+# correções visíveis não escreviam o arquivo.
+NOVIDADES = {"arquivo": "app/novidades.json", "caminhos": ["app/"]}
+
+
+@pytest.mark.parametrize(
+    "titulo, corpo, alterados, reprova",
+    [
+        ("fix: o card volta", "", {"app/main.py"}, True),
+        ("feat: card novo (spec 9)", "", {"app/templates/x.html"}, True),
+        ("fix: o card volta", "", {"app/main.py", "app/novidades.json"}, False),
+        ("fix: coletor", "Novidades: nenhuma, só log interno.", {"app/x.py"}, False),
+        ("fix: teste", "", {"app/tests/test_x.py"}, False),
+        ("refactor: laço", "", {"app/main.py"}, False),
+        ("agent: regra", "", {"devagent/x.py"}, False),
+        ("fix: doc", "", {"docs/STATE.md"}, False),
+        ("", "", {"app/main.py"}, False),
+    ],
+)
+def test_regra_12_novidades(
+    titulo: str, corpo: str, alterados: set[str], reprova: bool
+) -> None:
+    from devagent.conferir_pr import Resultado, conferir_novidades
+
+    res = Resultado()
+    conferir_novidades(res, titulo, corpo, alterados, NOVIDADES)
+    assert bool(res.falhas) is reprova
+    if reprova:
+        assert "app/novidades.json" in res.falhas[0]
+
+
+def test_regra_12_sem_secao_nao_roda() -> None:
+    from devagent.conferir_pr import Resultado, conferir_novidades
+
+    res = Resultado()
+    conferir_novidades(res, "fix: x", "", {"app/main.py"}, {})
+    assert res.falhas == []
