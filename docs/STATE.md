@@ -18,6 +18,9 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Saúde técnica] Spec 193 - O Consultor de um pregão passado sai de uma função só:
+  - `app/consultor/placar.py`: `consultor_de_pregao_passado(data, referencia)` monta o `dados` histórico (cinco grupos, `ativos_avaliados`, opiniões do dia) com uma conexão e duas consultas a `consultor_fechamentos`; `_mensagem_do_placar` calcula o "+X% contra o IBOV em N pregões" a partir de um dicionário. Cada item traz `decisao_tecnica`.
+  - `app/main.py`: `pagina_consultor` e `api_consultor` chamam a função no ramo `is_historical` (205 linhas a menos). Aceite em `tests/test_aceite_193.py`.
 - [Poda] Spec 192 - Seletor do tema que nada usa reprova o teste:
   - `app/static/tema.css`: saem as regras de `pilha`, `m-t-2`, `d-block`, `painel-estado-container`, `texto-num`, `tabela-scroll` e as do *Só Sinais* para `painel-tendencia`, `painel-apetite` e `painel-rotacao`; o seletor da visão macro no *Só Sinais* fica `.visao-macro:not(.painel-ibovespa)`. Nenhuma diferença de estilo computado nas quatro páginas, a 390 e 1280 px, nos dois modos.
   - `tests/test_seletores_usados.py` (roda sempre): reprova seletor de classe sem ocorrência como palavra inteira em `.html`, `.js` ou `.py` de `app/` (os `<style>` dos templates não contam como uso), salvo `PREFIXOS_DINAMICOS` (`g-cor-`, `span-`, `novidade-`) e `SEM_USO_CONHECIDOS` (vazio); exceção vencida também reprova. Reaproveita `seletores_do_css` e `estilos_dos_templates` da 187. Aceite em `tests/test_aceite_192.py`.

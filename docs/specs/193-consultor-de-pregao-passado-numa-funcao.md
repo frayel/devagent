@@ -1,7 +1,7 @@
 ---
 id: 193
 titulo: O Consultor de um pregão passado sai de uma função só
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_193.py
