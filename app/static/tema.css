@@ -99,8 +99,6 @@ header .hora { margin-left: auto; font-size: var(--fs-meta); color: var(--texto-
 .span-8 { grid-column: span 8; }
 .span-12 { grid-column: span 12; }
 
-.pilha { display: grid; gap: var(--e3); align-content: start; }
-
 @media (max-width: 1199px) {
   .grade { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .span-3, .span-4 { grid-column: span 3; }
@@ -207,8 +205,6 @@ td.barra i.l { background: var(--destaque); opacity: 0.2; }
 svg.medidor { display: block; width: 100%; }
 
 .duas { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e4); }
-.m-t-2 { margin-top: var(--e2); }
-.d-block { display: block; }
 .sub { margin: 0 0 var(--e2) 0; font-size: var(--fs-meta); color: var(--texto-2); }
 
 .vazio { padding: var(--e5); text-align: center; color: var(--texto-2); font-size: var(--fs-meta); }
@@ -260,15 +256,6 @@ footer p { margin: var(--e2) 0 0; }
     margin-left: auto;
 }
 
-/* Utilitários adicionados pelo Apetite a Risco */
-.painel-estado-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    height: 100%;
-    gap: var(--e3);
-    padding: var(--e3) 0;
-}
 .texto-alta {
     color: var(--alta);
 }
@@ -289,7 +276,7 @@ footer p { margin: var(--e2) 0 0; }
 body.modo-so-sinais .grafico,
 body.modo-so-sinais .grafico-legenda,
 body.modo-so-sinais table,
-body.modo-so-sinais .visao-macro:not(.painel-ibovespa):not(.painel-tendencia):not(.painel-apetite):not(.painel-rotacao) {
+body.modo-so-sinais .visao-macro:not(.painel-ibovespa) {
     display: none !important;
 }
 
@@ -308,35 +295,6 @@ body.modo-so-sinais .painel-ibovespa .valor {
 
 body.modo-so-sinais .painel-ibovespa .var {
     font-size: calc(var(--fs-base) * 1.5);
-}
-
-body.modo-so-sinais .painel-tendencia .duas {
-    display: flex;
-    flex-direction: column;
-    gap: var(--e4);
-    height: 100%;
-    justify-content: center;
-}
-
-body.modo-so-sinais .painel-tendencia .sub,
-body.modo-so-sinais .painel-tendencia .kpi {
-    display: none !important;
-}
-
-body.modo-so-sinais .painel-tendencia .var {
-    font-size: var(--fs-hero);
-    text-align: center;
-}
-
-body.modo-so-sinais .painel-apetite .kpi-container,
-body.modo-so-sinais .painel-rotacao .duas {
-    display: none !important;
-}
-
-body.modo-so-sinais .painel-apetite .hero,
-body.modo-so-sinais .painel-rotacao .hero {
-    font-size: calc(var(--fs-hero) * 1.5);
-    margin: auto 0;
 }
 
 /* Manchete Dinamica */
@@ -510,7 +468,6 @@ tbody td .spark svg { width: 100%; height: 100%; }
 /* Oculta painéis indisponíveis conforme spec 034 */
 .escondido { display: none !important; }
 
-.texto-num { color: var(--texto); }
 /* Utilitario de espacamento (spec 035) */
 .espaco-topo { margin-top: var(--e3); }
 
@@ -566,10 +523,6 @@ tbody td .spark svg { width: 100%; height: 100%; }
     font-size: calc(var(--fs-hero) * 0.85);
 }
 
-.tabela-scroll {
-  max-height: 300px;
-  overflow-y: auto;
-}
 .menu-link {
     color: var(--texto-2);
     text-decoration: none;

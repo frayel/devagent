@@ -1,7 +1,7 @@
 ---
 id: 192
 titulo: Seletor do tema que nada usa reprova o teste
-status: ready
+status: done
 esforco: P
 gaveta: poda
 aceite: tests/test_aceite_192.py
