@@ -6,6 +6,7 @@ esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_194.py
 origem: nova
+revisada: 2026-11-24
 ---
 
 ## Problema
@@ -24,7 +25,7 @@ Atualizar os pesos para a carteira da B3 de hoje é outra pergunta (ver *Fora do
 Medida de tamanho: `grep -rln "TICKERS_PESOS\|TICKERS_PESO\b\|anomalia_peso.PESOS\|from app.collectors.anomalia_peso"` dá 3 arquivos de código (os três coletores) e 3 de teste (`tests/test_aceite_142.py`, `tests/test_aceite_143.py`, `tests/test_anomalia_peso.py`), mais `app/templates/index.html` e `app/main.py` (o global do Jinja). Nenhum teste existente muda de asserção.
 
 ## Comportamento esperado
-1. Um módulo novo, `app/collectors/pesos_ibovespa.py`, com uma constante só: `PESOS_IBOVESPA: dict[str, float]`, ticker sem `.SA` → peso **em percentual do índice** (VALE3 = `12.0`), com as 10 ações da tabela acima e os valores da coluna da Concentração (que já são os do texto do Fator Peso Pesado): VALE3 12, PETR4 8, ITUB4 7, PETR3 4, BBDC4 4, B3SA3 3, BBAS3 3, WEGE3 3, ABEV3 3, BBDC3 3. Um comentário no topo diz de onde os pesos vieram e que são aproximados, sem data de conferência (não há uma registrada hoje).
+1. Um módulo novo, `app/collectors/pesos_ibovespa.py`, com uma constante só: `PESOS_IBOVESPA: dict[str, float]`, ticker sem `.SA` → peso **em percentual do índice** (VALE3 = `12.0`), com as 10 ações da tabela acima e os valores da coluna da Concentração (que já são os do texto do Fator Peso Pesado), **na ordem de hoje de `concentracao.TICKERS_PESOS`** (a ordem monta a URL do `spark`): VALE3 12, PETR4 8, ITUB4 7, PETR3 4, BBDC4 4, B3SA3 3, WEGE3 3, ABEV3 3, BBDC3 3, BBAS3 3. Um comentário no topo diz de onde os pesos vieram e que são aproximados, sem data de conferência (não há uma registrada hoje).
 2. Uma função `pesos(tickers: Iterable[str]) -> dict[str, float]` no mesmo módulo devolve o subconjunto pedido, na ordem pedida, e levanta `KeyError` para ticker fora da tabela (painel novo não inventa peso).
 3. Os três coletores passam a ler a tabela, e as constantes que os testes importam continuam existindo, derivadas dela, com o mesmo formato de hoje:
    - `concentracao.TICKERS_PESOS = {t: p / 100 for t, p in PESOS_IBOVESPA.items()}` (fração, as mesmas 10 ações e a mesma ordem; o `peso` gravado em `top3_json` e lido pelo `/api/snapshot` continua em fração, `0.12`).
@@ -43,7 +44,7 @@ Sem fórmula nova. A unidade é o ponto em que as três cópias divergem, então
 - Fator Peso Pesado: `pts = (var_pct / 100) × (peso / 100) × ibov_anterior`, com `var_pct` em percentual (como hoje).
 - Anomalia de Peso: `impacto = var_pct × peso × ibov_anterior / 10000`, com `var_pct` em percentual (como hoje).
 
-Exemplo de ponta a ponta, do Yahoo à tela. O `spark` entrega para `ITUB4.SA` `previousClose = 35.00` e último preço `35.70` (reais por ação); o Ibovespa gravado tem `previous_close = 129000.0` pontos. Peso na tabela: `7.0` (% do índice).
+Exemplo de ponta a ponta, do Yahoo à tela. Os coletores leem campos diferentes do `spark` (como hoje): a Concentração (`range=5d`) usa os dois últimos valores de `response[0].indicators.quote[0].close` (`[35.00, 35.70]` para `ITUB4.SA` e `[129000.0, 130000.0]` para `^BVSP`); a Anomalia (`range=1d`) usa `response[0].meta.chartPreviousClose = 35.00` e `meta.regularMarketPrice = 35.70` (reais por ação), com o Ibovespa anterior vindo do banco (`previous_close = 129000.0` pontos). Peso na tabela: `7.0` (% do índice).
 
 - Variação: `35,70 / 35,00 − 1 = 0,02` (fração), ou `var_pct = 2,0` (percentual).
 - Concentração: `0,02 × (7,0 / 100) × 129.000 = 180,6` pontos.
@@ -55,8 +56,8 @@ Exemplo de ponta a ponta, do Yahoo à tela. O `spark` entrega para `ITUB4.SA` `p
 `tests/test_aceite_194.py`, com `exigir_spec_done("194")`, sem internet:
 
 - [ ] `PESOS_IBOVESPA` tem as 10 ações com os valores do item 1 do *Comportamento esperado*, e `pesos(("ITUB4",)) == {"ITUB4": 7.0}`; `pesos(("XPTO3",))` levanta `KeyError`.
-- [ ] Anomalia de Peso, com o Ibovespa gravado em `previous_close = 129000.0` e o `fetch_with_retry` trocado por um que devolve, no formato `spark`, ITUB4 de `35.00` para `35.70` e mais nada: `collect_and_save()` grava em `alertas_json` `{"ticker": "ITUB4", "impacto": 180.6}` (tolerância de `1e-6`).
-- [ ] Concentração de Ganhos, com o `spark` de ITUB4 `35.00 → 35.70` e `^BVSP` `129000.0 → 130000.0`: a linha de ITUB4 em `top3_json` tem `pontos` igual a `180.6` (tolerância de `1e-6`) e `peso == 0.07`.
+- [ ] Anomalia de Peso, com o Ibovespa gravado em `previous_close = 129000.0` e o `fetch_with_retry` trocado por um que devolve, no formato `spark`, só `ITUB4.SA` com `meta.chartPreviousClose = 35.00` e `meta.regularMarketPrice = 35.70`: `collect_and_save()` grava em `alertas_json` `{"ticker": "ITUB4", "impacto": 180.6}` (tolerância de `1e-6`).
+- [ ] Concentração de Ganhos (`concentracao.fetch_yfinance()`), com o `spark` trazendo em `indicators.quote[0].close` `[35.00, 35.70]` para `ITUB4.SA` e `[129000.0, 130000.0]` para `^BVSP` (alta de 0,78%, acima do corte de 0,1%): a linha de ITUB4 em `top3_json` tem `pontos` igual a `180.6` (tolerância de `1e-6`) e `peso == 0.07`.
 - [ ] Para todo ticker presente em mais de uma das três constantes (`concentracao.TICKERS_PESOS` × 100, `fator_peso_pesado.TICKERS_PESO` sem `.SA`, `anomalia_peso.PESOS`), o peso é o mesmo, e é o de `PESOS_IBOVESPA`.
 - [ ] Nenhum dos três módulos de coletor tem um literal de peso: o texto (`inspect.getsource`) de cada um não casa com a expressão `"[A-Z]{4}\d{1,2}(\.SA)?"\s*:\s*\d`.
 - [ ] A página `/` contém o texto `Pesos aproximados, somando 34%: VALE3 12, PETR4 8, ITUB4 7, PETR3 4, BBAS3 3`, e o `index.html` não contém mais `VALE3 12`.
