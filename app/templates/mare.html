@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "componentes.html" import card_mare, painel %}
+{% from "componentes.html" import card_mare %}
 {#- Tela solo da Maré (spec 173): só o card, no centro da janela, e o aviso legal.
     Sem cabeçalho, sem menu e sem Plotly; recarrega no ritmo da coleta (spec 163). -#}
 {% block titulo %}Maré do mercado · Painel B3{% endblock %}
@@ -10,37 +10,5 @@
 {% block classe_main %}tela-solo{% endblock %}
 {% block content %}
 {{ card_mare(mare, carimbo, False, seletor) }}
-{#- Depois de cada faixa (spec 183): fora do card e do fragmento /mare/card, então o seletor não o troca. -#}
-{%- if memoria %}
-{% call painel("Depois de cada faixa", 4, memoria.metodo or "", memoria.fonte or "", memoria.quando or "", "mare-memoria") %}
-  <p class="mare-memoria-frase">{{ memoria.frase }}</p>
-  {%- if not memoria.formacao %}
-  <table class="mare-memoria-tabela">
-    <thead>
-      <tr>
-        <th scope="col">Faixa</th>
-        <th scope="col" class="n">Casos</th>
-        <th scope="col" class="n">Ibovespa {{ memoria.horizonte }} pregões depois</th>
-        <th scope="col" class="n">Subiu em</th>
-      </tr>
-    </thead>
-    <tbody>
-      {%- for l in memoria.linhas %}
-      <tr{% if l.hoje %} class="mare-memoria-hoje"{% endif %}>
-        <th scope="row">{{ l.faixa }}{% if l.hoje %} <span class="selo">hoje</span>{% endif %}</th>
-        <td class="n num">{{ l.casos }}</td>
-        {%- if l.poucos %}
-        <td class="n mare-memoria-poucos" colspan="2">poucos casos</td>
-        {%- else %}
-        <td class="n"><span class="var {{ l.classe }}">{{ l.seta }} {{ l.media }}</span></td>
-        <td class="n num">{{ l.positivos }}</td>
-        {%- endif %}
-      </tr>
-      {%- endfor %}
-    </tbody>
-  </table>
-  {%- endif %}
-{% endcall %}
-{%- endif %}
 {%- endblock %}
 {% block rodape_extra %}{% endblock %}

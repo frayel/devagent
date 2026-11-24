@@ -18,6 +18,9 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 195 - Depois de cada faixa sai de /mare e vai para o painel geral:
+  - `app/templates/componentes.html`: macro `card_mare_memoria(memoria, span)`; `memoria` None é a data passada sem `mare_historico` (sem registro). `mare.html` volta a ter só o card.
+  - `app/main.py`: `index` monta `memoria_mare` dentro do `lendo_pregao`; `pagina_mare` não lê mais o `mare_historico`. Na Visão Geral, a linha 3 é *Motores do Índice* (8) e o quadro (4); sem o Motores, o quadro ocupa 12. Aceite em `tests/test_aceite_195.py`.
 - [Saúde técnica] Spec 194 - Os pesos do Ibovespa saem de uma tabela só:
   - `app/collectors/pesos_ibovespa.py`: `PESOS_IBOVESPA` (10 ações, % do índice), `pesos(tickers)` (KeyError fora da tabela) e `texto_pesos`/`numero_peso` para o texto da tela.
   - `concentracao.TICKERS_PESOS` (fração), `fator_peso_pesado.TICKERS_PESO` (`CINCO_MAIORES`, com `.SA`) e `anomalia_peso.PESOS` derivam da tabela; na Anomalia de Peso ITUB4 vai de 8 a 7, BBDC4 de 4,5 a 4 e B3SA3 de 4 a 3. O texto do Fator Peso Pesado vem do global `pesos_fator_peso_pesado` (`app/main.py`). Aceite em `tests/test_aceite_194.py`.

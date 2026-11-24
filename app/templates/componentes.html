@@ -213,3 +213,45 @@
     {{ extra }}
 {% endcall %}
 {% endmacro %}
+
+{#- Depois de cada faixa (specs 183 e 195): o que o Ibovespa fez depois de cada faixa da Maré.
+    Fica no painel geral, fora do card e do fragmento /mare/card, então o seletor não o troca.
+    memoria None: data passada sem snapshot `mare_historico` (sem registro). -#}
+{% macro card_mare_memoria(memoria, span=4) %}
+{%- set classes = "painel-memoria-mare mare-memoria visao-macro visao-geral" %}
+{%- if memoria is none %}
+{% call painel("Depois de cada faixa", span, "", "", "", classes) %}
+  {{ estado('sem_registro') }}
+{% endcall %}
+{%- else %}
+{% call painel("Depois de cada faixa", span, memoria.metodo or "", memoria.fonte or "", memoria.quando or "", classes) %}
+  <p class="mare-memoria-frase">{{ memoria.frase }}</p>
+  {%- if not memoria.formacao %}
+  <table class="mare-memoria-tabela">
+    <thead>
+      <tr>
+        <th scope="col">Faixa</th>
+        <th scope="col" class="n">Casos</th>
+        <th scope="col" class="n">Ibovespa {{ memoria.horizonte }} pregões depois</th>
+        <th scope="col" class="n">Subiu em</th>
+      </tr>
+    </thead>
+    <tbody>
+      {%- for l in memoria.linhas %}
+      <tr{% if l.hoje %} class="mare-memoria-hoje"{% endif %}>
+        <th scope="row">{{ l.faixa }}{% if l.hoje %} <span class="selo">hoje</span>{% endif %}</th>
+        <td class="n num">{{ l.casos }}</td>
+        {%- if l.poucos %}
+        <td class="n mare-memoria-poucos" colspan="2">poucos casos</td>
+        {%- else %}
+        <td class="n"><span class="var {{ l.classe }}">{{ l.seta }} {{ l.media }}</span></td>
+        <td class="n num">{{ l.positivos }}</td>
+        {%- endif %}
+      </tr>
+      {%- endfor %}
+    </tbody>
+  </table>
+  {%- endif %}
+{% endcall %}
+{%- endif %}
+{% endmacro %}
