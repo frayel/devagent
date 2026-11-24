@@ -6,6 +6,7 @@ esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_195.py
 origem: nova
+revisada: 2026-11-24
 ---
 
 ## Problema
@@ -25,9 +26,12 @@ A pergunta que a spec responde: **no painel geral, o que o Ibovespa fez depois d
    - depois, *Fator Peso Pesado* e *Concentração Setorial*, como hoje.
    
    Quando *Motores do Índice* não aparece (classe `escondido`), *Depois de cada faixa* ocupa `span-12`, no mesmo padrão do `clima_span` (`index.html:82`), para não deixar célula vazia (spec 149). Motores volta a `span-12` quando o quadro não existe.
-4. **Uma fonte só.** O HTML do quadro sai de `mare.html` para uma macro em `app/templates/componentes.html` (sugestão: `card_mare_memoria(memoria, span)`), chamada só por `index.html`. A montagem dos dados continua em `mare_servico.memoria` e `mare_servico.view_memoria`, chamadas pela rota `/` com o `mare_historico` e a faixa da mesma view da Maré que o card usa, como `pagina_mare` faz hoje.
+4. **Uma fonte só.** O HTML do quadro sai de `mare.html` para uma macro em `app/templates/componentes.html` (sugestão: `card_mare_memoria(memoria, span)`), chamada só por `index.html`. A montagem dos dados continua em `mare_servico.memoria` e `mare_servico.view_memoria`, chamadas pela rota `/` (`index`, `app/main.py`, que já roda dentro de `lendo_pregao` e de `req_snapshot_cache_ctx`) com `app.banco.ler_snapshot("mare_historico")` e a `faixa` da variável `mare` que a rota já monta com `mare_servico.get_mare_view()` (`app/main.py:2158`), como `pagina_mare` faz hoje. Não precisa de consulta nova nem de passar `data_ref`: dentro do `lendo_pregao`, `ler_snapshot` já lê o pregão escolhido.
 5. **Fora do seletor.** O quadro fica fora do card da Maré e do fragmento `/mare/card`: trocar Marolas, Ondas ou Maré não o troca nem o recarrega (regra da 183, que continua).
-6. **Data passada.** Com `?data=`, o quadro usa o `mare_historico` daquele pregão (`ler_snapshot("mare_historico", data_ref)`) e a faixa da leitura da Maré daquele pregão. Sem registro, o card mostra `estado('sem_registro')`.
+6. **Data passada.** Com `?data=`, o quadro usa o `mare_historico` daquele pregão e a faixa da leitura da Maré daquele pregão (os dois vêm do `lendo_pregao`, item 4). Os três casos:
+   - sem `?data=` e sem `mare_historico`, ou com snapshot sem nenhum caso: *Memória em formação*, como na 183 (`view_memoria(None, ...)`);
+   - com `?data=` e **sem** snapshot `mare_historico` naquele pregão: o card mostra `estado('sem_registro')` no lugar da frase e da tabela, com o título *Depois de cada faixa* e as mesmas classes (a grade não muda);
+   - com `?data=` e snapshot sem nenhum caso: *Memória em formação*.
 7. **Só Sinais.** Some no modo *Só Sinais* como os outros cards `visao-macro`.
 8. **`/api/snapshot` não muda.** A chave `paineis.mare.memoria` da 183 continua igual.
 
@@ -48,7 +52,8 @@ Nenhum.
   - **uma fonte só:** em `app/templates/`, `mare-memoria-tabela` aparece só em `componentes.html`.
 - [ ] `tests/test_aceite_183.py`: `test_snapshot_e_tela_com_historico`, `test_bloco_na_tela_em_qualquer_nivel` e `test_tabela_nao_rola_para_o_lado` passam a pedir `/` (com `?nivel=`, no segundo) em vez de `/mare`; `test_fragmento_e_pagina_inicial_sem_o_bloco` passa a conferir que o fragmento e `/mare` não têm o bloco. As asserções de conteúdo (frase, tabela, método, *poucos casos*, largura) não mudam.
 - [ ] A classe do card não começa com `painel-mare`: `tests/test_aceite_173.py` acha o card da Maré com `\bpainel-mare\b` e conta `painel-mare` no HTML, e `painel-mare-memoria` casaria com os dois. Por isso `painel-memoria-mare`.
-- [ ] `tests/test_aceite_173.py`, `tests/test_aceite_176.py` e `tests/test_aceite_149.py` continuam verdes sem mudar asserções: a primeira dobra não cresce (o quadro fica na linha 3) e a grade não ganha célula vazia.
+- [ ] `tests/test_aceite_173.py` e `tests/test_aceite_176.py` continuam verdes sem mudar asserções: a primeira dobra não cresce (o quadro fica na linha 3).
+- [ ] `tests/test_aceite_149.py`: a única mudança é acrescentar `"Depois de cada faixa",  # spec 195` ao conjunto `TITULOS_PERMITIDOS`, como a 176 fez com *Apetite e rotação*. Sem isso, `test_so_titulos_existentes_na_visao_geral` reprova: o fixture da 149 não grava `mare_historico`, então o quadro aparece em *Memória em formação*, visível na Visão Geral. `test_12_colunas_fecham` e `test_6_colunas_do_fator_em_diante` continuam sem mudança e verdes: a linha 3 fecha em 8 + 4 (a Maré ocupa linhas 1 e 2) e a grade não ganha célula vazia.
 
 ## Invariantes de produção
 - O HTML publicado de `/mare` não contém `Depois de cada faixa`.
@@ -58,3 +63,8 @@ Nenhum.
 - Mudar a conta, o horizonte de 5 pregões, os textos ou o método da 183.
 - Mostrar o quadro em outra aba além da Visão Geral.
 - Mudar a ordem ou o tamanho de *Fator Peso Pesado* e *Concentração Setorial*.
+- A célula vazia de 4 colunas ao lado de *Motores do Índice* no modo *Só Sinais*: o quadro some (item 7) e o Motores, que não é `visao-macro`, fica em `span-8`. É o mesmo comportamento que *Clima Global* já tem ao lado de *Apetite e rotação* nesse modo; a spec 149 trata da Visão Geral.
+- Apagar as regras `.mare-memoria-*` de `app/static/tema.css`: continuam valendo para a tabela no painel geral.
+
+## Revisão
+Revisada em 24/11/2026. Conferido na `main`: o bloco ainda está em `mare.html` e não existe em `index.html` nem em `componentes.html`; nenhuma outra spec `ready` ou `draft` move o quadro (a 174 é `draft` e trata dos níveis). Tamanho: 4 arquivos de código (`app/main.py`, `app/templates/mare.html`, `index.html`, `componentes.html`) e 3 de teste (`test_aceite_183.py`, `test_aceite_149.py`, o novo `test_aceite_195.py`). Ajustes: (1) o aceite dizia que a `test_aceite_149.py` passaria sem mudança, mas o conjunto `TITULOS_PERMITIDOS` dela reprova qualquer título novo na Visão Geral; agora o aceite manda acrescentar o título; (2) o item 6 separava mal *Memória em formação* de *sem registro* numa data passada; agora lista os três casos; (3) o item 4 aponta a `mare` que a rota `/` já monta e o `lendo_pregao` que ela já usa, em vez de `ler_snapshot(..., data_ref)`; (4) *Fora do escopo* registra a célula vazia no modo *Só Sinais* e as regras de CSS que ficam.
