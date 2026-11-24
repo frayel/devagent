@@ -36,6 +36,9 @@ Regras (mantenha em sincronia com devagent/skills/destravar-pr.md):
       ou as specs citadas estão `draft` ou não existem (ADR 024).
     - Antes do merge (--antes-do-merge): PR que altera spec que a main já
       alterou depois que a branch saiu dela fecha como redundante (ADR 024).
+      PR que cria spec com um número que a main já usa em outro arquivo
+      também fecha: em 23/11 duas sessões reservaram o 194, cada PR passou
+      sozinho no CI e os dois entraram (#1025).
     - Bug aberto há mais de 24 h ganha o label `prioridade` e passa a ser
       tratado no Passo 1.6, antes da fila de specs (ADR 030).
     - Só PRs e branches do agente: PR ou branch de pessoa fica intocado.
@@ -979,6 +982,59 @@ def specs_ja_mudadas_na_main(branch: str, main: str = "origin/main") -> list[str
     )
 
 
+def _numero(spec_id: str) -> str:
+    return spec_id.strip().lower().lstrip("0") or "0"
+
+
+def numeros_ja_na_main(novas: dict[str, str], ids_na_main: dict[str, str]) -> list[str]:
+    """Specs criadas pelo PR cujo `id:` a main já usa em outro arquivo (puro).
+
+    `novas`: caminho -> texto das specs que o PR cria; `ids_na_main`:
+    caminho -> id das specs da main.
+    """
+    ocupados: dict[str, str] = {}
+    for caminho, spec_id in ids_na_main.items():
+        ocupados.setdefault(_numero(spec_id), caminho)
+    repetidas = []
+    for caminho, texto in sorted(novas.items()):
+        m = re.search(r"^id:\s*(\S+)\s*$", texto, re.MULTILINE)
+        if not m:
+            continue
+        outro = ocupados.get(_numero(m.group(1)))
+        if outro and outro != caminho:
+            repetidas.append(f"{caminho} (id {m.group(1)}, já em {outro})")
+    return repetidas
+
+
+def specs_com_numero_ocupado(branch: str, main: str = "origin/main") -> list[str]:
+    pasta = documentos()["specs"].rstrip("/") + "/"
+    base = sh("git", "merge-base", main, f"origin/{branch}").strip()
+    criadas = [
+        a
+        for a in sh(
+            "git",
+            "diff",
+            "--name-only",
+            "--no-renames",
+            "--diff-filter=A",
+            base,
+            f"origin/{branch}",
+        ).split()
+        if a.startswith(pasta) and a.endswith(".md")
+    ]
+    if not criadas:
+        return []
+    novas = {a: sh("git", "show", f"origin/{branch}:{a}") for a in criadas}
+    ids_na_main = {}
+    for linha in sh(
+        "git", "grep", "-E", "^id:", main, "--", pasta, check=False
+    ).splitlines():
+        # origin/main:docs/specs/x.md:id: 194
+        _, caminho, resto = linha.split(":", 2)
+        ids_na_main[caminho] = resto.split(":", 1)[1].strip()
+    return numeros_ja_na_main(novas, ids_na_main)
+
+
 REDUNDANTE = 10
 
 
@@ -991,6 +1047,20 @@ def antes_do_merge(branch: str) -> int:
     if pr is None:
         return 0
     sh("git", "fetch", "-q", "origin", "main", branch)
+    ocupadas = specs_com_numero_ocupado(branch)
+    if ocupadas:
+        comentar(
+            pr["number"],
+            "Fechando sem merge: a `main` já tem spec com o número que este PR "
+            "usa, e duas specs com o mesmo número travam a revisão (#1025): "
+            + ", ".join(f"`{a}`" for a in ocupadas)
+            + ". Outra sessão reservou o mesmo número antes. A raia recomeça da "
+            "`main` atualizada, com o número que `python -m devagent.papel "
+            "especificador` reservar.",
+        )
+        sh("gh", "pr", "close", str(pr["number"]), "--delete-branch", check=False)
+        print(f"PR #{pr['number']} fechado: número de spec ocupado")
+        return REDUNDANTE
     mudadas = specs_ja_mudadas_na_main(branch)
     if not mudadas:
         return 0

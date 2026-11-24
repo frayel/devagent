@@ -530,7 +530,7 @@ Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres 
 - Spec 035 (Reorganização dos Gauges de Tendência):
   - Integrados medidores de MM21 e MM200 ao card "Ibovespa hoje".
   - Removido o painel autônomo de Tendência (Ibovespa).
-- Spec 035 (Setor Líder por Volume Financeiro):
+- Spec 035b (Setor Líder por Volume Financeiro):
   - Adicionado setor líder por volume e valor financeiro ao painel "Concentração Setorial" na visão macro.
   - Banco de dados SQLite (`concentracao_setorial_cache`) e `/api/snapshot` atualizados.
   - O contador de painéis, seções ou telas acrescentados permanece em 0, pois a UI foi integrada num painel existente.
