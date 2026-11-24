@@ -77,6 +77,14 @@ Regras (mantenha em sincronia com devagent/CICLO.md, Passos 1 e 4):
        criou a página, as specs a repetiam e as correções a esqueciam (cinco
        correções visíveis de 16/11 a 22/11 ficaram de fora).
 
+   13. Cada número de spec existe uma vez só em `docs/specs/` (subpastas
+       incluídas), olhando a árvore inteira. Em 23/11 duas sessões do
+       Especificador reservaram o 194 com cinco minutos de diferença, as
+       duas specs entraram e a revisão travou: `status_da_spec` e
+       `spec_na_main` liam o arquivo errado (#1025). A colisão entre dois PRs
+       abertos ao mesmo tempo é barrada no merge pelo guardião
+       (`--antes-do-merge`).
+
 Uma regra nunca é afrouxada no mesmo PR que corrige o que ela aponta
 (README do núcleo, separação de poderes).
 """
@@ -363,6 +371,23 @@ def hora_do_relatorio_errada(rel: str, quando: datetime) -> str:
     )
 
 
+def ids_repetidos(pasta: Path, raiz: Path) -> dict[str, list[str]]:
+    """Número de spec -> arquivos, só para os números que aparecem mais de uma vez."""
+    vistos: dict[str, list[str]] = {}
+    if not pasta.is_dir():
+        return {}
+    for caminho in sorted(pasta.rglob("*.md")):
+        m = ID_DE_SPEC.search(caminho.read_text(encoding="utf-8"))
+        if not m:
+            continue
+        numero = m.group(1).lower().lstrip("0") or "0"
+        vistos.setdefault(numero, []).append(caminho.relative_to(raiz).as_posix())
+    return {n: cs for n, cs in vistos.items() if len(cs) > 1}
+
+
+ID_DE_SPEC = re.compile(r"^id:\s*(\S+)\s*$", re.MULTILINE)
+
+
 def conferir_enxuto(
     res: Resultado, arquivos: list[str], enxuto: dict[str, Any]
 ) -> None:
@@ -484,6 +509,14 @@ def conferir(
                 f"{caminho} parece teste ou script de exploração fora de `tests/`. "
                 "Mova para `tests/` ou apague do PR."
             )
+
+    # Regra 13: número de spec único.
+    for numero, caminhos in ids_repetidos(raiz / doc["specs"], raiz).items():
+        res.falha(
+            f"A spec {numero} existe em mais de um arquivo: {', '.join(caminhos)}. "
+            "Renumere a mais nova com `python -m devagent.papel especificador` "
+            "(regra 13)."
+        )
 
     # Regra 11: árvore enxuta.
     conferir_enxuto(res, arquivos_versionados(raiz), CONFIG.get("enxuto", {}))

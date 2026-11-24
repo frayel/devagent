@@ -572,15 +572,21 @@ def spec_na_main(numero: str, pasta: str = "docs/specs") -> str | None:
     if not m:
         return None
     padrao = re.compile(rf"/0*{m.group(1)}{m.group(2)}-[^/]*\.md$")
-    for nome in nomes:
-        if padrao.search(nome):
-            return subprocess.run(
-                ["git", "show", f"origin/main:{nome}"],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            ).stdout
-    return None
+    achadas = {
+        nome: subprocess.run(
+            ["git", "show", f"origin/main:{nome}"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        ).stdout
+        for nome in nomes
+        if padrao.search(nome)
+    }
+    # Número repetido (#1025): a `draft` sai da escolha; sobrando mais de uma,
+    # ValueError, que o `conferir` trata como alvo ocupado.
+    from devagent.aceite import escolher_spec
+
+    return escolher_spec(numero, achadas)
 
 
 def conferir(persona: str, numero: str) -> int:
@@ -592,7 +598,14 @@ def conferir(persona: str, numero: str) -> int:
     except OSError as exc:
         print(f"Não consegui ler os PRs abertos ({exc}): encerre sem PR.")
         return 1
-    motivo = alvo_ocupado(persona, numero, prs, spec_na_main(numero))
+    try:
+        texto = spec_na_main(numero)
+    except ValueError as exc:
+        print(
+            f"Alvo ocupado: {exc} Encerre sem PR; o número precisa ser corrigido antes."
+        )
+        return 1
+    motivo = alvo_ocupado(persona, numero, prs, texto)
     if motivo:
         print(
             f"Alvo ocupado: {motivo} Outra sessão chegou antes. Descarte as "
