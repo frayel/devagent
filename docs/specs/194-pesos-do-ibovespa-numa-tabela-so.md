@@ -1,7 +1,7 @@
 ---
 id: 194
 titulo: Os pesos do Ibovespa saem de uma tabela só
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_194.py

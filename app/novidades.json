@@ -1,5 +1,12 @@
 [
   {
+    "data": "2026-11-24",
+    "tipo": "correcao",
+    "texto": "Anomalia de Peso usa o mesmo peso de cada ação no Ibovespa que Concentração de Ganhos. Antes Itaú, Bradesco e B3 pesavam mais nela, e a mesma ação somava pontos diferentes nos dois cards.",
+    "onde": {"aba": "rankings", "aba_nome": "Rankings & Destaques", "painel": "Anomalia de Peso"},
+    "spec": "194"
+  },
+  {
     "data": "2026-11-22",
     "tipo": "melhoria",
     "texto": "O Consultor escreve preços-alvo, fechamentos e potenciais com vírgula decimal e as datas das opiniões em dd/mm/aaaa, no dia de Brasília.",

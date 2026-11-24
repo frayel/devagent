@@ -18,6 +18,9 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Saúde técnica] Spec 194 - Os pesos do Ibovespa saem de uma tabela só:
+  - `app/collectors/pesos_ibovespa.py`: `PESOS_IBOVESPA` (10 ações, % do índice), `pesos(tickers)` (KeyError fora da tabela) e `texto_pesos`/`numero_peso` para o texto da tela.
+  - `concentracao.TICKERS_PESOS` (fração), `fator_peso_pesado.TICKERS_PESO` (`CINCO_MAIORES`, com `.SA`) e `anomalia_peso.PESOS` derivam da tabela; na Anomalia de Peso ITUB4 vai de 8 a 7, BBDC4 de 4,5 a 4 e B3SA3 de 4 a 3. O texto do Fator Peso Pesado vem do global `pesos_fator_peso_pesado` (`app/main.py`). Aceite em `tests/test_aceite_194.py`.
 - [Saúde técnica] Spec 193 - O Consultor de um pregão passado sai de uma função só:
   - `app/consultor/placar.py`: `consultor_de_pregao_passado(data, referencia)` monta o `dados` histórico (cinco grupos, `ativos_avaliados`, opiniões do dia) com uma conexão e duas consultas a `consultor_fechamentos`; `_mensagem_do_placar` calcula o "+X% contra o IBOV em N pregões" a partir de um dicionário. Cada item traz `decisao_tecnica`.
   - `app/main.py`: `pagina_consultor` e `api_consultor` chamam a função no ramo `is_historical` (205 linhas a menos). Aceite em `tests/test_aceite_193.py`.

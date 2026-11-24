@@ -4,18 +4,14 @@ from datetime import datetime, timezone
 import httpx
 
 from app.database import FatorPesoPesadoData, save_fator_peso_pesado_data
+from app.collectors.pesos_ibovespa import pesos
 from app.collectors.utils import fechamento_anterior, fetch_with_retry
 from app.services.fator_peso_pesado import limitar
 
 logger = logging.getLogger(__name__)
 
-TICKERS_PESO = {
-    "VALE3.SA": 12.0,
-    "PETR4.SA": 8.0,
-    "ITUB4.SA": 7.0,
-    "PETR3.SA": 4.0,
-    "BBAS3.SA": 3.0,
-}
+CINCO_MAIORES = ("VALE3", "PETR4", "ITUB4", "PETR3", "BBAS3")
+TICKERS_PESO = {f"{t}.SA": p for t, p in pesos(CINCO_MAIORES).items()}
 
 
 def _parse_chart(data: dict) -> dict:
