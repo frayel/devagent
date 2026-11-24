@@ -7,22 +7,12 @@ from app.database import (
     save_concentracao_vendedora_data,
 )
 from app.collectors import mt5
+from app.collectors.pesos_ibovespa import PESOS_IBOVESPA
 from app.collectors.utils import fetch_with_retry
 
 logger = logging.getLogger(__name__)
 
-TICKERS_PESOS = {
-    "VALE3": 0.12,
-    "PETR4": 0.08,
-    "ITUB4": 0.07,
-    "PETR3": 0.04,
-    "BBDC4": 0.04,
-    "B3SA3": 0.03,
-    "WEGE3": 0.03,
-    "ABEV3": 0.03,
-    "BBDC3": 0.03,
-    "BBAS3": 0.03,
-}
+TICKERS_PESOS = {t: p / 100 for t, p in PESOS_IBOVESPA.items()}
 
 
 ESTAVEL = "Ibovespa estável, sem concentração definida."

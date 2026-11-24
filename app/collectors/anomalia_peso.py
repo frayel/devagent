@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime, timezone
 
+from app.collectors.pesos_ibovespa import pesos
 from app.collectors.utils import fetch_with_retry
 from app.database import (
     AnomaliaPesoData,
@@ -11,13 +12,7 @@ from app.database import (
 
 logger = logging.getLogger(__name__)
 
-PESOS = {
-    "VALE3": 12.0,
-    "PETR4": 8.0,
-    "ITUB4": 8.0,
-    "BBDC4": 4.5,
-    "B3SA3": 4.0,
-}
+PESOS = pesos(("VALE3", "PETR4", "ITUB4", "BBDC4", "B3SA3"))
 
 
 def collect_and_save() -> bool:

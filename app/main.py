@@ -90,6 +90,8 @@ from app.database import (
 from app import agendador
 from app.collectors.ibovespa import LIMIAR_PCT_REVISAO, LIMIAR_PONTOS_REVISAO
 from app.collectors import consultor_opinioes as coletor_opinioes
+from app.collectors import fator_peso_pesado as fator_peso_pesado_coletor
+from app.collectors import pesos_ibovespa
 from app.services import sistema as sistema_servico
 
 logging.basicConfig(
@@ -134,6 +136,13 @@ templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["gauge_dados"] = gauge.dados
 templates.env.filters["gauge_pct"] = gauge.gauge_pct
 templates.env.filters["origem_opiniao"] = coletor_opinioes.origem_do_link
+# Spec 194: o texto do Fator Peso Pesado sai da tabela única de pesos.
+templates.env.globals["pesos_fator_peso_pesado"] = {
+    "texto": pesos_ibovespa.texto_pesos(fator_peso_pesado_coletor.TICKERS_PESO),
+    "soma": pesos_ibovespa.numero_peso(
+        sum(fator_peso_pesado_coletor.TICKERS_PESO.values())
+    ),
+}
 
 
 def _dia_brasilia(momento) -> str:
