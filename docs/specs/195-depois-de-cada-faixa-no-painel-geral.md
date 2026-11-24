@@ -1,20 +1,12 @@
 ---
-id: 194
+id: 195
 titulo: Depois de cada faixa sai de /mare e vai para o painel geral
-status: draft
+status: ready
 esforco: P
 gaveta: experiência
-aceite: tests/test_aceite_194.py
+aceite: tests/test_aceite_195.py
 origem: nova
-revisada: 2026-11-23
 ---
-
-## Revisão
-Revisada em 23/11/2026 e devolvida para `draft` **só pelo número**. O conteúdo passou no checklist: a pergunta é do usuário, os aceites são testáveis sem internet com os fixtures da 183, não há fórmula nova, as invariantes de produção são verificáveis pelo HTML publicado, o *Fora do escopo* está explícito, o código atual ainda não faz o que ela pede (o bloco está em `app/templates/mare.html:13-44` e `pagina_mare` monta `memoria`, `app/main.py:528-536`; `index.html` não tem o quadro e Motores é `span-12`, linha 142) e o tamanho é pequeno (`grep -rl "mare-memoria"`: 2 arquivos de código, `mare.html` e `tema.css`, e 1 de teste, `test_aceite_183.py`).
-
-O defeito é a colisão: `docs/specs/194-pesos-do-ibovespa-numa-tabela-so.md` (#1022) entrou na `main` antes desta (#1023) com o mesmo `id: 194` e o mesmo `aceite: tests/test_aceite_194.py`. Com as duas `ready`, quem entregar uma escreve o aceite da outra, `exigir_spec_done("194")` não distingue as duas e `devagent.papel` (`spec_na_main`) acha a primeira que casar com `194-`. Número novo é do Especificador (regra 8), e o Revisor não renumera; por isso esta, a que chegou depois, sai da fila.
-
-**Para o Especificador:** reabra este mesmo texto com o próximo número livre, trocando `id`, `aceite` e as referências a `test_aceite_194.py`. Nada mais precisa mudar.
 
 ## Problema
 Pedido do dono do produto em 23/11/2026: a tela `/mare` mostra o quadro *Depois de cada faixa*, mas ela foi pedida para ter só o card *Maré do mercado* (spec 173). O quadro deve aparecer no painel geral.
@@ -46,7 +38,7 @@ Nenhuma nova: o snapshot `mare_historico` da 174a, como na 183. Plano B: o da 18
 Nenhum.
 
 ## Critérios de aceite
-- [ ] `tests/test_aceite_194.py`, com `exigir_spec_done("194")`, sem internet, com os fixtures de `tests/test_aceite_183.py` (`calendario_fixo` e o `mare_historico` sintético):
+- [ ] `tests/test_aceite_195.py`, com `exigir_spec_done("195")`, sem internet, com os fixtures de `tests/test_aceite_183.py` (`calendario_fixo` e o `mare_historico` sintético):
   - **`/mare` só com o card:** o HTML de `GET /mare` não contém `Depois de cada faixa` nem `mare-memoria`, e tem exatamente um elemento `section.painel`;
   - **painel geral com o quadro:** o HTML de `GET /` contém `Depois de cada faixa`, a frase da faixa de hoje com os números do snapshot e a marca `hoje` na linha certa, dentro de um elemento com as classes `painel-memoria-mare`, `visao-macro` e `visao-geral`;
   - **posição:** no HTML de `/`, o card do quadro vem logo depois do de *Motores do Índice*; com Motores visível, Motores tem `span-8` e o quadro `span-4`; com Motores `escondido`, o quadro tem `span-12`;
