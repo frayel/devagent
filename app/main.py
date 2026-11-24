@@ -534,16 +534,6 @@ def pagina_mare(request: Request, nivel: str | None = Query(default=None)):
     with app.banco.req_snapshot_cache_ctx():
         mare, seletor = _card_mare_nivel(request, nivel, False)
         carimbo = _carimbos_criticos(agora).get("mare")
-        # Depois de cada faixa (spec 183): fora do card, em qualquer nível.
-        historico = app.banco.ler_snapshot("mare_historico")
-        hoje = mare_servico.get_mare_view()
-        memoria = mare_servico.view_memoria(
-            mare_servico.memoria(
-                (historico or {}).get("leituras") or [],
-                hoje["faixa"] if hoje else None,
-            ),
-            historico,
-        )
     return templates.TemplateResponse(
         request=request,
         name="mare.html",
@@ -551,7 +541,6 @@ def pagina_mare(request: Request, nivel: str | None = Query(default=None)):
             "mare": mare,
             "carimbo": carimbo,
             "seletor": seletor,
-            "memoria": memoria,
         },
     )
 
@@ -2159,6 +2148,20 @@ def index(
         mare_card, mare_seletor = _card_mare_nivel(
             request, nivel, is_historical, data_ref
         )
+        # Depois de cada faixa (specs 183 e 195): card próprio na Visão Geral,
+        # fora do card da Maré, então o seletor de nível não o troca.
+        mare_historico = app.banco.ler_snapshot("mare_historico")
+        memoria_mare = (
+            None
+            if is_historical and mare_historico is None
+            else mare_servico.view_memoria(
+                mare_servico.memoria(
+                    (mare_historico or {}).get("leituras") or [],
+                    mare["faixa"] if mare else None,
+                ),
+                mare_historico,
+            )
+        )
 
         anomalia_data = get_latest_anomalia_peso_data()
 
@@ -2253,6 +2256,7 @@ def index(
             "mare": mare,
             "mare_card": mare_card,
             "mare_seletor": mare_seletor,
+            "memoria_mare": memoria_mare,
             "motores_cards": motores_cards,
             "motores_sem_carimbo": motores_sem_carimbo,
             "carimbos": carimbos,

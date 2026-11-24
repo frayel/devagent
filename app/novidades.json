@@ -1,6 +1,13 @@
 [
   {
     "data": "2026-11-24",
+    "tipo": "melhoria",
+    "texto": "O que o Ibovespa fez nos 5 pregões seguintes a cada faixa da Maré agora aparece na Visão Geral, logo abaixo da Maré do mercado. A tela /mare volta a ter só o card.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Depois de cada faixa"},
+    "spec": "195"
+  },
+  {
+    "data": "2026-11-24",
     "tipo": "correcao",
     "texto": "Anomalia de Peso usa o mesmo peso de cada ação no Ibovespa que Concentração de Ganhos. Antes Itaú, Bradesco e B3 pesavam mais nela, e a mesma ação somava pontos diferentes nos dois cards.",
     "onde": {"aba": "rankings", "aba_nome": "Rankings & Destaques", "painel": "Anomalia de Peso"},

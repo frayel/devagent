@@ -1,7 +1,7 @@
 ---
 id: 195
 titulo: Depois de cada faixa sai de /mare e vai para o painel geral
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_195.py

@@ -215,7 +215,7 @@ def test_snapshot_antigo_sem_ibov(calendario_fixo):
     assert mare_snap["memoria"] is None
     assert mare_snap["niveis"] == mare.niveis(app.banco.ler_snapshot("mare_historico"))
     assert mare_snap["niveis"]["ondas"] is not None
-    html = cliente.get("/mare").text
+    html = cliente.get("/").text  # spec 195: o bloco foi para o painel geral
     assert "Depois de cada faixa" in html
     assert "Memória em formação" in html
     assert "mare-memoria-tabela" not in html
@@ -238,7 +238,7 @@ def test_snapshot_e_tela_com_historico(calendario_fixo):
     assert (medo["media"], medo["positivos"]) == (0.60, 60)
     assert mem["ate"] < leituras[-1]["data"]
 
-    html = cliente.get("/mare?nivel=ondas").text
+    html = cliente.get("/?nivel=ondas").text  # spec 195
     assert "Depois de cada faixa" in html
     de = date.fromisoformat(mem["de"]).strftime("%d/%m/%Y")
     ate = date.fromisoformat(mem["ate"]).strftime("%d/%m/%Y")
@@ -274,7 +274,7 @@ def test_bloco_na_tela_em_qualquer_nivel(calendario_fixo):
     _gravar_mare(30)
     cliente = _cliente()
     for nivel in ("marolas", "ondas", "mare"):
-        assert "Depois de cada faixa" in cliente.get(f"/mare?nivel={nivel}").text
+        assert "Depois de cada faixa" in cliente.get(f"/?nivel={nivel}").text
 
 
 def test_fragmento_e_pagina_inicial_sem_o_bloco(calendario_fixo):
@@ -282,7 +282,8 @@ def test_fragmento_e_pagina_inicial_sem_o_bloco(calendario_fixo):
     _gravar_mare(30)
     cliente = _cliente()
     assert "Depois de cada faixa" not in cliente.get("/mare/card?nivel=ondas").text
-    assert "Depois de cada faixa" not in cliente.get("/").text
+    # Spec 195: a tela solo /mare volta a ter só o card.
+    assert "Depois de cada faixa" not in cliente.get("/mare").text
 
 
 def test_media_formatada_no_padrao_brasileiro():
@@ -305,7 +306,7 @@ def test_tabela_nao_rola_para_o_lado(calendario_fixo, largura):
 
     _gravar_historico(_historico_sintetico())
     _gravar_mare(30)
-    html = _cliente().get("/mare").text
+    html = _cliente().get("/").text  # spec 195
     css = (Path(__file__).resolve().parents[1] / "app/static/tema.css").read_text(
         encoding="utf-8"
     )

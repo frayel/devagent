@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado, gauge, sparkline, card_mare %}
+{% from "componentes.html" import painel, kpi, variacao, tabela_ativos, medidor, estado, gauge, sparkline, card_mare, card_mare_memoria %}
 
 {#- Só a home desenha gráfico: as outras páginas não baixam o Plotly (spec 172). -#}
 {% block scripts_pagina %}
@@ -138,8 +138,10 @@
 {% endif %}
 
 {#- Spec 176: o Motores fazia par com o Clima Global (span-6); o Clima subiu para o lado da
-    Maré, e o Motores ocupa a linha inteira para Fator e Setorial seguirem lado a lado. -#}
-{% set motores_span = 12 %}
+    Maré. Spec 195: o Motores divide a linha 3 com Depois de cada faixa (8 + 4), que fica
+    na coluna da Maré; sem o Motores, o quadro ocupa a linha (spec 149, sem célula vazia). -#}
+{% set motores_visivel = motores_cards or motores_sem_carimbo %}
+{% set motores_span = 8 if memoria_mare is defined else 12 %}
 {% call painel("Motores do Índice", motores_span, "Desempenho dos 3 principais grupos de ações que ditam o rumo do Ibovespa.", c_mot.get('fonte', ''), c_mot.get('rodape', ''), "painel-motores-indice visao-geral escondido" if not motores_cards and not motores_sem_carimbo else "painel-motores-indice visao-geral", c_mot.get('desatualizado', False)) %}
     {% if motores_cards %}
         <div class="motores-grid">
@@ -153,6 +155,9 @@
         {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}
 {% endcall %}
+{% if memoria_mare is defined %}
+{{ card_mare_memoria(memoria_mare, 4 if motores_visivel else 12) }}
+{% endif %}
 
 {% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação. O percentual do gauge exclui quem ficou em zero.", highlights.fonte if highlights else "", c_disp.get('rodape') or (highlights.time if highlights else ""), "visao-macro sentimento-risco", c_disp.get('desatualizado', False)) %}
     {% if highlights and highlights.dispersion_pct is not none %}

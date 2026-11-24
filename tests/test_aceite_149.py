@@ -48,6 +48,7 @@ TITULOS_PERMITIDOS = {
     "Pressão Vendedora",
     "Concentração de Ganhos",
     "Apetite e rotação",  # spec 176
+    "Depois de cada faixa",  # spec 195
 }
 
 
