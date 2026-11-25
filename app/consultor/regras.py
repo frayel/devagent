@@ -1,3 +1,5 @@
+from app.consultor.formato import numero_br, reais
+
 R1_QUEDAS = 5
 R1_GATILHO_VOL = 1.5
 R3_IFR_MAX = 70
@@ -88,7 +90,7 @@ def avaliar_ativo(
             "regra": "R1 Faca caindo",
             "decisao": "Aguardar",
             "motivo": f"{quedas} quedas seguidas.",
-            "gatilho": f"Primeiro fechamento em alta com VOL_REL >= {R1_GATILHO_VOL:.1f}",
+            "gatilho": f"Primeiro fechamento em alta com VOL_REL >= {numero_br(R1_GATILHO_VOL, 1)}",
             "mm200": mm200,
         }
 
@@ -97,8 +99,8 @@ def avaliar_ativo(
             return {
                 "regra": "R2 Tendência de baixa",
                 "decisao": "Vender",
-                "motivo": f"Preço < MM200 ({mm200:.2f}), MM21 < MM200, FR20 ({fr20:.2f}%) < 0",
-                "gatilho": f"Fechamento acima da MM200 (R$ {mm200:.2f})",
+                "motivo": f"Preço < MM200 ({numero_br(mm200)}), MM21 < MM200, FR20 ({numero_br(fr20)}%) < 0",
+                "gatilho": f"Fechamento acima da MM200 ({reais(mm200)})",
                 "mm200": mm200,
             }
 
@@ -107,8 +109,8 @@ def avaliar_ativo(
             return {
                 "regra": "R3 Esticada",
                 "decisao": "Aguardar",
-                "motivo": f"Preço > MM200 ({mm200:.2f}), MM21 > MM200, IFR14 ({ifr14:.2f}) > {R3_IFR_MAX}",
-                "gatilho": f"Recuo até a MM21 (R$ {mm21:.2f}) ou IFR14 < {R3_IFR_RECUO}",
+                "motivo": f"Preço > MM200 ({numero_br(mm200)}), MM21 > MM200, IFR14 ({numero_br(ifr14)}) > {R3_IFR_MAX}",
+                "gatilho": f"Recuo até a MM21 ({reais(mm21)}) ou IFR14 < {R3_IFR_RECUO}",
                 "mm200": mm200,
             }
 
@@ -117,8 +119,8 @@ def avaliar_ativo(
             return {
                 "regra": "R4 Rompimento pendente",
                 "decisao": "Aguardar",
-                "motivo": f"Preço até 3% abaixo da MM200 ({mm200:.2f}) e MM21 subindo",
-                "gatilho": f"Fechamento acima da MM200 (R$ {mm200:.2f}) com VOL_REL >= {R4_GATILHO_VOL:.1f}",
+                "motivo": f"Preço até 3% abaixo da MM200 ({numero_br(mm200)}) e MM21 subindo",
+                "gatilho": f"Fechamento acima da MM200 ({reais(mm200)}) com VOL_REL >= {numero_br(R4_GATILHO_VOL, 1)}",
                 "mm200": mm200,
             }
 
@@ -132,8 +134,8 @@ def avaliar_ativo(
             return {
                 "regra": "R5 Tendência de alta saudável",
                 "decisao": "Comprar",
-                "motivo": f"Preço > MM200 ({mm200:.2f}), MM21 > MM200, {R5_IFR_MIN} <= IFR14 ({ifr14:.2f}) <= {R5_IFR_MAX}, FR20 ({fr20:.2f}%) > 0",
-                "gatilho": f"Fechamento abaixo da MM200 (R$ {mm200:.2f})",
+                "motivo": f"Preço > MM200 ({numero_br(mm200)}), MM21 > MM200, {R5_IFR_MIN} <= IFR14 ({numero_br(ifr14)}) <= {R5_IFR_MAX}, FR20 ({numero_br(fr20)}%) > 0",
+                "gatilho": f"Fechamento abaixo da MM200 ({reais(mm200)})",
                 "mm200": mm200,
             }
 

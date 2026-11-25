@@ -8,6 +8,7 @@ from app.consultor.sintese import (
     obter_decisao_final,
 )
 from app.consultor.regras import avaliar_ativo, calcular_mm
+from app.consultor.formato import numero_br
 from app.consultor.armazenamento import (
     data_iso,
     get_opinioes_ativos,
@@ -27,6 +28,45 @@ IDADE_MAXIMA_MIN = 60 * 24 * 4
 _consultor_cache = None
 _consultor_cache_versao = None
 _consultor_cache_time = None
+
+
+def confianca_da_regra(nome_regra, regras_confianca):
+    """Nível e frase de confiança de uma regra, a partir do histórico gravado (spec 197: números no padrão brasileiro)."""
+    if not regras_confianca or nome_regra not in regras_confianca:
+        return {"nivel": "baixa", "mensagem": "histórico indisponível"}
+
+    dados = regras_confianca[nome_regra]
+    n = dados["disparos"]
+    acertos = dados["acertos"]
+    excesso = dados["excesso_mediano"]
+
+    if n == 0:
+        return {"nivel": "baixa", "mensagem": "histórico indisponível"}
+
+    taxa = (acertos / n) * 100
+
+    if n >= 100 and taxa >= 60:
+        nivel = "alta"
+    elif n >= 30 and taxa >= 55:
+        nivel = "média"
+    elif n < 30:
+        return {"nivel": "baixa", "mensagem": f"baixa: amostra pequena (n = {n})"}
+    else:
+        nivel = "baixa"
+
+    sinal = "+" if excesso >= 0 else ""
+    mensagem = f"Nas {n} vezes em que {nome_regra.split(' ')[0]} disparou em ativos do Ibovespa nos últimos 2 anos, o ativo superou o Ibovespa em {int(taxa)}% dos casos nos 20 pregões seguintes (mediana {sinal}{numero_br(excesso * 100, 1)} p.p.)."
+
+    return {
+        "nivel": nivel,
+        "mensagem": mensagem,
+        "n": n,
+        "taxa_acerto": taxa,
+        "excesso_mediano": excesso,
+        "janela_inicio": dados.get("janela_inicio", ""),
+        "janela_fim": dados.get("janela_fim", ""),
+        "confianca": nivel,
+    }
 
 
 def calcular_consultor(ignorar_cache: bool = False) -> dict:
@@ -110,41 +150,7 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
     regras_confianca = get_consultor_confianca()
 
     def obter_confianca(nome_regra):
-        if not regras_confianca or nome_regra not in regras_confianca:
-            return {"nivel": "baixa", "mensagem": "histórico indisponível"}
-
-        dados = regras_confianca[nome_regra]
-        n = dados["disparos"]
-        acertos = dados["acertos"]
-        excesso = dados["excesso_mediano"]
-
-        if n == 0:
-            return {"nivel": "baixa", "mensagem": "histórico indisponível"}
-
-        taxa = (acertos / n) * 100
-
-        if n >= 100 and taxa >= 60:
-            nivel = "alta"
-        elif n >= 30 and taxa >= 55:
-            nivel = "média"
-        elif n < 30:
-            return {"nivel": "baixa", "mensagem": f"baixa: amostra pequena (n = {n})"}
-        else:
-            nivel = "baixa"
-
-        sinal = "+" if excesso > 0 else ""
-        mensagem = f"Nas {n} vezes em que {nome_regra.split(' ')[0]} disparou em ativos do Ibovespa nos últimos 2 anos, o ativo superou o Ibovespa em {int(taxa)}% dos casos nos 20 pregões seguintes (mediana {sinal}{(excesso * 100):.1f} p.p.)."
-
-        return {
-            "nivel": nivel,
-            "mensagem": mensagem,
-            "n": n,
-            "taxa_acerto": taxa,
-            "excesso_mediano": excesso,
-            "janela_inicio": dados.get("janela_inicio", ""),
-            "janela_fim": dados.get("janela_fim", ""),
-            "confianca": nivel,
-        }
+        return confianca_da_regra(nome_regra, regras_confianca)
 
     opinioes_ativos = get_opinioes_ativos()
     # Um só instante de referência para a lista e os cards (spec 165).

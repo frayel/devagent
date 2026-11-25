@@ -1,7 +1,7 @@
 ---
 id: 197
 titulo: As frases do Consultor escrevem números no padrão brasileiro
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_197.py

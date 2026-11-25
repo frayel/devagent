@@ -58,7 +58,7 @@ def test_obter_decisao_final_vender_compra():
     dec, frase, gatilho = obter_decisao_final(aval, consenso, 10.0, 9.0)
     assert dec == "Aguardar"
     assert "recomenda compra" in frase
-    assert "11.00" in gatilho
+    assert "R$ 11,00" in gatilho
 
 
 def test_obter_decisao_final_no_radar():
@@ -67,4 +67,4 @@ def test_obter_decisao_final_no_radar():
     dec, frase, gatilho = obter_decisao_final(aval, consenso, 10.0, 11.0)
     assert dec == "No radar"
     assert "compra com potencial" in frase
-    assert "11.00" in gatilho
+    assert "R$ 11,00" in gatilho

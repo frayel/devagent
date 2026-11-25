@@ -71,7 +71,7 @@
                     <tbody>
                         <tr>
                             <td><strong>R1 Faca caindo</strong></td>
-                            <td>QUEDAS_SEGUIDAS &gt;= {{ regras_limiares.R1_QUEDAS }} -> Aguardar (gatilho: primeiro fechamento em alta com VOL_REL >= {{ regras_limiares.R1_GATILHO_VOL }})</td>
+                            <td>QUEDAS_SEGUIDAS &gt;= {{ regras_limiares.R1_QUEDAS }} -> Aguardar (gatilho: primeiro fechamento em alta com VOL_REL >= {{ regras_limiares.R1_GATILHO_VOL | numero_br(1) }})</td>
                             <td class="fonte-dado">{{ dados.regras_confianca["R1 Faca caindo"].mensagem if dados.regras_confianca else "histórico indisponível" }}</td>
                         </tr>
                         <tr>
@@ -86,7 +86,7 @@
                         </tr>
                         <tr>
                             <td><strong>R4 Rompimento pendente</strong></td>
-                            <td>fechamento até 3% abaixo da MM200 e MM21 de hoje maior que de 5 pregões atrás -> Aguardar (fechamento acima da MM200 com VOL_REL >= {{ regras_limiares.R4_GATILHO_VOL }})</td>
+                            <td>fechamento até 3% abaixo da MM200 e MM21 de hoje maior que de 5 pregões atrás -> Aguardar (fechamento acima da MM200 com VOL_REL >= {{ regras_limiares.R4_GATILHO_VOL | numero_br(1) }})</td>
                             <td class="fonte-dado">{{ dados.regras_confianca["R4 Rompimento pendente"].mensagem if dados.regras_confianca else "histórico indisponível" }}</td>
                         </tr>
                         <tr>
