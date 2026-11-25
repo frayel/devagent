@@ -6,6 +6,7 @@ esforco: P
 gaveta: capacidade nova
 aceite: tests/test_aceite_196.py
 origem: Ibovespa sombra (pesos iguais)
+revisada: 2026-11-25
 ---
 
 ## Problema
@@ -17,7 +18,7 @@ A pergunta: **a ação média da amostra subiu mais ou menos que o Ibovespa hoje
 
 ## Comportamento esperado
 1. **O coletor guarda a média.** `fetch_yfinance` calcula a média simples de `change_percent` das ações de `parsed_results` (as aceitas; ficam fora as `em_revisao` e as ausentes, como já ficam das contagens) e grava dois campos novos no payload de `maiores_altas_baixas`: `media_simples_pct` (float, em **percentual**, como `change_percent`) e `media_simples_n` (int, quantas ações entraram na média). Sem ação aceita, os dois ficam `None`. `HighlightsData` ganha os dois campos com padrão `None`; `get_latest_highlights_data` os lê com `payload.get(...)`, para os snapshots antigos, que não os têm, continuarem legíveis.
-2. **O card *Dispersão* ganha uma linha**, abaixo da legenda "N subiram · M caíram", no mesmo card (`index.html`, perto da linha 157), sem mudar o gauge, o tamanho (`span-4`) nem as classes do card:
+2. **O card *Dispersão* ganha uma linha**, abaixo da legenda "N subiram · M caíram", no mesmo card (`app/templates/index.html`, o `painel("Dispersão", ...)` da linha 162), sem mudar o gauge, o tamanho (`span-4`) nem as classes do card:
    - com a comparação disponível (item 4): `Ação média: +0,30% · Ibovespa: +1,00%` e, numa segunda linha, a diferença e a leitura: `Diferença: −0,70 p.p. · o índice foi além da ação média`;
    - só com a média (Ibovespa indisponível, em revisão ou de outro horário): `Ação média: +0,30% (28 ações)`, sem a diferença e sem leitura;
    - sem a média (`media_simples_pct` `None`, inclusive em snapshot antigo): a linha não aparece, e o resto do card fica como hoje.
@@ -29,7 +30,7 @@ A pergunta: **a ação média da amostra subiu mais ou menos que o Ibovespa hoje
    O limiar de 0,50 p.p. é uma escolha de leitura, não uma estatística, e aparece no texto do método.
 4. **Quando comparar.** A diferença só é mostrada quando as três condições valem: o Ibovespa da página tem variação (`variacao_indisponivel` falso), a variação não está em revisão (`revisao_variacao` falso) e os carimbos das duas coletas (`ibovespa` e `maiores_altas_baixas`) estão a no máximo 20 minutos um do outro. As duas saem da mesma rodada do agendador (`app/agendador.py:297-298`), de 15 em 15 minutos no pregão; 20 minutos aceita a mesma rodada e recusa a mistura de pregões. A conta da comparação fica numa função pura em `app/services/highlights.py` (sugestão: `comparar_com_ibovespa(media_pct, n, ibov_pct, ibov_ts, media_ts, ibov_valida)`), chamada pela rota `/` com os dados que ela já monta.
 5. **Método à vista.** O texto de ajuda do card *Dispersão* (terceiro argumento de `painel(...)`) ganha uma frase: "Ação média: média simples da variação do dia das ações da amostra, todas com o mesmo peso, comparada à variação do Ibovespa da mesma rodada. Diferença em pontos percentuais; a partir de 0,50 p.p., para cima ou para baixo, o card diz quem foi além." Fonte e horário são os do card, que já os mostra.
-6. **Data passada.** Com `?data=`, a linha usa o payload de `maiores_altas_baixas` e a leitura do Ibovespa daquele pregão, como o card já faz. Pregão gravado antes desta spec não tem `media_simples_pct`: a linha não aparece, sem erro.
+6. **Data passada.** Com `?data=`, a linha usa o payload de `maiores_altas_baixas` e a leitura do Ibovespa daquele pregão, como o card já faz. Pregão gravado antes desta spec não tem `media_simples_pct`: a linha não aparece, sem erro. A regra dos 20 minutos do item 4 vale também aqui, com os carimbos gravados nos dois payloads daquele pregão; se eles se afastam mais que isso, a linha mostra só a média, sem diferença (a degradação conservadora, nunca uma comparação de rodadas diferentes).
 7. **`/api/snapshot`.** `paineis.altas_baixas` ganha a chave `acao_media`: `{"media_pct": 0.30, "amostra": 4, "ibovespa_pct": 1.00, "diferenca_pp": -0.70, "leitura": "o índice foi além da ação média"}`, com `ibovespa_pct`, `diferenca_pp` e `leitura` `null` quando a comparação do item 4 não vale, e a chave inteira `null` quando não há média. Os números vão sem arredondar no JSON; o exemplo acima usa os do item *Cálculos*. A chave `dispersao` não muda.
 
 ## Fontes de dados
@@ -64,7 +65,7 @@ Escala errada aparece logo: se `change_percent` fosse tratado como fração, a m
 
 ## Critérios de aceite
 - [ ] `tests/test_aceite_196.py`, com `exigir_spec_done("196")`, sem internet (respx e os fixtures de `tests/test_highlights.py`):
-  - **média gravada:** com o `spark` das quatro ações do exemplo, `fetch_yfinance()` devolve `media_simples_pct` a menos de 0,001 de `0.30` e `media_simples_n == 4`; com uma quinta ação a +20% que a segunda fonte não confirma (vai para `em_revisao`), a média e o `n` não mudam;
+  - **média gravada:** com o `spark` das quatro ações do exemplo, `fetch_yfinance()` devolve `media_simples_pct` a menos de 0,001 de `0.30` e `media_simples_n == 4`; com uma quinta ação a +20% que a segunda fonte não confirma (vai para `em_revisao`; a segunda fonte é simulada com `monkeypatch` de `app.collectors.highlights.consultar_segunda_fonte`, como em `tests/test_aceite_135.py`), a média e o `n` não mudam;
   - **comparação pura:** a função do item 4 devolve, para média `0.30`, Ibovespa `1.00` e carimbos a 3 minutos, diferença `-0.70` e a leitura `o índice foi além da ação média`; para `1.20` e `1.00`, `índice e ação média andaram juntos`; para `1.60` e `1.00`, `a ação média foi além do índice`; com carimbos a 25 minutos, ou com o Ibovespa em revisão, ou com a variação indisponível, sem diferença e sem leitura;
   - **tela:** com os snapshots `maiores_altas_baixas` e `ibovespa` do exemplo gravados na mesma rodada, o HTML de `GET /` contém, dentro do card *Dispersão*, `+0,30%`, `+1,00%`, `0,70 p.p.` e `o índice foi além da ação média`;
   - **sem comparação:** com o snapshot `ibovespa` 25 minutos antes, o card contém `Ação média: +0,30% (4 ações)` e não contém `p.p.`;
