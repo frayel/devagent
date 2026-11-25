@@ -32,6 +32,8 @@ class HighlightsData:
     pregao_data: str | None = None
     ausentes_count: int = 0
     ausentes_json: str = "[]"
+    media_simples_pct: float | None = None
+    media_simples_n: int | None = None
 
 
 @dataclass
@@ -368,6 +370,8 @@ def save_highlights_data(data: HighlightsData) -> None:
         "pregao_data": getattr(data, "pregao_data", None),
         "ausentes_count": getattr(data, "ausentes_count", 0),
         "ausentes_json": getattr(data, "ausentes_json", "[]"),
+        "media_simples_pct": data.media_simples_pct,
+        "media_simples_n": data.media_simples_n,
     }
     gravar_snapshot("maiores_altas_baixas", hoje, "ao_vivo", data.fonte, payload)
 
@@ -390,6 +394,8 @@ def get_latest_highlights_data() -> HighlightsData | None:
             pregao_data=payload.get("pregao_data"),
             ausentes_count=payload.get("ausentes_count", 0),
             ausentes_json=payload.get("ausentes_json", "[]"),
+            media_simples_pct=payload.get("media_simples_pct"),
+            media_simples_n=payload.get("media_simples_n"),
         )
     return None
 

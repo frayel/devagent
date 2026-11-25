@@ -207,6 +207,8 @@ def _semear(db_path: str) -> None:
             up_count=18,
             down_count=12,
             total_count=30,
+            media_simples_pct=0.45,
+            media_simples_n=30,
         )
     )
     db.save_volume_alerts_data(

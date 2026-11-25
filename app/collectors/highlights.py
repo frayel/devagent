@@ -252,6 +252,13 @@ def fetch_yfinance() -> HighlightsData | None:
     lows.sort(key=lambda x: x["change_percent"])
 
     total_count = len(parsed_results)
+    # Spec 196: a ação média do dia, todas com o mesmo peso, só com as aceitas
+    # (as em revisão e as ausentes ficam fora, como das contagens).
+    media_simples_pct = (
+        sum(a["change_percent"] for a in parsed_results) / total_count
+        if total_count
+        else None
+    )
 
     return HighlightsData(
         timestamp=datetime.now(timezone.utc),
@@ -265,6 +272,8 @@ def fetch_yfinance() -> HighlightsData | None:
         pregao_data=pregao_data_str,
         ausentes_count=len(ausentes_tickers),
         ausentes_json=json.dumps(ausentes_tickers),
+        media_simples_pct=media_simples_pct,
+        media_simples_n=total_count if media_simples_pct is not None else None,
     )
 
 

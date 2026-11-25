@@ -1,7 +1,7 @@
 ---
 id: 196
 titulo: A ação média do dia contra o Ibovespa
-status: ready
+status: done
 esforco: P
 gaveta: capacidade nova
 aceite: tests/test_aceite_196.py
