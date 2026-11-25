@@ -6,6 +6,7 @@ esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_197.py
 origem: Preço-alvo no padrão brasileiro
+revisada: 2026-11-25
 ---
 
 ## Problema
@@ -72,7 +73,7 @@ Nenhuma conta nova; muda só a escrita. Exemplos de ponta a ponta:
 - [ ] `_mensagem_do_placar` com os números do exemplo devolve `+5,0% contra o IBOV em 5 pregões`; com `offset = 1`, `... em 1 pregão`; com excesso `-0.023`, começa com `-2,3%`.
 - [ ] A confiança de uma regra com `n = 120`, 75 acertos e `excesso_mediano = 0.0321` termina em `(mediana +3,2 p.p.).`
 - [ ] A página `/consultor`, montada com um dublê de `calcular_consultor` no molde de `tests/test_aceite_191.py`, não contém `VOL_REL >= 1.5` nem `VOL_REL >= 1.0`, e contém `VOL_REL >= 1,5`.
-- [ ] As asserções de texto que hoje fixam o formato antigo passam a fixar o novo: `tests/test_aceite_131.py:82` e `tests/test_aceite_193.py:21,147` (`+5,0% contra o IBOV em 5 pregões`, `+17,1% contra o IBOV em 1 pregão`). É a mudança de comportamento pedida aqui, não afrouxamento de teste.
+- [ ] As asserções de texto que hoje fixam o formato antigo passam a fixar o novo: `tests/test_aceite_131.py:82`, `tests/test_aceite_193.py:21,147` (`+5,0% contra o IBOV em 5 pregões`, `+17,1% contra o IBOV em 1 pregão`) e `tests/test_aceite_113b.py:66` (`em 1 pregões` passa a `em 1 pregão`). O dublê de `tests/test_consultor.py:186,226` só repassa um texto pronto e não muda. É a mudança de comportamento pedida aqui, não afrouxamento de teste.
 - [ ] `tests/test_aceite_197.py` usa `exigir_spec_done("197")` e roda sem internet.
 
 ## Invariantes de produção
