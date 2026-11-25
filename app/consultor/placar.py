@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any
 
+from app.consultor.formato import percentual
 from app.consultor.sintese import agrupar_por_ativo, fechamentos_das_opinioes
 
 
@@ -71,8 +72,8 @@ def _mensagem_do_placar(
     if p_futuro is None or ibov_hoje is None or ibov_futuro is None:
         return "ainda sem resultado"
     excesso = _calcular_excesso(recomendacao["preco"], p_futuro, ibov_hoje, ibov_futuro)
-    sinal = "+" if excesso > 0 else ""
-    return f"{sinal}{excesso * 100:.1f}% contra o IBOV em {offset} pregões"
+    pregoes_txt = "pregão" if offset == 1 else "pregões"
+    return f"{percentual(excesso)} contra o IBOV em {offset} {pregoes_txt}"
 
 
 def consultor_de_pregao_passado(data: str, referencia: datetime | None) -> dict:

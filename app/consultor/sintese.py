@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timezone, timedelta
 
 from app.consultor.armazenamento import get_fechamentos, ler_data, ler_preco_alvo
+from app.consultor.formato import reais
 
 logger = logging.getLogger(__name__)
 
@@ -299,7 +300,7 @@ def obter_decisao_final(avaliacao, consenso_casas, fechamento, mm21):
         elif consenso == "compra":
             decisao = "Aguardar"
             mm200 = avaliacao.get("mm200", 0)
-            gatilho = f"Fechamento acima da MM200 (R$ {mm200:.2f})"
+            gatilho = f"Fechamento acima da MM200 ({reais(mm200)})"
             frase = "maioria das casas recomenda compra"
     elif tecnico == "Aguardar":
         decisao = "Aguardar"
@@ -312,7 +313,7 @@ def obter_decisao_final(avaliacao, consenso_casas, fechamento, mm21):
         ):
             decisao = "No radar"
             mm21_val = mm21 if mm21 is not None else 0
-            gatilho = f"fechamento acima da MM21 (R$ {mm21_val:.2f})"
+            gatilho = f"fechamento acima da MM21 ({reais(mm21_val)})"
             frase = "casas recomendam compra com potencial"
 
     return decisao, frase, gatilho

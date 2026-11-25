@@ -63,7 +63,8 @@ def test_aceite_113b_data_passada(monkeypatch):
         .get("Comprar", [{}])[0]
         .get("mensagem_confianca", "")
     )
-    assert "em 1 pregões" in msg1
+    assert "em 1 pregão" in msg1
+    assert "1 pregões" not in msg1
 
     res2 = client.get(
         "/api/consultor?data=2023-10-02", auth=("consultor", "senha_secreta")

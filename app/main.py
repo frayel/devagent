@@ -195,6 +195,7 @@ def _metodo_do_alvo(situacao) -> str:
 templates.env.filters["ate_o_alvo"] = _ate_o_alvo
 templates.env.filters["metodo_do_alvo"] = _metodo_do_alvo
 templates.env.filters["reais"] = formato.reais
+templates.env.filters["numero_br"] = formato.numero_br
 templates.env.filters["percentual"] = formato.percentual
 templates.env.filters["data_brasilia"] = formato.data_brasilia
 

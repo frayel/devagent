@@ -18,7 +18,7 @@ from devagent.aceite import exigir_spec_done
 
 SENHA = "senha_secreta"
 D = "2023-11-01"
-MENSAGEM = "+5.0% contra o IBOV em 5 pregões"
+MENSAGEM = "+5,0% contra o IBOV em 5 pregões"
 # Como `salvar_recomendacoes` grava: o JSON do consenso das casas. Vazio, o
 # `StrictUndefined` dos testes reprovaria `item.consenso.consenso` no template.
 CONSENSO = json.dumps({"consenso": "sem cobertura", "preco_alvo_mediano": None})
@@ -144,7 +144,7 @@ def test_funcao_entrega_placar_e_decisao_tecnica(monkeypatch):
 @pytest.mark.parametrize(
     "dia, esperado",
     [
-        ("2023-11-09", "+17.1% contra o IBOV em 1 pregões"),
+        ("2023-11-09", "+17,1% contra o IBOV em 1 pregão"),
         ("2023-11-10", "ainda sem resultado"),
     ],
 )

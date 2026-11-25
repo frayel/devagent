@@ -79,6 +79,6 @@ def test_aceite_131_historico_sem_n1(monkeypatch):
     assert len(compras) == 85
 
     for item in compras:
-        assert item["mensagem_confianca"] == "+5.0% contra o IBOV em 5 pregões"
+        assert item["mensagem_confianca"] == "+5,0% contra o IBOV em 5 pregões"
 
     assert connections_opened <= 8
