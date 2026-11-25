@@ -1,5 +1,12 @@
 [
   {
+    "data": "2026-11-25",
+    "tipo": "novidade",
+    "texto": "O card Dispersão diz quanto subiu a ação média do dia, todas com o mesmo peso, e quanto ela ficou acima ou abaixo do Ibovespa.",
+    "onde": {"aba": "sentimento-risco", "aba_nome": "Sentimento & Risco", "painel": "Dispersão"},
+    "spec": "196"
+  },
+  {
     "data": "2026-11-24",
     "tipo": "melhoria",
     "texto": "O que o Ibovespa fez nos 5 pregões seguintes a cada faixa da Maré agora aparece na Visão Geral, logo abaixo da Maré do mercado. A tela /mare volta a ter só o card.",

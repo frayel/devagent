@@ -37,7 +37,11 @@ from app.services import destaques as destaques_servico
 from app.services import novidades as novidades_servico
 from app.services.manchete import gerar_manchete
 from app.database import get_latest_highlights_data, get_latest_apetite_risco_data
-from app.services.highlights import get_highlights_view_data
+from app.services.highlights import (
+    acao_media_api,
+    comparar_com_ibovespa,
+    get_highlights_view_data,
+)
 from app.services.volume_alerts import get_volume_alerts_view_data
 from app.services import radares as radares_servico
 from app.services.dolar_correlation import get_dolar_correlation_view_data
@@ -1174,6 +1178,10 @@ def snapshot(
                     "proporcao_alta_pct": (up_count / total_count) * 100,
                 }
 
+            altas_baixas_panel["acao_media"] = acao_media_api(
+                _acao_media_dos_dados(highlights_data, data)
+            )
+
             resp["paineis"]["altas_baixas"] = altas_baixas_panel
 
         elif is_historical:
@@ -2027,6 +2035,39 @@ def _payloads_radares() -> dict[str, Any]:
     }
 
 
+def _acao_media_dos_dados(highlights_data: Any, ibov_data: Any) -> dict | None:
+    """A ação média contra o Ibovespa (spec 196), com os dados lidos do banco.
+
+    Lida no `lendo_pregao` de quem chama: com `?data=`, usa os dois payloads
+    daquele pregão. O Ibovespa só entra se a variação existe e não está em
+    revisão, pelos mesmos limiares do card do índice.
+    """
+    if highlights_data is None:
+        return None
+    ibov_pct: float | None = None
+    ibov_ts = None
+    ibov_valida = False
+    if (
+        ibov_data is not None
+        and ibov_data.previous_close
+        and ibov_data.previous_close > 0
+    ):
+        pts = ibov_data.current_price - ibov_data.previous_close
+        ibov_pct = pts / ibov_data.previous_close * 100
+        ibov_ts = ibov_data.timestamp
+        ibov_valida = not (
+            abs(ibov_pct) > LIMIAR_PCT_REVISAO or abs(pts) >= LIMIAR_PONTOS_REVISAO
+        )
+    return comparar_com_ibovespa(
+        getattr(highlights_data, "media_simples_pct", None),
+        getattr(highlights_data, "media_simples_n", None),
+        ibov_pct,
+        ibov_ts,
+        highlights_data.timestamp,
+        ibov_valida,
+    )
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(
     request: Request,
@@ -2082,6 +2123,9 @@ def index(
         ibovespa_data = get_ibovespa_view_data(agora)
 
         highlights = get_highlights_view_data()
+        acao_media = _acao_media_dos_dados(
+            get_latest_highlights_data(), get_latest_ibovespa_data()
+        )
         highs_dict = {}
         if highlights and highlights.get("dispersion_pct") is not None:
             highs_dict["dispersion_pct"] = highlights["dispersion_pct"]
@@ -2237,6 +2281,7 @@ def index(
             "manchete": manchete,
             "data": data_ibov,
             "highlights": highlights,
+            "acao_media": acao_media,
             "dolar_correlation": dolar_correlation,
             "sensibilidade_juros": sensibilidade_juros,
             "forca_relativa": forca_relativa,

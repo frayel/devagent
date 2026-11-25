@@ -159,7 +159,7 @@
 {{ card_mare_memoria(memoria_mare, 4 if motores_visivel else 12) }}
 {% endif %}
 
-{% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação. O percentual do gauge exclui quem ficou em zero.", highlights.fonte if highlights else "", c_disp.get('rodape') or (highlights.time if highlights else ""), "visao-macro sentimento-risco", c_disp.get('desatualizado', False)) %}
+{% call painel("Dispersão", 4, "Proporção de ações em alta numa amostra de ações de alta liquidez, sem ponderação. O percentual do gauge exclui quem ficou em zero. Ação média: média simples da variação do dia das ações da amostra, todas com o mesmo peso, comparada à variação do Ibovespa da mesma rodada. Diferença em pontos percentuais; a partir de 0,50 p.p., para cima ou para baixo, o card diz quem foi além.", highlights.fonte if highlights else "", c_disp.get('rodape') or (highlights.time if highlights else ""), "visao-macro sentimento-risco", c_disp.get('desatualizado', False)) %}
     {% if highlights and highlights.dispersion_pct is not none %}
         {{ gauge(highlights.dispersion_pct, "em alta", 0, 100, "{:.0f}%", resumo="Dispersão, ações em alta") }}
         <div class="legenda num">
@@ -169,6 +169,17 @@
             <span>{{ highlights.get('neutral_count') }} estáveis</span>
             {% endif %}
         </div>
+        {#- Spec 196: a ação média do dia contra o Ibovespa da mesma rodada. -#}
+        {% if acao_media %}
+        <div>
+            {% if acao_media.diferenca_fmt %}
+            <p class="sub texto-centro">Ação média: {{ variacao(acao_media.media_fmt, acao_media.media_pct) }} · Ibovespa: {{ acao_media.ibovespa_fmt }}</p>
+            <p class="sub texto-centro">Diferença: {{ variacao(acao_media.diferenca_fmt, acao_media.diferenca_pp) }} · {{ acao_media.leitura }}</p>
+            {% else %}
+            <p class="sub texto-centro">Ação média: {{ variacao(acao_media.media_fmt, acao_media.media_pct) }} ({{ acao_media.amostra }} ações)</p>
+            {% endif %}
+        </div>
+        {% endif %}
     {% else %}
         {{ estado('sem_registro' if is_historical else 'indisponivel') }}
     {% endif %}

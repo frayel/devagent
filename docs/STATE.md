@@ -18,6 +18,9 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Capacidade nova] Spec 196 - A ação média do dia contra o Ibovespa:
+  - `app/collectors/highlights.py`: `fetch_yfinance` grava `media_simples_pct` (percentual) e `media_simples_n` no payload de `maiores_altas_baixas`, só com as ações aceitas; `HighlightsData` ganha os dois campos (padrão `None`, snapshots antigos continuam legíveis).
+  - `app/services/highlights.py`: `comparar_com_ibovespa` (pura: Ibovespa válido e as duas coletas a no máximo 20 min) e `acao_media_api`; `app/main.py`: `_acao_media_dos_dados`, usado pela rota `/` (card *Dispersão*) e por `paineis.altas_baixas.acao_media` do `/api/snapshot`. Aceite em `tests/test_aceite_196.py`.
 - [Experiência] Spec 195 - Depois de cada faixa sai de /mare e vai para o painel geral:
   - `app/templates/componentes.html`: macro `card_mare_memoria(memoria, span)`; `memoria` None é a data passada sem `mare_historico` (sem registro). `mare.html` volta a ter só o card.
   - `app/main.py`: `index` monta `memoria_mare` dentro do `lendo_pregao`; `pagina_mare` não lê mais o `mare_historico`. Na Visão Geral, a linha 3 é *Motores do Índice* (8) e o quadro (4); sem o Motores, o quadro ocupa 12. Aceite em `tests/test_aceite_195.py`.
