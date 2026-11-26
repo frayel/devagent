@@ -18,6 +18,9 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Saúde técnica] Spec 198 - O diagnóstico de opiniões do Consultor sai de uma função só:
+  - `app/consultor/armazenamento.py`: `contar_fila_pendente()` conta a fila no banco do Consultor (`app.banco`, o Postgres em produção); antes as rotas contavam no SQLite local, sempre vazio, e o aviso `fila` nunca aparecia.
+  - `app/consultor/diagnostico.py`: `diagnostico_de_opinioes(dados, pregao_passado)`, com as oito chaves sempre presentes; pregão passado sai `pregao_passado` sem ler a fila, e qualquer erro sai `erro` ("diagnóstico indisponível"), sem 500 no `/api/consultor`. `pagina_consultor` e `api_consultor` usam a função; `consultor.html` mostra "Nenhuma opinião gravada nos 30 dias até dd/mm/aaaa." e esconde o rodapé "Última extração" no pregão passado. Aceite em `tests/test_aceite_198.py`.
 - [Experiência] Spec 197 - As frases do Consultor escrevem números no padrão brasileiro:
   - `app/consultor/regras.py` e `app/consultor/sintese.py`: gatilho e motivo com `reais`/`numero_br`; `app/consultor/placar.py`: `_mensagem_do_placar` com `percentual` e `pregão` no singular; `app/consultor/calculador.py`: `confianca_da_regra(nome_regra, regras_confianca)` em nível de módulo, mediana com `numero_br`.
   - `app/main.py`: filtro `numero_br` no Jinja, usado nos limiares `VOL_REL` da tabela de regras. Gatilhos antigos gravados no banco não mudam. Aceite em `tests/test_aceite_197.py`.
