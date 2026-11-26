@@ -20,6 +20,10 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Experiência] Spec 199 - O radar raro que acende ganha uma linha sob a manchete:
+  - `app/services/radares.py`: `LIMIAR_RARO = 10`, `MINIMO_REGISTROS_RARO = 10`, `MAX_LINHAS_RARO = 2`; `radares_raros(estados, anterior)` (função pura, maior intervalo primeiro), `frases_raros`, `raros_do_contexto`, `raros_api`, `registrados_antes`. `ultimo_alerta_vazio` traz `anterior`.
+  - `app/main.py`: `_ultimo_alerta_radares` devolve também `anterior` (`ultimo_alerta` sobre `pregoes[1:]`), da mesma leitura; `/` põe `manchete_raros` no contexto e `/api/snapshot` publica `radares_ultimo_alerta.raros` e `registrados_antes` com os payloads de `_payloads_radares()`. Em produção, a linha só aparece quando houver 10 pregões anteriores com instrumentação (perto de 03/12/2026).
+  - `app/templates/index.html`: `p.manchete-raro` sob `p.manchete-texto`; o card Exaustão de Alta passa a usar `tk`/`conteudo` (as linhas saíam vazias). `app/static/tema.css`: `.manchete-raro`. Testes: `tests/test_aceite_199.py`, `tests/test_card_exaustao_alta.py`.
 - [Correção] Barra diária defasada do MetaTrader 5 não vira cotação do dia:
   - `app/collectors/mt5.py`: `pregao_esperado(agora)` e `defasagem(ultima_barra, agora)`; `_baixar_barras` recusa a série `D1` cuja última barra é anterior ao pregão esperado (folga `FOLGA_BARRA_DO_DIA` de 15 min depois da abertura), pausa o símbolo por `PAUSA_SIMBOLO` e registra falha não grave no `registro_fontes`; a coleta segue para o Yahoo. `CONFERIR_DEFASAGEM` é desligado em `tests/conftest.py` e ligado com relógio fixo em `tests/test_mt5_defasagem.py`.
 - [Saúde técnica] Spec 198 - O diagnóstico de opiniões do Consultor sai de uma função só:

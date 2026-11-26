@@ -304,6 +304,14 @@ body.modo-so-sinais .painel-ibovespa .var {
     margin-bottom: 20px;
 }
 
+/* Radar raro aceso (spec 199): uma linha menor sob a manchete. */
+.manchete-raro {
+    font-size: var(--fs-base);
+    color: var(--alerta);
+    margin: calc(-1 * var(--e3)) 0 var(--e3);
+    overflow-wrap: anywhere;
+}
+
 /* Destaques agora (spec 167): uma linha entre a manchete e as abas. */
 .destaques-agora {
     display: flex;

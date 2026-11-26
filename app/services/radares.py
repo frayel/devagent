@@ -108,6 +108,11 @@ def _hora(timestamp: datetime | None) -> str:
 
 
 JANELA_ULTIMO_ALERTA = 20
+# Spec 199: "raro" é o radar que passou metade da janela sem acender, contado
+# só depois de 10 pregões anteriores com registro.
+LIMIAR_RARO = 10
+MINIMO_REGISTROS_RARO = 10
+MAX_LINHAS_RARO = 2
 
 
 def janela_pregoes(agora: datetime, n: int = JANELA_ULTIMO_ALERTA) -> list[date]:
@@ -170,7 +175,11 @@ def ultimo_alerta(historico: dict[date, Any], pregoes: list[date]) -> dict[str, 
 
 def ultimo_alerta_vazio(janela: int = JANELA_ULTIMO_ALERTA) -> dict[str, Any]:
     """O resultado sem nenhum registro: data histórica ou leitura falha."""
-    return {**ultimo_alerta({}, []), "janela": janela}
+    return {
+        **ultimo_alerta({}, []),
+        "janela": janela,
+        "anterior": {**ultimo_alerta({}, []), "janela": janela - 1},
+    }
 
 
 def frase_ultimo_alerta(chave: str, ultimo: dict[str, Any] | None) -> str:
@@ -189,6 +198,98 @@ def frase_ultimo_alerta(chave: str, ultimo: dict[str, Any] | None) -> str:
     if m == 1:
         return "· sem alerta no 1 pregão registrado"
     return f"· sem alerta nos {m} pregões registrados"
+
+
+def radares_raros(
+    estados: dict[str, str], anterior: dict[str, Any] | None
+) -> list[dict[str, Any]]:
+    """Radares acesos agora que quase nunca acendem (spec 199).
+
+    `estados` é o estado de `classificar` por chave de RADARES; `anterior` é
+    `ultimo_alerta(historico, pregoes[1:])`, sem o pregão corrente. Devolve
+    `{"chave", "nome", "ultimo", "pregoes_atras"}`, o maior intervalo primeiro
+    (`pregoes_atras` None antes de qualquer N); `pregoes_atras` já conta o
+    pregão corrente (1 é o pregão anterior).
+    """
+    if not anterior or anterior.get("registrados", 0) < MINIMO_REGISTROS_RARO:
+        return []
+    raros: list[tuple[int, int, dict[str, Any]]] = []
+    for ordem, (chave, nome, _campo_lista) in enumerate(RADARES):
+        if estados.get(chave) != COM_ALERTAS:
+            continue
+        info = (anterior.get("radares") or {}).get(chave) or {}
+        atras = info.get("pregoes_atras")
+        if atras is None:
+            item = {"chave": chave, "nome": nome, "ultimo": None, "pregoes_atras": None}
+            raros.append((-JANELA_ULTIMO_ALERTA - 1, ordem, item))
+            continue
+        n = atras + 1
+        if n < LIMIAR_RARO:
+            continue
+        item = {
+            "chave": chave,
+            "nome": nome,
+            "ultimo": info["ultimo"],
+            "pregoes_atras": n,
+        }
+        raros.append((-n, ordem, item))
+    raros.sort(key=lambda t: (t[0], t[1]))
+    return [item for _peso, _ordem, item in raros]
+
+
+def frases_raros(raros: list[dict[str, Any]], registrados_antes: int) -> list[str]:
+    """As linhas sob a manchete: no máximo duas, mais a do excedente (spec 199)."""
+    linhas: list[str] = []
+    for item in raros[:MAX_LINHAS_RARO]:
+        atras = item["pregoes_atras"]
+        if atras is None:
+            linhas.append(
+                f"{item['nome']} acendeu: nenhum alerta nos {registrados_antes} "
+                "pregões registrados antes deste."
+            )
+        else:
+            linhas.append(
+                f"{item['nome']} acendeu: o último alerta foi há {atras} pregões "
+                f"({item['ultimo'].strftime('%d/%m')})."
+            )
+    resto = len(raros) - MAX_LINHAS_RARO
+    if resto == 1:
+        linhas.append("e mais 1 radar raro acendeu; veja a aba Alertas.")
+    elif resto > 1:
+        linhas.append(f"e mais {resto} radares raros acenderam; veja a aba Alertas.")
+    return linhas
+
+
+def raros_do_contexto(
+    payloads: dict[str, Any],
+    agora: datetime,
+    is_historical: bool,
+    ultimo: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Os raros a partir dos payloads dos radares e do resultado da rota (spec 199)."""
+    if is_historical or not ultimo:
+        return []
+    estados = {
+        chave: classificar(payloads.get(chave), chave, agora, is_historical)[0]
+        for chave, _n, _c in RADARES
+    }
+    return radares_raros(estados, ultimo.get("anterior"))
+
+
+def raros_api(raros: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """`paineis.radares_ultimo_alerta.raros` do `/api/snapshot`, com datas ISO."""
+    return [
+        {
+            **item,
+            "ultimo": item["ultimo"].isoformat() if item["ultimo"] else None,
+        }
+        for item in raros
+    ]
+
+
+def registrados_antes(ultimo: dict[str, Any] | None) -> int:
+    anterior = (ultimo or {}).get("anterior") or {}
+    return int(anterior.get("registrados") or 0)
 
 
 def ultimo_alerta_api(ultimo: dict[str, Any]) -> dict[str, Any]:

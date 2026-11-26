@@ -899,7 +899,11 @@ def _ultimo_alerta_radares(agora: datetime, is_historical: bool) -> dict[str, An
     except Exception:
         logging.getLogger(__name__).exception("leitura da instrumentação falhou")
         return radares_servico.ultimo_alerta_vazio()
-    return radares_servico.ultimo_alerta(historico, pregoes)
+    # Spec 199: o mesmo histórico, sem o pregão corrente, decide o "radar raro".
+    return {
+        **radares_servico.ultimo_alerta(historico, pregoes),
+        "anterior": radares_servico.ultimo_alerta(historico, pregoes[1:]),
+    }
 
 
 @app.get("/api/snapshot")
@@ -964,10 +968,11 @@ def snapshot(
             resp["paineis"]["assimetria_risco_retorno"] = None
         # O contrato da auditoria exige `fonte` e `coletado_em` em todo painel
         # (issue #872); a contagem vem da instrumentação lida agora (spec 185).
+        ultimo_radares = _ultimo_alerta_radares(agora, is_historical)
         resp["paineis"]["radares_ultimo_alerta"] = {
-            **radares_servico.ultimo_alerta_api(
-                _ultimo_alerta_radares(agora, is_historical)
-            ),
+            **radares_servico.ultimo_alerta_api(ultimo_radares),
+            "registrados_antes": radares_servico.registrados_antes(ultimo_radares),
+            "raros": [],
             "fonte": "instrumentacao",
             "coletado_em": agora.isoformat(),
         }
@@ -1623,8 +1628,15 @@ def snapshot(
             "fonte": "composto",
         }
 
+        payloads_radares = _payloads_radares()
+        # Spec 199: os mesmos payloads e o mesmo `classificar` da página.
+        resp["paineis"]["radares_ultimo_alerta"]["raros"] = radares_servico.raros_api(
+            radares_servico.raros_do_contexto(
+                payloads_radares, agora, is_historical, ultimo_radares
+            )
+        )
         confluencia = radares_servico.confluencia(
-            _payloads_radares(), agora, is_historical
+            payloads_radares, agora, is_historical
         )
         resp["paineis"]["confluencia_radares"] = {
             "acoes": confluencia["acoes"],
@@ -2195,12 +2207,20 @@ def index(
             "correlacao_di": correlacao_di,
             "relogio": relogio,
         }
+        ultimo_radares = _ultimo_alerta_radares(agora, is_historical)
         contexto["radares"] = radares_servico.resumo(
             contexto,
             agora,
             is_historical,
             mostrar_vazios=vazios == "1",
-            ultimo=_ultimo_alerta_radares(agora, is_historical),
+            ultimo=ultimo_radares,
+        )
+        # Spec 199: o radar raro aceso ganha uma linha sob a manchete.
+        contexto["manchete_raros"] = radares_servico.frases_raros(
+            radares_servico.raros_do_contexto(
+                contexto, agora, is_historical, ultimo_radares
+            ),
+            radares_servico.registrados_antes(ultimo_radares),
         )
         contexto["confluencia"] = radares_servico.confluencia(
             contexto, agora, is_historical
