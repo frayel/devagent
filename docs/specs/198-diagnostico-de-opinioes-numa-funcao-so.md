@@ -6,6 +6,7 @@ esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_198.py
 origem: Uma função para `/consultor` e `/api/consultor`
+revisada: 2026-11-26
 ---
 
 ## Problema
@@ -27,7 +28,7 @@ Medida de tamanho: o que muda referencia `app/main.py`, `app/consultor/armazenam
    - **Pregão passado** (`pregao_passado=True`): `codigo = "pregao_passado"`, sem consultar a fila (`fila_pendentes = None`) e com os campos de status vazios (`""` e `0`): o status da extração é de agora, não daquele dia.
    - **Qualquer exceção** (inclusive de `contar_fila_pendente`): `codigo = "erro"`, `motivo = "diagnóstico indisponível"` e as outras chaves com os padrões (`""`, `0`, `fila_pendentes = None`). A função nunca levanta.
 3. `pagina_consultor` e `api_consultor` trocam o bloco pelo resultado de `diagnostico_de_opinioes(dados, is_historical)`. No `api_consultor`, `fontes_opiniao` passa a ser montado fora do `try`, com `diagnostico` e `fila` (= `fila_pendentes` do diagnóstico) vindos da função e `llm` e `feeds` como hoje; a rota não responde 500 por erro no diagnóstico. Os `import` locais que só o bloco usava (`from app.database import get_connection`, `cast`, `Dict`) saem, senão o `ruff` (F401) reprova.
-4. Em `consultor.html`, com `opinioes_diagnostico.codigo == "pregao_passado"` e a lista vazia, o aviso é `Nenhuma opinião gravada nos 30 dias até dd/mm/aaaa.` (a data do pregão, `data_referencia` no formato da página), e o rodapé "Última extração: ..." não aparece. Em pregão de hoje, aviso e rodapé ficam como estão. Nenhuma classe CSS nova.
+4. Em `consultor.html`, com `opinioes_diagnostico.codigo == "pregao_passado"` e a lista vazia (a condição que o aviso já usa, `{% if not opinioes_por_ativo %}`), o aviso é `Nenhuma opinião gravada nos 30 dias até dd/mm/aaaa.` (a data do pregão: `data_referencia.strftime('%d/%m/%Y')`, como em `base.html`; não o filtro `data_brasilia`, que converte fuso e pode trocar o dia), e o rodapé "Última extração: ..." não aparece. Em pregão de hoje, aviso e rodapé ficam como estão. Nenhuma classe CSS nova.
 
 ## Fontes de dados
 Nenhuma fonte nova e nenhuma dependência nova. A tabela `consultor_fila_materias` e o status de `consultor_opinioes_status`, pelas funções de `app.consultor.armazenamento`. Banco fora do ar: o diagnóstico sai `erro` com o motivo "diagnóstico indisponível", a lista de opiniões e as recomendações seguem como hoje.
@@ -43,7 +44,7 @@ Sem fórmula nova; a contagem e a árvore de decisão de hoje, lidas no banco ce
 - Mesmo arranjo, `GET /consultor?data=<pregão passado sem opiniões>` (ex.: `2023-11-01`): `codigo = "pregao_passado"` → `Nenhuma opinião gravada nos 30 dias até 01/11/2023.`, sem "Aguardando a primeira extração" e sem "Última extração: nunca".
 
 ## Critérios de aceite
-`tests/test_aceite_198.py`, com `exigir_spec_done("198")`, sem internet. Para separar os dois bancos no teste, `app.banco.get_connection` (e o nome importado em `app.consultor.armazenamento`) é trocado por `monkeypatch` por uma função que abre um segundo arquivo SQLite em `tmp_path`, com `init_db()` do Consultor rodando nele; o `DATABASE_PATH` de `app.database` continua no SQLite de teste, com a fila vazia.
+`tests/test_aceite_198.py`, com `exigir_spec_done("198")`, sem internet. Para separar os dois bancos no teste, `app.banco.get_connection` (e o nome importado em `app.consultor.armazenamento`) é trocado por `monkeypatch` por uma função que abre um segundo arquivo SQLite em `tmp_path` e devolve a tupla `(conn, "sqlite_efemero")`, como o original; antes, `armazenamento.reset_db_init()` (ou `monkeypatch.setattr(armazenamento, "_consultor_db_initialized", False)`, como a `test_aceite_129`), para o `init_db()` do Consultor criar as tabelas nesse arquivo; o `DATABASE_PATH` de `app.database` continua no SQLite de teste, com a fila vazia.
 
 - [ ] Com o arranjo do exemplo, `contar_fila_pendente()` devolve 7.
 - [ ] `GET /consultor` (pregão de hoje) responde 200 e contém `7 matérias na fila, a próxima extração é na próxima rodada.`; `GET /api/consultor` traz `fontes_opiniao.fila == 7` e `fontes_opiniao.diagnostico.codigo == "fila"`.
@@ -52,7 +53,7 @@ Sem fórmula nova; a contagem e a árvore de decisão de hoje, lidas no banco ce
 - [ ] Com `contar_fila_pendente` trocado por uma função que levanta, `diagnostico_de_opinioes(dados, False)` devolve `codigo == "erro"` com as oito chaves, e `GET /api/consultor` responde 200 com `fontes_opiniao.diagnostico.codigo == "erro"`.
 - [ ] `GET /consultor?data=2023-11-01` (o arranjo de pregões da 193, sem opiniões) contém `Nenhuma opinião gravada nos 30 dias até 01/11/2023.` e não contém `Aguardando a primeira extração` nem `Última extração: nunca`; `GET /api/consultor?data=2023-11-01` traz `fontes_opiniao.diagnostico.codigo == "pregao_passado"`.
 - [ ] O texto de `pagina_consultor` e de `api_consultor` (`inspect.getsource`) não contém `consultor_fila_materias` nem `app.database import get_connection`; `grep -rn "from app.database import get_connection" app` só acha `app/banco.py`.
-- [ ] Os testes que já existem passam sem mudança de asserção (`make verify`), em especial `tests/test_aceite_085.py`, `tests/test_aceite_157.py`, `tests/test_aceite_168.py` e `tests/test_aceite_193.py`.
+- [ ] Os testes que já existem passam sem mudança de asserção (`make verify`), em especial `tests/test_aceite_085.py`, `tests/test_aceite_131.py`, `tests/test_aceite_157.py`, `tests/test_aceite_168.py` e `tests/test_aceite_193.py`. A 131 e a 193 contam as conexões de `armazenamento.get_connection` no pregão passado; o ramo `pregao_passado` não chama `contar_fila_pendente`, por isso a contagem não sobe. No pregão de hoje a contagem passa a abrir uma conexão do banco do Consultor no lugar da do SQLite local.
 
 Ordem sugerida: primeiro o terceiro critério, com a árvore copiada do `api_consultor` para a função; depois a contagem no banco certo; por último as rotas e o template.
 
