@@ -1,5 +1,12 @@
 [
   {
+    "data": "2026-11-26",
+    "tipo": "correcao",
+    "texto": "Sem opiniões, o Consultor volta a dizer quantas matérias esperam a extração. Num pregão passado, diz que não houve opinião gravada naqueles 30 dias, em vez de falar da extração de agora.",
+    "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Opiniões Recentes"},
+    "spec": "198"
+  },
+  {
     "data": "2026-11-25",
     "tipo": "melhoria",
     "texto": "No Consultor, gatilho, motivo, resultado contra o Ibovespa e confiança das regras escrevem os números como o resto da página: R$ 1.234,50, +5,0%, +3,2 p.p. e \"1 pregão\" no singular.",

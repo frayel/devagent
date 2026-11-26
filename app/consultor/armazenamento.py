@@ -868,6 +868,25 @@ def get_opinioes_ativos(dias: int = 30) -> dict:
         conn.close()
 
 
+def contar_fila_pendente() -> int:
+    """Matérias da fila de opiniões ainda não processadas (spec 198).
+
+    Lê o banco do Consultor (`app.banco`), o mesmo das gravações; erro de
+    banco propaga para quem chama.
+    """
+    init_db()
+    conn, backend = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT COUNT(*) FROM consultor_fila_materias WHERE processada = 0"
+        )
+        row = cursor.fetchone()
+        return int(row[0]) if row else 0
+    finally:
+        conn.close()
+
+
 def get_opinioes_status() -> dict:
     init_db()
     conn, backend = get_connection()

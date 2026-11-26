@@ -1,7 +1,7 @@
 ---
 id: 198
 titulo: O diagnóstico de opiniões do Consultor sai de uma função só
-status: ready
+status: done
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_198.py

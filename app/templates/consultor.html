@@ -147,7 +147,9 @@
                 <p class="fonte-dado">Até o alvo: compara o preço-alvo com os fechamentos guardados pelo Consultor desde o dia da matéria. "Atingido" é o primeiro fechamento que chegou ao alvo, no sentido do fechamento anterior à matéria.</p>
                 {% endif %}
                 {% if not opinioes_por_ativo %}
-                    {% if opinioes_diagnostico.codigo == "sem_chave" %}
+                    {% if opinioes_diagnostico.codigo == "pregao_passado" %}
+                    <p>Nenhuma opinião gravada nos 30 dias até {{ data_referencia.strftime('%d/%m/%Y') if data_referencia else "" }}.</p>
+                    {% elif opinioes_diagnostico.codigo == "sem_chave" %}
                     <p>Extração desligada: falta a chave do Gemini.</p>
                     {% elif opinioes_diagnostico.codigo == "cota" %}
                     <p>Cota diária do Gemini esgotada ({{ opinioes_diagnostico.materias_processadas }} chamadas). Volta amanhã.</p>
@@ -165,9 +167,11 @@
                     <p>Nenhuma opinião nos últimos 30 dias.</p>
                     {% endif %}
                 {% endif %}
+                {% if opinioes_diagnostico.codigo != "pregao_passado" %}
                 <div class="fonte-dado">
                     Última extração: {{ opinioes_diagnostico.ultima_extracao_em or "nunca" }} · matérias processadas em 24 h: {{ opinioes_diagnostico.materias_processadas }} · opiniões gravadas em 7 dias: {{ opinioes_diagnostico.opinioes_gravadas }} · descartadas: {{ opinioes_diagnostico.descartadas }}
                 </div>
+                {% endif %}
             </div>
         </div>
 
