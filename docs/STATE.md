@@ -15,9 +15,13 @@ Os contadores das cadências do Passo 7 não ficam mais aqui: são calculados a 
 
 Problemas da página de saúde cuja causa está fora do repositório. Cada um traz o ajuste exato que uma pessoa precisa fazer; a issue fecha sozinha quando a página deixa de acusar.
 
-Nenhum em aberto. A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
+- **Terminal MetaTrader 5 parado (26/11/2026).** Às 12h05 BRT, com o pregão aberto, a mt5api devolvia como última barra diária do `IBOV` a de 25/11. Desde o fix desta data o produto recusa essas barras e usa o Yahoo, mas o MT5 fica sem servir enquanto o terminal não atualizar. Ajuste: conferir, na máquina Windows da mt5api, se o terminal está conectado à corretora e recebendo cotações (barra D1 do dia presente em `GET /rates/from-pos?symbol=IBOV&timeframe=D1&count=1`). O `/sistema` mostra o motivo no item *MetaTrader 5* ("barra diária defasada").
+
+A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Correção] Barra diária defasada do MetaTrader 5 não vira cotação do dia:
+  - `app/collectors/mt5.py`: `pregao_esperado(agora)` e `defasagem(ultima_barra, agora)`; `_baixar_barras` recusa a série `D1` cuja última barra é anterior ao pregão esperado (folga `FOLGA_BARRA_DO_DIA` de 15 min depois da abertura), pausa o símbolo por `PAUSA_SIMBOLO` e registra falha não grave no `registro_fontes`; a coleta segue para o Yahoo. `CONFERIR_DEFASAGEM` é desligado em `tests/conftest.py` e ligado com relógio fixo em `tests/test_mt5_defasagem.py`.
 - [Saúde técnica] Spec 198 - O diagnóstico de opiniões do Consultor sai de uma função só:
   - `app/consultor/armazenamento.py`: `contar_fila_pendente()` conta a fila no banco do Consultor (`app.banco`, o Postgres em produção); antes as rotas contavam no SQLite local, sempre vazio, e o aviso `fila` nunca aparecia.
   - `app/consultor/diagnostico.py`: `diagnostico_de_opinioes(dados, pregao_passado)`, com as oito chaves sempre presentes; pregão passado sai `pregao_passado` sem ler a fila, e qualquer erro sai `erro` ("diagnóstico indisponível"), sem 500 no `/api/consultor`. `pagina_consultor` e `api_consultor` usam a função; `consultor.html` mostra "Nenhuma opinião gravada nos 30 dias até dd/mm/aaaa." e esconde o rodapé "Última extração" no pregão passado. Aceite em `tests/test_aceite_198.py`.

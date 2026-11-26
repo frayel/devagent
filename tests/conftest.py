@@ -45,6 +45,9 @@ def setup_db(monkeypatch, tmp_path):
 
     mt5.limpar_cache()
     mt5.reiniciar_rastreio()
+    # As barras de fixture têm datas fixas; a conferência de barra diária
+    # defasada é exercitada com relógio fixo em tests/test_mt5_defasagem.py.
+    monkeypatch.setattr(mt5, "CONFERIR_DEFASAGEM", False)
 
     # A descoberta do modelo Gemini nunca vai à rede nos testes.
     monkeypatch.delenv("GEMINI_MODELO", raising=False)
