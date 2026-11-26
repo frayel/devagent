@@ -1,7 +1,7 @@
 ---
 id: 199
 titulo: O radar raro que acende ganha uma linha sob a manchete
-status: ready
+status: done
 esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_199.py

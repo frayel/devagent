@@ -16,6 +16,9 @@
 <!-- Manchete Dinâmica -->
 <div class="span-12 manchete-container">
     <p class="manchete-texto texto-centro">{{ manchete }}</p>
+    {% for linha in manchete_raros or [] %}
+    <p class="manchete-raro texto-centro">{{ linha }}</p>
+    {% endfor %}
 </div>
 
 {#- Destaques agora (spec 167): maior alta, maior baixa e a ação em mais radares. -#}
@@ -514,8 +517,8 @@
         {% set linhas = [] %}
         {% for a in exaustao_alta.alertas %}
             {% set _ = linhas.append([
-                {'texto': a.ticker, 'ticker': True},
-                {'texto': ("%.2f%%"|format(a.variacao))|replace(".", ","), 'destaque': True, 'cor': 'alta' if a.variacao > 0 else 'baixa'}
+                {'tk': True, 'conteudo': a.ticker},
+                {'num': True, 'conteudo': (variacao((("%.2f%%" | format(a.variacao | abs))|replace(".", ",")) | e, 1 if a.variacao > 0 else -1 if a.variacao < 0 else 0)) | safe}
             ]) %}
         {% endfor %}
         {{ tabela_ativos(linhas, [{'titulo': 'Ativo'}, {'titulo': 'Variação', 'num': True}], 'exaustao_alta') }}

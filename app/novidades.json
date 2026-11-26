@@ -1,6 +1,20 @@
 [
   {
     "data": "2026-11-26",
+    "tipo": "novidade",
+    "texto": "Quando acende um radar que quase nunca acende (10 pregões ou mais sem alerta), a manchete da Visão Geral ganha uma linha dizendo qual é e há quanto tempo ele não acendia.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Manchete"},
+    "spec": "199"
+  },
+  {
+    "data": "2026-11-26",
+    "tipo": "correcao",
+    "texto": "Com a Exaustão de Alta acesa, o card volta a mostrar o ativo e a variação do dia; antes a tabela saía com as linhas vazias.",
+    "onde": {"aba": "alertas", "aba_nome": "Alertas Intraday", "painel": "Exaustão de Alta"},
+    "spec": "199"
+  },
+  {
+    "data": "2026-11-26",
     "tipo": "correcao",
     "texto": "Com o pregão aberto, o card do Ibovespa não mostra mais o fechamento de ontem como valor de agora quando o MetaTrader 5 para de atualizar: a cotação passa a vir do Yahoo Finance.",
     "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Ibovespa"},
