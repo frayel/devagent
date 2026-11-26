@@ -9,7 +9,8 @@ Finance (`/v8/finance/spark` e `/v8/finance/chart`). `fetch_with_retry`
 pergunta a este módulo se ele consegue responder a URL; se consegue, devolve
 uma resposta no mesmo formato do Yahoo, montada com as barras do MT5, e o
 Yahoo nem é chamado. Se o MT5 falhar, a requisição segue para o Yahoo como
-antes. Assim todos os painéis preferem o MT5 sem que cada coletor precise
+antes. Série diária que não chega ao pregão esperado (terminal parado, ver
+`pregao_esperado`) conta como falha do símbolo. Assim todos os painéis preferem o MT5 sem que cada coletor precise
 de um parser novo.
 
 Transparência (PRODUTO.md, seção 1): cada requisição registra a fonte que de
@@ -44,6 +45,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 import httpx
 
+from app import calendario
 from app.collectors import registro_fontes
 
 logger = logging.getLogger(__name__)
@@ -58,6 +60,12 @@ TTL_INTRADIA = 120.0
 PAUSA_APOS_FALHA = 300.0  # servidor fora do ar: não insiste por 5 minutos
 PAUSA_SIMBOLO = 300.0  # símbolo que o terminal não serviu: não insiste por 5 minutos
 TIMEOUT = 10.0
+# Depois da abertura, o terminal tem esta folga para abrir a barra diária do
+# pregão. Passada ela, barra diária de pregão anterior é terminal parado.
+FOLGA_BARRA_DO_DIA = timedelta(minutes=15)
+# Desligado só nos testes que não exercitam a conferência (tests/conftest.py):
+# as barras de fixture têm datas fixas e envelheceriam com o relógio real.
+CONFERIR_DEFASAGEM = True
 
 INTERVALOS = {
     "1m": "M1",
@@ -220,6 +228,35 @@ def _hora_da_barra(valor: Any) -> datetime:
     return datetime.fromisoformat(texto).replace(tzinfo=None)
 
 
+def _agora() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def pregao_esperado(agora: datetime) -> date:
+    """Pregão da última barra diária que o terminal precisa ter neste instante.
+
+    Num dia de pregão, passada a folga depois da abertura, é o próprio dia;
+    antes disso, e em fim de semana ou feriado, é o pregão anterior.
+    """
+    local = agora.astimezone(calendario.BRT)
+    hoje = local.date()
+    abertura = datetime.combine(hoje, calendario.ABERTURA, tzinfo=calendario.BRT)
+    if calendario.e_pregao(hoje) and local >= abertura + FOLGA_BARRA_DO_DIA:
+        return hoje
+    return calendario.pregao_anterior(hoje)
+
+
+def defasagem(ultima_barra: date, agora: datetime) -> str | None:
+    """Motivo para recusar a série diária, ou None se ela está em dia."""
+    esperado = pregao_esperado(agora)
+    if ultima_barra >= esperado:
+        return None
+    return (
+        f"barra diária defasada (última {ultima_barra.strftime('%d/%m/%Y')}; "
+        f"pregão esperado {esperado.strftime('%d/%m/%Y')})"
+    )
+
+
 def _pausar_servidor(motivo: str) -> None:
     """Falha do servidor inteiro (rede, chave): vale para todos os símbolos."""
     global _indisponivel_ate, _motivo_pausa
@@ -333,6 +370,21 @@ def _baixar_barras(simbolo: str, timeframe: str, quantidade: int) -> list[dict]:
     if not lidas:
         raise Mt5Indisponivel(f"barras ilegíveis para {simbolo}")
     lidas.sort(key=lambda x: x["hora"])
+    if timeframe == "D1" and CONFERIR_DEFASAGEM:
+        defasada = defasagem(lidas[-1]["hora"].date(), _agora())
+        if defasada:
+            # Terminal parado: a última barra diária é de um pregão anterior.
+            # Servir isso como cotação do dia mostra o fechamento de ontem
+            # como se fosse agora (auditoria de 26/11/2026). O símbolo fica em
+            # pausa e a coleta segue para o Yahoo.
+            motivo = f"{simbolo}: {defasada}"
+            with _trava:
+                _simbolos_falhos[(simbolo, timeframe)] = (agora + PAUSA_SIMBOLO, motivo)
+            registro_fontes.falha(registro_fontes.MT5, motivo, grave=False)
+            logger.warning(
+                "MT5 com barra diária defasada (%s); usando outras fontes", motivo
+            )
+            raise Mt5Indisponivel(motivo)
     registro_fontes.sucesso(registro_fontes.MT5)
     return lidas
 

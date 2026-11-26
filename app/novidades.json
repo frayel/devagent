@@ -2,6 +2,13 @@
   {
     "data": "2026-11-26",
     "tipo": "correcao",
+    "texto": "Com o pregão aberto, o card do Ibovespa não mostra mais o fechamento de ontem como valor de agora quando o MetaTrader 5 para de atualizar: a cotação passa a vir do Yahoo Finance.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Ibovespa"},
+    "pr": "#1043"
+  },
+  {
+    "data": "2026-11-26",
+    "tipo": "correcao",
     "texto": "Sem opiniões, o Consultor volta a dizer quantas matérias esperam a extração. Num pregão passado, diz que não houve opinião gravada naqueles 30 dias, em vez de falar da extração de agora.",
     "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Opiniões Recentes"},
     "spec": "198"
