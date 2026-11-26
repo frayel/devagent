@@ -6,6 +6,7 @@ esforco: P
 gaveta: experiência
 aceite: tests/test_aceite_199.py
 origem: O radar raro que acende vira manchete
+revisada: 2026-11-26
 ---
 
 ## Problema
@@ -53,12 +54,12 @@ A manchete ganha, nesta ordem:
 Variação Súbita não aparece (último alerta há 2 pregões). Radar de Short Squeeze não aparece (apagado agora). Se os snapshots de 17/11 e 18/11 não existissem, os pregões anteriores com registro seriam 9 e nenhuma linha apareceria.
 
 ## Fontes de dados
-Só o que já existe: o snapshot `instrumentacao` (spec 166), lido numa só consulta por `app.banco.ler_snapshots_datas("instrumentacao", pregoes)`, e os payloads atuais dos radares que a rota já lê para a aba Alertas. Nenhuma fonte externa. Plano B: leitura que falha ou devolve `{}` vira "nenhum radar raro"; nenhuma exceção chega à rota (como `_ultimo_alerta_radares` em `app/main.py` já faz).
+Só o que já existe: o snapshot `instrumentacao` (spec 166), lido numa só consulta por `app.banco.ler_snapshots_datas("instrumentacao", pregoes)`, e os payloads atuais dos radares que `_payloads_radares()` (`app/main.py`) já entrega à `/` e ao `/api/snapshot` (este o usa para `paineis.confluencia_radares`). O `/api/snapshot` calcula `raros` com esses mesmos payloads e o mesmo `classificar`, para a página e a API dizerem a mesma coisa. Nenhuma fonte externa. Plano B: leitura que falha ou devolve `{}` vira "nenhum radar raro"; nenhuma exceção chega à rota (como `_ultimo_alerta_radares` em `app/main.py` já faz).
 
 Hoje (26/11) há cerca de 6 pregões com registro depois da 166: a linha só passa a aparecer em produção quando houver 10 pregões anteriores registrados, perto de 03/12/2026. Isso é o comportamento esperado, não defeito.
 
 ## Cálculos
-- Reaproveitar `ultimo_alerta(historico, pregoes[1:])` da spec 185, sobre o **mesmo** histórico que a rota já lê para a seção "Sem alertas" (uma consulta por requisição, não duas). `pregoes_atras` dessa chamada + 1 = `N` do pregão corrente. `registrados` dessa chamada = os "pregões registrados antes deste".
+- Reaproveitar `ultimo_alerta(historico, pregoes[1:])` da spec 185, sobre o **mesmo** histórico que a rota já lê para a seção "Sem alertas" (uma consulta por requisição, não duas). Hoje `_ultimo_alerta_radares` (`app/main.py`) lê o histórico e devolve só o resultado de `ultimo_alerta(historico, pregoes)`; ele precisa passar a devolver também o cálculo sobre `pregoes[1:]` (ou o histórico), sem uma segunda chamada a `ler_snapshots_datas`. `pregoes_atras` dessa chamada + 1 = `N` do pregão corrente. `registrados` dessa chamada = os "pregões registrados antes deste".
 - Uma função pura nova em `app/services/radares.py`, por exemplo `radares_raros(estados: dict[str, str], anterior: dict) -> list[dict]`, que aplica os três critérios e a ordem acima e devolve `{"chave", "nome", "ultimo": date | None, "pregoes_atras": N | None}`; outra (ou a mesma) monta as frases. A forma exata é do desenvolvimento; o teste olha o HTML e o JSON.
 - Constantes `LIMIAR_RARO = 10` e `MINIMO_REGISTROS_RARO = 10` no mesmo módulo, ao lado de `JANELA_ULTIMO_ALERTA`.
 - Por que 10 e 10: com 20 pregões de janela, "10 pregões sem acender" é metade da janela, o mesmo corte da poda (`PRODUTO.md`, seção 8: escondido em mais da metade de 10 pregões); exigir 10 registros evita chamar de raro um radar só porque o sistema começou a contar ontem.
@@ -72,12 +73,12 @@ Hoje (26/11) há cerca de 6 pregões com registro depois da 166: a linha só pas
 - [ ] Sem nenhum snapshot `instrumentacao`, ou com `ler_snapshots_datas` levantando exceção, `/` responde 200 sem nenhum `p.manchete-raro`.
 - [ ] Em `/?data=2026-12-02` (histórico), nenhum `p.manchete-raro`.
 - [ ] `/api/snapshot` traz `paineis.radares_ultimo_alerta.raros` (abaixo) com o exemplo; a leitura da instrumentação continua uma consulta por requisição.
-- [ ] `tests/test_aceite_185.py` e o teste de classes sem estilo (spec 187) continuam passando.
+- [ ] `tests/test_aceite_185.py` e `tests/test_classes_com_estilo.py` (classe sem estilo, spec 187) continuam passando.
 - [ ] Em 390 px (Chromium), com as duas linhas do exemplo, `/` não tem rolagem horizontal.
 
 ## Invariantes de produção
-- `/api/snapshot` traz `paineis.radares_ultimo_alerta.raros` como lista (vazia quando não há radar raro, em data histórica ou com a leitura falhando), cada item `{"chave": <chave de RADARES>, "nome": str, "ultimo": "AAAA-MM-DD" | null, "pregoes_atras": N | null}`, e `paineis.radares_ultimo_alerta.registrados_antes` inteiro.
-- Para todo item de `raros`: `pregoes_atras` é `null` ou `10 ≤ pregoes_atras < 20`; `registrados_antes ≥ 10`; e a chave está com alerta agora no `/api/snapshot` (lista do radar não vazia).
+- `/api/snapshot` traz `paineis.radares_ultimo_alerta.raros` como lista (vazia quando não há radar raro, em data histórica ou com a leitura falhando), cada item `{"chave": <chave de RADARES>, "nome": str, "ultimo": "AAAA-MM-DD" | null, "pregoes_atras": N | null}`, e `paineis.radares_ultimo_alerta.registrados_antes` inteiro (0 em data histórica ou com a leitura falhando).
+- Para todo item de `raros`: `pregoes_atras` é `null` ou `10 ≤ pregoes_atras < 20`; `registrados_antes ≥ 10`; a chave é uma das 20 de `RADARES`; e, quando `paineis` tem um painel com essa mesma chave (por exemplo `faca_caindo`, `exaustao_alta`), a lista de alertas dele não está vazia. Nem todo radar aparece em `paineis` com a chave de `RADARES` (`volume_alerts` sai como `radar_volume`; `scanner_capitulacao` e `radar_anomalia_fechamento` não têm painel próprio), e esses ficam fora desta conferência.
 - `raros` tem no máximo tantos itens quanto radares com alerta no mesmo snapshot.
 - O número de `p.manchete-raro` em `/` é `min(len(raros), 2)`, mais 1 quando `len(raros) > 2`.
 
