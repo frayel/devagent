@@ -2,6 +2,7 @@
 id: 201
 titulo: A manchete montada num lugar só
 status: ready
+revisada: 2026-11-27
 esforco: P
 gaveta: saúde técnica
 aceite: tests/test_aceite_201.py
@@ -53,7 +54,10 @@ Segundo exemplo (motores sem carimbo): Ibovespa `current_price = 125625.0`, `pre
 - [ ] `tests/test_aceite_201.py`, com `exigir_spec_done("201")`, sem internet, banco de teste do `conftest.py` e relógio fixo num pregão:
   - **mesma frase nas duas rotas:** com o banco do primeiro exemplo (Ibovespa parado, 12/15/30, carimbos presentes), `GET /api/snapshot` traz `paineis.manchete.texto == "O mercado opera sem direção definida."` e `humor == "sem_direcao"`, e o HTML de `GET /` contém a mesma frase no `.manchete-texto`;
   - **motor sem carimbo fica fora nas duas:** com o banco do segundo exemplo, as duas rotas trazem a frase "… sinais mistos (12 altas e 15 baixas de 30 ações; motores ausentes)." e nenhuma traz "motores setoriais divergem";
-  - **paridade em lote:** para pelo menos quatro bancos (os dois exemplos, um com o índice em alta ampla e "Tomando risco", um com o Ibovespa sem `previous_close`), o texto de `paineis.manchete` do snapshot é igual ao texto da manchete da home;
+  - **paridade em lote:** para pelo menos quatro bancos, o texto de `paineis.manchete` do snapshot é igual ao texto da manchete da home e igual ao esperado:
+    - os dois exemplos acima, com as frases deles;
+    - alta ampla: `current_price = 126250.0`, `previous_close = 125000.0` (+1,00%), `up_count = 22`, `down_count = 6`, `total_count = 30` (fração 0,733), apetite `"Tomando risco"`, motores com carimbo Vale +1,1 e Petro +0,9 → "Dia de otimismo generalizado com forte tomada de risco.";
+    - Ibovespa sem `previous_close` (nulo), 12/15/30 → "Resumo do mercado indisponível no momento.";
   - **um lugar só:** `app/main.py` não chama `gerar_manchete` diretamente (`"gerar_manchete(" not in` o código-fonte de `app/main.py`), e a função nova de `app/services/manchete.py` é chamada pelas duas rotas.
 - [ ] Os testes atuais da manchete (`tests/test_manchete.py`, `tests/test_aceite_140.py`, `tests/test_aceite_134.py`) continuam passando sem afrouxar asserção: `gerar_manchete` não muda.
 - [ ] Tamanho medido em 27/11 com `grep -rl gerar_manchete app tests`: 2 arquivos de código (`app/main.py`, `app/services/manchete.py`) e 3 de teste (que não precisam mudar), mais o teste de aceite novo.
