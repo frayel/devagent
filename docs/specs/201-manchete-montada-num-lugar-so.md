@@ -1,7 +1,7 @@
 ---
 id: 201
 titulo: A manchete montada num lugar só
-status: ready
+status: done
 revisada: 2026-11-27
 esforco: P
 gaveta: saúde técnica

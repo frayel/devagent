@@ -254,3 +254,64 @@ def gerar_manchete(
         texto = f"{texto_base}."
 
     return Manchete(texto, MISTO)
+
+
+def entradas_da_manchete(
+    ibovespa: Any | None,
+    highlights: Any | None,
+    apetite_estado: str | None,
+    motores: Any | None,
+    carimbos: dict[str, dict[str, Any] | None],
+) -> Manchete:
+    """Monta as entradas de `gerar_manchete` a partir das linhas do banco (spec 201).
+
+    É o único lugar que monta essas entradas: a home e o `/api/snapshot` chamam
+    esta função com as mesmas linhas e os mesmos carimbos de `_carimbos_criticos`,
+    e por isso mostram a mesma frase.
+    """
+    from app.collectors.ibovespa import LIMIAR_PCT_REVISAO, LIMIAR_PONTOS_REVISAO
+
+    def _pregao(chave: str) -> str | None:
+        c = carimbos.get(chave)
+        return c["pregao_iso"] if c else None
+
+    ibov_input: dict[str, Any] | None = None
+    if ibovespa is not None:
+        anterior = getattr(ibovespa, "previous_close", None)
+        atual = getattr(ibovespa, "current_price", None)
+        if anterior and anterior > 0 and atual is not None:
+            pontos = atual - anterior
+            variacao_pct = pontos / anterior * 100
+            ibov_input = {
+                "valor": atual,
+                "variacao_pct": variacao_pct,
+                "is_positive": variacao_pct > 0,
+                "revisao_variacao": abs(variacao_pct) > LIMIAR_PCT_REVISAO
+                or abs(pontos) >= LIMIAR_PONTOS_REVISAO,
+                "pregao": _pregao("ibovespa"),
+            }
+        else:
+            ibov_input = {"valor": atual, "estado": "indisponivel"}
+
+    highs_input: dict[str, Any] | None = None
+    if highlights is not None:
+        highs_input = {
+            "up_count": getattr(highlights, "up_count", None),
+            "down_count": getattr(highlights, "down_count", None),
+            "total_count": getattr(highlights, "total_count", None),
+            "pregao": _pregao("altas_baixas"),
+        }
+
+    risco_input = {"estado": apetite_estado} if apetite_estado else None
+
+    # Motor sem carimbo não entra na leitura (spec 141).
+    motores_input: dict[str, Any] | None = None
+    if motores is not None and carimbos.get("motores_indice") is not None:
+        try:
+            lista = json.loads(getattr(motores, "motores_json", None) or "null")
+        except (json.JSONDecodeError, TypeError):
+            lista = None
+        if lista:
+            motores_input = {"pregao": _pregao("motores_indice"), "motores": lista}
+
+    return gerar_manchete(ibov_input, highs_input, risco_input, motores_input)

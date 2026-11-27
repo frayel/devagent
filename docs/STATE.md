@@ -20,6 +20,8 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Saúde técnica] Spec 201 - A manchete montada num lugar só:
+  - `app/services/manchete.py`: `entradas_da_manchete(ibovespa, highlights, apetite_estado, motores, carimbos)` monta as entradas de `gerar_manchete` a partir das linhas do banco e dos carimbos de `_carimbos_criticos`; motores sem carimbo ficam fora (spec 141). `snapshot` e `index` (`app/main.py`) chamam só ela; sai o `highs_dict` sem uso da home. Aceite em `tests/test_aceite_201.py`.
 - [Poda] Spec 200 - O consenso do Yahoo sai do Consultor:
   - Removidos `app/collectors/consultor_yahoo.py` e `app/consultor/consenso_yahoo.py`; `consultor_yahoo` sai das janelas e da tupla de coletores de `app/agendador.py`; `/consultor` e `/api/consultor` não anexam mais `consenso_yahoo`.
   - `app/consultor/armazenamento.py` e `app/database.py` não criam mais `consultor_consenso_yahoo` nem `consultor_consenso_yahoo_status` (as do Postgres ficam órfãs); `calcular_consultor` volta à versão `(max_criado, max_extraida, status_ts)`; `app/services/sistema.py` perde `verificar_consenso_yahoo` e o parâmetro `consenso_yahoo` de `montar`. Aceite em `tests/test_aceite_200.py`.
