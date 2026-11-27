@@ -5,7 +5,7 @@ status: ready
 esforco: P
 gaveta: poda
 aceite: tests/test_aceite_200.py
-origem: nova (página de saúde, "Yahoo · consenso · candidato à poda")
+origem: nova
 ---
 
 ## Problema
