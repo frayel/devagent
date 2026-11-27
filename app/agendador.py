@@ -262,7 +262,6 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
         "clima_global": "pre_abertura",
         "consultor_historico": "semanal",
         "consultor_fechamento": "fechamento",
-        "consultor_yahoo": "fechamento",
         # Uma vez por pregão completo, com o mercado fechado (spec 174a).
         "mare_historico": "diario",
         # Confluência de cada pregão fechado (spec 186): roda por último, depois
@@ -340,7 +339,6 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
             "assimetria_risco_retorno",
             "consultor_historico",
             "consultor_fechamento",
-            "consultor_yahoo",
             "confluencia_historico",
         ):
             try:

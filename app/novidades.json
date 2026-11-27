@@ -1,5 +1,12 @@
 [
   {
+    "data": "2026-11-27",
+    "tipo": "melhoria",
+    "texto": "O Consultor deixa de buscar o consenso de analistas do Yahoo Finance, que nunca respondeu ao servidor e não é permitido pelo site. A recomendação não muda.",
+    "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Consenso"},
+    "spec": "200"
+  },
+  {
     "data": "2026-11-26",
     "tipo": "novidade",
     "texto": "Quando acende um radar que quase nunca acende (10 pregões ou mais sem alerta), a manchete da Visão Geral ganha uma linha dizendo qual é e há quanto tempo ele não acendia.",

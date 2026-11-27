@@ -1,7 +1,6 @@
 """Partida a frio dos coletores de janela própria (#919).
 
-`consultor_historico`, `consultor_fechamento`, `consultor_yahoo` e
-`clima_global` não gravam snapshot com o nome do módulo. A partida a frio
+`consultor_historico`, `consultor_fechamento` e `clima_global` não gravam snapshot com o nome do módulo. A partida a frio
 deles olha a instrumentação das rodadas (quem rodou em cada dia), não
 `ler_snapshot(nome)`, senão rodam em toda rodada, fora da janela.
 """
@@ -20,7 +19,6 @@ PROPRIOS = (
     "clima_global",
     "consultor_historico",
     "consultor_fechamento",
-    "consultor_yahoo",
 )
 
 # Segunda, 16/11/2026, 18h00 BRT: a rodada que a issue mostra.
@@ -102,7 +100,7 @@ def _rodar(monkeypatch, instante: datetime, instrumentar: bool = False) -> list[
 def test_segunda_18h_nao_roda_o_historico_que_rodou_no_sabado(monkeypatch):
     _execucoes(
         {
-            SEXTA: ["clima_global", "consultor_fechamento", "consultor_yahoo"],
+            SEXTA: ["clima_global", "consultor_fechamento"],
             SABADO: ["consultor_historico"],
         }
     )
@@ -110,7 +108,6 @@ def test_segunda_18h_nao_roda_o_historico_que_rodou_no_sabado(monkeypatch):
     assert "consultor_historico" not in chamadas
     # O fechamento só abre depois das 18h15, e o último pregão fechado é a sexta.
     assert "consultor_fechamento" not in chamadas
-    assert "consultor_yahoo" not in chamadas
     # O clima global está na própria janela (7h às 18h15) e os do pregão seguem iguais.
     assert "clima_global" in chamadas
     assert "ibovespa" in chamadas
@@ -134,16 +131,15 @@ def test_historico_de_mais_de_uma_semana_e_partida_a_frio(monkeypatch):
 
 def test_fechamento_que_nao_rodou_no_ultimo_pregao_e_partida_a_frio(monkeypatch):
     # Rodou na quinta, mas não na sexta (o último pregão fechado às 18h00 de segunda).
-    _execucoes({date(2026, 11, 12): ["consultor_fechamento", "consultor_yahoo"]})
+    _execucoes({date(2026, 11, 12): ["consultor_fechamento"]})
     chamadas = _rodar(monkeypatch, SEGUNDA_18H)
     assert "consultor_fechamento" in chamadas
-    assert "consultor_yahoo" in chamadas
 
 
 def test_segunda_21h_nao_roda_o_que_rodou_na_segunda(monkeypatch):
     _execucoes(
         {
-            SEGUNDA: ["clima_global", "consultor_fechamento", "consultor_yahoo"],
+            SEGUNDA: ["clima_global", "consultor_fechamento"],
             SABADO: ["consultor_historico"],
         }
     )

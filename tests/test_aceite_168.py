@@ -22,6 +22,9 @@ LEGADAS = (
     "instrumentacao_coleta_tempo",
     "ibovespa_cache",
     "highlights_cache",
+    # Consenso do Yahoo (spec 159), podado pela spec 200.
+    "consultor_consenso_yahoo",
+    "consultor_consenso_yahoo_status",
 )
 INDICES_LEGADOS = (
     "idx_instrumentacao_coleta_vazia_timestamp",
@@ -30,8 +33,6 @@ INDICES_LEGADOS = (
     "idx_highlights_cache_timestamp",
 )
 ESPERADAS = {
-    "consultor_consenso_yahoo",
-    "consultor_consenso_yahoo_status",
     "consultor_fila_materias",
     "consultor_llm_uso",
     "consultor_opinioes",
@@ -63,7 +64,7 @@ def _fontes_app() -> str:
     return "\n".join(p.read_text(encoding="utf-8") for p in sorted(APP.rglob("*.py")))
 
 
-def test_init_db_cria_exatamente_as_dez_tabelas():
+def test_init_db_cria_exatamente_as_oito_tabelas():
     tabelas = _nomes("table")
     assert tabelas == ESPERADAS
     assert not tabelas & set(LEGADAS)

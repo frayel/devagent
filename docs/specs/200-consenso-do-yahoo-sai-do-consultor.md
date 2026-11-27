@@ -1,7 +1,7 @@
 ---
 id: 200
 titulo: O consenso do Yahoo sai do Consultor
-status: ready
+status: done
 esforco: P
 gaveta: poda
 aceite: tests/test_aceite_200.py

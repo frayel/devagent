@@ -20,6 +20,9 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Poda] Spec 200 - O consenso do Yahoo sai do Consultor:
+  - Removidos `app/collectors/consultor_yahoo.py` e `app/consultor/consenso_yahoo.py`; `consultor_yahoo` sai das janelas e da tupla de coletores de `app/agendador.py`; `/consultor` e `/api/consultor` não anexam mais `consenso_yahoo`.
+  - `app/consultor/armazenamento.py` e `app/database.py` não criam mais `consultor_consenso_yahoo` nem `consultor_consenso_yahoo_status` (as do Postgres ficam órfãs); `calcular_consultor` volta à versão `(max_criado, max_extraida, status_ts)`; `app/services/sistema.py` perde `verificar_consenso_yahoo` e o parâmetro `consenso_yahoo` de `montar`. Aceite em `tests/test_aceite_200.py`.
 - [Experiência] Spec 199 - O radar raro que acende ganha uma linha sob a manchete:
   - `app/services/radares.py`: `LIMIAR_RARO = 10`, `MINIMO_REGISTROS_RARO = 10`, `MAX_LINHAS_RARO = 2`; `radares_raros(estados, anterior)` (função pura, maior intervalo primeiro), `frases_raros`, `raros_do_contexto`, `raros_api`, `registrados_antes`. `ultimo_alerta_vazio` traz `anterior`.
   - `app/main.py`: `_ultimo_alerta_radares` devolve também `anterior` (`ultimo_alerta` sobre `pregoes[1:]`), da mesma leitura; `/` põe `manchete_raros` no contexto e `/api/snapshot` publica `radares_ultimo_alerta.raros` e `registrados_antes` com os payloads de `_payloads_radares()`. Em produção, a linha só aparece quando houver 10 pregões anteriores com instrumentação (perto de 03/12/2026).
