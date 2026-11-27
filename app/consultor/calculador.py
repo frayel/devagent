@@ -111,12 +111,24 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
     _consultor_cache_time = datetime.now()
 
     if "^BVSP" not in historicos or not historicos["^BVSP"]:
+        # Sem série recente do Ibovespa as regras técnicas não rodam, mas as
+        # opiniões continuam valendo: antes este retorno também as escondia, e
+        # a página dizia "nenhuma matéria" com 82 opiniões gravadas (27/11/2026).
+        agora_sem = datetime.now(timezone.utc)
+        opinioes_ativos_sem = get_opinioes_ativos()
+        lista_sem = [op for ops in opinioes_ativos_sem.values() for op in ops]
         res_dict: dict = {
             "ibovespa": None,
-            "opinioes_recentes": [],
-            "opinioes_por_ativo": [],
+            "sinais_indisponiveis": True,
+            "ativos_avaliados": 0,
+            "opinioes_recentes": opinioes_recentes,
+            "opinioes_por_ativo": agrupar_por_ativo(
+                lista_sem,
+                referencia=agora_sem,
+                fechamentos=fechamentos_das_opinioes(lista_sem),
+            ),
             "regras_confianca": {},
-            "opinioes_status": get_opinioes_status(),
+            "opinioes_status": opinioes_status,
             "sinais_pregao": None,
             "sinais_coletado_em": sinais_coletado_em,
         }

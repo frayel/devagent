@@ -416,6 +416,14 @@ def estado_do_sistema() -> dict:
     except Exception:  # tabelas ainda não criadas: a verificação do banco acusa
         vazios, rodadas, rodada = {}, {}, None
         historico_poda = {}
+    try:
+        from app.consultor.universo import CARTEIRA_IBOVESPA
+
+        series_consultor: dict[str, Any] | None = {
+            "criado_em": banco_module.versao_series(CARTEIRA_IBOVESPA + ["^BVSP"])
+        }
+    except Exception:  # banco fora: o item do banco já acusa
+        series_consultor = None
     entradas: dict[str, Any] = dict(
         agora=agora,
         inicio=INICIO,
@@ -437,6 +445,7 @@ def estado_do_sistema() -> dict:
         monitor_ligado=monitor_sistema.monitor_ligado(),
         modelo_gemini=gemini_modelo.descricao(),
         historico_poda=historico_poda,
+        series_consultor=series_consultor,
     )
     estado = sistema_servico.montar(**entradas)
     # Os grupos desta instância (banco, coleta, integrações) só têm dado real

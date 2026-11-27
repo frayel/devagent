@@ -61,6 +61,9 @@ IDADE_MAXIMA_NO_PREGAO = timedelta(minutes=45)
 VARIACAO_DIARIA_MAXIMA = 20.0
 FAIXA_PLAUSIVEL = (40_000.0, 600_000.0)
 HISTORICO_MINIMO = 15  # pregões no gráfico de 30 dias
+# Pregões fechados sem a série do Consultor renovada. De 17/11 a 27/11/2026 o
+# Consultor ficou vazio e nada acusou (nenhuma checagem lia o /api/consultor).
+CONSULTOR_PREGOES_SEM_RENOVAR = 2
 
 
 def baixar(url: str, timeout: float = 30.0, tentativas: int = 1) -> tuple[int, str]:
@@ -875,6 +878,185 @@ def checar_clima_global(snapshot: dict) -> list[Resultado]:
     return r
 
 
+# --------------------------------------------------------------------------
+# Páginas protegidas: Consultor e /sistema
+# --------------------------------------------------------------------------
+
+
+def baixar_json_protegido(endereco: str, timeout: float = 60.0) -> tuple[int, Any]:
+    """GET com o HTTP Basic da página de saúde (`[saude]` no devagent.toml e
+    SAUDE_SENHA). Devolve (status, JSON ou None); status 0 se não conectou."""
+    import base64
+    import os
+    import urllib.error
+
+    from devagent.config import CONFIG
+
+    cabecalhos = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+    senha = os.environ.get("SAUDE_SENHA", "")
+    if senha:
+        usuario = str((CONFIG.get("saude") or {}).get("usuario", ""))
+        par = base64.b64encode(f"{usuario}:{senha}".encode()).decode()
+        cabecalhos["Authorization"] = f"Basic {par}"
+    req = urllib.request.Request(endereco, headers=cabecalhos)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            corpo = resp.read().decode("utf-8", "replace")
+            status = resp.status
+    except urllib.error.HTTPError as e:
+        return e.code, None
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return 0, None
+    try:
+        return status, json.loads(corpo)
+    except ValueError:
+        return status, None
+
+
+def _sem_acesso(id_: str, endereco: str, status: int) -> Resultado:
+    if status in (401, 403):
+        return Resultado(
+            id_,
+            INCONCLUSIVO,
+            f"{endereco} pede senha",
+            "Defina SAUDE_SENHA (a mesma CONSULTOR_SENHA) no ambiente da auditoria.",
+        )
+    return Resultado(
+        id_,
+        FALHA,
+        f"{endereco} não respondeu com JSON",
+        f"HTTP {status}" if status else "sem conexão",
+    )
+
+
+def ultimo_pregao_fechado(agora: datetime) -> date:
+    local = agora.astimezone(calendario.BRT)
+    d = local.date()
+    if calendario.e_pregao(d) and local.time() > calendario.FIM_DA_JANELA:
+        return d
+    return calendario.pregao_anterior(d)
+
+
+def pregoes_sem_renovar(coletado: datetime, agora: datetime, teto: int = 30) -> int:
+    """Quantos pregões fecharam depois de `coletado`."""
+    n = 0
+    d = ultimo_pregao_fechado(agora)
+    while (
+        n < teto
+        and datetime.combine(d, calendario.FECHAMENTO, tzinfo=calendario.BRT) > coletado
+    ):
+        n += 1
+        d = calendario.pregao_anterior(d)
+    return n
+
+
+def checar_consultor(dados: Any, agora: datetime) -> list[Resultado]:
+    """O Consultor avaliou os ativos com séries recentes (`/api/consultor`)."""
+    if not isinstance(dados, dict):
+        return [
+            Resultado("consultor.contrato", FALHA, "/api/consultor fora do contrato")
+        ]
+    r: list[Resultado] = []
+    avaliados = dados.get("ativos_avaliados") or 0
+    r.append(
+        Resultado(
+            "consultor.avaliados",
+            OK if avaliados > 0 else FALHA,
+            "O Consultor avaliou os ativos do Ibovespa",
+            f"ativos_avaliados = {avaliados}",
+        )
+    )
+    info = dados.get("informacoes_de") or {}
+    texto = str(info.get("sinais_coletado_em") or "")
+    try:
+        coletado = datetime.strptime(texto, "%d/%m/%Y %H:%M").replace(
+            tzinfo=calendario.BRT
+        )
+    except ValueError:
+        r.append(
+            Resultado(
+                "consultor.frescor",
+                FALHA,
+                "Consultor sem data de coleta das séries",
+                f"informacoes_de.sinais_coletado_em = {texto!r}",
+            )
+        )
+        return r
+    atraso = pregoes_sem_renovar(coletado, agora)
+    r.append(
+        Resultado(
+            "consultor.frescor",
+            OK if atraso < CONSULTOR_PREGOES_SEM_RENOVAR else FALHA,
+            "Séries do Consultor renovadas depois dos últimos fechamentos",
+            f"coletadas em {texto} BRT; {atraso} pregão(ões) fechado(s) depois",
+        )
+    )
+    return r
+
+
+def checar_sistema(dados: Any, achados: list[Resultado]) -> list[Resultado]:
+    """A página /sistema responde no contrato e enxerga o que a auditoria viu.
+
+    Os problemas que ela lista já viram a issue `sistema-com-problema` (job
+    `saude` do workflow); aqui aparecem como aviso, para não abrir duas issues
+    da mesma coisa. Falha é o /sistema dizer que está tudo bem enquanto a
+    auditoria encontra produção errada: foi assim de 17/11 a 27/11/2026.
+    Falha da auditoria é dado errado em produção, então o /sistema precisa
+    ter ao menos um item de nível problema.
+    """
+    geral = dados.get("geral") if isinstance(dados, dict) else None
+    nivel = geral.get("nivel") if isinstance(geral, dict) else None
+    if nivel not in ("ok", "atencao", "problema"):
+        return [
+            Resultado(
+                "sistema.contrato",
+                FALHA,
+                "/api/sistema fora do contrato",
+                f"geral.nivel = {nivel!r}",
+            )
+        ]
+    r = [Resultado("sistema.contrato", OK, "/api/sistema responde no contrato")]
+    pendentes = [p for p in geral.get("pendentes") or [] if isinstance(p, dict)]
+    problemas = [p for p in pendentes if p.get("nivel") == "problema"]
+    if problemas:
+        r.append(
+            Resultado(
+                "sistema.problemas",
+                AVISO,
+                f"/sistema acusa {len(problemas)} problema(s)",
+                "; ".join(
+                    f"{p.get('grupo', '')} · {p.get('nome', '')}: {p.get('resumo', '')}"
+                    for p in problemas
+                ),
+            )
+        )
+    else:
+        r.append(Resultado("sistema.problemas", OK, "/sistema não acusa problemas"))
+    falhas = [a for a in achados if a.status == FALHA]
+    # Uma atenção sem relação não conta: em 27/11/2026 o /sistema estava em
+    # atenção por agendamentos perdidos enquanto o Consultor estava vazio.
+    if falhas and not problemas:
+        r.append(
+            Resultado(
+                "sistema.coerencia",
+                FALHA,
+                "/sistema não acusa problema, mas a auditoria achou falhas",
+                "Falhas sem eco no /sistema: "
+                + "; ".join(f"{f.id} ({f.titulo})" for f in falhas),
+            )
+        )
+    else:
+        r.append(
+            Resultado(
+                "sistema.coerencia",
+                OK,
+                "/sistema coerente com o que a auditoria viu",
+                f"nível geral {nivel}; {len(falhas)} falha(s) na auditoria",
+            )
+        )
+    return r
+
+
 def rodapes_sem_fuso(html: str) -> list[str]:
     """Rodapés com fonte que não dizem o fuso (BRT) em lugar nenhum do texto."""
     import re
@@ -1018,6 +1200,19 @@ def auditar(
         r += checar_fixtures(painel, numeros_dos_fixtures())
         ref, erros = referencia(painel.fonte)
         r += checar_referencia(painel, ref, erros, agora)
+
+    c_status, c_dados = baixar_json_protegido(f"{url}/api/consultor")
+    if c_status == 200 and c_dados is not None:
+        r += checar_consultor(c_dados, agora)
+    else:
+        r.append(_sem_acesso("consultor.acesso", "/api/consultor", c_status))
+
+    # Por último: a coerência compara o /sistema com tudo o que veio antes.
+    s_status, s_dados = baixar_json_protegido(f"{url}/api/sistema")
+    if s_status == 200 and s_dados is not None:
+        r += checar_sistema(s_dados, r)
+    else:
+        r.append(_sem_acesso("sistema.acesso", "/api/sistema", s_status))
 
     if navegador:
         r += checar_navegador(url + "/", saida)

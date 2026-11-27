@@ -260,7 +260,9 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
 
     janelas = {
         "clima_global": "pre_abertura",
-        "consultor_historico": "semanal",
+        # Série de 2 anos renovada a cada pregão fechado: no sábado ela só
+        # renovava se o cache vencesse, e ele nunca vencia fora do pregão.
+        "consultor_historico": "fechamento",
         "consultor_fechamento": "fechamento",
         # Uma vez por pregão completo, com o mercado fechado (spec 174a).
         "mare_historico": "diario",
@@ -471,7 +473,7 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
                     finally:
                         app.banco._estado_snapshot.reset(token_est)
                         app.banco._data_referencia_snapshot.reset(token_data)
-                    if nome == "consultor_historico":
+                    if nome == "consultor_historico" and backtest_vencido():
                         from app.consultor import avaliador_historico
 
                         global _backtest_rodando
@@ -532,6 +534,27 @@ def _coletar(estado_detalhes_manual: list[str] | None = None) -> None:
             )
         except Exception:
             logger.exception("Falha ao gravar a instrumentação da rodada")
+
+
+def backtest_vencido(agora: datetime | None = None) -> bool:
+    """O backtest do Consultor continua semanal mesmo com a série diária:
+    só roda quando o último resultado gravado tem mais de 6 dias."""
+    from app.database import get_consultor_confianca
+
+    agora = agora or datetime.now(timezone.utc)
+    try:
+        confianca = get_consultor_confianca()
+    except Exception:  # noqa: BLE001 - sem tabela, roda
+        return True
+    datas = [
+        v["atualizado_em"]
+        for v in confianca.values()
+        if isinstance(v, dict) and isinstance(v.get("atualizado_em"), datetime)
+    ]
+    if not datas:
+        return True
+    ultima = max(d if d.tzinfo else d.replace(tzinfo=timezone.utc) for d in datas)
+    return agora - ultima > timedelta(days=6)
 
 
 def proxima_espera(intervalo_atual: timedelta, duracao: timedelta) -> timedelta:

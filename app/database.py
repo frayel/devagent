@@ -1594,6 +1594,43 @@ def invalidar_cache_historico(ticker: str):
         del _historico_diario_cache[k]
 
 
+def _instante_utc(valor: object) -> datetime | None:
+    """`criado_em` da série como instante UTC; texto sem fuso vale como UTC
+    (o `gravar_serie` usa o relógio do servidor, que no Render é UTC)."""
+    if isinstance(valor, datetime):
+        dt = valor
+    else:
+        try:
+            dt = datetime.fromisoformat(str(valor))
+        except ValueError:
+            return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def serie_vencida(
+    criado_em: datetime, agora: datetime, max_age_minutes: int, aberto: bool
+) -> bool:
+    """A série gravada em `criado_em` já não serve como cache?
+
+    Com o pregão aberto, vence com a idade. Fora dele, a idade só perdoa a
+    série coletada depois do fechamento do último pregão: antes, uma série de
+    dez dias passava por nova a noite inteira e no fim de semana, e o coletor
+    semanal do Consultor nunca a renovava (Consultor vazio de 17/11 a 27/11/2026).
+    """
+    from datetime import timedelta
+
+    from app.calendario import BRT, FECHAMENTO, ultimo_pregao_fechado
+
+    if (agora - criado_em) <= timedelta(minutes=max_age_minutes):
+        return False
+    if aberto:
+        return True
+    fechamento = datetime.combine(ultimo_pregao_fechado(agora), FECHAMENTO, tzinfo=BRT)
+    return criado_em < fechamento
+
+
 def get_historico_diario(
     tickers: list[str], range_str: str, interval: str, max_age_minutes: int = 15
 ) -> dict[str, dict]:
@@ -1681,14 +1718,11 @@ def get_historico_diario(
     final_result = {}
     for ticker, spark_data in result.items():
         if "metadata" in spark_data and "criado_em" in spark_data["metadata"]:
-            criado_em_str = spark_data["metadata"]["criado_em"]
-            try:
-                criado_em = datetime.fromisoformat(criado_em_str)
-                idade = (agora - criado_em).total_seconds() / 60.0
-                if is_aberto and idade > max_age_minutes:
-                    continue
-            except Exception:
-                pass
+            criado_em = _instante_utc(spark_data["metadata"]["criado_em"])
+            if criado_em is not None and serie_vencida(
+                criado_em, agora, max_age_minutes, is_aberto
+            ):
+                continue
         final_result[ticker] = spark_data
 
     return final_result

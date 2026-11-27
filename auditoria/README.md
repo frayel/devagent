@@ -27,6 +27,10 @@ Não há revisão humana: o agente pode alterar a auditoria e o `automerge.yml` 
 | Coerência | variação % bate com a variação em pontos; variação diária abaixo de 20% (era 12%; caso relatado em 29/10/2026 de que o índice teria variado 15,99% com o circuit breaker estendido, relatado e não confirmado por fonte independente); valor em faixa plausível; histórico ordenado, com pelo menos 15 pregões e sem datas de mais de 60 dias |
 | Fechamento anterior coerente | fechamento anterior igual ao penúltimo ponto do gráfico (tolerância 0,05%) quando o valor exibido coincide com o último ponto (`ibov.fechamento_anterior_coerente`) |
 | Vazamento de teste | nenhum valor de `tests/fixtures/` aparece em produção |
+| Consultor | `/api/consultor` avaliou ativos (`ativos_avaliados > 0`) e as séries foram coletadas depois do fechamento de menos de 2 pregões (`consultor.avaliados`, `consultor.frescor`) |
+| Página /sistema | `/api/sistema` responde no contrato do núcleo (`sistema.contrato`); os problemas que ela lista entram como aviso, porque o job `saude` já abre a issue `sistema-com-problema` (`sistema.problemas`); falha se a auditoria encontrou falhas e o /sistema não lista nenhum item de nível problema, sinal de que ele está cego para elas (`sistema.coerencia`; uma atenção sem relação não basta) |
+
+`/api/consultor` e `/api/sistema` usam o HTTP Basic de `[saude]` no `devagent.toml`, com a senha em `SAUDE_SENHA`. Sem ela, se a página pedir senha, o resultado é `inconclusivo`. Essas checagens nasceram do incidente de 17/11 a 27/11/2026: o Consultor ficou vazio por dez dias com o /sistema todo verde e a auditoria sem olhar para ele.
 
 Fonte independente fora do ar gera resultado `inconclusivo`, que não reprova.
 
