@@ -6,6 +6,7 @@ esforco: P
 gaveta: poda
 aceite: tests/test_aceite_200.py
 origem: nova
+revisada: 2026-11-27
 ---
 
 ## Problema
@@ -29,7 +30,7 @@ O que sai:
 3. **Banco.** Em `app/consultor/armazenamento.py` saem `SQL_CONSENSO_YAHOO`, `SQL_CONSENSO_YAHOO_STATUS`, `criar_tabelas_consenso_yahoo`, `tem_consenso_yahoo`, `save_consenso_yahoo`, `get_consenso_yahoo`, `resumo_consenso_yahoo`, `max_coletado_em_consenso_yahoo`, `get_consenso_yahoo_status` e `set_consenso_yahoo_status`, e a chamada em `init_db` do consultor. Em `app/database.py` sai a chamada a `criar_tabelas_consenso_yahoo`. As tabelas `consultor_consenso_yahoo` e `consultor_consenso_yahoo_status` deixam de ser criadas; as que já existem no Postgres de produção ficam (sem `DROP`), como fez a spec 168 com as tabelas legadas.
 4. **Cache do Consultor.** Em `app/consultor/calculador.py`, o `yahoo_ts` sai da tupla `versao_atual`, que volta a ser `(max_criado, max_extraida, status_ts)`.
 5. **`/sistema`.** Saem `verificar_consenso_yahoo` e `BLOQUEIO_PODA_YAHOO` de `app/services/sistema.py`, o parâmetro `consenso_yahoo` de `montar` e `_resumo_consenso_yahoo` de `app/main.py`. O grupo Coleta perde o item "Yahoo · consenso"; os outros itens não mudam.
-6. **Documentação.** Em `docs/context/fontes-de-dados.md`, a seção *Yahoo Finance (quoteSummary · consenso de analistas · consultor)* sai; a linha do `quoteSummary` em *Fontes proibidas* fica, acrescida de "o coletor da spec 159 foi removido pela spec 200 (bloqueado em produção de 19/11 a 27/11/2026, nenhuma leitura gravada)". Em *Fontes descontinuadas*, uma linha no mesmo formato da brapi.
+6. **Documentação.** Em `docs/context/fontes-de-dados.md`, a seção *Yahoo Finance (quoteSummary · consenso de analistas · consultor)* sai; a linha do `quoteSummary` em *Fontes proibidas* fica, acrescida de "o coletor da spec 159 foi removido pela spec 200 (bloqueado em produção de 19/11 a 27/11/2026, nenhuma leitura gravada)". Em *Fontes descontinuadas*, uma linha no mesmo formato da brapi, por exemplo: "**Yahoo Finance `quoteSummary`** (removido em <data do merge>): consenso de analistas do Consultor (spec 159). Bloqueado (HTTP 429) em produção de 19/11 a 27/11/2026 sem nenhuma leitura gravada, e proibido pelo `robots.txt`. A decisão do Consultor nunca dependeu dele."
 
 O que fica: a decisão do Consultor, o consenso das casas e todas as colunas das tabelas de `/consultor` ficam iguais (a spec 159 já garantia que o Yahoo não entrava na decisão; `test_decisao_igual_com_e_sem_a_tabela` da 159 o provava). O `chart`/`spark` do Yahoo usado por outros coletores e pela auditoria não é tocado (ver *Fora do escopo*).
 
@@ -65,5 +66,5 @@ Nenhum. Medida de poda: dias seguidos de bloqueio (8, contados do `desde` da pau
 ## Fora do escopo
 - `DROP TABLE` das duas tabelas no Postgres de produção: ficam órfãs, como as legadas da spec 168.
 - Outra fonte de consenso de analistas. O ADR 005 registra que não há fonte gratuita e permitida; se aparecer, é spec nova de capacidade.
-- O item 20 da *Fila* ("A casa fora da curva"), que dependia da faixa `alvo_minimo`–`alvo_maximo` do Yahoo, sai do backlog neste mesmo PR `spec:`, por depender da fonte podada.
+- O item 20 da *Fila* ("A casa fora da curva"), que dependia da faixa `alvo_minimo`–`alvo_maximo` do Yahoo, já saiu do backlog no PR `spec:` desta spec, por depender da fonte podada; a entrega não mexe no `docs/BACKLOG.md` por causa dele.
 - O `robots.txt` de `query1`/`query2.finance.yahoo.com` responde `Disallow: /` para todo o host, o que alcança também o `chart` e o `spark` que vários coletores (reserva do MT5) e a auditoria usam. Isso é uma pergunta de regra do produto, maior que esta poda; fica como item da *Fila* do backlog, para decisão do dono antes de qualquer spec.
