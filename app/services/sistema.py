@@ -322,6 +322,52 @@ def verificar_historico_pregoes(datas: list[str], agora: datetime) -> Item:
     return Item("Histórico de pregões", OK, resumo, detalhe)
 
 
+SERIES_ATENCAO = 2  # pregões fechados sem a série do Consultor renovada
+SERIES_PROBLEMA = 4
+
+
+def verificar_series_consultor(criado_em: str | None, agora: datetime) -> Item:
+    """Idade da série diária de 2 anos que as regras do Consultor leem.
+
+    Ela parou em 17/11/2026 e o Consultor ficou vazio por dez dias sem nenhum
+    item desta página acusar: o coletor devolvia o cache velho e contava como
+    sucesso. Aqui a medida é o próprio dado, não o coletor.
+    """
+    from app.calendario import FECHAMENTO, pregao_anterior, ultimo_pregao_fechado
+
+    nome = "Séries do Consultor"
+    criado = _dt(criado_em) if criado_em else None
+    if criado is None:
+        return Item(
+            nome,
+            PROBLEMA,
+            "nenhuma série diária gravada",
+            "Sem série, as regras técnicas do Consultor não rodam.",
+        )
+    atrasados = 0
+    d = ultimo_pregao_fechado(agora)
+    while (
+        datetime.combine(d, FECHAMENTO, tzinfo=BRT) > criado
+        and atrasados < SERIES_PROBLEMA + 10
+    ):
+        atrasados += 1
+        d = pregao_anterior(d)
+    resumo = f"coletadas em {hora_brt(criado)}"
+    if atrasados >= SERIES_PROBLEMA:
+        nivel = PROBLEMA
+    elif atrasados >= SERIES_ATENCAO:
+        nivel = ATENCAO
+    else:
+        return Item(nome, OK, resumo, "Renovadas depois do último fechamento.")
+    return Item(
+        nome,
+        nivel,
+        f"{resumo} · {atrasados} pregões sem renovar",
+        "O coletor consultor_historico não gravou a série depois desses "
+        "fechamentos; sem ela, o Consultor não avalia as regras técnicas.",
+    )
+
+
 def verificar_banco(info: dict[str, Any]) -> Item:
     if info.get("disjuntor_desde"):
         return Item(
@@ -1074,6 +1120,7 @@ def montar(
     monitor_ligado: bool = False,
     modelo_gemini: str | None = None,
     historico_poda: dict[date, dict] | None = None,
+    series_consultor: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     ambiente = dict(os.environ) if ambiente is None else ambiente
     github = remoto.get("github")
@@ -1088,6 +1135,10 @@ def montar(
         coleta_ligada, estado_coleta, intervalo_coleta, inicio, agora
     )
     coleta.append(verificar_paineis_vazios(vazios, horas_vazios, rodadas))
+    if series_consultor is not None:
+        coleta.append(
+            verificar_series_consultor(series_consultor.get("criado_em"), agora)
+        )
     if historico_poda is not None:
         janela_poda = ultimos_pregoes(agora)
         coleta.append(verificar_candidatos_poda(historico_poda, janela_poda))

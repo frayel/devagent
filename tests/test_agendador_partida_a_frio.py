@@ -25,6 +25,8 @@ PROPRIOS = (
 SEGUNDA_18H = datetime(2026, 11, 16, 21, 0, 45, tzinfo=timezone.utc)
 # Segunda, 16/11/2026, 21h00 BRT: depois de todas as janelas do dia.
 SEGUNDA_21H = datetime(2026, 11, 17, 0, 0, tzinfo=timezone.utc)
+# Segunda, 16/11/2026, 18h30 BRT: dentro da janela de fechamento.
+SEGUNDA_18H30 = datetime(2026, 11, 16, 21, 30, tzinfo=timezone.utc)
 # Sábado, 14/11/2026, 10h00 BRT.
 SABADO_10H = datetime(2026, 11, 14, 13, 0, tzinfo=timezone.utc)
 
@@ -113,9 +115,16 @@ def test_segunda_18h_nao_roda_o_historico_que_rodou_no_sabado(monkeypatch):
     assert "ibovespa" in chamadas
 
 
-def test_sabado_roda_o_historico(monkeypatch):
+def test_fechamento_do_pregao_roda_o_historico(monkeypatch):
+    """A série de 2 anos é renovada a cada pregão fechado, não só no sábado:
+    no sábado o cache nunca vencia e o Consultor ficou vazio (27/11/2026)."""
     _execucoes({SABADO: ["consultor_historico"]})
-    assert "consultor_historico" in _rodar(monkeypatch, SABADO_10H)
+    assert "consultor_historico" in _rodar(monkeypatch, SEGUNDA_18H30)
+
+
+def test_sabado_nao_renova_o_historico_ja_renovado_na_sexta(monkeypatch):
+    _execucoes({SEXTA: ["consultor_historico"]})
+    assert "consultor_historico" not in _rodar(monkeypatch, SABADO_10H)
 
 
 def test_sem_execucao_registrada_e_partida_a_frio(monkeypatch):
@@ -139,8 +148,7 @@ def test_fechamento_que_nao_rodou_no_ultimo_pregao_e_partida_a_frio(monkeypatch)
 def test_segunda_21h_nao_roda_o_que_rodou_na_segunda(monkeypatch):
     _execucoes(
         {
-            SEGUNDA: ["clima_global", "consultor_fechamento"],
-            SABADO: ["consultor_historico"],
+            SEGUNDA: ["clima_global", "consultor_fechamento", "consultor_historico"],
         }
     )
     chamadas = _rodar(monkeypatch, SEGUNDA_21H)

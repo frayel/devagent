@@ -46,6 +46,8 @@ jobs:
         env:
           # Vazio: o auditor usa producao_url do devagent.toml.
           PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+          # /api/consultor e /api/sistema, se a produção pedir senha.
+          SAUDE_SENHA: ${{ secrets.SAUDE_SENHA }}
         run: |
           set +e
           make audit PY=python ARGS="--navegador --saida relatorio"

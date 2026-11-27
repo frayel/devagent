@@ -1,6 +1,13 @@
 [
   {
     "data": "2026-11-27",
+    "tipo": "correcao",
+    "texto": "O Consultor volta a avaliar as ações: a série diária das regras parou em 17/11 e a página ficava vazia no pregão. Agora ela é renovada a cada fechamento e, se faltar, as opiniões continuam.",
+    "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Sinais técnicos"},
+    "pr": "#1050"
+  },
+  {
+    "data": "2026-11-27",
     "tipo": "melhoria",
     "texto": "O Consultor deixa de buscar o consenso de analistas do Yahoo Finance, que nunca respondeu ao servidor e não é permitido pelo site. A recomendação não muda.",
     "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Consenso"},

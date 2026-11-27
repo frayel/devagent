@@ -42,8 +42,9 @@ def test_backtest_unico(monkeypatch):
     class MockDatetime:
         @classmethod
         def now(cls, tz=None):
-            # Return a saturday to trigger consultor_historico
-            return datetime.datetime(2023, 1, 7, 12, 0, 0, tzinfo=datetime.timezone.utc)
+            # Segunda, 19h BRT: janela de fechamento, que dispara o
+            # consultor_historico desde que ele virou diário (antes, sábado).
+            return datetime.datetime(2023, 1, 9, 22, 0, 0, tzinfo=datetime.timezone.utc)
 
     monkeypatch.setattr("app.agendador.datetime", MockDatetime)
 

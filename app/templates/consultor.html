@@ -18,6 +18,11 @@
         </div>
         {% endif %}
 
+        {% if dados.sinais_indisponiveis %}
+        <div class="alerta" id="consultor-sem-series">
+            As regras técnicas não foram avaliadas: falta a série diária recente do Ibovespa (última coleta: {{ informacoes_de.sinais_coletado_em }}). As opiniões abaixo continuam valendo.
+        </div>
+        {% endif %}
         {% if informacoes_de.estado_sinais == 'Defasado' %}
         <div class="alerta" id="alerta-sinais-defasado">
             {{ informacoes_de.frase_sinais }}
