@@ -2,6 +2,13 @@
   {
     "data": "2026-11-27",
     "tipo": "correcao",
+    "texto": "Com o Ibovespa parado, a manchete da Visão Geral diz que o mercado opera sem direção definida, em vez de dizer que está em baixa. A frase da tela passa a ser sempre a mesma que o site publica.",
+    "onde": {"aba": "visao-geral", "aba_nome": "Visão Geral", "painel": "Manchete"},
+    "spec": "201"
+  },
+  {
+    "data": "2026-11-27",
+    "tipo": "correcao",
     "texto": "O Consultor volta a avaliar as ações: a série diária das regras parou em 17/11 e a página ficava vazia no pregão. Agora ela é renovada a cada fechamento e, se faltar, as opiniões continuam.",
     "onde": {"pagina": "/consultor", "pagina_nome": "Consultor", "painel": "Sinais técnicos"},
     "pr": "#1050"

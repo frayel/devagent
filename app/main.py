@@ -36,7 +36,7 @@ from app.services.ibovespa import get_ibovespa_view_data
 from app.services import carimbo as carimbo_servico
 from app.services import destaques as destaques_servico
 from app.services import novidades as novidades_servico
-from app.services.manchete import gerar_manchete
+from app.services.manchete import entradas_da_manchete
 from app.database import get_latest_highlights_data, get_latest_apetite_risco_data
 from app.services.highlights import (
     acao_media_api,
@@ -1567,48 +1567,13 @@ def snapshot(
         elif is_historical:
             resp["paineis"]["anomalia_fechamento"] = None
 
-        # Manchete (Spec 140)
-        ibov_input = None
-        if data:
-            ibov_input = {
-                "valor": data.current_price,
-                "variacao_pct": variation_pct,
-                "is_positive": variation_pct > 0
-                if variation_pct is not None
-                else False,
-                "revisao_variacao": revisao_variacao,
-                "pregao": _pregao("ibovespa"),
-                "estado": estado_ibov,
-            }
-
-        highs_input = None
-        if highlights_data:
-            highs_input = {
-                "up_count": getattr(highlights_data, "up_count", None),
-                "down_count": getattr(highlights_data, "down_count", None),
-                "total_count": getattr(highlights_data, "total_count", None),
-                "pregao": _pregao("altas_baixas"),
-            }
-
-        risco_input = None
-        if apetite_risco_data:
-            risco_input = {"estado": getattr(apetite_risco_data, "estado", None)}
-
-        motores_input = None
-        if motores_data and getattr(motores_data, "motores_json", None):
-            try:
-                motores_input = {
-                    "pregao": _pregao("motores_indice"),
-                    "motores": json.loads(motores_data.motores_json),
-                }
-            except Exception:
-                motores_input = None
-
-        manchete_obj = gerar_manchete(
-            ibov_input,
-            highs_input,
-            risco_input,
-            motores_data=motores_input,
+        # Manchete (specs 140 e 201): a mesma montagem da home.
+        manchete_obj = entradas_da_manchete(
+            data,
+            highlights_data,
+            getattr(apetite_risco_data, "estado", None) if apetite_risco_data else None,
+            motores_data,
+            carimbos,
         )
         resp["paineis"]["manchete"] = {
             "humor": manchete_obj.humor,
@@ -2007,9 +1972,6 @@ def index(
         acao_media = _acao_media_dos_dados(
             get_latest_highlights_data(), get_latest_ibovespa_data()
         )
-        highs_dict = {}
-        if highlights and highlights.get("dispersion_pct") is not None:
-            highs_dict["dispersion_pct"] = highlights["dispersion_pct"]
 
         apetite_risco = get_apetite_risco_view_data()
         risco_dict = {}
@@ -2022,22 +1984,12 @@ def index(
         forca_relativa = get_forca_relativa_view_data()
         escudo_quedas = get_escudo_quedas_view_data()
 
-        def _com_pregao(view: dict | None, chave: str) -> dict | None:
-            c = carimbos[chave]
-            if view is None or c is None:
-                return view
-            return {**view, "pregao": c["pregao_iso"]}
-
-        manchete = gerar_manchete(
-            _com_pregao(ibovespa_data, "ibovespa"),
-            _com_pregao(highlights, "altas_baixas"),
-            risco_dict,
-            motores_data={
-                "pregao": carimbos["motores_indice"]["pregao_iso"],
-                "motores": motores_cards,
-            }
-            if motores_cards and carimbos["motores_indice"]
-            else motores_cards,
+        manchete = entradas_da_manchete(
+            get_latest_ibovespa_data(),
+            get_latest_highlights_data(),
+            risco_dict.get("estado"),
+            motores_data,
+            carimbos,
         )
 
         coesao = get_coesao_view_data()
