@@ -14,7 +14,6 @@ from app.consultor.armazenamento import (
     get_opinioes_ativos,
     get_opinioes_recentes,
     get_opinioes_status,
-    max_coletado_em_consenso_yahoo,
 )
 from app.consultor.avaliador_historico import pre_processar_ativo
 from app.database import get_consultor_confianca
@@ -89,12 +88,7 @@ def calcular_consultor(ignorar_cache: bool = False) -> dict:
             max_extraida = str(op["extraida_em"])
 
     status_ts = str(opinioes_status.get("ultima_extracao_em", ""))
-    # A leitura nova do consenso do Yahoo aparece sem esperar outra fonte mudar (spec 159).
-    try:
-        yahoo_ts = max_coletado_em_consenso_yahoo()
-    except Exception:  # noqa: BLE001 - complemento opcional
-        yahoo_ts = ""
-    versao_atual = (max_criado, max_extraida, status_ts, yahoo_ts)
+    versao_atual = (max_criado, max_extraida, status_ts)
 
     if (
         not ignorar_cache

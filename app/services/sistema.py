@@ -575,54 +575,6 @@ def verificar_radares_escondidos(
     )
 
 
-BLOQUEIO_PODA_YAHOO = timedelta(days=7)
-
-
-def verificar_consenso_yahoo(info: dict[str, Any], agora: datetime) -> Item:
-    """Fonte "Yahoo · consenso" do Consultor (spec 159).
-
-    É uma fonte que pode estar bloqueada para o IP do servidor: a pausa é
-    medida honesta, não defeito que o ciclo conserta. Atenção que não envelhece.
-    """
-    from app.consultor.universo import CARTEIRA_IBOVESPA
-
-    nome = "Yahoo · consenso"
-    status = info.get("status") or {}
-    ultima = info.get("ultima")
-    if status.get("status") == "pausa":
-        desde = _dt(status.get("desde"))
-        quando = desde.astimezone(BRT).strftime("%d/%m %H:%M") if desde else "?"
-        motivo = status.get("motivo") or "sem resposta"
-        resumo = f"bloqueado ({motivo}) desde {quando}"
-        coletado = _dt((ultima or {}).get("coletado_em"))
-        leitura_nova = coletado is not None and desde is not None and coletado > desde
-        if desde and agora - desde > BLOQUEIO_PODA_YAHOO and not leitura_nova:
-            resumo += "; candidato à poda: remover o coletor numa spec de poda"
-        return Item(
-            nome,
-            ATENCAO,
-            resumo,
-            "O quoteSummary do Yahoo recusou ou não respondeu; a fonte fica "
-            "24 h em pausa e o Consultor segue igual, sem o consenso do Yahoo.",
-            status.get("ultima_tentativa") or None,
-            desde=status.get("desde"),
-            envelhece=False,
-        )
-    if not ultima:
-        return Item(nome, OK, "sem leitura ainda", envelhece=False)
-    try:
-        dia = date.fromisoformat(ultima["data"]).strftime("%d/%m")
-    except (TypeError, ValueError):
-        dia = str(ultima.get("data"))
-    return Item(
-        nome,
-        OK,
-        f"{ultima['ativos']} de {len(CARTEIRA_IBOVESPA)} ativos em {dia}",
-        quando=ultima.get("coletado_em"),
-        envelhece=False,
-    )
-
-
 def verificar_tempo_coleta(
     tempos: dict[str, float],
     duracao_parede: float | None = None,
@@ -1122,7 +1074,6 @@ def montar(
     monitor_ligado: bool = False,
     modelo_gemini: str | None = None,
     historico_poda: dict[date, dict] | None = None,
-    consenso_yahoo: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     ambiente = dict(os.environ) if ambiente is None else ambiente
     github = remoto.get("github")
@@ -1152,8 +1103,6 @@ def montar(
         )
     else:
         coleta.append(verificar_tempo_coleta(tempos))
-    if consenso_yahoo is not None:
-        coleta.append(verificar_consenso_yahoo(consenso_yahoo, agora))
 
     integracoes = verificar_integracoes(
         fontes, pausa_mt5, ambiente, agora, modelo_gemini

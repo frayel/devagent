@@ -85,7 +85,6 @@ def _item(ticker, fechamento, consenso):
         "justificativa": "",
         "mensagem_confianca": "confiança de teste",
         "consenso": consenso,
-        "consenso_yahoo": None,
     }
 
 

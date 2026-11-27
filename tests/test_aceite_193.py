@@ -178,11 +178,9 @@ def test_sem_ibov_no_pregao_futuro(monkeypatch):
 def test_json_igual_a_funcao(monkeypatch):
     exigir_spec_done("193")
     import app.main
-    from app.consultor import consenso_yahoo
     from app.consultor.placar import consultor_de_pregao_passado
 
     _arranjo(monkeypatch, 80)
-    monkeypatch.setattr(consenso_yahoo, "anexar", lambda *a, **k: None)
 
     res = _cliente().get(f"/api/consultor?data={D}", auth=("consultor", SENHA))
     assert res.status_code == 200
