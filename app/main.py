@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from app.consultor import formato
 from app.consultor.calculador import calcular_consultor
 from app.consultor.placar import consultor_de_pregao_passado
-from app.consultor.diagnostico import diagnostico_de_opinioes
+from app.consultor.diagnostico import diagnostico_de_opinioes, idade_da_fila
 from app.consultor.universo import (
     composicao_esta_desatualizada,
     FONTE_URL,
@@ -699,6 +699,11 @@ def pagina_consultor(
     opinioes_diagnostico = diagnostico_de_opinioes(
         dados if isinstance(dados, dict) else None, is_historical
     )
+    fila_idade = (
+        {"desde": None, "horas": None, "texto": ""}
+        if is_historical
+        else idade_da_fila(datetime.now(timezone.utc))
+    )
 
     from app.consultor.informacoes import construir_informacoes_de
 
@@ -715,6 +720,7 @@ def pagina_consultor(
             "consultor_indisponivel": consultor_indisponivel,
             "regras_limiares": regras_limiares,
             "opinioes_diagnostico": opinioes_diagnostico,
+            "fila_idade": fila_idade,
             "datas_seletor": datas_seletor,
             "data_referencia": data_ref,
             "is_historical": is_historical,
@@ -774,6 +780,11 @@ def api_consultor(
     opinioes_diagnostico = diagnostico_de_opinioes(
         dados if isinstance(dados, dict) else None, is_historical
     )
+    fila_idade = (
+        {"desde": None, "horas": None, "texto": ""}
+        if is_historical
+        else idade_da_fila(datetime.now(timezone.utc))
+    )
     fontes_opiniao = {
         "llm": (dados.get("opinioes_status") if isinstance(dados, dict) else None)
         or {
@@ -788,6 +799,7 @@ def api_consultor(
         "diagnostico": opinioes_diagnostico,
         "feeds": coletor_opinioes.status_fontes(),
         "fila": opinioes_diagnostico["fila_pendentes"],
+        "fila_idade": fila_idade,
     }
 
     opinioes_api: dict[str, Any] = {}

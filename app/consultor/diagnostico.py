@@ -1,6 +1,7 @@
 """Diagnóstico das opiniões do Consultor, igual na página e no JSON (spec 198)."""
 
 import logging
+from datetime import datetime
 from typing import Any
 
 from app.consultor import armazenamento
@@ -70,3 +71,31 @@ def diagnostico_de_opinioes(dados: dict | None, pregao_passado: bool) -> dict:
     except Exception:
         logger.exception("Diagnóstico de opiniões indisponível")
         return _vazio("erro", "diagnóstico indisponível")
+
+
+def _idade_vazia() -> dict[str, Any]:
+    return {"desde": None, "horas": None, "texto": ""}
+
+
+def idade_da_fila(agora: datetime) -> dict[str, Any]:
+    """Há quanto tempo a matéria mais antiga da fila espera (spec 202).
+
+    Devolve sempre `desde`, `horas` e `texto`; fila vazia, data ilegível ou
+    erro de banco dão o dicionário vazio. Nunca levanta.
+    """
+    try:
+        from app.services.sistema import _dt, ha_quanto
+
+        desde = armazenamento.fila_pendente_desde()
+        inicio = _dt(desde)
+        if desde is None or inicio is None:
+            return _idade_vazia()
+        segundos = max(0.0, (agora - inicio).total_seconds())
+        return {
+            "desde": desde,
+            "horas": round(segundos / 3600, 1),
+            "texto": ha_quanto(inicio, agora),
+        }
+    except Exception:
+        logger.exception("Idade da fila de opiniões indisponível")
+        return _idade_vazia()

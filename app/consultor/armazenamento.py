@@ -688,6 +688,29 @@ def contar_fila_pendente() -> int:
         conn.close()
 
 
+def fila_pendente_desde() -> str | None:
+    """`criado_em` da matéria mais antiga ainda não processada (spec 202).
+
+    Fila vazia devolve `None`; erro de banco propaga para quem chama.
+    """
+    init_db()
+    conn, backend = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT MIN(criado_em) FROM consultor_fila_materias WHERE processada = 0"
+        )
+        row = cursor.fetchone()
+        if not row or row[0] is None:
+            return None
+        valor = row[0]
+        if isinstance(valor, datetime):
+            return valor.isoformat()
+        return str(valor)
+    finally:
+        conn.close()
+
+
 def get_opinioes_status() -> dict:
     init_db()
     conn, backend = get_connection()
