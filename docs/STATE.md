@@ -20,6 +20,8 @@ Problemas da página de saúde cuja causa está fora do repositório. Cada um tr
 A demora de cerca de 1,2 s para abrir conexão com o Postgres (issue #913) foi aceita pelo dono do produto em 16/11: o `/sistema` só a mostra no detalhe do item *Banco de dados*, sem Atenção.
 
 ## Implementado
+- [Capacidade nova] Spec 202 - A fila de opiniões diz há quanto tempo a mais antiga espera:
+  - `app/consultor/armazenamento.py`: `fila_pendente_desde()`; `app/consultor/diagnostico.py`: `idade_da_fila(agora)`. `pagina_consultor` e `api_consultor` a chamam só no pregão de hoje; o JSON publica `fontes_opiniao.fila_idade`, e `consultor.html` acrescenta a idade (e o aviso de descarte com 48 h ou mais) aos ramos `aguardando` e `fila`. Aceite em `tests/test_aceite_202.py`.
 - [Saúde técnica] Spec 201 - A manchete montada num lugar só:
   - `app/services/manchete.py`: `entradas_da_manchete(ibovespa, highlights, apetite_estado, motores, carimbos)` monta as entradas de `gerar_manchete` a partir das linhas do banco e dos carimbos de `_carimbos_criticos`; motores sem carimbo ficam fora (spec 141). `snapshot` e `index` (`app/main.py`) chamam só ela; sai o `highs_dict` sem uso da home. Aceite em `tests/test_aceite_201.py`.
 - [Poda] Spec 200 - O consenso do Yahoo sai do Consultor:

@@ -1,7 +1,7 @@
 ---
 id: 202
 titulo: A fila de opiniões diz há quanto tempo a matéria mais antiga espera
-status: ready
+status: done
 esforco: P
 gaveta: capacidade nova
 aceite: tests/test_aceite_202.py

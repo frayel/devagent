@@ -161,9 +161,9 @@
                     {% elif opinioes_diagnostico.codigo == "erro" %}
                     <p>A última extração falhou às {{ opinioes_diagnostico.desde[11:16] }} ({{ opinioes_diagnostico.motivo }}).</p>
                     {% elif opinioes_diagnostico.codigo == "aguardando" %}
-                    <p>Aguardando a primeira extração. Há {{ opinioes_diagnostico.fila_pendentes }} matérias na fila.</p>
+                    <p>Aguardando a primeira extração. Há {{ opinioes_diagnostico.fila_pendentes }} matérias na fila.{% if fila_idade and fila_idade.texto %} A mais antiga espera {{ fila_idade.texto }}.{% if fila_idade.horas is not none and fila_idade.horas >= 48 %} Matérias com mais de 3 dias saem da fila sem extração.{% endif %}{% endif %}</p>
                     {% elif opinioes_diagnostico.codigo == "fila" %}
-                    <p>{{ opinioes_diagnostico.fila_pendentes }} matérias na fila, a próxima extração é na próxima rodada.</p>
+                    <p>{{ opinioes_diagnostico.fila_pendentes }} matérias na fila, a próxima extração é na próxima rodada.{% if fila_idade and fila_idade.texto %} A mais antiga espera {{ fila_idade.texto }}.{% if fila_idade.horas is not none and fila_idade.horas >= 48 %} Matérias com mais de 3 dias saem da fila sem extração.{% endif %}{% endif %}</p>
                     {% elif opinioes_diagnostico.codigo == "sem_materias" %}
                     <p>Nenhuma matéria das fontes citou ativos do Ibovespa com opinião de casa de análise nos últimos 30 dias.</p>
                     {% elif opinioes_diagnostico.codigo == "descartadas" %}
