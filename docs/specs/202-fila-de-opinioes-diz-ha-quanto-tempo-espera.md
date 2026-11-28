@@ -6,6 +6,7 @@ esforco: P
 gaveta: capacidade nova
 aceite: tests/test_aceite_202.py
 origem: A fila de opiniões tem idade
+revisada: 2026-11-28
 ---
 
 ## Problema
@@ -13,7 +14,7 @@ Há quanto tempo a matéria mais antiga espera a extração de opiniões? Desde 
 
 A idade importa por um motivo que a tela hoje esconde: a cada matéria nova, `app/consultor/armazenamento.py` (`save_materia`, linha 421; ramos Postgres ~linha 466 e SQLite ~linha 501) apaga da fila **toda** linha com `criado_em` de mais de 3 dias, processada ou não, e corta a fila em 200 linhas. Matéria que espera mais de 3 dias sai sem extração, em silêncio.
 
-Medida de tamanho: muda `app/consultor/armazenamento.py` (uma função de leitura), `app/consultor/diagnostico.py` (uma função), `app/main.py` (as rotas `pagina_consultor` e `api_consultor`, uma chamada cada) e `app/templates/consultor.html` (os ramos `aguardando` e `fila` do aviso). Testes que tocam o que muda: `grep -rl "matérias na fila\|fontes_opiniao" tests` dá `test_aceite_085.py`, `test_aceite_198.py` e os que chamam `/api/consultor`; nenhum muda de asserção (as frases de hoje continuam como estão, a frase nova vem depois delas).
+Medida de tamanho: muda `app/consultor/armazenamento.py` (uma função de leitura), `app/consultor/diagnostico.py` (uma função), `app/main.py` (as rotas `pagina_consultor` e `api_consultor`, uma chamada cada) e `app/templates/consultor.html` (os ramos `aguardando` e `fila` do aviso). Testes que tocam o que muda: `grep -rl "matérias na fila\|fontes_opiniao" tests` dá `test_aceite_085.py`, `test_aceite_157.py` e `test_aceite_198.py` (e os que chamam `/api/consultor`, como `test_aceite_131.py` e `test_aceite_193.py`); nenhum muda de asserção (as frases de hoje continuam como estão, a frase nova vem depois delas).
 
 ## Comportamento esperado
 1. Função nova `fila_pendente_desde() -> str | None` em `app/consultor/armazenamento.py`: `SELECT MIN(criado_em) FROM consultor_fila_materias WHERE processada = 0`, pelo `get_connection` do próprio módulo, com `init_db()` antes, como `contar_fila_pendente`. Fila vazia devolve `None`. Erro de banco propaga.
@@ -60,7 +61,7 @@ Conta da primeira linha: 15:00 − 10:00 = 18 000 s → 300 min (≥ 90) → 5,0
 
 ## Invariantes de produção
 - `GET /api/consultor` responde 200 e `fontes_opiniao.fila_idade` tem as chaves `desde`, `horas` e `texto`.
-- Quando `fontes_opiniao.fila == 0`, `fontes_opiniao.fila_idade.desde` é `null`; quando `fila > 0`, `desde` não é `null` (salvo erro de banco) e `horas` fica entre 0 e 72,5 (a poda de 3 dias apaga o que passa disso; a meia hora a mais cobre o intervalo até a próxima matéria disparar a poda).
+- Quando `fontes_opiniao.fila == 0`, `fontes_opiniao.fila_idade.desde` é `null`; quando `fila > 0`, `desde` não é `null` (salvo erro de banco) e `horas` é um número maior ou igual a 0. Não há teto: a poda de 3 dias só roda dentro de `save_materia`, e o laço das opiniões fica até 2 h sem ler fora do pregão (`FORA_DO_PREGAO` em `app/agendador.py`) e sem gravar nada quando nenhuma fonte responde; nesses intervalos a mais antiga passa de 72 h, e é justamente isso que a frase nova deve mostrar.
 - `GET /consultor?data=<pregão passado da janela>` não contém `A mais antiga espera`.
 
 ## Fora do escopo
